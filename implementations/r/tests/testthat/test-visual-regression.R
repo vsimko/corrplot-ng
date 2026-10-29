@@ -1,6 +1,7 @@
 test_that("legacy visual case manifest matches executable regression cases", {
-  manifest_path <- file.path("..", "..", "tests", "legacy-visual", "cases.json")
-  manifest_path <- normalizePath(manifest_path, mustWork = FALSE)
+  manifest_path <- testthat::test_path(
+    "..", "..", "..", "..", "tests", "legacy-visual", "cases.json"
+  )
   expect_true(file.exists(manifest_path), info = "Shared legacy visual manifest not found")
   manifest <- jsonlite::fromJSON(manifest_path)
   expect_identical(as.character(utils::packageVersion("corrplot")), manifest$reference_version)
