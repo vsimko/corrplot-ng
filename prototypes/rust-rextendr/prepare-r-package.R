@@ -28,5 +28,8 @@ rextendr::use_extendr(path = pkg_dir, quiet = TRUE, overwrite = TRUE)
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
 writeLines(rust_src, file.path(pkg_dir, "src", "rust", "src", "lib.rs"))
 
-# Generate the R wrappers from the actual Rust module metadata.
-devtools::document(pkg_dir, quiet = TRUE)
+# Generate the R wrappers from the temporary package directory.
+old_wd <- getwd()
+on.exit(setwd(old_wd), add = TRUE)
+setwd(pkg_dir)
+devtools::document(quiet = TRUE)
