@@ -13,9 +13,11 @@ UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript scripts/update-legacy-visual-snapshots.
 ```
 
 The script writes one 900×900 PNG per case under
-`implementations/r/tests/testthat/fixtures/legacy-visual/`. Review all images
-and commit the complete set together. Snapshot regeneration is deliberately
-opt-in so a routine test run cannot silently rewrite approved references.
+`implementations/r/tests/testthat/fixtures/legacy-visual/`. You can also run the
+manual **Generate legacy visual snapshots** GitHub Actions workflow and download
+the `legacy-visual-snapshots` artifact. Review all images and commit the complete
+set together. Snapshot regeneration is deliberately opt-in so a routine test run
+cannot silently rewrite approved references.
 
 Until the PNGs are committed, CI retains the existing side-by-side comparison
 against `corrplot::corrplot()`. Once all snapshots are committed, the R visual
