@@ -1,0 +1,15 @@
+Package: corrplotng
+Title: Next Generation Correlation Plots
+Version: 0.0.0.9000
+Authors@R: person("corrplot-ng contributors", role = c("aut", "cre"), email = "maintainers@example.invalid")
+Description: A provisional R interface for the corrplot-ng project. The current
+    implementation delegates plotting to the original corrplot package to
+    establish a compatibility test harness before a new implementation exists.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    corrplot
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
