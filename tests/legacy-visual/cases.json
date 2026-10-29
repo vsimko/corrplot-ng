@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "reference_repository": "https://github.com/taiyun/corrplot",
+  "reference_branch": "master",
+  "reference_version": "0.95",
+  "reference_commit": "62532f700e6c9d04b93ffbf0bf56e264b0e0368e",
+  "sources": [
+    "tests/testthat/test-corrplot.R",
+    "vignettes/example-corrplot.R",
+    "vignettes/example-corrplot.mixed.R",
+    "vignettes/corrplot-intro.Rmd"
+  ],
+  "comparison": {
+    "reference_call": "corrplot::corrplot",
+    "candidate_call": "corrplotng::corrplot_ng",
+    "format": "PNG raster",
+    "initial_tolerance": 0,
+    "notes": "Both calls run in the same CI environment with identical dimensions and graphics settings. Cases are representative, not an exhaustive inventory of all corrplot arguments."
+  },
+  "cases": [
+    {"id": "default-circle", "source": "vignettes/corrplot-intro.Rmd", "covers": "Default circle method"},
+    {"id": "method-number", "source": "vignettes/example-corrplot.R", "covers": "Numeric coefficients"},
+    {"id": "method-square", "source": "vignettes/example-corrplot.R", "covers": "Square glyphs"},
+    {"id": "method-ellipse", "source": "vignettes/example-corrplot.R", "covers": "Ellipse glyphs"},
+    {"id": "method-shade", "source": "vignettes/example-corrplot.R", "covers": "Shading glyphs"},
+    {"id": "method-color", "source": "vignettes/example-corrplot.R", "covers": "Color heatmap glyphs"},
+    {"id": "method-pie", "source": "vignettes/example-corrplot.R", "covers": "Pie glyphs"},
+    {"id": "order-aoe-upper", "source": "vignettes/corrplot-intro.Rmd", "covers": "AOE ordering and upper triangle"},
+    {"id": "lower-with-coefficients", "source": "vignettes/example-corrplot.R", "covers": "Lower triangle, labels and coefficients"},
+    {"id": "mixed-circle-ellipse", "source": "vignettes/example-corrplot.mixed.R", "covers": "Mixed rendering methods"},
+    {"id": "missing-values", "source": "tests/testthat/test-corrplot.R", "covers": "NA values and NA labels"},
+    {"id": "significance", "source": "vignettes/example-corrplot.R", "covers": "P-value significance annotations"},
+    {"id": "confidence-interval", "source": "tests/testthat/test-corrplot.R", "covers": "Confidence intervals"},
+    {"id": "non-correlation-matrix", "source": "vignettes/corrplot-intro.Rmd", "covers": "Non-correlation data and color limits"},
+    {"id": "math-labels", "source": "tests/testthat/test-corrplot.R", "covers": "Plotmath and special variable labels"}
+  ]
+}

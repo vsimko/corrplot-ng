@@ -11,5 +11,7 @@ Roxygen: list(markdown = TRUE)
 Imports:
     corrplot
 Suggests:
+    jsonlite,
+    png,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
