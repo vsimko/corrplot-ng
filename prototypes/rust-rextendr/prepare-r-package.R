@@ -31,5 +31,12 @@ rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
 writeLines(rust_src, file.path(pkg_dir, "src", "rust", "src", "lib.rs"))
 
+# pkgload installs the package before roxygen2 has generated NAMESPACE.
+# Seed the required file so this first install can compile the Rust DLL.
+namespace_file <- file.path(pkg_dir, "NAMESPACE")
+if (!file.exists(namespace_file)) {
+  writeLines(character(), namespace_file)
+}
+
 # Generate the R wrappers from the temporary package directory.
 devtools::document(pkg = pkg_dir, quiet = FALSE)
