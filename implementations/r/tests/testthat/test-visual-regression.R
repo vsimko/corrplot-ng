@@ -1,10 +1,9 @@
 test_that("legacy visual case manifest matches executable regression cases", {
-  manifest_path <- file.path(
-    "..", "..", "..", "tests", "legacy-visual", "cases.json"
-  )
+  manifest_path <- file.path("..", "..", "tests", "legacy-visual", "cases.json")
   manifest_path <- normalizePath(manifest_path, mustWork = FALSE)
-  skip_if_not(file.exists(manifest_path), "Shared legacy visual manifest not found")
+  expect_true(file.exists(manifest_path), info = "Shared legacy visual manifest not found")
   manifest <- jsonlite::fromJSON(manifest_path)
+  expect_identical(as.character(utils::packageVersion("corrplot")), manifest$reference_version)
   expect_setequal(manifest$cases$id, names(legacy_visual_cases))
 })
 
@@ -112,7 +111,6 @@ test_that("corrplot-ng matches the original corrplot visual examples", {
   }
 
   for (case_id in names(legacy_visual_cases)) {
-    testthat::local_edition(3)
     reference_file <- tempfile(fileext = ".png")
     candidate_file <- tempfile(fileext = ".png")
     render_legacy_case(legacy_visual_cases[[case_id]], reference_plotter, reference_file)
