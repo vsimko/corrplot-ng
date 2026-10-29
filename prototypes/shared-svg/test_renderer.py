@@ -2,23 +2,34 @@ import json
 import unittest
 from pathlib import Path
 
-from renderer import render_svg
+from renderer import render_scene_svg, render_svg
+from scene import build_scene
 
 
 HERE = Path(__file__).parent
 
 
-class SvgPrototypeTests(unittest.TestCase):
+class PlotSceneTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = json.loads((HERE / "example.json").read_text(encoding="utf-8"))
 
-    def test_output_is_deterministic(self):
-        first = render_svg(self.config)
-        second = render_svg(self.config)
-        self.assertEqual(first, second)
+    def test_scene_is_renderer_neutral_json_data(self):
+        scene = build_scene(self.config)
+        self.assertEqual(scene["kind"], "correlation_plot")
+        self.assertEqual(scene["schema_version"], 1)
+        self.assertEqual(len(scene["cells"]), 9)
+        self.assertEqual(scene["cells"][1]["value"], 0.65)
+        self.assertIsNone(scene["cells"][5]["value"])
+        json.dumps(scene)
 
-    def test_emits_svg_and_user_annotation(self):
+    def test_scene_and_svg_output_are_deterministic(self):
+        scene = build_scene(self.config)
+        self.assertEqual(scene, build_scene(self.config))
+        self.assertEqual(render_scene_svg(scene), render_scene_svg(build_scene(self.config)))
+        self.assertEqual(render_svg(self.config), render_scene_svg(scene))
+
+    def test_svg_backend_emits_annotation_and_expected_symbols(self):
         svg = render_svg(self.config)
         self.assertTrue(svg.startswith('<svg xmlns="http://www.w3.org/2000/svg"'))
         self.assertIn("Prototype annotation: synthetic example only", svg)
@@ -28,15 +39,25 @@ class SvgPrototypeTests(unittest.TestCase):
         svg = render_svg(self.config)
         self.assertEqual(svg.count(">NA</text>"), 2)
 
+    def test_rejects_empty_labels(self):
+        with self.assertRaisesRegex(ValueError, "labels"):
+            build_scene({"labels": [], "matrix": []})
+
     def test_rejects_non_square_matrix(self):
-        invalid = {"labels": ["alpha", "beta"], "matrix": [[1.0]]}
-        with self.assertRaises(ValueError):
-            render_svg(invalid)
+        with self.assertRaisesRegex(ValueError, "square"):
+            build_scene({"labels": ["alpha", "beta"], "matrix": [[1.0]]})
 
     def test_rejects_out_of_range_values(self):
-        invalid = {"labels": ["alpha"], "matrix": [[1.2]]}
-        with self.assertRaises(ValueError):
-            render_svg(invalid)
+        with self.assertRaisesRegex(ValueError, "between -1 and 1"):
+            build_scene({"labels": ["alpha"], "matrix": [[1.2]]})
+
+    def test_rejects_boolean_as_correlation(self):
+        with self.assertRaisesRegex(ValueError, "numbers or null"):
+            build_scene({"labels": ["alpha"], "matrix": [[True]]})
+
+    def test_rejects_non_string_annotation(self):
+        with self.assertRaisesRegex(ValueError, "annotation"):
+            build_scene({"labels": ["alpha"], "matrix": [[1.0]], "annotation": 123})
 
 
 if __name__ == "__main__":
