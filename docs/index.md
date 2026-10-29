@@ -16,9 +16,26 @@ This directory contains project documentation in the Open Knowledge Format (OKF)
 
 Use this file as the starting point. Keep all repository documentation in English.
 
+## Project at a glance
+
+The main requirements are:
+
+1. Keep the original R package useful and stable.
+2. Preserve legacy R behavior in the new project, with compatibility claims backed by tests.
+3. Use a shared core and clear interfaces for multiple programming languages.
+4. Keep shared plot behavior consistent across languages.
+5. Support the common correlation-plot methods from the original package.
+6. Document features, defaults, limitations, and examples.
+7. Keep the design small enough to maintain with a few hours of work per week and AI assistance.
+8. Provide a migration aid and citation support as planned follow-up work.
+
+See [top-level requirements](requirements.md) for priorities and checks. These are project goals, not claims about the current implementation.
+
 ## Documents
 
-- [Future vision](future-vision.md): project goals, possible architecture, development steps, and open questions.
+- [Top-level requirements](requirements.md): main product and engineering requirements, priorities, and acceptance checks.
+- [Proposed architecture](architecture.md): components, dependency direction, language interfaces, shared core, and rendering backends.
+- [Future vision](future-vision.md): project goals, possible development steps, and open questions.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 
 ## Editing guidelines
