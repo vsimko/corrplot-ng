@@ -1,0 +1,25 @@
+# Renderer-neutral scene contract, version 1
+
+**Status:** Experimental prototype contract, not a stable public API.
+
+The JSON Schema in [scene-v1.schema.json](scene-v1.schema.json) describes the prepared scene produced by the shared-SVG prototype. Language adapters may construct this data and independent renderers may consume it without sharing implementation code.
+
+## Semantics
+
+- `schema_version` is `1`; incompatible structural changes require a new version.
+- `kind` is `correlation_plot`.
+- `width`, `height`, positions, and sizes use logical canvas units. They are not pixels, points, or CSS units.
+- `labels` contains one item per matrix variable, in matrix order. `text` is always a string. Row and column label positions are independent.
+- `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the original matrix/labels order.
+- `value` is a correlation coefficient in `[-1, 1]`, or JSON `null` for a missing value. Missing must not be silently converted to zero.
+- `x`, `y`, and `size` describe the cell's top-left position and square extent. `center_x` and `center_y` are its center.
+- `annotation` is plain text. This version supports one annotation string, not arbitrary positioned/layered elements.
+- `style` contains six-digit sRGB hex colors. It defines semantic colors only; it does not prescribe a particular shape or renderer.
+
+## Deliberate limits
+
+Version 1 is only enough for the current synthetic example. It does not yet define ordering algorithms, significance markers, confidence intervals, legends, arbitrary annotations, typography, accessibility metadata, or native R graphics-device behavior. Do not treat these omissions as a promise that the eventual public API will be limited to this subset.
+
+## Compatibility and evolution
+
+Keep the legacy R API as the behavioral reference. Before using this contract beyond the prototype, validate it against representative legacy cases and decide how version negotiation and optional capabilities should work. Do not add renderer-specific fields to this scene merely to simplify one backend; propose a versioned semantic field instead.
