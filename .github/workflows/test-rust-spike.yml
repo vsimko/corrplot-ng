@@ -37,6 +37,10 @@ jobs:
 
   r-to-rust:
     name: R-to-Rust integration (${{ matrix.os }})
+    env:
+      # Keep Cargo artifacts outside the disposable R package: R CMD INSTALL
+      # may remove src/rust/target during package cleanup.
+      CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -58,7 +62,7 @@ jobs:
       - name: Cache generated Rust dependencies and build artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: prototypes/rust-rextendr/.ci-r-package/src/rust -> target
+          workspaces: prototypes/rust-rextendr/.ci-r-package/src/rust -> ../../../.ci-rust-target
       - name: Install generated R package
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
