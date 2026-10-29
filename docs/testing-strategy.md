@@ -16,7 +16,7 @@ status: proposed
 
 Build a test system before the project adds a large amount of implementation code. Protect the original R package and check that future language interfaces use the same rules.
 
-The repository now has a provisional R package scaffold. Its `corrplot_ng()` adapter delegates to the original `corrplot` package, and its first `testthat` checks exercise the seven legacy methods through that adapter. These tests establish a runnable harness; they do not prove that a new implementation is compatible. The Python fixture checks validate test data only.
+The repository now has a provisional R package scaffold under `implementations/r/`. Its `corrplot_ng()` adapter delegates to the original `corrplot` package, and its first `testthat` checks exercise the seven legacy methods through that adapter. These tests establish a runnable harness; they do not prove that a new implementation is compatible. The Python fixture checks validate test data only.
 
 ## Test layers
 
