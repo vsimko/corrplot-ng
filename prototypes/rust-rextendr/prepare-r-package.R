@@ -38,8 +38,23 @@ if (!file.exists(namespace_file)) {
   writeLines(character(), namespace_file)
 }
 
-# The first pass may bootstrap the package namespace while compiling the Rust DLL.
-# Run a second pass after that bootstrap so rextendr can generate the exported
-# R wrappers into the now-existing NAMESPACE.
+# Generate extendr's R wrappers and package exports. Some rextendr versions
+# bootstrap the package without writing the wrapper on the first pass.
 rextendr::document(pkg = pkg_dir, quiet = FALSE)
 rextendr::document(pkg = pkg_dir, quiet = FALSE)
+
+# Keep this smoke test independent of wrapper-generation behavior across
+# rextendr versions: the exported wrapper calls the registered extendr symbol.
+wrapper_file <- file.path(pkg_dir, "R", "scene_cell_count.R")
+if (!file.exists(wrapper_file) ||
+    !grepl("scene_cell_count", paste(readLines(wrapper_file, warn = FALSE), collapse = "\n"), fixed = TRUE)) {
+  writeLines(c(
+    "#' Return the number of cells in a square plot scene.",
+    "#' @export",
+    "scene_cell_count <- function(n_labels) .Call(wrap__scene_cell_count, n_labels)"
+  ), wrapper_file)
+}
+namespace_lines <- readLines(namespace_file, warn = FALSE)
+if (!any(grepl("^export\\(scene_cell_count\\)$", namespace_lines))) {
+  writeLines(c(namespace_lines, "export(scene_cell_count)"), namespace_file)
+}
