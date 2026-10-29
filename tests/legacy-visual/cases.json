@@ -2,6 +2,8 @@
   "schema_version": 1,
   "reference_repository": "https://github.com/taiyun/corrplot",
   "reference_branch": "master",
+  "reference_version": "0.95",
+  "reference_commit": "62532f700e6c9d04b93ffbf0bf56e264b0e0368e",
   "sources": [
     "tests/testthat/test-corrplot.R",
     "vignettes/example-corrplot.R",
