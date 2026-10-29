@@ -58,6 +58,57 @@ The migration tool will help users translate legacy calls into the new API and i
 
 Compatibility will be validated with regression tests against the original package. Full behavioral compatibility is a goal to verify, not an assumption.
 
+## Local development
+
+The repository currently contains an R compatibility-test package and a small Python prototype. These are development scaffolding, not a complete implementation.
+
+### Prerequisites
+
+- Git
+- Python 3 (the shared prototype and fixture tests use only the Python standard library)
+- R (version 4.x recommended)
+
+On Debian or Ubuntu, install the system tools with:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y git python3 r-base
+```
+
+Install the R packages used by the compatibility wrapper and tests:
+
+```sh
+R -q -e 'install.packages(c("corrplot", "testthat", "jsonlite", "png"), repos = "https://cloud.r-project.org")'
+```
+
+### Run tests
+
+Run the Python fixture-integrity tests from the repository root:
+
+```sh
+python3 -m unittest discover -s tests -v
+```
+
+Run the shared SVG/scene prototype tests:
+
+```sh
+python3 -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+```
+
+Run the R package tests:
+
+```sh
+R -q -e 'testthat::test_local("implementations/r")'
+```
+
+To run the SVG prototype manually and write its output to standard output:
+
+```sh
+python3 prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json
+```
+
+The R visual-regression tests compare output with committed PNG baselines. If a test fails, investigate the cause before regenerating or replacing those baselines. See the test scripts and fixtures for the exact workflow.
+
 ## Scientific citation
 
 Software citation is an important project goal.
