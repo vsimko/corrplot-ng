@@ -10,6 +10,16 @@ from pathlib import Path
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "correlation-cases.json"
+LEGACY_VISUAL_PATH = Path(__file__).parent / "legacy-visual" / "cases.json"
+R_LEGACY_VISUAL_PATH = (
+    Path(__file__).parent.parent
+    / "implementations"
+    / "r"
+    / "tests"
+    / "testthat"
+    / "fixtures"
+    / "legacy-visual-cases.json"
+)
 EXPECTED_METHODS = {
     "circle",
     "square",
@@ -26,6 +36,13 @@ class FixtureIntegrityTests(unittest.TestCase):
     def setUpClass(cls):
         with FIXTURE_PATH.open(encoding="utf-8") as fixture_file:
             cls.data = json.load(fixture_file)
+
+    def test_r_package_manifest_mirrors_shared_legacy_visual_manifest(self):
+        with LEGACY_VISUAL_PATH.open(encoding="utf-8") as source_file:
+            source = json.load(source_file)
+        with R_LEGACY_VISUAL_PATH.open(encoding="utf-8") as r_file:
+            r_manifest = json.load(r_file)
+        self.assertEqual(r_manifest, source)
 
     def test_schema_version_is_supported(self):
         self.assertEqual(self.data.get("schema_version"), 1)
