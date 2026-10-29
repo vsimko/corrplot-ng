@@ -1,0 +1,64 @@
+name: C++ / Rcpp Windows binary install
+
+on:
+  pull_request:
+    paths:
+      - "prototypes/cpp-rcpp/**"
+      - ".github/workflows/test-cpp-windows-binary.yml"
+  push:
+    branches:
+      - prototype/cpp-rcpp-spike
+      - test/windows-binary-install-cpp
+
+jobs:
+  build-windows-binary:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Install Rcpp
+        shell: Rscript {0}
+        run: install.packages("Rcpp", repos = "https://cloud.r-project.org")
+      - name: Generate Rcpp wrappers
+        shell: Rscript {0}
+        run: Rcpp::compileAttributes("prototypes/cpp-rcpp")
+      - name: Build Windows binary package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cd dist
+          R CMD INSTALL --build ../prototypes/cpp-rcpp
+          ls -la
+          test -n "$(find . -maxdepth 1 -type f -name '*.zip' -print -quit)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cpp-windows-binary
+          path: dist/*.zip
+          if-no-files-found: error
+
+  install-without-toolchain:
+    needs: build-windows-binary
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: cpp-windows-binary
+          path: dist
+      - name: Install binary with a restricted PATH and run smoke test
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist -Filter *.zip | Select-Object -First 1
+          if (-not $zip) { throw "Windows binary package ZIP was not downloaded." }
+          $rBin = Split-Path (Get-Command R.exe).Source
+          $env:PATH = "$rBin;C:\Windows\System32;C:\Windows"
+          $lib = Join-Path $env:TEMP "corrplotng-cpp-library"
+          New-Item -ItemType Directory -Force -Path $lib | Out-Null
+          & (Join-Path $rBin "R.exe") CMD INSTALL "--library=$lib" $zip.FullName
+          if ($LASTEXITCODE -ne 0) { throw "Binary installation failed with exit code $LASTEXITCODE." }
+          $env:R_LIBS_USER = $lib
+          & (Join-Path $rBin "Rscript.exe") -e "library(corrplotngcppspike); source('prototypes/cpp-rcpp/tests/smoke-test.R')"
+          if ($LASTEXITCODE -ne 0) { throw "Installed binary smoke test failed with exit code $LASTEXITCODE." }
