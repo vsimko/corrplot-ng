@@ -1,0 +1,28 @@
+# Shared SVG renderer spike
+
+This is a small architecture experiment, not production code and not a commitment to Python, Rust, or SVG as the final design.
+
+It accepts a language-neutral JSON object and renders a correlation matrix as deterministic SVG. The example includes positive, negative, and missing values, plus one user-defined text annotation.
+
+Run from the repository root:
+
+```sh
+python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json
+python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+```
+
+## What this validates
+
+- A small input model can be rendered without language-specific API objects.
+- The same input produces byte-for-byte stable SVG in this prototype.
+- Missing values and a user annotation can be represented in the output.
+- Basic input constraints can be checked before rendering.
+
+## What this does not validate
+
+- Visual parity with the original R package.
+- The full corrplot feature set or a final shared-core schema.
+- Cross-language bindings, Rust, performance, or production packaging.
+- Drawing on the active R graphics device or follow-up calls such as `text()` and `segments()`.
+
+The R graphics integration question remains open and needs a separate R-based experiment. This spike should be used to inform the architecture, not treated as a compatibility implementation.
