@@ -30,6 +30,11 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Install pinned legacy corrplot reference
+        run: |
+          install.packages("remotes")
+          remotes::install_github("taiyun/corrplot@62532f700e6c9d04b93ffbf0bf56e264b0e0368e", dependencies = FALSE)
+
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
