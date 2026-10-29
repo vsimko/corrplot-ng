@@ -13,5 +13,6 @@ fn scene_cell_count(n_labels: i32) -> i32 {
 }
 
 extendr_module! {
-    mod corrplotng_rust_spike;
+    mod corrplotngrustspike;
+    fn scene_cell_count;
 }
