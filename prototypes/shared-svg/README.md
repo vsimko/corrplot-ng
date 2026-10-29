@@ -10,6 +10,7 @@ Run from the repository root:
 python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json
 python -m pip install jsonschema
 python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+Rscript prototypes/shared-svg/test_r_scene_consumer.R
 ```
 
 ## What this validates
