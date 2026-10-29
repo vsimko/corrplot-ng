@@ -1,7 +1,13 @@
 name: Rust spike
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
+    branches:
+      - prototype/rust-rextendr-spike
     paths:
       - "prototypes/rust-rextendr/**"
       - ".github/workflows/test-rust-spike.yml"
