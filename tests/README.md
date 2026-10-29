@@ -22,7 +22,7 @@ Use JSON `null` for missing values. Keep matrix labels and dimensions explicit. 
 
 ## R tests
 
-Install the package dependencies, then run `R CMD check .` or run the tests with `testthat::test_local()` from the repository root. GitHub Actions runs an R package check on pull requests and pushes to `main`.
+Install the package dependencies, then run `R CMD check implementations/r` from the repository root, or change to `implementations/r` and run `R CMD check .`. To run tests interactively, use `testthat::test_local("implementations/r")`. GitHub Actions runs an R package check on pull requests and pushes to `main`.
 
 ## Next steps
 
