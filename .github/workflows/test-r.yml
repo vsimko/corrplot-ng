@@ -23,7 +23,7 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install package dependencies
+      - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: implementations/r
@@ -31,6 +31,7 @@ jobs:
           needs: check
 
       - name: Install pinned legacy corrplot reference
+        shell: Rscript {0}
         run: |
           install.packages("remotes")
           remotes::install_github("taiyun/corrplot@62532f700e6c9d04b93ffbf0bf56e264b0e0368e", dependencies = FALSE)
