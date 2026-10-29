@@ -1,0 +1,40 @@
+name: Generate legacy visual snapshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-snapshots:
+    name: Render approved legacy PNG candidates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: implementations/r
+          extra-packages: any::jsonlite, any::png
+          needs: check
+
+      - name: Generate PNG snapshots from corrplot 0.95
+        env:
+          UPDATE_LEGACY_VISUAL_SNAPSHOTS: "1"
+        run: Rscript scripts/update-legacy-visual-snapshots.R
+
+      - name: Upload PNG snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-visual-snapshots
+          path: implementations/r/tests/testthat/fixtures/legacy-visual/*.png
+          if-no-files-found: error
+          retention-days: 14
