@@ -21,15 +21,17 @@ This is a planning document. A listed item is not proof that the feature exists.
 
 The first goal is to cover the methods in the original R corrplot package.
 
-| Method | Description | Plan |
-|---|---|---|
-| Circle | Show each correlation as a circle. Use size and color to show its value. | Compatibility target |
-| Square | Show each correlation as a square. Use size and color to show its value. | Compatibility target |
-| Ellipse | Show each correlation as an ellipse. Use shape and color to show its value. | Compatibility target |
-| Number | Show each correlation as a number. | Compatibility target |
-| Shade | Use shaded cells to show correlations. | Compatibility target |
-| Color | Use colored cells to show correlations. | Compatibility target |
-| Pie | Show each correlation as a pie-like shape. | Compatibility target |
+The thumbnails below are small, schematic examples. They explain the visual form only. They do not define exact colors, scales, defaults, or output from the future implementation.
+
+| Method | Example | Description | Plan |
+|---|---|---|---|
+| Circle | ![Circle method example](images/circle.svg) | Show each correlation as a circle. Use size and color to show its value. | Compatibility target |
+| Square | ![Square method example](images/square.svg) | Show each correlation as a square. Use size and color to show its value. | Compatibility target |
+| Ellipse | ![Ellipse method example](images/ellipse.svg) | Show each correlation as an ellipse. Use shape and color to show its value. | Compatibility target |
+| Number | ![Number method example](images/number.svg) | Show each correlation as a number. | Compatibility target |
+| Shade | ![Shade method example](images/shade.svg) | Use shaded cells to show correlations. | Compatibility target |
+| Color | ![Color method example](images/color.svg) | Use colored cells to show correlations. | Compatibility target |
+| Pie | ![Pie method example](images/pie.svg) | Show each correlation as a pie-like shape. | Compatibility target |
 
 ## 2. Matrix layouts
 
