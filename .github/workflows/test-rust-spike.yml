@@ -50,6 +50,7 @@ jobs:
       - name: Generate temporary R package with rextendr
         run: Rscript prototypes/rust-rextendr/prepare-r-package.R
       - name: Install generated R package
+        shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
       - name: Test Rust function from R
         run: Rscript -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
