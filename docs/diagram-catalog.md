@@ -60,21 +60,53 @@ The project should assess these shared options:
 
 The exact behavior and defaults must be defined in the API design.
 
-## 4. Possible new visualizations
+## 4. Basic plots that support correlation analysis
 
-These ideas need design and user feedback before implementation.
+The product should consider these common statistical plots. They are not all part of the original R corrplot API. Their role and priority must be agreed before implementation.
 
-| Visualization | Description | Priority |
-|---|---|---|
-| Clustered correlation heatmap | Group variables by similarity and show the resulting matrix. | Candidate |
-| Pairwise correlation panel | Show several pairwise relationships in a grid. | Candidate |
-| Correlation network | Show variables as nodes and selected correlations as links. | Candidate |
-| Interactive correlation matrix | Let users inspect values and select variables in a web view. | Candidate |
-| Multi-matrix comparison | Compare correlation matrices from different datasets or time periods. | Candidate |
-| Correlation change plot | Show how correlations change between groups or time periods. | Candidate |
-| Partial-correlation view | Show partial correlations when suitable input values are available. | Candidate |
+| Plot type | Example | Main use | Plan |
+|---|---|---|---|
+| Scatterplot | ![Scatterplot example](images/scatterplot.svg) | Inspect the relationship between two variables and spot outliers or non-linear patterns. | Recommended basic plot |
+| Scatterplot matrix (pairs plot) | ![Scatterplot matrix example](images/scatterplot-matrix.svg) | Inspect pairwise relationships across several variables. | Recommended basic plot |
+| Correlation heatmap | ![Color method example](images/color.svg) | Compare many correlation values in a compact matrix. | Compatibility target |
+| Numeric correlation matrix | ![Number method example](images/number.svg) | Read exact correlation values. | Compatibility target |
+| Correlation matrix with significance marks | Use a matrix method with significance markers. | Separate effect size from evidence about statistical significance. | Recommended shared option |
+| Correlation matrix with confidence intervals | Use a matrix method with interval values or interval annotations. | Show uncertainty when estimates and suitable intervals are available. | Recommended shared option |
 
-## 5. Shared visual rules
+A scatterplot and a scatterplot matrix are useful companions to a correlation matrix. They help users check whether a correlation is driven by outliers, subgroups, or a non-linear relationship. These plots need their own data and API design; they should not be treated as just another cell-rendering method.
+
+## 5. Recommended additional visualizations
+
+These are candidates for later releases. They need design, user feedback, and a clear use case before implementation.
+
+| Visualization | Example | Main use | Priority |
+|---|---|---|---|
+| Clustered correlation heatmap | ![Clustered heatmap example](images/clustered-heatmap.svg) | Group similar variables and reveal blocks of related variables. | High candidate |
+| Correlation network | ![Correlation network example](images/correlation-network.svg) | Show selected strong relationships as links between variables. | High candidate |
+| Partial-correlation network | ![Partial correlation network example](images/partial-correlation-network.svg) | Show conditional relationships after accounting for other variables, when valid estimates are available. | Candidate |
+| Pairwise correlation panel | ![Scatterplot matrix example](images/scatterplot-matrix.svg) | Compare several pairwise relationships in one view. | Candidate; overlaps with scatterplot matrix |
+| Multi-matrix comparison | ![Matrix comparison example](images/matrix-comparison.svg) | Compare correlation matrices across datasets, groups, or time periods. | High candidate |
+| Correlation change plot | ![Correlation change example](images/correlation-change.svg) | Show how correlations change across groups or time. | High candidate |
+| Interactive correlation matrix | A web view with cell inspection and variable selection. | Inspect values and explore large matrices. | Candidate |
+| Correlation difference matrix | A diverging-color matrix of differences between two correlation matrices. | Locate relationships that changed between groups or time periods. | Candidate |
+| Robust correlation view | A matrix or pairwise plot using a robust correlation estimator. | Reduce sensitivity to outliers when the selected estimator supports this. | Candidate |
+| Rank-correlation view | A matrix using Spearman or Kendall correlation. | Show monotonic relationships when Pearson correlation is not suitable. | Candidate |
+| Lagged cross-correlation plot | A plot of correlation values across time lags. | Explore time-series relationships with appropriate statistical care. | Candidate |
+| Correlation uncertainty view | A matrix that encodes standard errors, intervals, or bootstrap uncertainty. | Show how uncertain correlation estimates are. | Candidate |
+
+The labels “High candidate” and “Candidate” are proposals, not a committed roadmap. Priorities should be reviewed against user needs, technical cost, and the limited time available for development.
+
+## 6. Scope boundaries
+
+The project should keep the first release focused.
+
+- **Core scope:** the seven original corrplot methods, matrix layouts, labels, scales, annotations, and legacy R compatibility.
+- **Strong next candidates:** clustered heatmaps, network views, and comparisons between correlation matrices.
+- **Supporting statistical plots:** scatterplots and scatterplot matrices, if they can be added without delaying core compatibility.
+- **Research features:** partial correlations, robust estimates, rank correlations, lagged cross-correlations, and uncertainty views require careful statistical definitions and documentation.
+- **Interactive views:** consider them after the shared plot model and static output are stable.
+
+## 7. Shared visual rules
 
 Where possible, plot types should use the same rules for:
 
@@ -89,7 +121,7 @@ Where possible, plot types should use the same rules for:
 
 A shared rule should have one definition in the core. Language interfaces should not change its meaning without a clear reason.
 
-## 6. How to add an item
+## 8. How to add an item
 
 For each new item, record:
 
@@ -102,7 +134,7 @@ For each new item, record:
 7. How to test it.
 8. Which language interfaces should support it.
 
-## 7. Next steps
+## 9. Next steps
 
 - Check the compatibility list against the current R package documentation.
 - Add examples for each existing method.
