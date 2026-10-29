@@ -25,9 +25,7 @@ writeLines("# Temporary package generated in CI.", file.path(pkg_dir, "R", "plac
 
 # usethis/rextendr discover the package from the working directory. Enter the
 # disposable package before invoking the scaffolding helpers.
-old_wd <- getwd()
 setwd(pkg_dir)
-on.exit(setwd(old_wd), add = TRUE)
 rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
