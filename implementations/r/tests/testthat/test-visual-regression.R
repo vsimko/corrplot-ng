@@ -55,6 +55,30 @@ test_that("corrplot-ng matches the saved legacy visual examples", {
       )
     }
   } else {
-    skip("Legacy PNG snapshots are not committed yet; use scripts/update-legacy-visual-snapshots.R to create them.")
+    # Keep the existing comparison active until the generated PNGs are reviewed
+    # and committed. After that, CI uses the saved baseline and avoids this
+    # second render of the legacy implementation.
+    reference_plotter <- function(corr, ...) {
+      corrplot::corrplot(corr = corr, ...)
+    }
+    for (case_id in names(legacy_visual_cases)) {
+      reference_file <- tempfile(fileext = ".png")
+      candidate_file <- tempfile(fileext = ".png")
+      render_legacy_case(legacy_visual_cases[[case_id]], reference_plotter, reference_file)
+      render_legacy_case(legacy_visual_cases[[case_id]], candidate_plotter, candidate_file)
+      reference_pixels <- png::readPNG(reference_file)
+      candidate_pixels <- png::readPNG(candidate_file)
+      expect_identical(
+        dim(candidate_pixels),
+        dim(reference_pixels),
+        info = paste("PNG dimensions differ for legacy case:", case_id)
+      )
+      expect_equal(
+        candidate_pixels,
+        reference_pixels,
+        tolerance = 0,
+        info = paste("Rendered pixels differ for legacy case:", case_id)
+      )
+    }
   }
 })
