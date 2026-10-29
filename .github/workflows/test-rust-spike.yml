@@ -62,7 +62,7 @@ jobs:
       - name: Cache generated Rust dependencies and build artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: prototypes/rust-rextendr/.ci-r-package/src/rust -> ../../../../../.ci-rust-target
+          workspaces: prototypes/rust-rextendr/.ci-r-package/src/rust -> ../../../.ci-rust-target
       - name: Install generated R package
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
