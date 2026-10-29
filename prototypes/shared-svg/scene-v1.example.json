@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "kind": "correlation_plot",
+  "width": 380,
+  "height": 392,
+  "labels": [
+    {
+      "text": "alpha",
+      "row_x": 92,
+      "row_y": 118,
+      "column_x": 146,
+      "column_y": 60
+    },
+    {
+      "text": "beta",
+      "row_x": 92,
+      "row_y": 202,
+      "column_x": 230,
+      "column_y": 60
+    },
+    {
+      "text": "gamma",
+      "row_x": 92,
+      "row_y": 286,
+      "column_x": 314,
+      "column_y": 60
+    }
+  ],
+  "cells": [
+    {
+      "row": 0,
+      "column": 0,
+      "value": 1,
+      "x": 104,
+      "y": 76,
+      "center_x": 146,
+      "center_y": 118,
+      "size": 84
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "value": 0.65,
+      "x": 188,
+      "y": 76,
+      "center_x": 230,
+      "center_y": 118,
+      "size": 84
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "value": -0.4,
+      "x": 272,
+      "y": 76,
+      "center_x": 314,
+      "center_y": 118,
+      "size": 84
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "value": 0.65,
+      "x": 104,
+      "y": 160,
+      "center_x": 146,
+      "center_y": 202,
+      "size": 84
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "value": 1,
+      "x": 188,
+      "y": 160,
+      "center_x": 230,
+      "center_y": 202,
+      "size": 84
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "value": null,
+      "x": 272,
+      "y": 160,
+      "center_x": 314,
+      "center_y": 202,
+      "size": 84
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "value": -0.4,
+      "x": 104,
+      "y": 244,
+      "center_x": 146,
+      "center_y": 286,
+      "size": 84
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "value": null,
+      "x": 188,
+      "y": 244,
+      "center_x": 230,
+      "center_y": 286,
+      "size": 84
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "value": 1,
+      "x": 272,
+      "y": 244,
+      "center_x": 314,
+      "center_y": 286,
+      "size": 84
+    }
+  ],
+  "annotation": "Prototype annotation: synthetic example only",
+  "style": {
+    "positive_color": "#2166ac",
+    "negative_color": "#b2182b",
+    "zero_color": "#bdbdbd",
+    "missing_fill": "#f2f2f2",
+    "grid_color": "#e0e0e0"
+  }
+}
