@@ -60,7 +60,7 @@ jobs:
           $lib = Join-Path $env:TEMP "corrplotng-cpp-library"
           New-Item -ItemType Directory -Force -Path $lib | Out-Null
           $env:R_LIBS_USER = $lib
-          & (Join-Path $rBin "Rscript.exe") -e "install.packages('Rcpp', lib='$lib', repos='https://cloud.r-project.org')"
+          & (Join-Path $rBin "Rscript.exe") -e "install.packages('Rcpp', lib=Sys.getenv('R_LIBS_USER'), repos='https://cloud.r-project.org')"
           if ($LASTEXITCODE -ne 0) { throw "Installing the Rcpp binary dependency failed with exit code $LASTEXITCODE." }
           & (Join-Path $rBin "R.exe") CMD INSTALL "--library=$lib" $zip.FullName
           if ($LASTEXITCODE -ne 0) { throw "Binary installation failed with exit code $LASTEXITCODE." }
