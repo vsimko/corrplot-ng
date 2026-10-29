@@ -1,2 +1,3 @@
 useDynLib(corrplotngcppspike, .registration = TRUE)
 importFrom(Rcpp, evalCpp)
+export(scene_cell_count)
