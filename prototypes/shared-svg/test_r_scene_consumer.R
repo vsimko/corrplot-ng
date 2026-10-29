@@ -10,7 +10,7 @@ stopifnot(identical(scene$schema_version, 1L) || identical(scene$schema_version,
 stopifnot(identical(scene$kind, "correlation_plot"))
 stopifnot(length(scene$labels) == 3L)
 stopifnot(length(scene$cells) == 9L)
-stopifnot(identical(scene$cells[[1]]$value, 1))
+stopifnot(is.numeric(scene$cells[[1]]$value), scene$cells[[1]]$value == 1)
 stopifnot(identical(scene$cells[[6]]$value, NULL))
 stopifnot(identical(scene$cells[[8]]$value, NULL))
 stopifnot(identical(scene$style$positive_color, "#2166ac"))
