@@ -23,12 +23,15 @@ writeLines(c(
 dir.create(file.path(pkg_dir, "R"))
 writeLines("# Temporary package generated in CI.", file.path(pkg_dir, "R", "placeholder.R"))
 
-rextendr::use_extendr(path = pkg_dir, quiet = TRUE, overwrite = TRUE)
+# usethis/rextendr discover the package from the working directory. Enter the
+# disposable package before invoking the scaffolding helpers.
+old_wd <- getwd()
+setwd(pkg_dir)
+on.exit(setwd(old_wd), add = TRUE)
+rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
 writeLines(rust_src, file.path(pkg_dir, "src", "rust", "src", "lib.rs"))
 
 # Generate the R wrappers from the temporary package directory.
-# This script runs in a disposable CI process, so changing its working directory is safe.
-setwd(pkg_dir)
-devtools::document(quiet = TRUE)
+devtools::document(pkg = pkg_dir, quiet = TRUE)
