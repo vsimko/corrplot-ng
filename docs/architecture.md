@@ -13,11 +13,11 @@ status: proposed
 
 ## Purpose
 
-This document describes a possible architecture. It is a proposal, not a record of implemented software. The design must be tested with a small prototype before the project commits to a technology.
+This document describes a proposed architecture. It is not a record of implemented software or a final technology decision. Use a small prototype to test the design before committing to it.
 
 ## Architecture overview
 
-The main design rule is to keep plot meaning and shared behavior in one language-neutral model. Language interfaces should translate their public APIs into that model. Rendering backends should turn the model into output for each target environment.
+The main design rule is to keep plot meaning and shared visual rules in one language-neutral model. Language interfaces should translate their public APIs into that model. Rendering backends should turn the model into output for each target environment.
 
 ```mermaid
 flowchart TB
@@ -29,10 +29,9 @@ flowchart TB
     AD --> CORE[Shared plot model and core rules]
     CORE --> VALID[Validation and data preparation]
     VALID --> LAYOUT[Layout and visual encoding]
-    LAYOUT --> RENDER[Rendering interface]
-    RENDER --> GR[Native R graphics backend]
-    RENDER --> PYR[Python plotting backend]
-    RENDER --> WEB[Web / SVG / Canvas backend]
+    LAYOUT --> SCENE[Renderer-neutral plot scene]
+    SCENE --> SVG[SVG renderer]
+    SCENE --> GR[Native R graphics adapter]
     MIG[Legacy-code migration tool] -. suggests new calls .-> LEG
     MIG -. suggests new calls .-> R
 ```
@@ -54,14 +53,14 @@ Interfaces must not define different meanings for the same shared option unless 
 
 ### 2. Legacy R compatibility adapter
 
-Map legacy function calls and arguments to the shared model.
+Map legacy function calls and arguments to the shared model where practical.
 
 - Keep the original R package as the behavior reference.
 - Record legacy behavior with tests before replacing code.
-- Preserve argument defaults, ordering, labels, annotations, and return behavior where required.
+- Preserve argument defaults, ordering, labels, annotations, return behavior, and graphics behavior where required.
 - Report known gaps. Do not claim full compatibility without test evidence.
 
-The compatibility adapter may need to keep some legacy behavior outside the shared core when exact compatibility requires it.
+Some legacy behavior may need to remain in the R adapter. In particular, existing R code can draw extra elements on the active graphics device with functions such as `text()`, `segments()`, and `points()`. Returning an SVG string alone does not preserve that workflow. The prototype must test how the R interface can draw the shared plot and still allow subsequent native R drawing.
 
 ### 3. Shared plot model and core rules
 
@@ -74,7 +73,7 @@ The core should own, where practical:
 - Mapping values to colors, sizes, shapes, and symbols.
 - Matrix layout and variable ordering.
 - Labels, annotations, legends, and scales.
-- A renderer-neutral description of plot elements.
+- A renderer-neutral description of plot elements and their geometry.
 
 The core should not depend on an interactive user interface or on one output format.
 
@@ -82,15 +81,30 @@ The core should not depend on an interactive user interface or on one output for
 
 The rendering interface receives the prepared plot model and sends it to a target backend.
 
-Possible backends include:
+**Current proposal to test:**
 
-- R graphics output.
-- Python plotting output.
-- SVG, Canvas, or another web output.
+- Use a renderer-neutral plot scene as the boundary between shared plot rules and output formats.
+- Test SVG as the primary vector output. It is text-based, portable, and suitable for deterministic structural tests.
+- Keep native R graphics integration as a separate compatibility concern, rather than assuming that SVG output behaves like an active R graphics device.
+- Consider other backends only when a concrete use case justifies them.
 
-A backend may have platform-specific limits. These limits must be documented and tested. The project should avoid duplicating plot rules in each backend.
+SVG output may be identical when the same scene and serializer are used. Rasterized PNG images may still differ because of fonts, rendering engines, and antialiasing. Tests should compare the scene or normalized SVG exactly where possible, and use image tolerances when comparing raster output.
 
-### 5. Legacy-code migration tool
+### 5. User-defined plot elements
+
+The design should support adding user-defined elements without putting language-specific drawing rules into the shared core.
+
+For the new API, consider representing annotations as elements in the shared plot scene before rendering. The scene needs a documented coordinate system and a clear rule for layering elements.
+
+For the legacy R API, test a separate integration path that preserves common drawing operations on the active graphics device. Do not assume that every R graphics operation can be translated automatically to SVG or to another language.
+
+The prototype should answer these questions:
+
+- Can the same shared plot scene produce stable SVG output?
+- Can the R adapter draw the plot and still support common follow-up calls such as `text()` and `segments()`?
+- Which legacy drawing behaviors cannot be preserved by the shared scene alone?
+
+### 6. Legacy-code migration tool
 
 Help users move from legacy R calls to the new API.
 
@@ -108,7 +122,8 @@ Use this dependency direction:
 1. Language-specific calls enter through an interface or adapter.
 2. The interface creates the shared plot model.
 3. The core validates data and resolves shared visual rules.
-4. A renderer converts the result to platform output.
+4. The core produces a renderer-neutral plot scene.
+5. A backend renders the scene for the target environment.
 
 The shared core must not call back into language interfaces. This keeps the core easier to test and reuse.
 
@@ -116,20 +131,32 @@ The shared core must not call back into language interfaces. This keeps the core
 
 Rust is a candidate for the shared core, but it is not a final decision.
 
-A prototype should compare:
+A small prototype should compare:
 
-- Calling the core from R, Python, and TypeScript.
+- Calling the core from R and at least one other language.
 - Build and installation complexity.
 - Support for required data types.
-- Rendering quality and native integration.
+- Stable SVG output and native R graphics integration.
 - Testing, debugging, packaging, and long-term maintenance.
 
 Choose the smallest design that meets the top-level requirements. Avoid extra services or runtime layers unless a tested need justifies them.
 
 ## Open questions
 
-- Should the core return a renderer-neutral scene, or should it render through backend adapters?
-- Which rendering backends are needed for the first useful release?
+- Is a renderer-neutral plot scene the right boundary between core rules and rendering?
+- Does SVG meet the initial output needs, and what is the simplest way to support native R graphics?
 - Which legacy behaviors must be reproduced exactly?
-- Which parts can be shared without making native language integration difficult?
+- Which user-defined drawing operations can be represented in the shared scene, and which need a native R path?
 - What is the simplest packaging model for each language?
+- Does Rust provide enough benefit to justify its build and distribution cost?
+
+## Prototype acceptance criteria
+
+The first prototype should:
+
+- Render one representative correlation plot from a language-neutral input.
+- Produce stable SVG from the same input and configuration.
+- Keep layout and visual rules outside language-specific adapters.
+- Demonstrate at least one user-defined annotation.
+- Test whether the R adapter can preserve a common post-plot drawing operation.
+- Document build complexity and any behavior that cannot be preserved.
