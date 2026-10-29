@@ -32,4 +32,4 @@ rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
 writeLines(rust_src, file.path(pkg_dir, "src", "rust", "src", "lib.rs"))
 
 # Generate the R wrappers from the temporary package directory.
-devtools::document(pkg = pkg_dir, quiet = TRUE)
+devtools::document(pkg = pkg_dir, quiet = FALSE)
