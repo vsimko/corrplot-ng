@@ -22,23 +22,6 @@ render_legacy_case <- function(case, plotter, path) {
   invisible(path)
 }
 
-
-render_legacy_case <- function(case, plotter, path) {
-  grDevices::png(
-    filename = path,
-    width = 900,
-    height = 900,
-    units = "px",
-    res = 120,
-    bg = "white",
-    type = "cairo"
-  )
-  on.exit(grDevices::dev.off(), add = TRUE)
-  graphics::par(mar = c(2, 2, 2, 2), xaxs = "i", yaxs = "i")
-  case(plotter)
-  invisible(path)
-}
-
 test_that("corrplot-ng matches the saved legacy visual examples", {
   skip_if_not_installed("png")
   snapshot_dir <- testthat::test_path("fixtures", "legacy-visual")
