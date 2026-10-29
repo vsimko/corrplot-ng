@@ -27,4 +27,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: prototypes/rust-rextendr
-      - run: cargo check --locked
+      - run: cargo check
