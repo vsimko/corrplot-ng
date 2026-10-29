@@ -39,7 +39,7 @@ See [top-level requirements](requirements.md) for priorities and checks. These a
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 - [Testing strategy](testing-strategy.md): test layers, compatibility evidence, shared fixtures, and CI plan.
 
-The R package scaffold currently delegates to the original `corrplot` package. It is a test adapter, not a new plotting implementation. See [the test guide](../tests/README.md).
+Implementations live in their own directories under [`implementations/`](../implementations/README.md). The R package scaffold in [`implementations/r/`](../implementations/r/README.md) currently delegates to the original `corrplot` package. It is a test adapter, not a new plotting implementation. See [the test guide](../tests/README.md).
 
 ## Editing guidelines
 
