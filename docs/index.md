@@ -37,6 +37,7 @@ See [top-level requirements](requirements.md) for priorities and checks. These a
 - [Proposed architecture](architecture.md): components, dependency direction, language interfaces, shared core, and rendering backends.
 - [Future vision](future-vision.md): project goals, possible development steps, and open questions.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
+- [Testing strategy](testing-strategy.md): test layers, compatibility evidence, shared fixtures, and CI plan.
 
 ## Editing guidelines
 
