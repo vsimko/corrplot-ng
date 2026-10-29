@@ -38,11 +38,9 @@ if (!file.exists(namespace_file)) {
   writeLines(character(), namespace_file)
 }
 
-# Generate extendr's R wrappers and package exports. Some rextendr versions
-# bootstrap the package without writing the wrapper on the first pass.
-rextendr::document(pkg = pkg_dir, quiet = FALSE)
-rextendr::document(pkg = pkg_dir, quiet = FALSE)
-
+# This smoke test only needs one stable wrapper. Generate it directly instead
+# of calling rextendr::document(), which builds Rust and cleans its target dir;
+# R CMD INSTALL would then compile the same Rust code again.
 # Keep this smoke test independent of wrapper-generation behavior across
 # rextendr versions: the exported wrapper calls the registered extendr symbol.
 wrapper_file <- file.path(pkg_dir, "R", "scene_cell_count.R")
