@@ -37,6 +37,9 @@ jobs:
             stop("Expected corrplot reference version 0.95")
           }
 
+      - name: Check R scene contract consumer
+        run: Rscript prototypes/shared-svg/test_r_scene_consumer.R
+
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
