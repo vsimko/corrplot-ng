@@ -1,13 +1,3 @@
-test_that("legacy visual case manifest matches executable regression cases", {
-  manifest_path <- testthat::test_path(
-    "..", "..", "..", "..", "tests", "legacy-visual", "cases.json"
-  )
-  expect_true(file.exists(manifest_path), info = "Shared legacy visual manifest not found")
-  manifest <- jsonlite::fromJSON(manifest_path)
-  expect_identical(as.character(utils::packageVersion("corrplot")), manifest$reference_version)
-  expect_setequal(manifest$cases$id, names(legacy_visual_cases))
-})
-
 legacy_visual_cases <- local({
   M <- stats::cor(datasets::mtcars)
   pmat <- 1 - abs(M)^0.2
@@ -84,6 +74,16 @@ legacy_visual_cases <- local({
       plotter(labelled, method = "circle")
     }
   )
+})
+
+test_that("legacy visual case manifest matches executable regression cases", {
+  manifest_path <- testthat::test_path(
+    "..", "..", "..", "..", "tests", "legacy-visual", "cases.json"
+  )
+  expect_true(file.exists(manifest_path), info = "Shared legacy visual manifest not found")
+  manifest <- jsonlite::fromJSON(manifest_path)
+  expect_identical(as.character(utils::packageVersion("corrplot")), manifest$reference_version)
+  expect_setequal(manifest$cases$id, names(legacy_visual_cases))
 })
 
 render_legacy_case <- function(case, plotter, path) {
