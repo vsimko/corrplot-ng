@@ -43,7 +43,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rextendr any::devtools
-          needs: check
+          needs: ""
       - name: Generate temporary R package with rextendr
         run: Rscript prototypes/rust-rextendr/prepare-r-package.R
       - name: Install generated R package
