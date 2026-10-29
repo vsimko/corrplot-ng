@@ -37,6 +37,20 @@ jobs:
             stop("Expected corrplot reference version 0.95")
           }
 
+
+      - name: Generate legacy visual snapshots (temporary bootstrap)
+        env:
+          UPDATE_LEGACY_VISUAL_SNAPSHOTS: "1"
+        run: Rscript scripts/update-legacy-visual-snapshots.R
+
+      - name: Upload legacy visual snapshots (temporary bootstrap)
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-visual-snapshots
+          path: implementations/r/tests/testthat/fixtures/legacy-visual/*.png
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
