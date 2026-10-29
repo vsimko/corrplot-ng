@@ -1,0 +1,11 @@
+Package: corrplotngcppspike
+Title: Temporary C++ Integration Smoke Test
+Version: 0.0.0.9000
+Authors@R: person("CI", "Runner", email = "ci@example.invalid", role = c("aut", "cre"))
+Description: Temporary package used to test the Rcpp C++-to-R boundary.
+License: MIT
+Encoding: UTF-8
+Imports:
+    Rcpp
+LinkingTo:
+    Rcpp
