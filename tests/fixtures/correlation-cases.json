@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "description": "Starter fixtures for shared correlation behavior. These are examples, not reference outputs from the original R package.",
+  "legacy_plot_methods": [
+    "circle",
+    "square",
+    "ellipse",
+    "number",
+    "shade",
+    "color",
+    "pie"
+  ],
+  "cases": [
+    {
+      "id": "two-variable-basic",
+      "description": "A complete two-variable correlation matrix.",
+      "labels": ["alpha", "beta"],
+      "matrix": [
+        [1.0, 0.5],
+        [0.5, 1.0]
+      ],
+      "expected_properties": [
+        "square",
+        "symmetric",
+        "unit_diagonal",
+        "values_in_range"
+      ],
+      "reference": {
+        "kind": "synthetic",
+        "status": "not-a-legacy-reference"
+      }
+    },
+    {
+      "id": "three-variable-mixed-signs",
+      "description": "A complete matrix with positive, negative, and zero correlations.",
+      "labels": ["alpha", "beta", "gamma"],
+      "matrix": [
+        [1.0, 0.2, -0.4],
+        [0.2, 1.0, 0.0],
+        [-0.4, 0.0, 1.0]
+      ],
+      "expected_properties": [
+        "square",
+        "symmetric",
+        "unit_diagonal",
+        "values_in_range"
+      ],
+      "reference": {
+        "kind": "synthetic",
+        "status": "not-a-legacy-reference"
+      }
+    },
+    {
+      "id": "missing-value-pattern",
+      "description": "A matrix with a symmetric pattern of missing values.",
+      "labels": ["alpha", "beta", "gamma"],
+      "matrix": [
+        [1.0, null, 0.3],
+        [null, 1.0, null],
+        [0.3, null, 1.0]
+      ],
+      "expected_properties": [
+        "square",
+        "symmetric",
+        "unit_diagonal",
+        "values_in_range"
+      ],
+      "reference": {
+        "kind": "synthetic",
+        "status": "not-a-legacy-reference"
+      }
+    }
+  ]
+}
