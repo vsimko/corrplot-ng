@@ -55,6 +55,13 @@ if (!file.exists(wrapper_file) ||
   ), wrapper_file)
 }
 namespace_lines <- readLines(namespace_file, warn = FALSE)
+# The initial empty NAMESPACE prevents pkgload from running before Rust
+# compilation, but it also makes rextendr skip its usual DLL registration.
+# Add the registration directive explicitly so .Call can resolve wrappers.
+dynlib_directive <- "useDynLib(corrplotngrustspike, .registration = TRUE)"
+if (!any(trimws(namespace_lines) == dynlib_directive)) {
+  namespace_lines <- c(namespace_lines, dynlib_directive)
+}
 if (!any(grepl("^export\\(scene_cell_count\\)$", namespace_lines))) {
   writeLines(c(namespace_lines, "export(scene_cell_count)"), namespace_file)
 }
