@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="126" viewBox="0 0 180 126" role="img" aria-labelledby="title desc">
+<title id="title">Circle method example</title><desc id="desc">A small correlation matrix with circles whose size and color show correlation values.</desc>
+<rect width="180" height="126" rx="6" fill="#ffffff"/>
+<g stroke="#d7dce2" stroke-width="1">
+<path d="M38 20H158 M38 52H158 M38 84H158 M38 116H158 M38 20V116 M78 20V116 M118 20V116 M158 20V116" fill="none"/>
+</g>
+<g>
+<circle cx="58" cy="36" r="13" fill="#2166ac"/><circle cx="98" cy="36" r="7" fill="#b2182b"/><circle cx="138" cy="36" r="3.5" fill="#b2182b"/>
+<circle cx="58" cy="68" r="7" fill="#b2182b"/><circle cx="98" cy="68" r="13" fill="#2166ac"/><circle cx="138" cy="68" r="10" fill="#2166ac"/>
+<circle cx="58" cy="100" r="3.5" fill="#b2182b"/><circle cx="98" cy="100" r="10" fill="#2166ac"/><circle cx="138" cy="100" r="13" fill="#2166ac"/>
+</g></svg>
