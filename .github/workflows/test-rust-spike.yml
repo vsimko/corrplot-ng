@@ -1,7 +1,13 @@
 name: Rust spike
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
+    branches:
+      - prototype/rust-rextendr-spike
     paths:
       - "prototypes/rust-rextendr/**"
       - ".github/workflows/test-rust-spike.yml"
@@ -17,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     defaults:
       run:
         working-directory: prototypes/rust-rextendr
@@ -35,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
