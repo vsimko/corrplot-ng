@@ -34,7 +34,9 @@ jobs:
         run: Rcpp::compileAttributes("prototypes/cpp-rcpp")
 
       - name: Install spike package
+        shell: bash
         run: R CMD INSTALL prototypes/cpp-rcpp
 
       - name: Run integration smoke test
+        shell: bash
         run: Rscript prototypes/cpp-rcpp/tests/smoke-test.R
