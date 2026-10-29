@@ -38,6 +38,8 @@ if (!file.exists(namespace_file)) {
   writeLines(character(), namespace_file)
 }
 
-# rextendr::document() refreshes generated R wrappers from the Rust module
-# before roxygen2 generates NAMESPACE and package documentation.
+# The first pass may bootstrap the package namespace while compiling the Rust DLL.
+# Run a second pass after that bootstrap so rextendr can generate the exported
+# R wrappers into the now-existing NAMESPACE.
+rextendr::document(pkg = pkg_dir, quiet = FALSE)
 rextendr::document(pkg = pkg_dir, quiet = FALSE)
