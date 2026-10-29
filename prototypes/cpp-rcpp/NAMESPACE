@@ -1,0 +1,2 @@
+useDynLib(corrplotngcppspike, .registration = TRUE)
+importFrom(Rcpp, evalCpp)
