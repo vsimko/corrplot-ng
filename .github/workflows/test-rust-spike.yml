@@ -1,0 +1,30 @@
+name: Rust spike
+
+on:
+  push:
+    paths:
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/test-rust-spike.yml"
+  pull_request:
+    paths:
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/test-rust-spike.yml"
+
+jobs:
+  cargo-check:
+    name: Cargo check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: prototypes/rust-rextendr
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: prototypes/rust-rextendr
+      - run: cargo check --locked
