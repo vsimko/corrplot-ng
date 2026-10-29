@@ -38,5 +38,6 @@ if (!file.exists(namespace_file)) {
   writeLines(character(), namespace_file)
 }
 
-# Generate the R wrappers from the temporary package directory.
-devtools::document(pkg = pkg_dir, quiet = FALSE)
+# rextendr::document() refreshes generated R wrappers from the Rust module
+# before roxygen2 generates NAMESPACE and package documentation.
+rextendr::document(pkg = pkg_dir, quiet = FALSE)
