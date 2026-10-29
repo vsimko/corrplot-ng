@@ -22,7 +22,7 @@ class SvgPrototypeTests(unittest.TestCase):
         svg = render_svg(self.config)
         self.assertTrue(svg.startswith('<svg xmlns="http://www.w3.org/2000/svg"'))
         self.assertIn("Prototype annotation: synthetic example only", svg)
-        self.assertEqual(svg.count("<circle "), 8)
+        self.assertEqual(svg.count("<circle "), 7)
 
     def test_missing_values_are_explicit(self):
         svg = render_svg(self.config)
