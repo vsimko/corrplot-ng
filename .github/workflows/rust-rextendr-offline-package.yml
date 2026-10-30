@@ -102,6 +102,10 @@ jobs:
           echo "R source tarball contains extendr license notices, Cargo.lock, and the vendored dependency archive."
       - name: Check the built R source package
         shell: bash
+        env:
+          # Keep the CRAN-style checks deterministic in CI; remote incoming
+          # checks depend on CRAN availability and are tested separately.
+          _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
         run: |
           set -euxo pipefail
           R CMD check --as-cran --no-manual corrplotngrustspike_0.0.0.9000.tar.gz
