@@ -227,3 +227,55 @@ test_that("label placement modes reject incompatible layouts and invalid offsets
   expect_error(corrplot_ng(corr, engine = "scene", tl.offset = Inf), "tl.offset")
   expect_error(corrplot_ng(corr, engine = "scene", tl.srt = NA_real_), "tl.srt")
 })
+
+test_that("general-matrix mode preserves values and resolves legacy color domains", {
+  positive <- matrix(c(2, 4, 4, 8), 2, byrow = TRUE)
+  scene <- corrplot_ng(positive, engine = "scene", is.corr = FALSE)
+  expect_identical(scene$kind, "general_matrix_plot")
+  expect_identical(scene$matrix_semantics$mode, "general_numeric")
+  expect_equal(scene$matrix_semantics$color_limits, c(2, 8))
+  expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+  expect_equal(scene$matrix_semantics$normalization,
+    list(intercept = -2, zoom = 1 / 6))
+  expect_equal(vapply(scene$cells, function(cell) cell$value, numeric(1)),
+    as.numeric(positive))
+
+  mixed <- matrix(c(-2, 4, 4, 3), 2, byrow = TRUE)
+  scene <- corrplot_ng(mixed, engine = "scene", is.corr = FALSE,
+    col.lim = c(-5, 5))
+  expect_equal(scene$matrix_semantics$color_limits, c(-5, 5))
+  expect_identical(scene$matrix_semantics$color_mapping, "diverging")
+  expect_equal(scene$matrix_semantics$normalization,
+    list(intercept = 0, zoom = 0.2))
+})
+
+test_that("general-matrix limits handle negative, constant, and hidden-diagonal data", {
+  negative <- matrix(c(-8, -4, -4, -2), 2, byrow = TRUE)
+  scene <- corrplot_ng(negative, engine = "scene", is.corr = FALSE)
+  expect_equal(scene$matrix_semantics$color_limits, c(-8, -2))
+  expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+
+  constant <- matrix(7, 2, 2)
+  scene <- corrplot_ng(constant, engine = "scene", is.corr = FALSE)
+  expect_equal(scene$matrix_semantics$color_limits, c(6.5, 7.5))
+
+  diagonal_dominant <- matrix(c(100, 3, 3, 200), 2, byrow = TRUE)
+  scene <- corrplot_ng(diagonal_dominant, engine = "scene",
+    is.corr = FALSE, diag = FALSE)
+  expect_equal(scene$matrix_semantics$color_limits, c(2.5, 3.5))
+})
+
+test_that("matrix semantic mode and explicit color limits are validated", {
+  expect_error(corrplot_ng(matrix(2, 1), engine = "scene", is.corr = "no"),
+    "is.corr")
+  expect_error(corrplot_ng(matrix(2, 1), engine = "scene", is.corr = FALSE,
+    col.lim = c(3, 4)), "cover every observed")
+  expect_error(corrplot_ng(matrix(2, 1), engine = "scene", is.corr = FALSE,
+    col.lim = c(1, 1)), "strictly increasing")
+  expect_error(corrplot_ng(matrix(2, 1), engine = "scene", is.corr = FALSE,
+    col.lim = c(0, Inf)), "finite")
+  expect_error(corrplot_ng(matrix(2, 1), engine = "scene", is.corr = TRUE,
+    col.lim = c(-2, 1)), "within \\[-1, 1\\]")
+  expect_error(corrplot_ng(matrix(NA_real_, 2, 2), engine = "scene",
+    is.corr = FALSE), "no observed values")
+})
