@@ -124,7 +124,7 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
         return Err("init requires an interactive terminal (TTY); it cannot run in scripts or CI".into());
     }
     println!("corrplot-ng configuration wizard");
-    println!("Enter paths relative to the configuration file's directory when using relative paths.");
+    println!("Input paths are relative to the config file; SVG output paths are relative to the current directory.");
     let input = prompt("Input labelled CSV/TSV path", None)?;
     if input == "-" { return Err("init requires a file path; stdin is not supported for reusable configurations".into()); }
     let delimiter = choose("Delimiter", &[",", "tab"], ",")?;
