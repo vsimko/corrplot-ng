@@ -69,7 +69,7 @@ fn build_config(
         "orange-teal" => ("#d95f02", "#f7f7f7", "#1b9e77", "#d9d9d9"),
         _ => unreachable!("palette is selected from the wizard's fixed choices"),
     };
-    format!(r##"{
+    format!(r##"{{
   "config_version": 1,
   "input": {{
     "kind": "matrix_csv",
