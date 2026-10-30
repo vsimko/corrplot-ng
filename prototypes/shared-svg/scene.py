@@ -286,6 +286,12 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             or normalization["zoom"] <= 0):
             raise ValueError("matrix_semantics must contain valid limits, mapping, and normalization")
         scene["matrix_semantics"] = semantics
+        transform = normalization
+        for cell in cells:
+            value = cell["value"]
+            cell["normalized_value"] = None if value is None else (
+                (value + transform["intercept"]) * transform["zoom"]
+            )
     if has_region_layout:
         scene["display_type"] = display_type
         scene["show_diagonal"] = show_diagonal
