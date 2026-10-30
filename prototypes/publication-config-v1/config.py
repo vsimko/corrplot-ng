@@ -37,6 +37,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("$.input.labels: labels must be unique")
         _validate_square(values, size, "$.input.values")
         _validate_symmetric(values, "$.input.values", allow_null=True)
+        _validate_diagonal(values, "$.input.values")
 
     significance = normalized["plot"]["significance"]
     if significance["enabled"]:
@@ -52,6 +53,13 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
 def _validate_square(matrix: list[list[Any]], size: int, path: str) -> None:
     if len(matrix) != size or any(len(row) != size for row in matrix):
         raise ValueError(f"{path}: expected a {size} by {size} matrix")
+
+
+def _validate_diagonal(matrix: list[list[Any]], path: str) -> None:
+    for index, row in enumerate(matrix):
+        value = row[index]
+        if value is not None and abs(value - 1.0) > 1e-8:
+            raise ValueError(f"{path}[{index}][{index}]: correlation diagonal must be 1 or null")
 
 
 def _validate_symmetric(matrix: list[list[Any]], path: str, allow_null: bool) -> None:
