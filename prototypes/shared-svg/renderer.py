@@ -91,8 +91,9 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{style["missing_fill"]}" stroke="#ffffff"/>')
             parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
-        color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
-        radius = abs(value) * (size * 0.43)
+        color = cell.get("color") or (style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"])
+        visual_value = cell.get("normalized_value", value)
+        radius = abs(visual_value) * (size * 0.43)
         parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
         if cell.get("method", scene.get("glyph_method", "circle")) != "number" and radius > 0:
             parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
