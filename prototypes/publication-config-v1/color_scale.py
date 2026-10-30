@@ -1,8 +1,10 @@
-"""Renderer-neutral color scale semantics for correlation values.
+"""Renderer-neutral color scale semantics for correlation and matrix values.
 
-Continuous scales interpolate sRGB channels between explicit value stops.
-Discrete scales use left-closed, right-open intervals, except that the final
-interval includes its upper endpoint. Missing values are handled separately.
+Signed continuous/discrete scales cover [-1, 1]. Sequential continuous scales
+cover normalized general-matrix values in [0, 1]. Continuous scales interpolate
+sRGB channels between explicit stops. Discrete scales use left-closed,
+right-open intervals, except that the final interval includes its upper endpoint.
+Missing values are handled separately.
 """
 from __future__ import annotations
 
@@ -116,7 +118,7 @@ class ColorScale:
             raise ValueError("color_scale.type: expected 'continuous' or 'discrete'")
 
     def map_value(self, value: Any) -> str:
-        """Map a correlation value to a normalized hex color."""
+        """Map a normalized scale value to a six-digit sRGB hex color."""
         if value is None:
             return self.missing_color
         number = _finite_number(value, "value")
