@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   compare:
-    name: Compare Python, pure R, C++/Rcpp and Rust/rextendr
+    name: Compare Python, C++/Rcpp and Rust/rextendr on B03/B04
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -43,7 +43,7 @@ jobs:
         run: python -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
 
       - name: Export deterministic shared fixtures
-        run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
+        run: python benchmarks/export_native_fixtures.py --stress-only --output benchmark-results/native-fixtures.json
 
       - name: Benchmark Python reference
         run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
@@ -64,7 +64,7 @@ jobs:
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
 
       - name: Benchmark pure R and native candidates
-        run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
+        run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json --stress-mode
 
       - name: Upload comparison inputs and results
         uses: actions/upload-artifact@v4
