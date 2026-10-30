@@ -231,8 +231,9 @@ test_that("label placement modes reject incompatible layouts and invalid offsets
 
 test_that("general-matrix adapter matches the shared corrplot 0.95 reference fixtures", {
   skip_if_not_installed("jsonlite")
-  fixture_path <- testthat::test_path("..", "..", "..", "..", "tests", "fixtures",
-    "general-matrix-cases.json")
+  fixture_path <- system.file("extdata", "general-matrix-cases.json",
+    package = "corrplotng")
+  expect_true(nzchar(fixture_path), info = "shared general-matrix fixtures must be installed")
   fixtures <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
   for (case in fixtures$cases) {
     values <- do.call(rbind, lapply(case$matrix, function(row) vapply(row, function(value) if (is.null(value)) NA_real_ else as.numeric(value), numeric(1))))
