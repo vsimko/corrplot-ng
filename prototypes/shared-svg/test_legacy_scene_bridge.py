@@ -2,7 +2,7 @@
 
 The R oracle exports 2x2, 3x3 (two label orders), and 4x4 matrices.
 This exercises the serialization boundary and checks ordered labels,
-row-major values, and preservation of missing cells.
+row-major values, preservation of missing cells, and adaptive label margins.
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from scene import build_scene
+from scene import LABEL_CHAR_WIDTH, LABEL_GAP, build_scene
 
 
 def verify_case(name: str, config: dict) -> None:
@@ -33,8 +33,16 @@ def verify_case(name: str, config: dict) -> None:
     assert missing == sum(
         value is None for row in matrix for value in row
     )
-    assert scene["width"] == 104 + size * 84 + 24
-    assert scene["height"] == 76 + size * 84 + 64
+
+    estimated_label_width = max(len(str(label)) * LABEL_CHAR_WIDTH for label in labels)
+    expected_left = max(104, int(estimated_label_width + LABEL_GAP * 2))
+    expected_top = max(76, int(estimated_label_width + 32))
+    assert scene["cells"][0]["x"] == expected_left
+    assert scene["cells"][0]["y"] == expected_top
+    assert scene["width"] == expected_left + size * 84 + 24
+    assert scene["height"] == expected_top + size * 84 + 64
+    assert all(label["row_x"] < expected_left for label in scene["labels"])
+    assert all(label["column_y"] < expected_top for label in scene["labels"])
 
     if name == "perfect_correlations_and_constant":
         assert matrix[0][1] == 1

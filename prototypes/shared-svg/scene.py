@@ -8,6 +8,10 @@ from __future__ import annotations
 
 from typing import Any
 
+LABEL_FONT_SIZE = 13
+LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6
+LABEL_GAP = 12
+
 
 def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     """Validate a correlation-plot config and return a deterministic plot scene."""
@@ -37,47 +41,38 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             if not -1 <= value <= 1:
                 raise ValueError("correlation values must be null or between -1 and 1")
 
+    label_texts = [str(label) for label in labels]
+    max_label_width = max(len(label) * LABEL_CHAR_WIDTH for label in label_texts)
     cell = 84
-    left, top = 104, 76
+    left = max(104, int(max_label_width + LABEL_GAP * 2))
+    top = max(76, int(max_label_width + 32))
     width = left + len(labels) * cell + 24
     height = top + len(labels) * cell + 64
     cells = []
     for row_index, row in enumerate(matrix):
         for column_index, value in enumerate(row):
             cells.append({
-                "row": row_index,
-                "column": column_index,
-                "value": value,
-                "x": left + column_index * cell,
-                "y": top + row_index * cell,
+                "row": row_index, "column": column_index, "value": value,
+                "x": left + column_index * cell, "y": top + row_index * cell,
                 "center_x": left + column_index * cell + cell / 2,
-                "center_y": top + row_index * cell + cell / 2,
-                "size": cell,
+                "center_y": top + row_index * cell + cell / 2, "size": cell,
             })
 
     label_items = []
-    for index, label in enumerate(labels):
+    for index, label in enumerate(label_texts):
         label_items.append({
-            "text": str(label),
-            "row_x": left - 12,
+            "text": label, "row_x": left - LABEL_GAP,
             "row_y": top + index * cell + cell / 2,
-            "column_x": left + index * cell + cell / 2,
-            "column_y": top - 16,
+            "column_x": left + index * cell + cell / 2, "column_y": top - 16,
         })
 
     return {
-        "schema_version": 1,
-        "kind": "correlation_plot",
-        "width": width,
-        "height": height,
-        "labels": label_items,
-        "cells": cells,
+        "schema_version": 1, "kind": "correlation_plot",
+        "width": width, "height": height, "labels": label_items, "cells": cells,
         "annotation": annotation,
         "style": {
-            "positive_color": "#2166ac",
-            "negative_color": "#b2182b",
-            "zero_color": "#bdbdbd",
-            "missing_fill": "#f2f2f2",
+            "positive_color": "#2166ac", "negative_color": "#b2182b",
+            "zero_color": "#bdbdbd", "missing_fill": "#f2f2f2",
             "grid_color": "#e0e0e0",
         },
     }

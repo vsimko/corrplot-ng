@@ -13,12 +13,21 @@ python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
 Rscript prototypes/shared-svg/test_r_scene_consumer.R
 ```
 
+## Label layout
+
+Row-label space expands to accommodate the longest label using a conservative
+sans-serif width estimate. Column labels are rotated vertically so neighboring
+columns cannot overlap; the top margin expands to fit them. The estimate is a
+layout heuristic rather than font measurement, so unusually wide glyphs may
+still need visual review with the target font.
+
 ## What this validates
 
 - A small input model can be rendered without language-specific API objects.
 - The same input produces byte-for-byte stable SVG in this prototype.
 - Missing values and a user annotation can be represented in the output.
 - Basic input constraints can be checked before rendering.
+- Long row and column labels receive dedicated layout space and regression coverage.
 - The legacy-output oracle exercises exact -1/+1 correlations, a constant-like
   variable with undefined off-diagonal correlations, and a fully missing
   row/column (including its diagonal). The bridge checks that JSON nulls remain
