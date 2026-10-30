@@ -79,12 +79,14 @@
       "additionalProperties": false,
       "required": [
         "kind",
-        "method",
         "missing"
       ],
       "properties": {
         "kind": {
-          "const": "correlation"
+          "enum": [
+            "correlation",
+            "general_numeric"
+          ]
         },
         "method": {
           "enum": [
@@ -98,6 +100,15 @@
             "preserve",
             "error"
           ]
+        },
+        "col_limits": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          },
+          "description": "Optional finite increasing color domain covering every observed value."
         }
       }
     },
@@ -375,9 +386,7 @@
           "type": [
             "number",
             "null"
-          ],
-          "minimum": -1,
-          "maximum": 1
+          ]
         }
       }
     },
@@ -398,5 +407,42 @@
       "type": "string",
       "pattern": "^#[0-9A-Fa-f]{6}$"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "matrix"
+        ],
+        "properties": {
+          "matrix": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "correlation"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "values": {
+                "items": {
+                  "items": {
+                    "minimum": -1,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
