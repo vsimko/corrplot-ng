@@ -1,6 +1,10 @@
 name: Release native CLI
 
 on:
+  pull_request:
+    paths:
+      - "tools/corrplot-ng/**"
+      - ".github/workflows/release-rust-cli.yml"
   push:
     tags:
       - "cli-v*"
