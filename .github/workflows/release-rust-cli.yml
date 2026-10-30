@@ -52,7 +52,8 @@ jobs:
           license: MIT
           runtime: statically linked musl; no Python or R runtime
           EOF
-          file dist/corrplot-ng | grep -q "statically linked"
+          file dist/corrplot-ng
+          file dist/corrplot-ng | grep -Eqi 'static(-pie)?(ally)? linked'
           ./dist/corrplot-ng --help >/dev/null
           ./dist/corrplot-ng version
           docker run --rm --network none -v "$PWD/dist:/release:ro" alpine:3.21 /release/corrplot-ng --help >/dev/null
