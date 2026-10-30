@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://corrplot-ng.invalid/schema/publication-config-v1.schema.json",
+  "title": "corrplot-ng publication figure configuration v1",
+  "description": "Language-neutral input configuration for reproducible correlation figures. This is distinct from the renderer-neutral prepared-scene contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["config_version", "input", "matrix", "plot", "colors", "dimensions", "typography", "output"],
+  "properties": {
+    "config_version": { "const": 1 },
+    "input": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "labels", "values"],
+          "properties": {
+            "kind": { "const": "inline_matrix" },
+            "labels": { "$ref": "#/$defs/labels" },
+            "values": { "$ref": "#/$defs/matrix" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "path", "delimiter", "header", "row_labels"],
+          "properties": {
+            "kind": { "const": "matrix_csv" },
+            "path": { "type": "string", "minLength": 1 },
+            "delimiter": { "type": "string", "minLength": 1, "maxLength": 1 },
+            "header": { "type": "boolean" },
+            "row_labels": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "matrix": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "method", "missing"],
+      "properties": {
+        "kind": { "const": "correlation" },
+        "method": { "enum": ["pearson", "spearman", "kendall"] },
+        "missing": { "enum": ["preserve", "error"] }
+      }
+    },
+    "plot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "display", "ordering", "show_values", "significance"],
+      "properties": {
+        "method": { "enum": ["circle", "square", "ellipse", "number", "shade", "color", "pie"] },
+        "display": { "enum": ["full", "upper", "lower"] },
+        "ordering": { "enum": ["original", "alphabetical", "aoe", "hclust"] },
+        "show_values": { "type": "boolean" },
+        "significance": {
+          "type": "object", "additionalProperties": false,
+          "required": ["enabled", "p_values", "thresholds"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "p_values": { "oneOf": [{ "$ref": "#/$defs/pMatrix" }, { "type": "null" }] },
+            "thresholds": {
+              "type": "array", "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+              "uniqueItems": true, "minItems": 1
+            }
+          },
+          "allOf": [
+            { "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+              "then": { "properties": { "p_values": { "$ref": "#/$defs/pMatrix" } } } }
+          ]
+        }
+      }
+    },
+    "colors": {
+      "type": "object", "additionalProperties": false,
+      "required": ["negative", "neutral", "positive", "missing"],
+      "properties": {
+        "negative": { "$ref": "#/$defs/color" },
+        "neutral": { "$ref": "#/$defs/color" },
+        "positive": { "$ref": "#/$defs/color" },
+        "missing": { "$ref": "#/$defs/color" }
+      }
+    },
+    "dimensions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height", "unit"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "enum": ["mm", "in"] }
+      }
+    },
+    "typography": {
+      "type": "object", "additionalProperties": false,
+      "required": ["family", "base_size"],
+      "properties": {
+        "family": { "type": "string", "minLength": 1 },
+        "base_size": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "output": {
+      "type": "object", "additionalProperties": false,
+      "required": ["format", "path"],
+      "properties": {
+        "format": { "const": "svg" },
+        "path": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "labels": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "matrix": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "array", "minItems": 1, "items": { "type": ["number", "null"], "minimum": -1, "maximum": 1 } }
+    },
+    "pMatrix": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "array", "minItems": 1, "items": { "type": "number", "minimum": 0, "maximum": 1 } }
+    },
+    "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+  }
+}
