@@ -137,6 +137,29 @@ class ColorScale:
         return entries
 
 
+def legacy_palette_scale(colors: list[str]) -> dict[str, Any]:
+    """Adapt a legacy corrplot color vector to the shared discrete scale.
+
+    Colors are assigned to equal-width intervals over [-1, 1]. If the number
+    of colors is odd, the central interval is split at zero and its color is
+    repeated, preserving the original mapping while satisfying the shared
+    scale's explicit-zero-boundary contract.
+    """
+    if not isinstance(colors, list) or not colors:
+        raise ValueError("legacy_palette: expected a non-empty list of colors")
+    normalized = [
+        _color(color, f"legacy_palette.colors[{index}]")
+        for index, color in enumerate(colors)
+    ]
+    count = len(normalized)
+    breaks = [-1.0 + 2.0 * index / count for index in range(count + 1)]
+    if count % 2:
+        midpoint = count // 2
+        breaks.insert(midpoint + 1, 0.0)
+        normalized.insert(midpoint + 1, normalized[midpoint])
+    return {"type": "discrete", "breaks": breaks, "colors": normalized}
+
+
 def build_color_scale(spec: dict[str, Any], missing_color: str = "#d9d9d9") -> ColorScale:
     """Construct a validated color scale."""
     return ColorScale(spec, missing_color)
