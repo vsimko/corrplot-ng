@@ -96,6 +96,52 @@ class PublicationConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "p_values.*square"):
             validate_config(config)
 
+
+    def test_significance_defaults_modes_and_threshold_ordering(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["plot"]["significance"].pop("mode", None)
+        config["plot"]["significance"].pop("symbol", None)
+        config["plot"]["significance"].pop("thresholds", None)
+        normalized = validate_config(config)
+        self.assertEqual(normalized["plot"]["significance"]["mode"], "pch")
+        self.assertEqual(normalized["plot"]["significance"]["symbol"], "×")
+        self.assertEqual(normalized["plot"]["significance"]["thresholds"], [0.001, 0.01, 0.05])
+        config["plot"]["significance"]["thresholds"] = [0.05, 0.01]
+        with self.assertRaisesRegex(ValueError, "strictly increasing"):
+            validate_config(config)
+
+    def test_significance_accepts_missing_p_values_and_scene_adapter_preserves_them(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["plot"]["significance"]["p_values"][0][2] = None
+        config["plot"]["significance"]["p_values"][2][0] = None
+        scene = to_scene_config(config)
+        self.assertIsNone(scene["p_values"][0][2])
+        self.assertEqual(scene["significance"]["mode"], "stars")
+
+    def test_confidence_intervals_are_validated_and_reordered(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["input"]["labels"] = ["C", "A", "B"]
+        config["plot"]["ordering"] = "alphabetical"
+        scene = to_scene_config(config)
+        permutation = scene["variable_order"]["indices"]
+        for key in ("lower", "upper"):
+            original = config["plot"]["confidence_intervals"][key]
+            self.assertEqual(scene["confidence_intervals"][key],
+                             [[original[i][j] for j in permutation] for i in permutation])
+
+    def test_confidence_intervals_reject_invalid_pairs_and_general_numeric(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["plot"]["confidence_intervals"]["lower"][0][1] = 0.9
+        config["plot"]["confidence_intervals"]["lower"][1][0] = 0.9
+        with self.assertRaisesRegex(ValueError, "lower bound exceeds upper bound"):
+            validate_config(config)
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        with self.assertRaisesRegex(ValueError, "require a correlation matrix"):
+            validate_config(config)
+
+
+
     def test_continuous_scale_is_validated_and_adapted_to_scene(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["colors"]["scale"] = {
