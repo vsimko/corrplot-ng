@@ -1,0 +1,234 @@
+name: Build and publish native CLI releases
+
+on:
+  pull_request:
+    paths:
+      - "tools/corrplot-ng/**"
+      - ".github/workflows/release-rust-cli.yml"
+  push:
+    tags:
+      - "corrplot-ng-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            suffix: ""
+            archive: tar.gz
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            suffix: ""
+            archive: tar.gz
+          - runner: macos-26
+            target: aarch64-apple-darwin
+            suffix: ""
+            archive: tar.gz
+          - runner: macos-26-intel
+            target: x86_64-apple-darwin
+            suffix: ""
+            archive: tar.gz
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: ".exe"
+            archive: zip
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            suffix: ".exe"
+            archive: zip
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Linux musl linker
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes musl-tools
+
+      - uses: dtolnay/rust-toolchain@1.99.1
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Record toolchain
+        id: toolchain
+        shell: bash
+        run: |
+          echo "rustc_version=$(rustc --version)" >> "$GITHUB_OUTPUT"
+          echo "cargo_version=$(cargo --version)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify dependency-free runtime graph
+        shell: bash
+        run: |
+          cargo tree --locked --manifest-path tools/corrplot-ng/Cargo.toml --edges normal
+          test "$(cargo tree --locked --manifest-path tools/corrplot-ng/Cargo.toml --edges normal | wc -l)" -eq 1
+
+      - name: Check release tag matches Cargo version
+        if: startsWith(github.ref, 'refs/tags/corrplot-ng-v')
+        shell: bash
+        run: |
+          package_version="$(awk -F '"' '/^version = / { print $2; exit }' tools/corrplot-ng/Cargo.toml)"
+          tag_version="${GITHUB_REF_NAME#corrplot-ng-v}"
+          test "$package_version" = "$tag_version" || {
+            echo "Tag version $tag_version does not match Cargo version $package_version" >&2
+            exit 1
+          }
+
+      - name: Build locked release binary
+        shell: bash
+        env:
+          CORRPLOT_GIT_SHA: ${{ github.sha }}
+          CORRPLOT_RUSTC_VERSION: ${{ steps.toolchain.outputs.rustc_version }}
+          CORRPLOT_BUILD_TARGET: ${{ matrix.target }}
+          RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
+        run: cargo build --locked --release --target "${{ matrix.target }}" --manifest-path tools/corrplot-ng/Cargo.toml
+
+      - name: Smoke-test release binary and inspect runtime dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="tools/corrplot-ng/target/${{ matrix.target }}/release/corrplot-ng${{ matrix.suffix }}"
+          stage="dist/corrplot-ng-${{ matrix.target }}"
+          mkdir -p "$stage"
+          "$binary" --help > "$stage/help.txt"
+          "$binary" version | tee "$stage/version.txt"
+          "$binary" validate --input tools/corrplot-ng/examples/smoke-matrix.csv
+          "$binary" render --input tools/corrplot-ng/examples/smoke-matrix.csv --output "$stage/smoke.svg"
+          "$binary" render --input tools/corrplot-ng/examples/smoke-matrix.csv --format scene-json --output "$stage/smoke-scene.json"
+          grep -q '<svg' "$stage/smoke.svg"
+          grep -q '"schema_version":1' "$stage/smoke-scene.json"
+          if [[ "$RUNNER_OS" != "Windows" ]]; then
+            env -i HOME="$HOME" PATH="/usr/bin:/bin" "$binary" version
+          fi
+          case "$RUNNER_OS" in
+            Linux)
+              (ldd "$binary" 2>&1 || true) > "$stage/runtime-dependencies.txt"
+              if grep -Eiq 'python|libpython|libR\.so' "$stage/runtime-dependencies.txt"; then
+                echo "Unexpected Python or R runtime dependency" >&2
+                exit 1
+              fi
+              ;;
+            macOS)
+              otool -L "$binary" > "$stage/runtime-dependencies.txt"
+              if grep -Eiq 'python|libpython|libR\.dylib' "$stage/runtime-dependencies.txt"; then
+                echo "Unexpected Python or R runtime dependency" >&2
+                exit 1
+              fi
+              ;;
+            *)
+              printf '%s\n' "PE imports are provided by the Windows loader and system libraries; Cargo dependency graph is empty." > "$stage/runtime-dependencies.txt"
+              ;;
+          esac
+          version="$(awk -F '"' '/^version = / { print $2; exit }' tools/corrplot-ng/Cargo.toml)"
+          size="$(wc -c < "$binary" | tr -d ' ')"
+          {
+            echo "package_version=$version"
+            echo "target=${{ matrix.target }}"
+            echo "source_commit=${GITHUB_SHA}"
+            echo "rustc=${{ steps.toolchain.outputs.rustc_version }}"
+            echo "cargo=${{ steps.toolchain.outputs.cargo_version }}"
+            echo "binary_size_bytes=$size"
+          } > "$stage/build-info.txt"
+          cp tools/corrplot-ng/README.md "$stage/README.md"
+          cp tools/corrplot-ng/examples/smoke-matrix.csv "$stage/smoke-matrix.csv"
+
+      - name: Verify static Linux binary in a minimal container
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          docker run --rm --network none \
+            -v "$PWD/tools/corrplot-ng/target/${{ matrix.target }}/release/corrplot-ng:/corrplot-ng:ro" \
+            alpine:3.23 /corrplot-ng version
+
+      - name: Package Unix release archive
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          version="$(awk -F '"' '/^version = / { print $2; exit }' tools/corrplot-ng/Cargo.toml)"
+          tar -czf "dist/corrplot-ng-$version-${{ matrix.target }}.tar.gz" -C dist "corrplot-ng-${{ matrix.target }}"
+
+      - name: Package Windows release archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          Compress-Archive -Path "dist/corrplot-ng-${{ matrix.target }}/*" -DestinationPath "dist/corrplot-ng-$version-${{ matrix.target }}.zip"
+
+      - name: Smoke-test extracted Unix archive
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F '"' '/^version = / { print $2; exit }' tools/corrplot-ng/Cargo.toml)"
+          archive="dist/corrplot-ng-$version-${{ matrix.target }}.tar.gz"
+          mkdir extracted
+          tar -xzf "$archive" -C extracted
+          binary="extracted/corrplot-ng-${{ matrix.target }}/corrplot-ng"
+          "$binary" --help
+          "$binary" version
+          "$binary" render --input tools/corrplot-ng/examples/smoke-matrix.csv --output extracted/smoke.svg
+          grep -q '<svg' extracted/smoke.svg
+
+      - name: Smoke-test extracted Windows archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          Expand-Archive "dist/corrplot-ng-$version-${{ matrix.target }}.zip" -DestinationPath extracted
+          $binary = "extracted/corrplot-ng-${{ matrix.target }}/corrplot-ng.exe"
+          & $binary --help
+          & $binary version
+          & $binary render --input tools/corrplot-ng/examples/smoke-matrix.csv --output extracted/smoke.svg
+          if (-not (Select-String -Path extracted/smoke.svg -Pattern '<svg')) { throw "SVG smoke output missing" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/corrplot-ng-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate SHA-256 checksums
+        run: |
+          cd release-assets
+          sha256sum corrplot-ng-*.tar.gz corrplot-ng-*.zip > SHA256SUMS.txt
+
+      - name: Attest release archives and checksums
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release-assets/*
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release-assets/*.tar.gz
+            release-assets/*.zip
+            release-assets/SHA256SUMS.txt
