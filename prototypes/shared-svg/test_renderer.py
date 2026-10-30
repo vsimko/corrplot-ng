@@ -172,6 +172,11 @@ class PlotSceneTests(unittest.TestCase):
     def test_general_numeric_accepts_values_outside_correlation_domain(self):
         scene = build_scene({
             "labels": ["A"], "matrix": [[125.0]], "matrix_mode": "general_numeric",
+            "matrix_semantics": {
+                "mode": "general_numeric", "color_limits": [124.5, 125.5],
+                "color_mapping": "sequential",
+                "normalization": {"intercept": -124.5, "zoom": 1.0},
+            },
         })
         self.assertEqual(scene["kind"], "general_matrix_plot")
         self.assertEqual(scene["cells"][0]["value"], 125.0)
