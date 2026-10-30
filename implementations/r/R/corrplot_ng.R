@@ -165,22 +165,22 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   for (row in seq_len(n)) {
     for (column in seq_len(n)) {
       value <- corr[row, column]
-      cells[[index]] <- list(row = row - 1L, column = column - 1L,
+      cell <- list(row = row - 1L, column = column - 1L,
         value = if (is.na(value)) NULL else as.numeric(value),
         normalized_value = if (is.na(value)) NULL else if (options$is.corr) as.numeric(value) else
           (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom,
-        color = if (is.na(value) || options$is.corr) NULL else {
-          normalized <- if (options$is.corr) as.numeric(value) else
-            (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
-          position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
-          palette_index <- max(1L, min(length(scale$palette), floor(position * (length(scale$palette) - 1L)) + 1L))
-          scale$palette[[palette_index]]
-        },
         x = left_margin + (column - 1L) * cell_size,
         y = top_margin + (row - 1L) * cell_size,
         center_x = left_margin + (column - 1L) * cell_size + cell_size / 2,
         center_y = top_margin + (row - 1L) * cell_size + cell_size / 2,
         size = cell_size)
+      if (!is.na(value) && !options$is.corr) {
+        normalized <- (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
+        position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
+        palette_index <- max(1L, min(length(scale$palette), floor(position * (length(scale$palette) - 1L)) + 1L))
+        cell$color <- scale$palette[[palette_index]]
+      }
+      cells[[index]] <- cell
       visible <- !is.na(value) && (options$diag || row != column) &&
         (display_type == "full" || (display_type == "upper" && row <= column) ||
           (display_type == "lower" && row >= column))
