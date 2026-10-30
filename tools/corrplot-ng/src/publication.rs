@@ -327,7 +327,7 @@ impl Publication {
             if lo < 0.0 && hi > 0.0 {
                 (lo, hi, 0.0, 1.0 / lo.abs().max(hi.abs()), "diverging")
             } else if hi <= 0.0 {
-                (lo, hi, -hi, 1.0 / (hi - lo), "sequential")
+                (lo, hi, -lo, 1.0 / (hi - lo), "sequential")
             } else {
                 (lo, hi, -lo, 1.0 / (hi - lo), "sequential")
             }
@@ -572,6 +572,42 @@ mod tests {
             }
             std::fs::remove_file(path).ok();
         }
+    }
+
+    #[test]
+    fn general_negative_values_normalize_from_zero_to_one() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        let source = std::fs::read_to_string(&fixture).unwrap();
+        let config = source
+            .replace(
+                "\"kind\": \"correlation\", \"method\": \"pearson\"",
+                "\"kind\": \"general_numeric\"",
+            )
+            .replace(
+                "[1.0, -0.42, 0.71],\n      [-0.42, 1.0, -0.18],\n      [0.71, -0.18, 1.0]",
+                "[-10.0, -5.0, -2.0],\n      [-5.0, -8.0, -3.0],\n      [-2.0, -3.0, -6.0]",
+            );
+        let path = std::env::temp_dir().join(format!(
+            "corrplot-ng-negative-normalization-{}.json",
+            std::process::id()
+        ));
+        std::fs::write(&path, config).unwrap();
+        let publication = Publication::load(path.to_str().unwrap()).unwrap();
+        let scene = parse_json(&publication.scene_json("normalization test")).unwrap();
+        let root = object(&scene, "scene").unwrap();
+        let cells = array(required(root, "cells", "scene").unwrap(), "cells").unwrap();
+
+        let normalized_at = |row: usize, column: usize| {
+            let cell = object(&cells[row * publication.labels.len() + column], "cell").unwrap();
+            match cell.get("normalized_value") {
+                Some(Json::Number(value)) => *value,
+                other => panic!("expected normalized numeric value, got {other:?}"),
+            }
+        };
+        assert!((normalized_at(0, 0) - 0.0).abs() < 1e-12);
+        assert!((normalized_at(0, 2) - 1.0).abs() < 1e-12);
+        std::fs::remove_file(path).ok();
     }
 
 }
