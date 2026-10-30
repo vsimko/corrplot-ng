@@ -158,7 +158,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     raw <- labels[[i]]
     prefix <- if (startsWith(raw, ":") || startsWith(raw, "=") || startsWith(raw, "$")) substr(raw, 1L, 1L) else NULL
     source <- if (is.null(prefix)) NULL else substring(raw, 2L)
-    parsed_label <- corrplot_ng_parse_label(raw)
+    corrplot_ng_parse_label(raw)
     list(text = raw, row_x = if (row_position == "left") left_margin - 12 else
         left_margin + (i - 1L) * cell_size,
       row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
