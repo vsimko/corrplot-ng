@@ -6,6 +6,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      include_stress:
+        description: 'Run the 500x500 and 1000x1000 stress workloads'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,6 +36,7 @@ jobs:
           filters: |
             foundation:
               - 'tests/**'
+              - 'benchmarks/**'
               - 'prototypes/shared-svg/**'
               - 'schemas/**'
               - '**/*.schema.json'
@@ -97,3 +104,57 @@ jobs:
 
       - name: Verify legacy-to-scene bridge
         run: python prototypes/shared-svg/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json
+
+
+  shared-core-benchmarks:
+    name: Run initial shared-core benchmarks
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.foundation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run benchmark correctness tests
+        run: python -m unittest discover -s tests -p 'test_benchmark_suite.py' -v
+
+      - name: Run benchmark suite
+        run: python benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
+
+      - name: Upload machine-readable benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-core-benchmark-results
+          path: benchmark-results/results.json
+          if-no-files-found: error
+          retention-days: 90
+
+  shared-core-stress-benchmarks:
+    name: Run large-matrix stress benchmarks
+    if: github.event_name == 'workflow_dispatch' && inputs.include_stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run B03 and B04 stress benchmarks
+        run: python benchmarks/run_shared_core.py --iterations 20 --include-stress --output benchmark-results/stress-results.json
+
+      - name: Upload stress benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-core-stress-benchmark-results
+          path: benchmark-results/stress-results.json
+          if-no-files-found: error
+          retention-days: 90
