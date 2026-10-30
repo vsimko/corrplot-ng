@@ -115,6 +115,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     if display_type == "diagonal" and not show_diagonal:
         raise ValueError("diagonal display requires show_diagonal=true")
 
+    has_region_layout = any(key in config for key in (
+        "display_type", "show_diagonal", "upper_method", "lower_method", "diagonal_method"
+    ))
     cells = []
     cell_colors = config.get("cell_colors")
     if cell_colors is not None:
@@ -142,9 +145,12 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 "row": row_index, "column": column_index, "value": value,
                 "x": x, "y": y, "center_x": x + cell / 2,
                 "center_y": y + cell / 2, "size": cell,
-                "visible": visible, "method": selected_method,
-                "region": "diagonal" if is_diagonal else ("upper" if row_index < column_index else "lower"),
             }
+            if has_region_layout:
+                item.update({
+                    "visible": visible, "method": selected_method,
+                    "region": "diagonal" if is_diagonal else ("upper" if row_index < column_index else "lower"),
+                })
             if cell_colors is not None:
                 item["color"] = cell_colors[row_index * len(labels) + column_index]
             cells.append(item)
@@ -178,9 +184,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     text_annotations = []
     for cell_item in cells:
         row_index, column_index, value = cell_item["row"], cell_item["column"], cell_item["value"]
-        if value is None or not cell_item["visible"]:
+        if value is None or not cell_item.get("visible", True):
             continue
-        if cell_item["method"] == "number":
+        if cell_item.get("method", method) == "number":
             role = "value"
             color = (
                 cell_item.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
@@ -222,8 +228,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         "schema_version": 1, "kind": "correlation_plot",
         "width": width, "height": height, "labels": label_items, "cells": cells,
         "annotation": annotation,
-        "glyph_method": method, "display_type": display_type,
-        "show_diagonal": show_diagonal, "text_annotations": text_annotations,
+        "glyph_method": method, "text_annotations": text_annotations,
         "title": title, "description": description,
         "style": {
             "positive_color": "#2166ac", "negative_color": "#b2182b",
@@ -231,6 +236,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             "grid_color": "#e0e0e0",
         },
     }
+    if has_region_layout:
+        scene["display_type"] = display_type
+        scene["show_diagonal"] = show_diagonal
     if layout:
         scene["typography"] = {
             "label_font_family": font_family,
