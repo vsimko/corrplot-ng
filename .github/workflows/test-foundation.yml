@@ -84,5 +84,16 @@ jobs:
       - name: Install pinned legacy corrplot
         run: R CMD INSTALL /tmp/corrplot-legacy.tar.gz
 
-      - name: Verify legacy semantic oracle
+      - name: Install JSON bridge dependency
+        run: Rscript -e 'install.packages("jsonlite", repos = "https://cloud.r-project.org")'
+
+      - name: Verify legacy semantic oracle and export scene input
         run: Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify legacy-to-scene bridge
+        run: python prototypes/shared-svg/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json
