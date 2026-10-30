@@ -94,7 +94,7 @@ impl Parser {
             while matches!(self.peek(), Some('0'..='9')) { self.take(); }
         }
         let s: String = self.chars[start..self.pos].iter().collect();
-        let n: f64 = s.parse().map_err(|_| "invalid JSON number")?;
+        let n: f64 = s.trim().parse().map_err(|_| "invalid JSON number")?;
         if !n.is_finite() { return Err("JSON numbers must be finite".into()); }
         Ok(Json::Number(n))
     }
