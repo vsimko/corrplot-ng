@@ -9,4 +9,4 @@ name = "corrplotngrustspike"
 crate-type = ["staticlib"]
 
 [dependencies]
-extendr-api = "0.8"
+extendr-api = "=0.8.2"
