@@ -851,4 +851,15 @@ mod tests {
         assert!(hclust_order(&isolated).unwrap_err().contains("no observed off-diagonal correlation"));
     }
 
+    #[test]
+    fn hclust_breaks_equal_pair_distances_by_original_indices() {
+        let values = vec![
+            vec![Some(1.0), Some(0.5), Some(0.5)],
+            vec![Some(0.5), Some(1.0), Some(-0.5)],
+            vec![Some(0.5), Some(-0.5), Some(1.0)],
+        ];
+        // (0, 1) and (0, 2) have equal minimum distance; the lower index pair wins.
+        assert_eq!(hclust_order(&values).unwrap(), vec![0, 1, 2]);
+    }
+
 }
