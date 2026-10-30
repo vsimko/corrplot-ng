@@ -79,9 +79,36 @@ jobs:
           # R CMD build runs the generated clean target, which removes the
           # expanded vendor directory. Preserve it as an archive whose paths
           # restore rust/vendor when rextendr extracts it from src/.
-          # Keep Cargo's checksum metadata, but omit repository-only content
-          # that is irrelevant to compilation and creates avoidable R check notes.
-          find vendor -type d -name .github -prune -exec rm -rf {} +
+          # Omit repository-only .github content to avoid hidden-file notes
+          # in R CMD check. Keep Cargo's checksum metadata consistent with
+          # the pruned vendor tree so offline Cargo builds remain verifiable.
+          if command -v python3 >/dev/null 2>&1; then PYTHON=python3; else PYTHON=python; fi
+          "$PYTHON" - <<'PY'
+          import json
+          import os
+
+          for root, dirs, files in os.walk("vendor"):
+              if ".cargo-checksum.json" not in files:
+                  continue
+              checksum_path = os.path.join(root, ".cargo-checksum.json")
+              with open(checksum_path, encoding="utf-8") as stream:
+                  checksum = json.load(stream)
+              entries = checksum.get("files", {})
+              checksum["files"] = {
+                  path: digest
+                  for path, digest in entries.items()
+                  if not path.startswith(".github/")
+              }
+              with open(checksum_path, "w", encoding="utf-8", newline="\\n") as stream:
+                  json.dump(checksum, stream, separators=(",", ":"))
+                  stream.write("\\n")
+
+          for root, dirs, _ in os.walk("vendor"):
+              if ".github" in dirs:
+                  dirs.remove(".github")
+                  import shutil
+                  shutil.rmtree(os.path.join(root, ".github"))
+          PY
           tar -cJf vendor.tar.xz -C .. rust/vendor
           rm -rf .cargo
       - name: Install generated R package without network access
