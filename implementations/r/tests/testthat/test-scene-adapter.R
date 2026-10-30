@@ -177,6 +177,7 @@ test_that("legacy plotmath prefixes parse to native R expressions", {
     expect_identical(paste(deparse(parsed[[1]]), collapse = ""), "alpha + beta")
   }
   expect_error(corrplot_ng_parse_label(":alpha +"), "invalid plotmath label")
+  expect_error(corrplot_ng_parse_label(":"), "expression is empty")
   expect_error(corrplot_ng_parse_label(NA_character_), "one non-missing")
 })
 
