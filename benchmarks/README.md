@@ -27,6 +27,7 @@ the artifact.
 - B01: 20x20 dense symmetric matrix.
 - B02: 100x100 dense symmetric matrix.
 - B05: 100x100 matrix with a deterministic 10% missing-value pattern.
+- B06: 100x100 matrix with long variable labels and an explanatory annotation.
 - B07: 100x100 matrix with a fixed non-identity permutation of labels and
   corresponding rows/columns.
 - B08: SVG serialization of the prebuilt B02 scene (serialization only).
