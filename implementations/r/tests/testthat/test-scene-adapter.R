@@ -14,6 +14,7 @@ test_that("the scene engine builds a renderer-neutral scene-v1 object", {
   }, numeric(1)), c(1, 0.6, NA_real_, 1))
   expect_identical(scene$annotation, "Example")
   expect_identical(scene$style$positive_color, "#2166ac")
+  expect_null(scene$cells[[2]]$color)
 })
 
 test_that("the scene engine derives labels when dimnames are absent or partial", {
