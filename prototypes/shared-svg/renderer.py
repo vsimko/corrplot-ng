@@ -20,9 +20,13 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
     weight = typography.get("label_font_weight", "normal")
     orientation = typography.get("column_label_orientation", "vertical")
     collision = typography.get("label_collision", "preserve")
+    title = html.escape(scene["title"], quote=False)
+    description = scene["description"]
+    described_by = ' aria-describedby="figure-description"' if description else ""
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:g}" height="{height:g}" viewBox="0 0 {width:g} {height:g}">',
-        '<title>Correlation matrix</title>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:g}" height="{height:g}" viewBox="0 0 {width:g} {height:g}" role="img" aria-labelledby="figure-title"{described_by}>',
+        f'<title id="figure-title">{title}</title>',
+        f'<desc id="figure-description">{html.escape(description, quote=False)}</desc>' if description else "",
         '<rect width="100%" height="100%" fill="#ffffff"/>',
     ]
 

@@ -8,6 +8,8 @@ scene <- jsonlite::fromJSON(scene_path, simplifyVector = FALSE)
 
 stopifnot(identical(scene$schema_version, 1L) || identical(scene$schema_version, 1))
 stopifnot(identical(scene$kind, "correlation_plot"))
+stopifnot(identical(scene$title, "Example correlation matrix"))
+stopifnot(identical(scene$description, "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable."))
 stopifnot(length(scene$labels) == 3L)
 stopifnot(length(scene$cells) == 9L)
 

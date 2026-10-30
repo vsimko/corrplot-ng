@@ -1,5 +1,6 @@
 import json
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from renderer import render_scene_svg, render_svg
@@ -89,6 +90,27 @@ class PlotSceneTests(unittest.TestCase):
         self.assertTrue(svg.startswith('<svg xmlns="http://www.w3.org/2000/svg"'))
         self.assertIn("Prototype annotation: synthetic example only", svg)
         self.assertEqual(svg.count("<circle "), 7)
+
+    def test_svg_accessibility_metadata(self):
+        config = {"labels": ["alpha"], "matrix": [[1.0]], "title": "R&D <metrics> – Δ", "description": "Metrics & bounds < 1"}
+        root = ET.fromstring(render_svg(config))
+        ns = "{http://www.w3.org/2000/svg}"
+        self.assertEqual(root.attrib["role"], "img")
+        self.assertEqual(root.attrib["aria-labelledby"], "figure-title")
+        self.assertEqual(root.attrib["aria-describedby"], "figure-description")
+        self.assertEqual(root.find(f"{ns}title").text, "R&D <metrics> – Δ")
+        self.assertEqual(root.find(f"{ns}desc").text, "Metrics & bounds < 1")
+
+    def test_empty_description_has_no_dangling_reference(self):
+        root = ET.fromstring(render_svg({"labels": ["alpha"], "matrix": [[1.0]]}))
+        self.assertNotIn("aria-describedby", root.attrib)
+        self.assertIsNone(root.find("{http://www.w3.org/2000/svg}desc"))
+
+    def test_metadata_must_be_strings(self):
+        for field in ("title", "description"):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    build_scene({"labels": ["alpha"], "matrix": [[1.0]], field: 123})
 
     def test_missing_values_are_explicit(self):
         svg = render_svg(self.config)
