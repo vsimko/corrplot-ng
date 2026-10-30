@@ -140,6 +140,22 @@ def main() -> None:
                 ),
             }
 
+    report["comparison"] = {}
+    for metric, floor_ms in (
+        ("version_startup", 0.5),
+        ("validate_config", 0.5),
+        ("render_config", 2.0),
+    ):
+        baseline = report["results"]["baseline"][metric]["median_ms"]
+        candidate = report["results"]["candidate"][metric]["median_ms"]
+        tolerance_ms = max(floor_ms, baseline * 0.05)
+        report["comparison"][metric] = {
+            "candidate_delta_percent": ((candidate - baseline) / baseline * 100)
+            if baseline else None,
+            "tolerance_ms": tolerance_ms,
+            "within_tolerance": candidate <= baseline + tolerance_ms,
+        }
+
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
