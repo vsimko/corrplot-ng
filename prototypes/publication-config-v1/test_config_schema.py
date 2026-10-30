@@ -198,7 +198,8 @@ class PublicationConfigTests(unittest.TestCase):
         config["input"]["values"] = [[-4.0, -3.0, -2.0], [-3.0, -4.0, -2.0], [-2.0, -2.0, -4.0]]
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
-        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 2.0)
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 4.0)
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["zoom"], 0.5)
         config["input"]["values"] = [[5.0, 5.0, 5.0], [5.0, 5.0, 5.0], [5.0, 5.0, 5.0]]
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [4.5, 5.5])
