@@ -495,7 +495,7 @@ mod tests {
 
     #[test]
     fn accepts_quoted_labels_and_escaped_quotes() {
-        let m = parse_matrix(",\"a, one\",\"b\"\"two\"\n\"a, one\",1,0.2\n\"b\"\"two\",0.2,1\n", Kind::Correlation).unwrap();
+        let m = parse_matrix_with_delimiter(",\"a, one\",\"b\"\"two\"\n\"a, one\",1,0.2\n\"b\"\"two\",0.2,1\n", Kind::Correlation, ',').unwrap();
         assert_eq!(m.labels[0], "a, one");
         assert_eq!(m.labels[1], "b\"two");
     }
