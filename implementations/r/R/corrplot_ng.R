@@ -48,7 +48,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   }
   defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
     addCoef.col = NULL, addCoefasPercent = FALSE, number.digits = NULL,
-    number.cex = 1, number.font = 2,\n    tl.pos = NULL, tl.offset = 0.4, tl.srt = 90)
+    number.cex = 1, number.font = 2,
+    tl.pos = NULL, tl.offset = 0.4, tl.srt = 90)
   options <- utils::modifyList(defaults, args)
   .corrplot_ng_build_scene_v1(corr, options)
 }
