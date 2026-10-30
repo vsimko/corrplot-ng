@@ -520,10 +520,14 @@ mod tests {
             ("correlation", "correlation_plot"),
             ("general_numeric", "general_matrix_plot"),
         ] {
-            let config = source.replace(
-                "\"kind\": \"correlation\", \"method\": \"pearson\"",
-                &format!("\"kind\": \"{kind}\""),
-            );
+            let config = if kind == "general_numeric" {
+                source.replace(
+                    "\"kind\": \"correlation\", \"method\": \"pearson\"",
+                    "\"kind\": \"general_numeric\"",
+                )
+            } else {
+                source.clone()
+            };
             let path = std::env::temp_dir().join(format!(
                 "corrplot-ng-scene-contract-{}-{kind}.json",
                 std::process::id()
