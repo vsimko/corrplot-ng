@@ -30,6 +30,18 @@ All nine third-party crates declare permissive license identifiers. This is an i
 - The three extendr crates declare MIT in Cargo metadata, but their individual vendored crate directories do not contain a license text file. The upstream extendr repository publishes an MIT `LICENSE`; the eventual R source package should include that notice explicitly.
 - `unicode-ident` includes its Unicode license text as well as MIT and Apache-2.0 texts.
 
+## Audit execution policy
+
+The audit workflow uses three execution modes:
+
+- Every pull request touching the Rust dependency inputs or audit workflow runs the lightweight SPDX policy check with `cargo-deny`.
+- A scheduled run performs the full audit every Monday, including dependency metadata capture, vendoring, license inventory generation, and an offline build.
+- A manually dispatched run performs the same full audit and is the required pre-release check before any CRAN submission.
+
+The full audit is intentionally not part of every ordinary CI run. Vendoring and offline compilation are more expensive than checking SPDX metadata and provide little additional value when dependency inputs have not changed.
+
+The workflow currently regenerates `Cargo.lock` during each run. Committing a reviewed lockfile is still a follow-up requirement so that scheduled audits and release builds use a fixed dependency graph rather than resolving the latest compatible versions.
+
 ## Interpretation
 
 The dependency graph is small, and the source archive is compact enough to investigate inclusion in an R source package. The first audit also exposed a packaging task: license notices cannot simply be assumed to be present in every Cargo vendor directory.
