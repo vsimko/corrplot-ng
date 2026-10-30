@@ -110,6 +110,8 @@ def _resolve_color_scale(config: dict[str, Any], semantics: dict[str, Any]) -> d
     """Select an explicit scale or the legacy-compatible default palette."""
     explicit = config["colors"].get("scale")
     if explicit is not None:
+        if explicit.get("type") == "sequential" and semantics["color_mapping"] != "sequential":
+            raise ValueError("$.colors.scale: sequential scales require a one-sided general numeric matrix")
         semantics["palette"] = "custom"
         return explicit
     if semantics["color_mapping"] == "sequential":
