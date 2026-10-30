@@ -584,10 +584,9 @@ mod tests {
                 "\"kind\": \"correlation\", \"method\": \"pearson\"",
                 "\"kind\": \"general_numeric\"",
             )
-            .replace(
-                "[1.0, -0.42, 0.71],\n      [-0.42, 1.0, -0.18],\n      [0.71, -0.18, 1.0]",
-                "[-10.0, -5.0, -2.0],\n      [-5.0, -8.0, -3.0],\n      [-2.0, -3.0, -6.0]",
-            );
+            .replace("[1.0, -0.42, 0.71]", "[-10.0, -5.0, -2.0]")
+            .replace("[-0.42, 1.0, -0.18]", "[-5.0, -8.0, -3.0]")
+            .replace("[0.71, -0.18, 1.0]", "[-2.0, -3.0, -6.0]");
         let path = std::env::temp_dir().join(format!(
             "corrplot-ng-negative-normalization-{}.json",
             std::process::id()
