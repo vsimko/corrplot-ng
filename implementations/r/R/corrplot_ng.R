@@ -123,13 +123,15 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (options$is.corr && any(corr[observed] < -1 | corr[observed] > 1)) {
     stop("the scene engine requires correlation values in [-1, 1]", call. = FALSE)
   }
+  if (!is.logical(options$diag) || length(options$diag) != 1L || is.na(options$diag)) {
+    stop("diag must be one non-missing logical value", call. = FALSE)
+  }
   scale <- .corrplot_ng_resolve_matrix_scale(corr, options$is.corr, options$col.lim, options$diag)
 
   annotation <- options$annotation
   if (!is.character(annotation) || length(annotation) != 1L || is.na(annotation)) stop("annotation must be one non-missing character string", call. = FALSE)
   method <- match.arg(options$method, c("circle", "number"))
   display_type <- match.arg(options$type, c("full", "upper", "lower"))
-  if (!is.logical(options$diag) || length(options$diag) != 1L || is.na(options$diag)) stop("diag must be one non-missing logical value", call. = FALSE)
   if (!is.logical(options$addCoefasPercent) || length(options$addCoefasPercent) != 1L || is.na(options$addCoefasPercent)) stop("addCoefasPercent must be one non-missing logical value", call. = FALSE)
   if (!is.null(options$addCoef.col) && (!is.character(options$addCoef.col) || length(options$addCoef.col) != 1L || is.na(options$addCoef.col) || !nzchar(options$addCoef.col))) stop("addCoef.col must be one non-empty color string or NULL", call. = FALSE)
   if (!is.null(options$addCoef.col)) tryCatch(grDevices::col2rgb(options$addCoef.col), error = function(e) stop("addCoef.col must be a valid R color", call. = FALSE))
