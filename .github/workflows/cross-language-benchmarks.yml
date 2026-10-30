@@ -32,7 +32,7 @@ jobs:
 
       - name: Install R benchmark dependencies
         shell: Rscript {0}
-        run: install.packages(c("Rcpp", "jsonlite", "rextendr", "usethis"), repos = "https://cloud.r-project.org")
+        run: install.packages(c("Rcpp", "jsonlite", "rextendr", "usethis"))
 
       - name: Export deterministic shared fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
