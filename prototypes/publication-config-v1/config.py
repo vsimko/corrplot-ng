@@ -77,22 +77,28 @@ def _resolve_matrix_scale(config: dict[str, Any]) -> dict[str, Any]:
         return {"mode": "correlation", "color_limits": [-1.0, 1.0],
                 "color_mapping": "diverging",
                 "normalization": {"intercept": 0.0, "zoom": 1.0}}
-    if config["input"]["kind"] != "inline_matrix":
-        raise ValueError("$.matrix.kind: general_numeric currently requires inline_matrix input")
     import math
-    observed = [float(value) for row in config["input"]["values"] for value in row if value is not None]
-    if not observed:
-        raise ValueError("$.input.values: cannot resolve automatic color limits from an all-missing matrix")
-    if any(not math.isfinite(value) for value in observed):
-        raise ValueError("$.input.values: values must be finite or null")
     explicit = config["matrix"].get("col_limits")
+    if config["input"]["kind"] == "matrix_csv":
+        if explicit is None:
+            raise ValueError("$.matrix.col_limits: CSV-backed general_numeric requires explicit limits until the matrix is loaded")
+        if (not all(math.isfinite(float(value)) for value in explicit) or explicit[0] >= explicit[1]):
+            raise ValueError("$.matrix.col_limits: expected two finite, strictly increasing values")
+        lower, upper = map(float, explicit)
+        observed = None
+    else:
+        observed = [float(value) for row in config["input"]["values"] for value in row if value is not None]
+        if not observed:
+            raise ValueError("$.input.values: cannot resolve automatic color limits from an all-missing matrix")
+        if any(not math.isfinite(value) for value in observed):
+            raise ValueError("$.input.values: values must be finite or null")
     if explicit is not None:
         if (not all(math.isfinite(float(value)) for value in explicit) or explicit[0] >= explicit[1]):
             raise ValueError("$.matrix.col_limits: expected two finite, strictly increasing values")
         lower, upper = map(float, explicit)
-        if min(observed) < lower or max(observed) > upper:
+        if observed is not None and (min(observed) < lower or max(observed) > upper):
             raise ValueError("$.matrix.col_limits: limits must cover every observed matrix value")
-    else:
+    elif observed is not None:
         lower, upper = min(observed), max(observed)
         if lower == upper:
             padding = max(0.5, abs(lower) * 0.05)
