@@ -105,8 +105,6 @@ def _resolve_matrix_scale(config: dict[str, Any]) -> dict[str, Any]:
             lower, upper = lower - padding, upper + padding
     if lower < 0 < upper:
         zoom, intercept, family = 1.0 / max(abs(lower), abs(upper)), 0.0, "diverging"
-    elif upper <= 0:
-        zoom, intercept, family = 1.0 / (upper - lower), -upper, "sequential"
     else:
         zoom, intercept, family = 1.0 / (upper - lower), -lower, "sequential"
     return {"mode": "general_numeric", "color_limits": [lower, upper],
