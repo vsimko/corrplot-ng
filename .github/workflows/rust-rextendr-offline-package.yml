@@ -74,6 +74,10 @@ jobs:
           mv install-vendor-config.toml vendor-config.toml
           mkdir -p ../.cargo
           cp vendor-config.toml ../.cargo/config.toml
+          # R CMD build runs the generated clean target, which removes the
+          # expanded vendor directory. Preserve it as an archive whose paths
+          # restore rust/vendor when rextendr extracts it from src/.
+          tar -cJf vendor.tar.xz -C .. rust/vendor
       - name: Install generated R package without network access
         shell: bash
         env:
@@ -94,5 +98,5 @@ jobs:
           grep -qx 'corrplotngrustspike/inst/licenses/extendr-MIT.txt' source-tarball-files.txt
           grep -qx 'corrplotngrustspike/inst/licenses/README.md' source-tarball-files.txt
           grep -qx 'corrplotngrustspike/src/rust/Cargo.lock' source-tarball-files.txt
-          grep -q '^corrplotngrustspike/src/rust/vendor/' source-tarball-files.txt
-          echo "R source tarball contains extendr license notices, Cargo.lock, and vendored sources."
+          grep -qx 'corrplotngrustspike/src/rust/vendor.tar.xz' source-tarball-files.txt
+          echo "R source tarball contains extendr license notices, Cargo.lock, and the vendored dependency archive."
