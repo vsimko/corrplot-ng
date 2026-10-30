@@ -12,9 +12,11 @@ From the repository root:
 ```sh
 python -m unittest discover -s tests -v
 python benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
+# Optional stress run (large memory/runtime footprint):
+python benchmarks/run_shared_core.py --iterations 20 --include-stress --output benchmark-results/stress-results.json
 ```
 
-The runner uses deterministic generated inputs (seed 20261029), writes the
+The default runner uses deterministic generated inputs (seed 20261029), writes the
 complete workload inputs and their manifest into the result JSON, and emits
 one result per workload. This keeps the committed source compact while making
 each run independently reproducible and preserving the exact input data in
@@ -28,6 +30,7 @@ the artifact.
 - B07: 100x100 matrix with a fixed non-identity permutation of labels and
   corresponding rows/columns.
 - B08: SVG serialization of the prebuilt B02 scene (serialization only).
+- B03/B04: optional 500x500 and 1,000x1,000 stress workloads. Run with `--include-stress`; CI exposes them through the `workflow_dispatch` input `include_stress`. They are kept out of every pull-request run because of their memory and runtime cost.
 
 ## Correctness gate and measurements
 
