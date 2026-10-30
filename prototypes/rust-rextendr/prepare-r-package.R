@@ -49,15 +49,28 @@ if (length(target_dir_idx) != 1L) {
 }
 makevars[target_dir_idx] <- paste0("TARGET_DIR = ", target_dir)
 
-cleanup_idx <- which(vapply(
-  makevars,
-  function(line) grepl('rm -Rf "$(CARGOTMP)" "$(VENDOR_DIR)"', line, fixed = TRUE),
-  logical(1)
-))
-if (length(cleanup_idx) != 1L) {
-  stop("Could not identify the generated rextendr rust_clean command in ", makevars_file)
+rust_clean_idx <- grep("^rust_clean:", makevars)
+clean_idx <- grep("^clean:", makevars)
+if (length(rust_clean_idx) != 1L || length(clean_idx) != 1L ||
+    clean_idx <= rust_clean_idx) {
+  stop("Could not identify the generated rextendr cleanup targets in ", makevars_file)
 }
-makevars[cleanup_idx] <- '\trm -Rf "$(CARGOTMP)" "$(VENDOR_DIR)"'
+cleanup_candidates <- seq.int(rust_clean_idx + 1L, clean_idx - 1L)
+cleanup_idx <- cleanup_candidates[
+  vapply(
+    makevars[cleanup_candidates],
+    function(line) {
+      grepl("@CLEAN_TARGET@", line, fixed = TRUE) ||
+        grepl("$(TARGET_DIR)", line, fixed = TRUE)
+    },
+    logical(1)
+  )
+]
+if (length(cleanup_idx) != 1L) {
+  stop("Could not identify the target-directory cleanup in ", makevars_file)
+}
+makevars[cleanup_idx] <- gsub("@CLEAN_TARGET@", "", makevars[cleanup_idx], fixed = TRUE)
+makevars[cleanup_idx] <- gsub("$(TARGET_DIR)", "", makevars[cleanup_idx], fixed = TRUE)
 writeLines(makevars, makevars_file)
 
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
