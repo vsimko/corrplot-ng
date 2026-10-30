@@ -59,6 +59,51 @@
           },
           "column_y": {
             "type": "number"
+          },
+          "row_visible": {
+            "type": "boolean"
+          },
+          "column_visible": {
+            "type": "boolean"
+          },
+          "row_position": {
+            "enum": [
+              "left",
+              "diagonal"
+            ]
+          },
+          "column_position": {
+            "enum": [
+              "top",
+              "diagonal"
+            ]
+          },
+          "column_rotation": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "plotmath": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "prefix",
+              "source"
+            ],
+            "properties": {
+              "prefix": {
+                "enum": [
+                  ":",
+                  "=",
+                  "$"
+                ]
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
         }
       }
