@@ -1,0 +1,67 @@
+name: Cross-language scene-v1 benchmarks
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/**"
+      - "prototypes/cpp-rcpp/**"
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/cross-language-benchmarks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: Compare Python, C++/Rcpp and Rust/rextendr
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install R benchmark dependencies
+        shell: Rscript {0}
+        run: install.packages(c("Rcpp", "jsonlite", "rextendr", "devtools", "usethis"), repos = "https://cloud.r-project.org")
+
+      - name: Export deterministic shared fixtures
+        run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
+
+      - name: Benchmark Python reference
+        run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json --iterations 20
+
+      - name: Generate Rcpp wrappers
+        shell: Rscript {0}
+        run: Rcpp::compileAttributes("prototypes/cpp-rcpp")
+
+      - name: Install C++/Rcpp candidate
+        shell: bash
+        run: R CMD INSTALL prototypes/cpp-rcpp
+
+      - name: Generate Rust/rextendr package
+        run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+
+      - name: Install Rust/rextendr candidate
+        shell: bash
+        run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+
+      - name: Benchmark native candidates and validate semantic parity
+        run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
+
+      - name: Upload comparison inputs and results
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-language-scene-v1-benchmark-results
+          path: benchmark-results/
+          if-no-files-found: error
+          retention-days: 90
