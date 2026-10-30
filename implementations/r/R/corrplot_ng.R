@@ -173,7 +173,11 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
         y = top_margin + (row - 1L) * cell_size,
         center_x = left_margin + (column - 1L) * cell_size + cell_size / 2,
         center_y = top_margin + (row - 1L) * cell_size + cell_size / 2,
-        size = cell_size)
+        size = cell_size,
+        visible = (options$diag || row != column) &&
+          (display_type == "full" || (display_type == "upper" && row <= column) ||
+            (display_type == "lower" && row >= column)),
+        region = if (row == column) "diagonal" else if (row < column) "upper" else "lower")
       if (!is.na(value) && !options$is.corr) {
         normalized <- (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
         position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
