@@ -29,16 +29,9 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      - name: Resolve dependencies and create lockfile
+      - name: Verify committed lockfile is current
         working-directory: prototypes/rust-rextendr
-        run: cargo generate-lockfile
-      - name: Publish generated lockfile for review
-        working-directory: prototypes/rust-rextendr
-        run: |
-          echo "CARGO_LOCK_BASE64_BEGIN"
-          base64 -w0 Cargo.lock
-          echo
-          echo "CARGO_LOCK_BASE64_END"
+        run: cargo metadata --locked --format-version 1 > /dev/null
       - name: Enforce dependency license policy
         working-directory: prototypes/rust-rextendr
         run: cargo deny check licenses
@@ -55,9 +48,9 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      - name: Resolve dependencies and create lockfile
+      - name: Verify committed lockfile is current
         working-directory: prototypes/rust-rextendr
-        run: cargo generate-lockfile
+        run: cargo metadata --locked --format-version 1 > /dev/null
       - name: Enforce dependency license policy
         working-directory: prototypes/rust-rextendr
         run: cargo deny check licenses
