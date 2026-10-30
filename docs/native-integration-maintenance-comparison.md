@@ -2,7 +2,7 @@
 
 **Issue:** [#113](https://github.com/vsimko/corrplot-ng/issues/113)  
 **Snapshot reviewed:** `main` at `91981304c6f5509e919f2d086cb8d74e33bbe255`  
-**Scope:** the isolated scene-v1 spikes in `prototypes/rust-rextendr/` and `prototypes/cpp-rcpp/`. This is a workflow comparison, not a language or production-architecture decision.
+**Scope:** the isolated scene-v1 spikes in `prototypes/rust-rextendr/` and `prototypes/cpp-rcpp/`. This is a workflow comparison, not a language or production-architecture decision. The companion CRAN policy assessment is handled separately by [issue #111](https://github.com/vsimko/corrplot-ng/issues/111); this report focuses on the actual repository workflows and their maintainer burden.
 
 ## Executive summary
 
