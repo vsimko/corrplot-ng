@@ -58,10 +58,14 @@ jobs:
             printf '\n[net]\noffline = true\n'
           } > .cargo/config.toml
           cargo build --lib --locked --offline --release
-          # rextendr sets CARGO_HOME to src/.cargo during R CMD INSTALL,
-          # so the vendored source path must be relative to src (not src/rust).
+          # rextendr sets CARGO_HOME to src/.cargo during R CMD INSTALL.
+          # Its config file is therefore src/.cargo/config.toml, not
+          # src/rust/.cargo/config.toml. Cargo config paths are relative to
+          # the parent of the .cargo directory, so rust/vendor is correct.
           sed 's/directory = "vendor"/directory = "rust\/vendor"/' vendor-config.toml > install-vendor-config.toml
           mv install-vendor-config.toml vendor-config.toml
+          mkdir -p ../.cargo
+          cp vendor-config.toml ../.cargo/config.toml
       - name: Install generated R package without network access
         shell: bash
         env:
