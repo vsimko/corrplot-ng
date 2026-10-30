@@ -11,39 +11,65 @@ from scene import build_scene
 
 
 def render_scene_svg(scene: dict[str, Any]) -> str:
-    """Serialize a validated plot scene to deterministic SVG."""
-    width = scene["width"]
-    height = scene["height"]
+    """Serialize a prepared plot scene to deterministic SVG."""
+    width, height = scene["width"], scene["height"]
     style = scene["style"]
+    typography = scene.get("typography", {})
+    family = html.escape(typography.get("label_font_family", "sans-serif"), quote=True)
+    font_size = typography.get("label_font_size", 13)
+    weight = typography.get("label_font_weight", "normal")
+    orientation = typography.get("column_label_orientation", "vertical")
+    collision = typography.get("label_collision", "preserve")
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:g}" height="{height:g}" viewBox="0 0 {width:g} {height:g}">',
         '<title>Correlation matrix</title>',
         '<rect width="100%" height="100%" fill="#ffffff"/>',
     ]
 
     for label in scene["labels"]:
-        parts.append(
-            f'<text x="{label["row_x"]}" y="{label["row_y"]:.1f}" text-anchor="end" dominant-baseline="middle" font-family="sans-serif" font-size="13">{html.escape(label["text"])}</text>'
-        )
-        parts.append(
-            f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]}" transform="rotate(-90 {label["column_x"]:.1f} {label["column_y"]})" text-anchor="start" font-family="sans-serif" font-size="13">{html.escape(label["text"])}</text>'
-        )
+        text = html.escape(label["text"])
+        if collision == "omit":
+            row_text = ""
+        elif collision == "truncate":
+            max_chars = max(1, int(label["row_x"] / (font_size * 0.6)))
+            row_text = text if len(text) <= max_chars else text[:max(1, max_chars - 1)] + "…"
+        else:
+            row_text = text
+        if row_text:
+            parts.append(
+                f'<text x="{label["row_x"]:g}" y="{label["row_y"]:.1f}" text-anchor="end" dominant-baseline="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{row_text}</text>'
+            )
+        if orientation == "horizontal":
+            column_text = text
+            if collision == "truncate":
+                max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
+                column_text = column_text if len(column_text) <= max_chars else column_text[:max(1, max_chars - 1)] + "…"
+            elif collision == "omit":
+                column_text = ""
+            if column_text:
+                parts.append(
+                    f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" text-anchor="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{column_text}</text>'
+                )
+        else:
+            parts.append(
+                f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" transform="rotate(-90 {label["column_x"]:.1f} {label["column_y"]:g})" text-anchor="start" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{text}</text>'
+            )
 
     for cell in scene["cells"]:
         x, y, size = cell["x"], cell["y"], cell["size"]
         cx, cy, value = cell["center_x"], cell["center_y"], cell["value"]
         if value is None:
-            parts.append(f'<rect x="{x}" y="{y}" width="{size}" height="{size}" fill="{style["missing_fill"]}" stroke="#ffffff"/>')
-            parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="12" fill="#666666">NA</text>')
+            parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{style["missing_fill"]}" stroke="#ffffff"/>')
+            parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
         color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
         radius = abs(value) * (size * 0.43)
-        parts.append(f'<rect x="{x}" y="{y}" width="{size}" height="{size}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
+        parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
         if radius > 0:
             parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
 
     if scene["annotation"]:
-        parts.append(f'<text x="{scene["cells"][0]["x"]}" y="{height - 22}" font-family="sans-serif" font-size="12" fill="#333333">{html.escape(scene["annotation"])}</text>')
+        parts.append(f'<text x="{scene["cells"][0]["x"]:g}" y="{height - 22:g}" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#333333">{html.escape(scene["annotation"])}</text>')
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
