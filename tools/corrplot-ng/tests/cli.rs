@@ -319,7 +319,7 @@ fn scene_v1_json_file_is_auto_detected_and_rendered() {
         .output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let rendered = String::from_utf8(output.stdout).unwrap();
-    assert!(rendered.contains("\\"schema_version\\":1"));
+    assert!(rendered.contains(r#""schema_version":1"#));
     assert!(rendered.contains("alpha"));
     assert!(rendered.contains("0.65"));
 }
