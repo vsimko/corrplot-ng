@@ -129,7 +129,11 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
     let missing = choose("Missing-value policy", &["preserve", "error"], "preserve")?;
     let plot_method = choose("Cell encoding", &["circle", "number"], "circle")?;
     let display = choose("Displayed matrix region", &["full", "upper", "lower"], "full")?;
-    let ordering = choose("Variable ordering", &["original", "alphabetical", "aoe", "hclust"], "original")?;
+    let ordering = if kind == "correlation" {
+        choose("Variable ordering", &["original", "alphabetical", "aoe", "hclust"], "original")?
+    } else {
+        choose("Variable ordering", &["original", "alphabetical"], "original")?
+    };
     let show_values = yes_no("Show numeric values in cells?", false)?;
     let output = prompt("SVG output path", Some("corrplot.svg"))?;
 
