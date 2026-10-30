@@ -77,8 +77,9 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             if collision == "truncate":
                 max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
                 column_text = column_text if len(column_text) <= max_chars else column_text[:max(1, max_chars - 1)] + "…"
+            rotation = -label.get("column_rotation", 90)
             parts.append(
-                f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" transform="rotate({-label.get('column_rotation', 90):g} {label["column_x"]:.1f} {label["column_y"]:g})" text-anchor="start" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{html.escape(column_text)}</text>'
+                f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" transform="rotate({rotation:g} {label["column_x"]:.1f} {label["column_y"]:g})" text-anchor="start" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{html.escape(column_text)}</text>'
             )
 
     for cell in scene["cells"]:
