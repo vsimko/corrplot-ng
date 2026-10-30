@@ -21,14 +21,22 @@ if (!file.copy(license_source, file.path(license_dir, "extendr-MIT.txt"), overwr
   stop("Could not copy extendr third-party license notices into generated package")
 }
 
+# R expects a file-backed license declaration when using the MIT template.
+writeLines(c(
+  "YEAR: 2026",
+  "COPYRIGHT HOLDER: corrplot-ng contributors"
+), file.path(pkg_dir, "LICENSE"))
+
 writeLines(c(
   "Package: corrplotngrustspike",
-  "Title: Temporary Rust Scene-v1 Benchmark",
-  "Version: 0.0.0.9000",
-  "Authors@R: person(\"CI\", \"Runner\", email = \"ci@example.invalid\", role = c(\"aut\", \"cre\"))",
-  "Description: Temporary package used to benchmark the Rust scene-v1 builder.",
-  "License: MIT",
-  "Encoding: UTF-8"
+  "Title: Temporary Rust Scene-V1 Benchmark",
+  "Version: 0.1.0",
+  "Authors@R: person(\"corrplot-ng\", \"contributors\", role = c(\"aut\", \"cre\"), email = \"maintainers@example.invalid\")",
+  "Description: Temporary package used to validate the isolated Rust scene-v1 builder.",
+  "License: MIT + file LICENSE",
+  "Encoding: UTF-8",
+  "Suggests: testthat",
+  "SystemRequirements: Cargo, rustc"
 ), file.path(pkg_dir, "DESCRIPTION"))
 
 dir.create(file.path(pkg_dir, "R"))
@@ -47,7 +55,7 @@ if (length(extendr_dependency) != 1L) {
 cargo_lines[extendr_dependency] <- 'extendr-api = "=0.8.2"'
 writeLines(cargo_lines, cargo_manifest)
 
-# Keep Cargo output outside the generated package and preserve it across
+# Keep Cargo output outside the disposable package and preserve it across
 # package clean steps, matching the existing offline-validation experiment.
 target_dir <- normalizePath(file.path(root, ".ci-rust-target"),
                             winslash = "/", mustWork = FALSE)
@@ -88,6 +96,10 @@ if (!any(trimws(namespace_lines) == dynlib_directive)) namespace_lines <- c(name
 wrapper_file <- file.path(pkg_dir, "R", "build_scene_json_rust.R")
 writeLines(c(
   "#' Build renderer-neutral scene-v1 JSON.",
+  "#' @param labels Character vector of matrix labels.",
+  "#' @param matrix Numeric square correlation matrix.",
+  "#' @param annotation Optional annotation included in the scene.",
+  "#' @return A single JSON string describing the scene-v1 object.",
   "#' @export",
   "build_scene_json_rust <- function(labels, matrix, annotation = \"\") {",
   "  .Call(wrap__build_scene_json_rust, labels, matrix, annotation)",
@@ -97,3 +109,47 @@ if (!any(grepl("^export\\(build_scene_json_rust\\)$", namespace_lines))) {
   namespace_lines <- c(namespace_lines, "export(build_scene_json_rust)")
 }
 writeLines(namespace_lines, namespace_file)
+
+# Keep generated-package checks meaningful instead of accepting an empty
+# temporary package: ship a help page, an executable example, and a test.
+man_dir <- file.path(pkg_dir, "man")
+dir.create(man_dir, showWarnings = FALSE)
+writeLines(c(
+  "\\name{build_scene_json_rust}",
+  "\\alias{build_scene_json_rust}",
+  "\\title{Build Renderer-Neutral Scene-V1 JSON}",
+  "\\description{Builds a renderer-neutral scene-v1 JSON representation from labels, a numeric matrix, and optional annotation text.}",
+  "\\usage{",
+  "build_scene_json_rust(labels, matrix, annotation = \"\")",
+  "}",
+  "\\arguments{",
+  "\\item{labels}{Character vector containing the matrix labels.}",
+  "\\item{matrix}{Numeric square matrix containing the correlation values.}",
+  "\\item{annotation}{Optional character string included as scene metadata.}",
+  "}",
+  "\\value{A character vector of length one containing the scene-v1 JSON.}",
+  "\\examples{",
+  "labels <- c(\"a\", \"b\")",
+  "correlations <- matrix(c(1, 0.2, 0.2, 1), nrow = 2)",
+  "scene <- build_scene_json_rust(labels, correlations, \"example\")",
+  "stopifnot(is.character(scene), length(scene) == 1L)",
+  "}"
+), file.path(man_dir, "build_scene_json_rust.Rd"))
+
+test_dir <- file.path(pkg_dir, "tests", "testthat")
+dir.create(test_dir, recursive = TRUE)
+writeLines(c(
+  "if (requireNamespace(\"testthat\", quietly = TRUE)) {",
+  "  testthat::test_check(\"corrplotngrustspike\")",
+  "}"
+), file.path(pkg_dir, "tests", "testthat.R"))
+writeLines(c(
+  "testthat::test_that(\"scene-v1 JSON is returned for a small matrix\", {",
+  "  labels <- c(\"a\", \"b\")",
+  "  correlations <- matrix(c(1, 0.2, 0.2, 1), nrow = 2)",
+  "  scene <- build_scene_json_rust(labels, correlations, \"test\")",
+  "  testthat::expect_type(scene, \"character\")",
+  "  testthat::expect_length(scene, 1L)",
+  "  testthat::expect_match(scene, '\\\"schema_version\\\"[[:space:]]*:[[:space:]]*1')",
+  "})"
+), file.path(test_dir, "test-scene-v1.R"))
