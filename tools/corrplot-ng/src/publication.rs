@@ -463,12 +463,7 @@ impl Publication {
             if matches!(get(o,"value"),Json::Null) { continue; }
             let value=num(get(o,"value"));
             let method=strv(get(o,"method"));
-            if method=="number" {
-                out.push_str(&format!(
-                    "<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"#ffffff\">{:.2}</text>\n",
-                    cx,cy,esc(family),font_size,value
-                ));
-            } else {
+            if method != "number" {
                 let normalized = o.get("normalized_value").map(num).unwrap_or_else(|| value.abs());
                 let radius=normalized.abs().min(1.0)*27.0+2.0;
                 out.push_str(&format!(
