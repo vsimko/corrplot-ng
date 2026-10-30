@@ -1,6 +1,8 @@
 #' Parse a legacy corrplot label
 #'
-#' Labels prefixed with `: `, `=`, or `$` (without the space after the
+#' Labels prefixed with `:`, `=`, or `#' Parse a legacy corrplot label
+#'
+#' 
 #' prefix) are parsed as native R plotmath expressions. Other labels are
 #' returned unchanged as character strings.
 #'
@@ -13,6 +15,9 @@ corrplot_ng_parse_label <- function(label) {
   }
   if (startsWith(label, ":") || startsWith(label, "=") || startsWith(label, "$")) {
     source <- substring(label, 2L)
+    if (!nzchar(trimws(source))) {
+      stop("invalid plotmath label '", label, "': expression is empty", call. = FALSE)
+    }
     tryCatch(parse(text = source), error = function(e) {
       stop("invalid plotmath label '", label, "': ", conditionMessage(e), call. = FALSE)
     })
@@ -161,7 +166,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     prefix <- if (startsWith(raw, ":") || startsWith(raw, "=") || startsWith(raw, "$")) substr(raw, 1L, 1L) else NULL
     source <- if (is.null(prefix)) NULL else substring(raw, 2L)
     corrplot_ng_parse_label(raw)
-    list(text = raw, row_x = if (row_position == "left") left_margin - 12 - label_offset else
+    item <- list(text = raw, row_x = if (row_position == "left") left_margin - 12 - label_offset else
         left_margin + (i - 1L) * cell_size - label_offset,
       row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
       column_x = left_margin + (i - 1L) * cell_size + cell_size / 2 +
@@ -171,8 +176,9 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
           (if (column_position == "diagonal") label_offset * sin(options$tl.srt * pi / 180) else 0),
       row_visible = show_rows, column_visible = show_columns,
       row_position = row_position, column_position = column_position,
-      column_rotation = options$tl.srt, offset = options$tl.offset,
-      plotmath = if (is.null(source)) NULL else list(prefix = prefix, source = source))
+      column_rotation = options$tl.srt, offset = options$tl.offset)
+    if (!is.null(source)) item$plotmath <- list(prefix = prefix, source = source)
+    item
   })
   scene <- list(schema_version = 1L, kind = "correlation_plot",
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
