@@ -40,8 +40,8 @@ Normalized configurations preserve supplied values and source matrix/label order
 
 - `original` preserves input order.
 - `alphabetical` sorts labels by Unicode case-folded text, then original text, then original index.
-- `hclust` uses average linkage over `d(i,j) = 1 - r(i,j)`. Cluster-pair distance is the arithmetic mean of observed cross-cluster distances; missing correlations are omitted. If a variable has no observed off-diagonal correlation, or remaining clusters have no observed cross-pair, clustering fails with a diagnostic. Equal distances are broken by the smallest original index in each cluster, and child orientation uses that same key.
-- `aoe` remains in the schema for compatibility but is rejected during scene adaptation until its eigenvector sign, tie, and degenerate-matrix semantics are specified.
+- `hclust` is supported for correlation matrices and uses average linkage over `d(i,j) = 1 - r(i,j)`. Cluster-pair distance is the arithmetic mean of observed cross-cluster distances; missing correlations are omitted. If a variable has no observed off-diagonal correlation, or remaining clusters have no observed cross-pair, clustering fails with a diagnostic. Equal distances are broken by the smallest original index in each cluster, and child orientation uses that same key.
+- `aoe` is supported for complete correlation matrices. It orders variables by the angle `atan2(v₂, v₁)` from the first two eigenvectors of the correlation matrix, with eigenvectors selected by descending eigenvalue. Each eigenvector's sign is fixed by making its largest-magnitude component positive (ties use the lowest original index). Equal leading eigenvalues are rejected because their eigenspace does not define a unique two-axis orientation; missing correlations and non-correlation matrices are also rejected.
 
 ## Evolution
 
