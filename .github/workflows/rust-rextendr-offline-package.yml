@@ -59,7 +59,7 @@ jobs:
           set -euxo pipefail
           cd prototypes/rust-rextendr/.ci-r-package/src/rust
           cp ../../../deny.toml deny.toml
-          cargo metadata --locked --format-version 1 > /dev/null
+          cargo metadata --offline --format-version 1 > /dev/null
           cargo deny check licenses
           cargo vendor --locked vendor > vendor-config.toml
           mkdir -p .cargo
@@ -99,7 +99,7 @@ jobs:
         run: |
           set -euxo pipefail
           R CMD build --no-build-vignettes --no-manual prototypes/rust-rextendr/.ci-r-package
-          tarball=corrplotngrustspike_0.0.0.9000.tar.gz
+          tarball=corrplotngrustspike_0.1.0.tar.gz
           test -s "$tarball"
           # R CMD build runs rextendr's clean target, which removes the expanded
           # vendor tree. Restore it into the source archive so R CMD check can
@@ -128,4 +128,4 @@ jobs:
           _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
         run: |
           set -euxo pipefail
-          R CMD check --as-cran --no-manual corrplotngrustspike_0.0.0.9000.tar.gz
+          R CMD check --as-cran --no-manual corrplotngrustspike_0.1.0.tar.gz
