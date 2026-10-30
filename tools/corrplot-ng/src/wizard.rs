@@ -55,7 +55,7 @@ fn json_string(value: &str) -> String {
 
 fn build_config(
     input: &str, delimiter: &str, kind: &str, method: &str, glyph: &str, missing: &str,
-    display: &str, ordering: &str, show_values: bool, output: &str,
+    display: &str, ordering: &str, palette: &str, font_family: &str, show_values: bool, output: &str,
 ) -> String {
     let matrix = if kind == "correlation" {
         format!("{{ \"kind\": \"correlation\", \"method\": {}, \"missing\": {} }}",
@@ -63,7 +63,13 @@ fn build_config(
     } else {
         format!("{{ \"kind\": \"general_numeric\", \"missing\": {} }}", json_string(missing))
     };
-    format!(r##"{{
+    let (negative, neutral, positive, missing_color) = match palette {
+        "blue-red" => ("#b2182b", "#f7f7f7", "#2166ac", "#d9d9d9"),
+        "purple-green" => ("#762a83", "#f7f7f7", "#1b7837", "#d9d9d9"),
+        "orange-teal" => ("#d95f02", "#f7f7f7", "#1b9e77", "#d9d9d9"),
+        _ => unreachable!("palette is selected from the wizard's fixed choices"),
+    };
+    format!(r##"{
   "config_version": 1,
   "input": {{
     "kind": "matrix_csv",
@@ -80,14 +86,15 @@ fn build_config(
     "show_values": {},
     "significance": {{ "enabled": false, "p_values": null, "thresholds": [0.001, 0.01, 0.05] }}
   }},
-  "colors": {{ "negative": "#b2182b", "neutral": "#f7f7f7", "positive": "#2166ac", "missing": "#d9d9d9" }},
+  "colors": {{ "negative": {}, "neutral": {}, "positive": {}, "missing": {} }},
   "dimensions": {{ "width": 160, "height": 145, "unit": "mm" }},
-  "typography": {{ "family": "sans-serif", "base_size": 9 }},
+  "typography": {{ "family": {}, "base_size": 9 }},
   "output": {{ "format": "svg", "path": {} }}
 }}
 "##,
         json_string(input), json_string(delimiter), matrix, json_string(glyph),
-        json_string(display), json_string(ordering), show_values, json_string(output))
+        json_string(display), json_string(ordering), json_string(negative), json_string(neutral),
+        json_string(positive), json_string(missing_color), json_string(font_family), show_values, json_string(output))
 }
 
 fn temporary_path(config_path: &Path) -> PathBuf {
@@ -134,10 +141,12 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
     } else {
         choose("Variable ordering", &["original", "alphabetical"], "original")?
     };
+    let palette = choose("Color palette", &["blue-red", "purple-green", "orange-teal"], "blue-red")?;
+    let font_family = choose("Label font family", &["sans-serif", "serif"], "sans-serif")?;
     let show_values = yes_no("Show numeric values in cells?", false)?;
     let output = prompt("SVG output path", Some("corrplot.svg"))?;
 
-    let config = build_config(&input, delimiter, &kind, &method, &plot_method, &missing, &display, &ordering, show_values, &output);
+    let config = build_config(&input, delimiter, &kind, &method, &plot_method, &missing, &display, &ordering, &palette, &font_family, show_values, &output);
     let destination = PathBuf::from(&output_config);
     let parent = destination.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or_else(|| Path::new("."));
     if !parent.is_dir() { return Err(format!("configuration directory '{}' does not exist", parent.display())); }
@@ -174,12 +183,14 @@ mod tests {
         std::fs::write(&matrix, ",alpha,beta\nalpha,1,0.4\nbeta,0.4,1\n").unwrap();
         let contents = build_config(
             "matrix.csv", ",", "correlation", "spearman", "number",
-            "preserve", "upper", "alphabetical", true, "figure.svg",
+            "preserve", "upper", "alphabetical", "purple-green", "serif", true, "figure.svg",
         );
         std::fs::write(&config, &contents).unwrap();
         let parsed = crate::publication::Publication::load(config.to_str().unwrap()).unwrap();
         assert_eq!(parsed.method, "number");
         assert_eq!(parsed.ordering, "alphabetical");
+        assert_eq!(parsed.positive, "#1b7837");
+        assert_eq!(parsed.family, "serif");
         assert!(parsed.show_values);
         std::fs::remove_dir_all(directory).ok();
     }
@@ -188,7 +199,7 @@ mod tests {
     fn tab_delimiter_is_encoded_as_a_json_tab_escape() {
         let config = build_config(
             "matrix.tsv", "\t", "correlation", "pearson", "circle",
-            "preserve", "full", "original", false, "figure.svg",
+            "preserve", "full", "original", "blue-red", "sans-serif", false, "figure.svg",
         );
         assert!(config.contains(r#""delimiter": "\t""#));
     }
