@@ -55,17 +55,32 @@ class PublicationSvgTests(unittest.TestCase):
         _, _, width, height = map(float, root.attrib["viewBox"].split())
         self.assertGreater(width, scene["width"])
         self.assertGreater(height, scene["height"])
-        # The added left/top viewBox space is reflected by positive label coords.
         labels = root.findall(f".//{SVG_NS}text")
         self.assertTrue(labels)
         self.assertTrue(all(float(node.attrib["x"]) >= 0 for node in labels))
+
+    def test_long_annotation_expands_right_viewbox_margin(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.2], [0.2, 1.0]],
+            "annotation": "Publication note " * 20,
+        })
+        svg = render_publication_svg(
+            scene, width_mm=180, height_mm=130,
+            font_family="serif", font_size_pt=18,
+        )
+        root = ET.fromstring(svg)
+        _, _, width, _ = map(float, root.attrib["viewBox"].split())
+        annotation = root.findall(f".//{SVG_NS}text")[-1]
+        estimated_right = float(annotation.attrib["x"]) + len(scene["annotation"]) * 18 * (96 / 72) * 0.6
+        self.assertGreaterEqual(width, estimated_right)
 
     def test_output_is_valid_xml_and_deterministic(self):
         first = self.render()
         second = self.render()
         ET.fromstring(first)
         self.assertEqual(first, second)
-        self.assertTrue(first.endswith("</svg>\n"))
+        self.assertTrue(first.endswith("</svg>\\n"))
 
     def test_annotation_and_missing_values_are_preserved(self):
         svg = self.render()
