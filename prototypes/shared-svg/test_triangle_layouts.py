@@ -79,7 +79,7 @@ class TriangleLayoutTests(unittest.TestCase):
 
     def test_invalid_region_method_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "upper_method"):
-            build_scene({**self.config, "upper_method": "ellipse"})
+            build_scene({**self.config, "upper_method": "triangle"})
 
 
     def test_ordered_mixed_layout_keeps_annotation_cell_identity(self):

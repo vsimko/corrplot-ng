@@ -93,6 +93,7 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{missing_color}" stroke="#ffffff"/>')
             parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
+        parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
         encoding = cell.get("encoding")
         if encoding is None:
             # Backward compatibility for pre-encoding scene-v1 payloads.
