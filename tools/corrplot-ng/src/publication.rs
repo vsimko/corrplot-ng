@@ -276,6 +276,131 @@ impl Publication {
             missing: missing_color, width, height, unit, family, base_size, output: output_path })
     }
 
+    pub fn scene_json(&self, title: &str) -> String {
+        let n = self.labels.len();
+        let cell = 64.0;
+        let left = 120.0;
+        let top = 76.0;
+        let width = left + n as f64 * cell + 24.0;
+        let height = top + n as f64 * cell + 32.0;
+        let esc = |value: &str| -> String {
+            let mut out = String::new();
+            for ch in value.chars() {
+                match ch {
+                    '"' => out.push_str("\\\""),
+                    '\\' => out.push_str("\\\\"),
+                    '\n' => out.push_str("\\n"),
+                    '\r' => out.push_str("\\r"),
+                    '\t' => out.push_str("\\t"),
+                    c if c < '\u{20}' => out.push_str(&format!("\\u{:04x}", c as u32)),
+                    c => out.push(c),
+                }
+            }
+            out
+        };
+        let fmt = |v: f64| if v == 0.0 { "0".to_string() } else { format!("{v}") };
+        let (lower, upper, intercept, zoom, mapping) = if self.kind == "general_numeric" {
+            let observed: Vec<f64> = self.values.iter().flatten().filter_map(|v| *v).collect();
+            let mut lo = observed.iter().copied().fold(f64::INFINITY, f64::min);
+            let mut hi = observed.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+            if lo == hi { let pad = 0.5_f64.max(lo.abs() * 0.05); lo -= pad; hi += pad; }
+            if lo < 0.0 && hi > 0.0 {
+                (lo, hi, 0.0, 1.0 / lo.abs().max(hi.abs()), "diverging")
+            } else if hi <= 0.0 {
+                (lo, hi, -hi, 1.0 / (hi - lo), "sequential")
+            } else {
+                (lo, hi, -lo, 1.0 / (hi - lo), "sequential")
+            }
+        } else { (-1.0, 1.0, 0.0, 1.0, "diverging") };
+
+        let mut out = format!(
+            "{{\"schema_version\":1,\"kind\":\"{}\",\"width\":{},\"height\":{},\"labels\":[",
+            if self.kind == "correlation" { "correlation_plot" } else { "general_matrix_plot" },
+            fmt(width), fmt(height)
+        );
+        for (i, label) in self.labels.iter().enumerate() {
+            if i > 0 { out.push(','); }
+            let cy = top + i as f64 * cell + cell / 2.0;
+            let cx = left + i as f64 * cell + cell / 2.0;
+            out.push_str(&format!(
+                "{{\"text\":\"{}\",\"row_x\":{},\"row_y\":{},\"column_x\":{},\"column_y\":{},\"row_visible\":true,\"column_visible\":true}}",
+                esc(label), fmt(left - 12.0), fmt(cy), fmt(cx), fmt(top - 12.0)
+            ));
+        }
+        out.push_str("],\"cells\":[");
+        let mut first = true;
+        for r in 0..n {
+            for c in 0..n {
+                if !first { out.push(','); }
+                first = false;
+                let value = self.values[r][c];
+                let visible = self.display == "full" || (self.display == "upper" && r <= c) || (self.display == "lower" && r >= c);
+                let region = if r == c { "diagonal" } else if r < c { "upper" } else { "lower" };
+                let color = match value { None => &self.missing, Some(v) if v > 0.0 => &self.positive, Some(v) if v < 0.0 => &self.negative, _ => &self.neutral };
+                let x = left + c as f64 * cell;
+                let y = top + r as f64 * cell;
+                let cx = x + cell / 2.0;
+                let cy = y + cell / 2.0;
+                out.push_str(&format!(
+                    "{{\"row\":{r},\"column\":{c},\"value\":{},\"x\":{},\"y\":{},\"center_x\":{},\"center_y\":{},\"size\":{},\"color\":\"{}\",\"visible\":{},\"method\":\"{}\",\"region\":\"{}\"",
+                    value.map(fmt).unwrap_or_else(|| "null".into()), fmt(x), fmt(y), fmt(cx), fmt(cy), fmt(cell), color, visible, self.method, region
+                ));
+                if self.kind == "general_numeric" {
+                    let normalized = value.map(|v| (v + intercept) * zoom).map(fmt).unwrap_or_else(|| "null".into());
+                    out.push_str(&format!(",\"normalized_value\":{normalized}"));
+                }
+                out.push('}');
+            }
+        }
+        out.push_str(&format!(
+            "],\"annotation\":\"\",\"title\":\"{}\",\"description\":\"Generated from publication-config v1 by corrplot-ng CLI\",\"glyph_method\":\"{}\",\"display_type\":\"{}\",\"show_diagonal\":true",
+            esc(title), self.method, self.display
+        ));
+        out.push_str(&format!(
+            ",\"style\":{{\"positive_color\":\"{}\",\"negative_color\":\"{}\",\"zero_color\":\"{}\",\"missing_fill\":\"{}\",\"grid_color\":\"#e0e0e0\"}}",
+            self.positive, self.negative, self.neutral, self.missing
+        ));
+        out.push_str(&format!(
+            ",\"typography\":{{\"label_font_family\":\"{}\",\"label_font_size\":{},\"label_font_weight\":\"normal\",\"column_label_orientation\":\"vertical\",\"label_collision\":\"preserve\"}}",
+            esc(&self.family), fmt(self.base_size)
+        ));
+        out.push_str(&format!(
+            ",\"legend\":[{{\"kind\":\"stop\",\"label\":\"-1\",\"color\":\"{}\"}},{{\"kind\":\"stop\",\"label\":\"0\",\"color\":\"{}\"}},{{\"kind\":\"stop\",\"label\":\"1\",\"color\":\"{}\"}},{{\"kind\":\"missing\",\"label\":\"Missing\",\"color\":\"{}\"}}]",
+            self.negative, self.neutral, self.positive, self.missing
+        ));
+        out.push_str(&format!(
+            ",\"variable_order\":{{\"strategy\":\"{}\",\"indices\":[",
+            self.ordering
+        ));
+        for i in 0..n { if i > 0 { out.push(','); } out.push_str(&i.to_string()); }
+        out.push_str("],\"labels\":[");
+        for (i, label) in self.labels.iter().enumerate() { if i > 0 { out.push(','); } out.push('"'); out.push_str(&esc(label)); out.push('"'); }
+        out.push_str("]}");
+        if self.kind == "general_numeric" {
+            out.push_str(&format!(
+                ",\"matrix_semantics\":{{\"mode\":\"general_numeric\",\"color_limits\":[{},{}],\"color_mapping\":\"{}\",\"normalization\":{{\"intercept\":{},\"zoom\":{}}}}}",
+                fmt(lower), fmt(upper), mapping, fmt(intercept), fmt(zoom)
+            ));
+        }
+        if self.method == "number" || self.show_values {
+            out.push_str(",\"text_annotations\":[");
+            let mut first = true;
+            for r in 0..n { for c in 0..n {
+                if !((self.display == "full") || (self.display == "upper" && r <= c) || (self.display == "lower" && r >= c)) { continue; }
+                if let Some(value) = self.values[r][c] {
+                    if !first { out.push(','); } first = false;
+                    out.push_str(&format!(
+                        "{{\"row\":{r},\"column\":{c},\"role\":\"value\",\"text\":\"{}\",\"color\":\"#ffffff\",\"font_size\":{},\"font_weight\":\"normal\",\"font_style\":\"normal\"}}",
+                        fmt(value), fmt(self.base_size)
+                    ));
+                }
+            }}
+            out.push(']');
+        }
+        out.push('}');
+        out
+    }
+
     pub fn svg(&self, title: &str) -> String {
         let n=self.labels.len(); let cell=64.0; let left=120.0; let top=76.0;
         let vw=left+n as f64*cell+24.0; let vh=top+n as f64*cell+32.0;
