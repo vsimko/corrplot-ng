@@ -342,7 +342,7 @@ fn scene_v1_json_can_be_read_from_stdin_with_explicit_format() {
 #[test]
 fn explicit_tsv_input_format_uses_tab_delimiters() {
     let path = std::env::temp_dir().join(format!("corrplot-ng-input-{}.tsv", std::process::id()));
-    fs::write(&path, "\\talpha\\tbeta\\nalpha\\t1\\t0.5\\nbeta\\t0.5\\t1\\n").unwrap();
+    fs::write(&path, "\talpha\tbeta\nalpha\t1\t0.5\nbeta\t0.5\t1\n").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["validate", "--input"]).arg(&path)
         .args(["--input-format", "tsv"])
