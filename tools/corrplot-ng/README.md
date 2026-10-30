@@ -65,8 +65,8 @@ Unsupported v1 semantics are rejected explicitly rather than ignored. This initi
 Run `corrplot-ng init` in an interactive terminal to create a reusable
 `publication-config v1` file. The wizard asks for the labelled CSV/TSV input,
 matrix semantics, supported correlation method, missing-value policy, cell
-encoding, displayed region, variable ordering, value annotations, and output
-paths. It prints a complete configuration preview, validates that exact
+encoding, displayed region, variable ordering, color palette, label font family,
+value annotations, and output paths. It prints a complete configuration preview, validates that exact
 configuration through the same `Publication::load` path used by
 `validate --config`, and asks before writing. Existing files are not
 overwritten without confirmation.
