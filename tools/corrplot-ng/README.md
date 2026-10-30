@@ -13,18 +13,32 @@ cargo build --release --manifest-path tools/corrplot-ng/Cargo.toml
 
 The executable is self-contained with respect to the application: no Python, R, or external CLI runtime is needed. Platform C runtime requirements depend on the Rust target and linker configuration.
 
-## Input format
+## Input formats and matrix contract
 
-The first version accepts a square labelled CSV or TSV matrix. The first cell is empty (or `label`), followed by column labels. Each subsequent row begins with the corresponding row label. Empty cells, `NA`, `NaN`, and `null` mean missing values.
+The CLI accepts labelled CSV, TSV, and JSON matrix input. CSV and TSV use the same labelled-square layout: the first cell is empty (or \`label\`), followed by column labels; each data row starts with its matching row label. Empty cells, \`NA\`, \`NaN\`, and \`null\` represent missing values. Quoted CSV fields support delimiters, escaped quotes, and embedded newlines.
 
-```csv
+\`\`\`csv
 ,alpha,beta,gamma
 alpha,1,0.65,-0.4
 beta,0.65,1,NA
 gamma,-0.4,NA,1
-```
+\`\`\`
 
-Correlation mode (default) requires finite values in [-1, 1], symmetry, and a unit diagonal. General-matrix mode accepts arbitrary finite values and does not impose correlation semantics.
+JSON matrix input uses the compact \`labels\` / \`values\` contract. Values are numbers or \`null\`; \`kind\` is optional and may be \`correlation\` or \`general\`.
+
+\`\`\`json
+{
+  "kind": "correlation",
+  "labels": ["alpha", "beta"],
+  "values": [[1, 0.4], [0.4, 1]]
+}
+\`\`\`
+
+The CLI also accepts renderer-neutral scene-v1 JSON output as input. It reconstructs the matrix from each label's \`text\` and the cells' \`row\`, \`column\`, and \`value\` fields; scene kind determines correlation or general-matrix semantics.
+
+Correlation mode (default for CSV/TSV and compact JSON without \`kind\`) requires finite values in [-1, 1], symmetry, and a unit diagonal. General-matrix mode accepts arbitrary finite values and does not impose correlation semantics.
+
+Input format detection is deterministic: \`.csv\`, \`.tsv\` / \`.tab\`, and \`.json\` extensions take precedence; otherwise JSON is detected from an object/array prefix and delimited text from its first non-empty row. If comma and tab detection is ambiguous, specify \`--input-format\`. Use \`--input-format csv|tsv|json\` to override detection. UTF-8 is required; a UTF-8 BOM is accepted.
 
 ## Commands
 
@@ -33,8 +47,9 @@ corrplot-ng validate --input matrix.csv
 corrplot-ng inspect --input matrix.csv
 corrplot-ng render --input matrix.csv --output figure.svg
 corrplot-ng render --input matrix.csv --format scene-json --output scene.json
-corrplot-ng render --input matrix.csv --method number --title "My correlations" > figure.svg
-cat matrix.csv | corrplot-ng render --input - > figure.svg
+corrplot-ng render --input matrix.tsv --input-format tsv --method number --title "My correlations" --output - > figure.svg
+corrplot-ng render --input matrix.json --input-format json --format scene-json --output - > scene.json
+cat matrix.csv | corrplot-ng render --input - --input-format csv --output - > figure.svg
 corrplot-ng presets
 corrplot-ng version
 ```
@@ -136,3 +151,10 @@ measurement, not a cross-platform performance guarantee. The CI workflow
 uploads a fresh comparison artifact for each pull-request revision.
 
 Measurement run: https://github.com/vsimko/corrplot-ng/actions/runs/41145752180
+
+
+## Stream and output behavior
+
+Use \`--input -\` to read stdin and \`--output -\` (or omit \`--output\`) to write a rendered artifact to stdout. The render stream contains only SVG or scene-v1 JSON; diagnostics are written to stderr. File output is staged in a temporary file and renamed only after rendering succeeds, so malformed input does not truncate an existing destination.
+
+\`--format\` selects the output format: \`svg\` (default) or \`scene-json\`. PNG, PDF, and HTML are not implemented and fail explicitly. Parquet is not supported. No Python or R process is invoked for CSV, TSV, JSON, stdin, stdout, or file output.
