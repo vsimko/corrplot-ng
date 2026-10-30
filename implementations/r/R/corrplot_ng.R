@@ -73,8 +73,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (limits[1] < -1 || limits[2] > 1) {
       stop("col.lim for correlation matrices must be within [-1, 1]", call. = FALSE)
     }
-    return(list(limits = as.numeric(limits), mapping = "diverging",
-      normalization = list(intercept = 0, zoom = 1)))
+    return(list(limits = as.numeric(limits), mapping = "diverging", palette_name = "RdBu",
+      palette = COL2("RdBu", 200), normalization = list(intercept = 0, zoom = 1)))
   }
 
   scale_values <- corr
@@ -101,10 +101,12 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   }
   mixed_sign <- min(scale_values) < 0 && max(scale_values) > 0
   if (mixed_sign) {
-    list(limits = as.numeric(limits), mapping = "diverging",
+    list(limits = as.numeric(limits), mapping = "diverging", palette_name = "RdBu",
+      palette = COL2("RdBu", 200),
       normalization = list(intercept = 0, zoom = 1 / max(abs(limits))))
   } else {
-    list(limits = as.numeric(limits), mapping = "sequential",
+    list(limits = as.numeric(limits), mapping = "sequential", palette_name = "YlOrBr",
+      palette = COL1("YlOrBr", 200),
       normalization = list(intercept = -limits[1], zoom = 1 / diff(limits)))
   }
 }
@@ -167,6 +169,13 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
         value = if (is.na(value)) NULL else as.numeric(value),
         normalized_value = if (is.na(value)) NULL else if (options$is.corr) as.numeric(value) else
           (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom,
+        color = if (is.na(value)) NULL else {
+          normalized <- if (options$is.corr) as.numeric(value) else
+            (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
+          position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
+          palette_index <- max(1L, min(length(scale$palette), floor(position * (length(scale$palette) - 1L)) + 1L))
+          scale$palette[[palette_index]]
+        },
         x = left_margin + (column - 1L) * cell_size,
         y = top_margin + (row - 1L) * cell_size,
         center_x = left_margin + (column - 1L) * cell_size + cell_size / 2,
@@ -243,7 +252,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     kind = if (options$is.corr) "correlation_plot" else "general_matrix_plot",
     matrix_semantics = list(mode = if (options$is.corr) "correlation" else "general_numeric",
       color_limits = scale$limits, color_mapping = scale$mapping,
-      normalization = scale$normalization),
+      palette = scale$palette_name, normalization = scale$normalization),
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,
     glyph_method = method, text_annotations = text_annotations,
