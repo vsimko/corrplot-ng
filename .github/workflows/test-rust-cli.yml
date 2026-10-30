@@ -34,3 +34,33 @@ jobs:
         run: cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Build release executable
         run: cargo build --locked --release --manifest-path tools/corrplot-ng/Cargo.toml
+
+  performance-comparison:
+    name: Compare CLI performance with PR base
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out PR base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build baseline release binary
+        run: cargo build --locked --release --manifest-path baseline/tools/corrplot-ng/Cargo.toml
+      - name: Build candidate release binary
+        run: cargo build --locked --release --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Measure baseline and candidate
+        run: |
+          python benchmarks/cli_startup.py \
+            --baseline baseline/tools/corrplot-ng/target/release/corrplot-ng \
+            --candidate tools/corrplot-ng/target/release/corrplot-ng \
+            --output cli-performance.json
+      - name: Upload performance comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-performance-comparison
+          path: cli-performance.json
+          if-no-files-found: error
