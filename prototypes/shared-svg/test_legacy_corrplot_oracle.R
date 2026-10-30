@@ -13,8 +13,6 @@ m <- matrix(
 )
 
 grDevices::pdf(NULL)
-on.exit(grDevices::dev.off(), add = TRUE)
-
 res <- corrplot(
   m,
   method = "circle",
