@@ -5,6 +5,7 @@ This module owns validation and deterministic layout, not SVG serialization.
 from __future__ import annotations
 
 from typing import Any
+from math import ceil
 
 LABEL_FONT_SIZE = 13
 LABEL_GAP = 12
@@ -81,7 +82,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     char_width = font_size * 0.6
     max_label_width = max(len(label) * char_width for label in label_texts)
     left = max(104, int(max_label_width + LABEL_GAP * 2))
-    top = max(76, int((max_label_width if orientation == "vertical" else font_size * 2) + 32))
+    horizontal_lines = max(1, ceil(max_label_width / max(cell, 1))) if collision == "wrap" else 1
+    top = max(76, int((max_label_width if orientation == "vertical" else horizontal_lines * font_size * 1.1) + 32))
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
 
