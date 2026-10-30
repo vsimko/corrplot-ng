@@ -23,6 +23,23 @@ class ColorScaleTests(unittest.TestCase):
         self.assertEqual(scale.map_value(-0.5), "#8caed2")
         self.assertEqual(scale.map_value(None), "#d9d9d9")
 
+    def test_sequential_scale_maps_normalized_values_and_legend(self):
+        scale = build_color_scale({
+            "type": "sequential", "interpolation": "rgb",
+            "stops": [
+                {"value": 0, "color": "#ffffe5"},
+                {"value": 0.5, "color": "#fec44f"},
+                {"value": 1, "color": "#662506"},
+            ],
+        })
+        self.assertEqual(scale.map_value(0), "#ffffe5")
+        self.assertEqual(scale.map_value(0.5), "#fec44f")
+        self.assertEqual(scale.map_value(1), "#662506")
+        self.assertEqual(scale.map_value(None), "#d9d9d9")
+        self.assertEqual(scale.legend_entries()[1]["value"], 0.5)
+        with self.assertRaisesRegex(ValueError, r"\[0, 1\]"):
+            scale.map_value(-0.1)
+
     def test_discrete_intervals_have_explicit_boundary_semantics(self):
         scale = build_color_scale({
             "type": "discrete",
