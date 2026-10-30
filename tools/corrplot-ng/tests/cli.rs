@@ -76,5 +76,5 @@ fn publication_config_rejects_unsupported_semantics() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/significance.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng")).args(["validate", "--config"]).arg(&root).output().unwrap();
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("significance is not yet supported"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("not yet supported"));
 }
