@@ -13,6 +13,9 @@ class PlotSceneTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = json.loads((HERE / "example.json").read_text(encoding="utf-8"))
+        cls.correlation_fixtures = json.loads(
+            (HERE.parents[1] / "tests" / "fixtures" / "correlation-cases.json").read_text(encoding="utf-8")
+        )["cases"]
         cls.golden_scene = json.loads(
             (HERE / "scene-v1.example.json").read_text(encoding="utf-8")
         )
@@ -36,6 +39,25 @@ class PlotSceneTests(unittest.TestCase):
             [(cell["row"], cell["column"]) for cell in cells],
             [(row, column) for row in range(3) for column in range(3)],
         )
+
+
+    def test_all_shared_correlation_fixtures_build_ordered_scenes(self):
+        for case in self.correlation_fixtures:
+            with self.subTest(case=case["id"]):
+                scene = build_scene({"labels": case["labels"], "matrix": case["matrix"]})
+                size = len(case["labels"])
+                self.assertEqual(
+                    [label["text"] for label in scene["labels"]],
+                    case["labels"],
+                )
+                self.assertEqual(
+                    [(cell["row"], cell["column"]) for cell in scene["cells"]],
+                    [(row, column) for row in range(size) for column in range(size)],
+                )
+                self.assertEqual(
+                    [cell["value"] for cell in scene["cells"]],
+                    [value for row in case["matrix"] for value in row],
+                )
 
     def test_scene_and_svg_output_are_deterministic(self):
         scene = build_scene(self.config)
