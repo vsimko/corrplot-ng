@@ -163,10 +163,58 @@
           "visible": {
             "type": "boolean"
           },
+          "encoding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "magnitude", "sign", "color"],
+            "properties": {
+              "kind": {"enum": ["circle", "square", "ellipse", "number", "shade", "color", "pie"]},
+              "magnitude": {"type": "number", "minimum": 0, "maximum": 1},
+              "sign": {"enum": [-1, 0, 1]},
+              "color": {"$ref": "#/$defs/color"},
+              "radius": {"type": "number", "minimum": 0},
+              "x": {"type": "number"},
+              "y": {"type": "number"},
+              "width": {"type": "number", "minimum": 0},
+              "height": {"type": "number", "minimum": 0},
+              "center_x": {"type": "number"},
+              "center_y": {"type": "number"},
+              "rx": {"type": "number", "minimum": 0},
+              "ry": {"type": "number", "minimum": 0},
+              "rotation": {"type": "number"},
+              "fill_opacity": {"type": "number", "minimum": 0, "maximum": 1},
+              "fill": {"$ref": "#/$defs/color"},
+              "line": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["x1", "y1", "x2", "y2", "stroke_width", "stroke_opacity"],
+                "properties": {
+                  "x1": {"type": "number"},
+                  "y1": {"type": "number"},
+                  "x2": {"type": "number"},
+                  "y2": {"type": "number"},
+                  "stroke_width": {"type": "number", "minimum": 0},
+                  "stroke_opacity": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              },
+              "full_circle": {"type": "boolean"},
+              "large_arc": {"type": "boolean"},
+              "sweep_flag": {"enum": [0, 1]},
+              "start_x": {"type": "number"},
+              "start_y": {"type": "number"},
+              "end_x": {"type": "number"},
+              "end_y": {"type": "number"}
+            }
+          },
           "method": {
             "enum": [
               "circle",
-              "number"
+              "square",
+              "ellipse",
+              "number",
+              "shade",
+              "color",
+              "pie"
             ]
           },
           "region": {
@@ -300,7 +348,12 @@
     "glyph_method": {
       "enum": [
         "circle",
-        "number"
+        "square",
+        "ellipse",
+        "number",
+        "shade",
+        "color",
+        "pie"
       ]
     },
     "text_annotations": {

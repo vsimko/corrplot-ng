@@ -10,6 +10,7 @@ from typing import Any
 from scene import build_scene
 
 
+
 def render_scene_svg(scene: dict[str, Any]) -> str:
     """Serialize a prepared plot scene to deterministic SVG."""
     width, height = scene["width"], scene["height"]
@@ -92,12 +93,77 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{missing_color}" stroke="#ffffff"/>')
             parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
-        color = cell.get("color") or (style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"])
-        visual_value = cell.get("normalized_value", value)
-        radius = abs(visual_value) * (size * 0.43)
         parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
-        if cell.get("method", scene.get("glyph_method", "circle")) != "number" and radius > 0:
-            parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
+        encoding = cell.get("encoding")
+        if encoding is None:
+            # Backward compatibility for pre-encoding scene-v1 payloads.
+            method = cell.get("method", scene.get("glyph_method", "circle"))
+            if method == "number":
+                continue
+            if method != "circle":
+                raise ValueError(f"scene cell is missing prepared encoding for {method!r}")
+            radius = abs(value) * size * 0.43
+            if radius > 0:
+                color = cell.get("color") or (style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"])
+                parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
+            continue
+
+        kind = encoding["kind"]
+        color = encoding["color"]
+        if kind == "circle":
+            radius = encoding["radius"]
+            if radius > 0:
+                parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
+        elif kind == "square":
+            if encoding["width"] > 0:
+                parts.append(
+                    f'<rect x="{encoding["x"]:.2f}" y="{encoding["y"]:.2f}" '
+                    f'width="{encoding["width"]:.2f}" height="{encoding["height"]:.2f}" '
+                    f'fill="{color}" stroke="none"/>'
+                )
+        elif kind == "ellipse":
+            parts.append(
+                f'<ellipse cx="{encoding["center_x"]:.1f}" cy="{encoding["center_y"]:.1f}" '
+                f'rx="{encoding["rx"]:.2f}" ry="{encoding["ry"]:.2f}" '
+                f'transform="rotate({encoding["rotation"]} {encoding["center_x"]:.1f} {encoding["center_y"]:.1f})" '
+                f'fill="{color}"/>'
+            )
+        elif kind == "number":
+            pass
+        elif kind == "shade":
+            parts.append(
+                f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
+                f'fill="{color}" fill-opacity="{encoding["fill_opacity"]:.3f}" stroke="none"/>'
+            )
+            line = encoding.get("line")
+            if line is not None:
+                parts.append(
+                    f'<line x1="{line["x1"]:g}" y1="{line["y1"]:g}" '
+                    f'x2="{line["x2"]:g}" y2="{line["y2"]:g}" '
+                    f'stroke="{color}" stroke-width="{line["stroke_width"]:.2f}" '
+                    f'stroke-opacity="{line["stroke_opacity"]:.3f}"/>'
+                )
+        elif kind == "color":
+            parts.append(
+                f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
+                f'fill="{encoding["fill"]}" stroke="{style["grid_color"]}"/>'
+            )
+        elif kind == "pie":
+            if encoding["full_circle"]:
+                parts.append(
+                    f'<circle cx="{encoding["center_x"]:.1f}" cy="{encoding["center_y"]:.1f}" '
+                    f'r="{encoding["radius"]:.2f}" fill="{color}"/>'
+                )
+            elif encoding["magnitude"] > 0 and encoding["sign"] != 0:
+                parts.append(
+                    f'<path d="M {encoding["center_x"]:.1f} {encoding["center_y"]:.1f} '
+                    f'L {encoding["start_x"]:.2f} {encoding["start_y"]:.2f} '
+                    f'A {encoding["radius"]:.2f} {encoding["radius"]:.2f} 0 '
+                    f'{1 if encoding["large_arc"] else 0} {encoding["sweep_flag"]} '
+                    f'{encoding["end_x"]:.2f} {encoding["end_y"]:.2f} Z" fill="{color}"/>'
+                )
+        else:
+            raise ValueError(f"unsupported prepared cell encoding {kind!r}")
 
     cells_by_position = {
         (item["row"], item["column"]): item for item in scene["cells"] if item.get("visible", True)
