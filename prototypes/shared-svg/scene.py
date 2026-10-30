@@ -5,7 +5,7 @@ This module owns validation and deterministic layout, not SVG serialization.
 from __future__ import annotations
 
 from typing import Any
-from math import ceil, isfinite
+from math import ceil, cos, isfinite, radians, sin
 
 LABEL_FONT_SIZE = 13
 LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6  # Backwards-compatible estimate used by the legacy bridge.
@@ -20,6 +20,87 @@ def _number(value: Any, name: str, minimum: float, maximum: float | None = None)
         limit = f" between {minimum} and {maximum}" if maximum is not None else f" at least {minimum}"
         raise ValueError(f"layout.{name} must be{limit}")
     return float(value)
+
+
+
+
+def _blend_hex(start: str, end: str, fraction: float) -> str:
+    """Linearly interpolate two six-digit sRGB colors."""
+    fraction = min(1.0, max(0.0, fraction))
+    start_rgb = tuple(int(start[index:index + 2], 16) for index in (1, 3, 5))
+    end_rgb = tuple(int(end[index:index + 2], 16) for index in (1, 3, 5))
+    channels = [round(a + (b - a) * fraction) for a, b in zip(start_rgb, end_rgb)]
+    return "#" + "".join(f"{channel:02x}" for channel in channels)
+
+
+def _cell_encoding(cell: dict[str, Any], method: str, style: dict[str, str]) -> dict[str, Any]:
+    value = cell["value"]
+    visual_value = cell.get("normalized_value", value)
+    magnitude = min(1.0, max(0.0, abs(visual_value)))
+    sign = 1 if value > 0 else -1 if value < 0 else 0
+    color = cell.get("color") or (
+        style["positive_color"] if sign > 0 else
+        style["negative_color"] if sign < 0 else style["zero_color"]
+    )
+    encoding: dict[str, Any] = {
+        "kind": method, "magnitude": magnitude, "sign": sign, "color": color,
+    }
+    x, y, size = cell["x"], cell["y"], cell["size"]
+    cx, cy = cell["center_x"], cell["center_y"]
+
+    if method == "circle":
+        encoding["radius"] = magnitude * size * 0.43
+    elif method == "square":
+        side = magnitude * size * 0.86
+        encoding.update({
+            "x": cx - side / 2, "y": cy - side / 2,
+            "width": side, "height": side,
+        })
+    elif method == "ellipse":
+        rx = size * 0.43
+        encoding.update({
+            "center_x": cx, "center_y": cy, "rx": rx,
+            "ry": max(size * 0.015, rx * (1.0 - magnitude)),
+            "rotation": 45 if sign > 0 else -45 if sign < 0 else 0,
+        })
+    elif method == "number":
+        pass
+    elif method == "shade":
+        encoding["fill_opacity"] = 0.12 + 0.45 * magnitude if magnitude > 0 else 0.0
+        if sign != 0:
+            if sign > 0:
+                line = {"x1": x, "y1": y + size, "x2": x + size, "y2": y}
+            else:
+                line = {"x1": x, "y1": y, "x2": x + size, "y2": y + size}
+            encoding["line"] = {
+                **line,
+                "stroke_width": max(1.0, size * 0.055 * magnitude),
+                "stroke_opacity": magnitude,
+            }
+    elif method == "color":
+        if cell.get("color"):
+            fill = cell["color"]
+        else:
+            target = style["positive_color"] if sign > 0 else style["negative_color"]
+            fill = style["zero_color"] if sign == 0 else _blend_hex(style["zero_color"], target, magnitude)
+        encoding["fill"] = fill
+    elif method == "pie":
+        radius = size * 0.43
+        start_angle = -90.0
+        end_angle = start_angle + sign * 360.0 * magnitude
+        encoding.update({
+            "center_x": cx, "center_y": cy, "radius": radius,
+            "full_circle": magnitude >= 1.0 - 1e-12,
+            "large_arc": magnitude > 0.5,
+            "sweep_flag": 1 if sign > 0 else 0,
+            "start_x": cx + radius * cos(radians(start_angle)),
+            "start_y": cy + radius * sin(radians(start_angle)),
+            "end_x": cx + radius * cos(radians(end_angle)),
+            "end_y": cy + radius * sin(radians(end_angle)),
+        })
+    else:
+        raise ValueError(f"unsupported cell method {method!r}")
+    return encoding
 
 
 def build_scene(config: dict[str, Any]) -> dict[str, Any]:
@@ -293,6 +374,11 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             value = cell["value"]
             cell["normalized_value"] = None if value is None else (
                 (value + transform["intercept"]) * transform["zoom"]
+            )
+    for cell in cells:
+        if cell["value"] is not None:
+            cell["encoding"] = _cell_encoding(
+                cell, cell.get("method", method), scene["style"]
             )
     if has_region_layout:
         scene["display_type"] = display_type

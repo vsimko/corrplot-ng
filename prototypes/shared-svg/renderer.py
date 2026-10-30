@@ -4,26 +4,11 @@ from __future__ import annotations
 import html
 import json
 import sys
-from math import cos, radians, sin
 from pathlib import Path
 from typing import Any
 
 from scene import build_scene
 
-
-
-def _blend_hex(start: str, end: str, fraction: float) -> str:
-    """Linearly interpolate two six-digit sRGB colors."""
-    fraction = min(1.0, max(0.0, fraction))
-    start_rgb = tuple(int(start[index:index + 2], 16) for index in (1, 3, 5))
-    end_rgb = tuple(int(end[index:index + 2], 16) for index in (1, 3, 5))
-    channels = [round(a + (b - a) * fraction) for a, b in zip(start_rgb, end_rgb)]
-    return "#" + "".join(f"{channel:02x}" for channel in channels)
-
-
-def _cell_magnitude(cell: dict[str, Any], value: float) -> float:
-    visual_value = cell.get("normalized_value", value)
-    return min(1.0, max(0.0, abs(visual_value)))
 
 
 def render_scene_svg(scene: dict[str, Any]) -> str:
@@ -108,83 +93,77 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{missing_color}" stroke="#ffffff"/>')
             parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
-        method = cell.get("method", scene.get("glyph_method", "circle"))
-        magnitude = _cell_magnitude(cell, value)
-        direction = 1 if value > 0 else -1 if value < 0 else 0
-        color = cell.get("color") or (
-            style["positive_color"] if direction > 0 else
-            style["negative_color"] if direction < 0 else style["zero_color"]
-        )
-        parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
+        encoding = cell.get("encoding")
+        if encoding is None:
+            # Backward compatibility for pre-encoding scene-v1 payloads.
+            method = cell.get("method", scene.get("glyph_method", "circle"))
+            if method == "number":
+                continue
+            if method != "circle":
+                raise ValueError(f"scene cell is missing prepared encoding for {method!r}")
+            radius = abs(value) * size * 0.43
+            if radius > 0:
+                color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
+                parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
+            continue
 
-        if method == "circle":
-            radius = magnitude * size * 0.43
+        kind = encoding["kind"]
+        color = encoding["color"]
+        if kind == "circle":
+            radius = encoding["radius"]
             if radius > 0:
                 parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
-        elif method == "square":
-            side = magnitude * size * 0.86
-            if side > 0:
+        elif kind == "square":
+            if encoding["width"] > 0:
                 parts.append(
-                    f'<rect x="{cx - side / 2:.2f}" y="{cy - side / 2:.2f}" '
-                    f'width="{side:.2f}" height="{side:.2f}" fill="{color}" stroke="none"/>'
+                    f'<rect x="{encoding["x"]:.2f}" y="{encoding["y"]:.2f}" '
+                    f'width="{encoding["width"]:.2f}" height="{encoding["height"]:.2f}" '
+                    f'fill="{color}" stroke="none"/>'
                 )
-        elif method == "ellipse":
-            rx = size * 0.43
-            ry = max(size * 0.015, rx * (1.0 - magnitude))
-            rotation = 45 if direction > 0 else -45 if direction < 0 else 0
+        elif kind == "ellipse":
             parts.append(
-                f'<ellipse cx="{cx:.1f}" cy="{cy:.1f}" rx="{rx:.2f}" ry="{ry:.2f}" '
-                f'transform="rotate({rotation} {cx:.1f} {cy:.1f})" fill="{color}"/>'
+                f'<ellipse cx="{encoding["center_x"]:.1f}" cy="{encoding["center_y"]:.1f}" '
+                f'rx="{encoding["rx"]:.2f}" ry="{encoding["ry"]:.2f}" '
+                f'transform="rotate({encoding["rotation"]} {encoding["center_x"]:.1f} {encoding["center_y"]:.1f})" '
+                f'fill="{color}"/>'
             )
-        elif method == "number":
-            pass  # The scene's text_annotations carry the formatted value.
-        elif method == "shade":
-            if magnitude > 0:
-                opacity = 0.12 + 0.45 * magnitude
+        elif kind == "number":
+            pass
+        elif kind == "shade":
+            if encoding["magnitude"] > 0:
                 parts.append(
                     f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
-                    f'fill="{color}" fill-opacity="{opacity:.3f}" stroke="none"/>'
+                    f'fill="{color}" fill-opacity="{encoding["fill_opacity"]:.3f}" stroke="none"/>'
                 )
-                if direction != 0:
-                    if direction > 0:
-                        x1, y1, x2, y2 = x, y + size, x + size, y
-                    else:
-                        x1, y1, x2, y2 = x, y, x + size, y + size
-                    stroke_width = max(1.0, size * 0.055 * magnitude)
-                    parts.append(
-                        f'<line x1="{x1:g}" y1="{y1:g}" x2="{x2:g}" y2="{y2:g}" '
-                        f'stroke="{color}" stroke-width="{stroke_width:.2f}" stroke-opacity="{magnitude:.3f}"/>'
-                    )
-        elif method == "color":
-            if cell.get("color"):
-                fill = cell["color"]
-            else:
-                target = style["positive_color"] if direction > 0 else style["negative_color"]
-                fill = style["zero_color"] if direction == 0 else _blend_hex(style["zero_color"], target, magnitude)
+            line = encoding.get("line")
+            if line is not None:
+                parts.append(
+                    f'<line x1="{line["x1"]:g}" y1="{line["y1"]:g}" '
+                    f'x2="{line["x2"]:g}" y2="{line["y2"]:g}" '
+                    f'stroke="{color}" stroke-width="{line["stroke_width"]:.2f}" '
+                    f'stroke-opacity="{line["stroke_opacity"]:.3f}"/>'
+                )
+        elif kind == "color":
             parts.append(
                 f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
-                f'fill="{fill}" stroke="{style["grid_color"]}"/>'
+                f'fill="{encoding["fill"]}" stroke="{style["grid_color"]}"/>'
             )
-        elif method == "pie":
-            radius = size * 0.43
-            if magnitude >= 1.0 - 1e-12:
-                parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
-            elif magnitude > 0 and direction != 0:
-                from_angle = -90.0
-                to_angle = from_angle + direction * 360.0 * magnitude
-                start_x = cx + radius * cos(radians(from_angle))
-                start_y = cy + radius * sin(radians(from_angle))
-                end_x = cx + radius * cos(radians(to_angle))
-                end_y = cy + radius * sin(radians(to_angle))
-                large_arc = 1 if magnitude > 0.5 else 0
-                sweep = 1 if direction > 0 else 0
+        elif kind == "pie":
+            if encoding["full_circle"]:
                 parts.append(
-                    f'<path d="M {cx:.1f} {cy:.1f} L {start_x:.2f} {start_y:.2f} '
-                    f'A {radius:.2f} {radius:.2f} 0 {large_arc} {sweep} '
-                    f'{end_x:.2f} {end_y:.2f} Z" fill="{color}"/>'
+                    f'<circle cx="{encoding["center_x"]:.1f}" cy="{encoding["center_y"]:.1f}" '
+                    f'r="{encoding["radius"]:.2f}" fill="{color}"/>'
+                )
+            elif encoding["magnitude"] > 0 and encoding["sign"] != 0:
+                parts.append(
+                    f'<path d="M {encoding["center_x"]:.1f} {encoding["center_y"]:.1f} '
+                    f'L {encoding["start_x"]:.2f} {encoding["start_y"]:.2f} '
+                    f'A {encoding["radius"]:.2f} {encoding["radius"]:.2f} 0 '
+                    f'{1 if encoding["large_arc"] else 0} {encoding["sweep_flag"]} '
+                    f'{encoding["end_x"]:.2f} {encoding["end_y"]:.2f} Z" fill="{color}"/>'
                 )
         else:
-            raise ValueError(f"unsupported cell method {method!r}")
+            raise ValueError(f"unsupported prepared cell encoding {kind!r}")
 
     cells_by_position = {
         (item["row"], item["column"]): item for item in scene["cells"] if item.get("visible", True)

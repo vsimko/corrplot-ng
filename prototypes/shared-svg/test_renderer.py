@@ -376,6 +376,29 @@ class PlotSceneTests(unittest.TestCase):
 
 
 
+
+    def test_scene_prepares_renderer_neutral_geometry_for_each_method(self):
+        methods = ("circle", "square", "ellipse", "number", "shade", "color", "pie")
+        for method in methods:
+            with self.subTest(method=method):
+                scene = build_scene({
+                    "labels": ["A", "B"],
+                    "matrix": [[1.0, -0.5], [-0.5, 1.0]],
+                    "method": method,
+                })
+                encoding = scene["cells"][1]["encoding"]
+                self.assertEqual(encoding["kind"], method)
+                self.assertEqual(encoding["sign"], -1)
+                self.assertEqual(encoding["magnitude"], 0.5)
+                if method == "ellipse":
+                    self.assertEqual(encoding["rotation"], -45)
+                if method == "pie":
+                    self.assertEqual(encoding["sweep_flag"], 0)
+                if method == "shade":
+                    self.assertLess(encoding["line"]["y1"], encoding["line"]["y2"])
+
+
+
     def test_all_seven_methods_have_distinct_deterministic_svg_encodings(self):
         examples = {
             "circle": "<circle cx=",

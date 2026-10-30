@@ -35,7 +35,14 @@
       "y": 76,
       "center_x": 146,
       "center_y": 118,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 36.12
+      }
     },
     {
       "row": 0,
@@ -45,7 +52,14 @@
       "y": 76,
       "center_x": 230,
       "center_y": 118,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.65,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 23.478
+      }
     },
     {
       "row": 0,
@@ -55,7 +69,14 @@
       "y": 76,
       "center_x": 314,
       "center_y": 118,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.4,
+        "sign": -1,
+        "color": "#b2182b",
+        "radius": 14.448
+      }
     },
     {
       "row": 1,
@@ -65,7 +86,14 @@
       "y": 160,
       "center_x": 146,
       "center_y": 202,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.65,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 23.478
+      }
     },
     {
       "row": 1,
@@ -75,7 +103,14 @@
       "y": 160,
       "center_x": 230,
       "center_y": 202,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 36.12
+      }
     },
     {
       "row": 1,
@@ -95,7 +130,14 @@
       "y": 244,
       "center_x": 146,
       "center_y": 286,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.4,
+        "sign": -1,
+        "color": "#b2182b",
+        "radius": 14.448
+      }
     },
     {
       "row": 2,
@@ -115,7 +157,14 @@
       "y": 244,
       "center_x": 314,
       "center_y": 286,
-      "size": 84
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 36.12
+      }
     }
   ],
   "annotation": "Prototype annotation: synthetic example only",
