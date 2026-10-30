@@ -115,26 +115,6 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     if display_type == "diagonal" and not show_diagonal:
         raise ValueError("diagonal display requires show_diagonal=true")
 
-    method = config.get("method", "circle")
-    if method not in ("circle", "number"):
-        raise ValueError("method must be 'circle' or 'number' in this scene slice")
-    display_type = config.get("display_type", "full")
-    if display_type not in ("full", "upper", "lower", "diagonal"):
-        raise ValueError("display_type must be full, upper, lower, or diagonal")
-    show_diagonal = config.get("show_diagonal", True)
-    if not isinstance(show_diagonal, bool):
-        raise ValueError("show_diagonal must be a boolean")
-    supported_methods = ("circle", "number")
-    upper_method = config.get("upper_method", method)
-    lower_method = config.get("lower_method", method)
-    diagonal_method = config.get("diagonal_method", method)
-    for name, selected in (("upper_method", upper_method), ("lower_method", lower_method),
-                           ("diagonal_method", diagonal_method)):
-        if selected not in supported_methods:
-            raise ValueError(f"{name} must be one of {', '.join(supported_methods)}")
-    if display_type == "diagonal" and not show_diagonal:
-        raise ValueError("diagonal display requires show_diagonal=true")
-
     has_region_layout = any(key in config for key in (
         "display_type", "show_diagonal", "upper_method", "lower_method", "diagonal_method"
     ))
