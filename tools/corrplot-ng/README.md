@@ -102,12 +102,13 @@ render a figure without installing Python or R:
 - name: Install corrplot-ng
   env:
     VERSION: "0.1.0"
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   run: |
     gh release download "cli-v\${VERSION}" \
       --repo vsimko/corrplot-ng \
       --pattern 'corrplot-ng-linux-x86_64-musl.tar.gz' \
       --pattern SHA256SUMS
-    sha256sum -c SHA256SUMS
+    sha256sum --ignore-missing -c SHA256SUMS
     tar -xzf corrplot-ng-linux-x86_64-musl.tar.gz
     sudo install -m 0755 corrplot-ng /usr/local/bin/corrplot-ng
 - name: Render figure
