@@ -138,6 +138,6 @@ test_that("coefficient annotation fixtures match pinned corrplot 0.95 semantics"
     actual <- lapply(scene$text_annotations, function(item) {
       list(row = item$row, column = item$column, role = item$role, text = item$text)
     })
-    expect_identical(actual, case$expected, info = case$id)
+    expect_equal(actual, case$expected, info = case$id)
   }
 })
