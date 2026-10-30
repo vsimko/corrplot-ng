@@ -29,7 +29,7 @@ This helper owns R device drawing only. It does not create or redefine the rende
 | Missing matrix values | Cell value: null; never coerced to zero | Supported |
 | annotation (corrplot-ng adapter option) | Scene-level plain-text annotation | Supported |
 | method | No glyph/method field in scene-v1 | Rejected in scene mode |
-| type, diag | Triangle and diagonal visibility are not represented in scene-v1 | Rejected in scene mode |
+| type, diag | Per-cell `visible` and `region` metadata; hidden cells retain identity and geometry | Supported |
 | order, hclust.method | No permutation/order semantics in scene-v1 | Rejected in scene mode |
 | is.corr | Explicit semantic mode; defaults to correlation and is never inferred from values | Supported |
 | col.lim | Resolved color domain; correlation limits remain within [-1, 1], general-matrix limits must cover all observed values | Supported (per-cell colors and visual normalization are included in the scene) |
