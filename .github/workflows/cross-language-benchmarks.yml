@@ -31,8 +31,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install R benchmark dependencies
-        shell: Rscript {0}
-        run: install.packages(c("Rcpp", "jsonlite", "rextendr", "usethis"))
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::Rcpp
+            any::jsonlite
+            any::rextendr
+            any::usethis
 
       - name: Export deterministic shared fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
