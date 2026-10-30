@@ -144,3 +144,42 @@ deterministic fixtures and checks semantic parity for pure R and both native
 bindings. This job is separate from the Ubuntu-only performance comparison:
 it validates source-build portability and runtime behavior, not speed or
 binary distribution readiness.
+
+## Python large-matrix stress run (2026-10-30)
+
+A separate stress run was executed with
+[workflow run 41061409661](https://github.com/vsimko/corrplot-ng/actions/runs/41061409661)
+from commit `8978c159d145e44a538666ac92ad8e699fe28a3e`. The workflow completed
+successfully and uploaded the machine-readable artifact
+`shared-core-stress-benchmark-results` (artifact ID `12980710758`).
+
+The run used CPython 3.12.15 on an x86_64 Linux GitHub-hosted runner with four
+reported CPUs. It used seed `20261029`, three warmups and 20 measured iterations.
+Semantic assertions ran before timing. The `--include-stress` option executes
+the full shared-core suite (B01, B02, B03, B04, B05, B06, B07 and B08), not
+only B03/B04. The measurements below are the per-call scene-construction
+medians for B03/B04; SVG serialization is a separate B08 measurement.
+
+| Workload | Matrix | Scene cells | Median scene construction | IQR | Peak traced allocation |
+|---|---:|---:|---:|---:|---:|
+| B03 | 500x500 | 250,000 | 2,457.39 ms | 35.76 ms | 101.5 MB |
+| B04 | 1,000x1,000 | 1,000,000 | 10,236.91 ms | 129.11 ms | 413.4 MB |
+
+Both stress workloads passed their semantic correctness gates for all 20
+measured iterations. B04's median is about 4.17 times B03's while containing
+four times as many cells, which is consistent with approximately linear
+scaling in this tested range. This is an observation about this Python
+prototype and workload only, not a complexity guarantee.
+
+The peak allocation figures are from Python `tracemalloc`; they are an
+allocation proxy, not process resident-set size (RSS), and do not represent
+whole-process memory consumption. The first-call latencies were 147.72 ms for
+B03 and 616.20 ms for B04; these are reported separately from the steady-state
+medians. The B08 SVG-serialization-only median was 156.33 ms for its 100x100
+fixture.
+
+This stress run is Python-only. It does not compare Python with pure R,
+C++/Rcpp or Rust/rextendr, and must not be used to select a production language.
+The benchmark runner's extended suite also re-ran the baseline workloads and
+B08. Raw inputs and all samples are available in the workflow artifact linked
+above.
