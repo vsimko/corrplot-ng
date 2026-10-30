@@ -1,0 +1,320 @@
+use std::collections::BTreeMap;
+
+#[derive(Debug, Clone)]
+enum Json {
+    Null, Bool(bool), Number(f64), String(String), Array(Vec<Json>), Object(BTreeMap<String, Json>),
+}
+
+struct Parser { chars: Vec<char>, pos: usize }
+impl Parser {
+    fn new(s: &str) -> Self { Self { chars: s.chars().collect(), pos: 0 } }
+    fn ws(&mut self) { while self.pos < self.chars.len() && self.chars[self.pos].is_whitespace() { self.pos += 1; } }
+    fn peek(&mut self) -> Option<char> { self.ws(); self.chars.get(self.pos).copied() }
+    fn take(&mut self) -> Option<char> { let c = self.chars.get(self.pos).copied(); if c.is_some() { self.pos += 1; } c }
+    fn expect(&mut self, wanted: char) -> Result<(), String> {
+        if self.take() == Some(wanted) { Ok(()) } else { Err(format!("expected '{wanted}' in JSON at character {}", self.pos)) }
+    }
+    fn string(&mut self) -> Result<String, String> {
+        self.expect('"')?;
+        let mut out = String::new();
+        loop {
+            match self.take().ok_or("unterminated JSON string")? {
+                '"' => return Ok(out),
+                '\\' => match self.take().ok_or("unterminated JSON escape")? {
+                    '"' => out.push('"'), '\\' => out.push('\\'), '/' => out.push('/'),
+                    'b' => out.push('\u{0008}'), 'f' => out.push('\u{000c}'), 'n' => out.push('\n'),
+                    'r' => out.push('\r'), 't' => out.push('\t'),
+                    'u' => {
+                        let first = self.hex4()?;
+                        let code = if (0xd800..=0xdbff).contains(&first) {
+                            if self.take() != Some('\\') || self.take() != Some('u') { return Err("invalid JSON surrogate pair".into()); }
+                            let second = self.hex4()?;
+                            if !(0xdc00..=0xdfff).contains(&second) { return Err("invalid JSON surrogate pair".into()); }
+                            0x10000 + (((first - 0xd800) as u32) << 10) + (second - 0xdc00) as u32
+                        } else if (0xdc00..=0xdfff).contains(&first) { return Err("unpaired JSON low surrogate".into()); }
+                        else { first as u32 };
+                        out.push(char::from_u32(code).ok_or("invalid JSON unicode escape")?);
+                    }
+                    c => return Err(format!("invalid JSON escape '\\{c}'")),
+                },
+                c if c < '\u{20}' => return Err("unescaped control character in JSON string".into()),
+                c => out.push(c),
+            }
+        }
+    }
+    fn hex4(&mut self) -> Result<u16, String> {
+        let mut n = 0u16;
+        for _ in 0..4 {
+            let c = self.take().ok_or("short JSON unicode escape")?;
+            n = n.checked_mul(16).ok_or("invalid JSON unicode escape")?
+                + c.to_digit(16).ok_or("invalid JSON unicode escape")? as u16;
+        }
+        Ok(n)
+    }
+    fn value(&mut self) -> Result<Json, String> {
+        match self.peek().ok_or("unexpected end of JSON")? {
+            '"' => Ok(Json::String(self.string()?)),
+            '[' => {
+                self.take(); let mut a = Vec::new();
+                if self.peek() == Some(']') { self.take(); return Ok(Json::Array(a)); }
+                loop { a.push(self.value()?); match self.peek() { Some(',') => { self.take(); }, Some(']') => { self.take(); break; }, _ => return Err("expected ',' or ']' in JSON array".into()) } }
+                Ok(Json::Array(a))
+            }
+            '{' => {
+                self.take(); let mut o = BTreeMap::new();
+                if self.peek() == Some('}') { self.take(); return Ok(Json::Object(o)); }
+                loop {
+                    if self.peek() != Some('"') { return Err("JSON object keys must be strings".into()); }
+                    let k = self.string()?; self.expect(':')?; let v = self.value()?;
+                    if o.insert(k.clone(), v).is_some() { return Err(format!("duplicate JSON object key '{k}'")); }
+                    match self.peek() { Some(',') => { self.take(); }, Some('}') => { self.take(); break; }, _ => return Err("expected ',' or '}' in JSON object".into()) }
+                }
+                Ok(Json::Object(o))
+            }
+            't' => { self.literal("true")?; Ok(Json::Bool(true)) }
+            'f' => { self.literal("false")?; Ok(Json::Bool(false)) }
+            'n' => { self.literal("null")?; Ok(Json::Null) }
+            '-' | '0'..='9' => self.number(),
+            c => Err(format!("unexpected character '{c}' in JSON")),
+        }
+    }
+    fn literal(&mut self, s: &str) -> Result<(), String> { for c in s.chars() { if self.take() != Some(c) { return Err("invalid JSON literal".into()); } } Ok(()) }
+    fn number(&mut self) -> Result<Json, String> {
+        let start = self.pos;
+        if self.peek() == Some('-') { self.take(); }
+        match self.peek() {
+            Some('0') => { self.take(); if matches!(self.peek(), Some('0'..='9')) { return Err("leading zero in JSON number".into()); } }
+            Some('1'..='9') => { self.take(); while matches!(self.peek(), Some('0'..='9')) { self.take(); } }
+            _ => return Err("invalid JSON number".into()),
+        }
+        if self.peek() == Some('.') { self.take(); if !matches!(self.peek(), Some('0'..='9')) { return Err("invalid JSON fraction".into()); } while matches!(self.peek(), Some('0'..='9')) { self.take(); } }
+        if matches!(self.peek(), Some('e'|'E')) {
+            self.take(); if matches!(self.peek(), Some('+'|'-')) { self.take(); }
+            if !matches!(self.peek(), Some('0'..='9')) { return Err("invalid JSON exponent".into()); }
+            while matches!(self.peek(), Some('0'..='9')) { self.take(); }
+        }
+        let s: String = self.chars[start..self.pos].iter().collect();
+        let n: f64 = s.parse().map_err(|_| "invalid JSON number")?;
+        if !n.is_finite() { return Err("JSON numbers must be finite".into()); }
+        Ok(Json::Number(n))
+    }
+}
+fn parse_json(s: &str) -> Result<Json, String> {
+    let mut p = Parser::new(s); let v = p.value()?; p.ws();
+    if p.pos != p.chars.len() { return Err("trailing content after JSON document".into()); }
+    Ok(v)
+}
+fn object<'a>(v: &'a Json, name: &str) -> Result<&'a BTreeMap<String, Json>, String> {
+    if let Json::Object(o) = v { Ok(o) } else { Err(format!("{name} must be an object")) }
+}
+fn array<'a>(v: &'a Json, name: &str) -> Result<&'a [Json], String> {
+    if let Json::Array(a) = v { Ok(a) } else { Err(format!("{name} must be an array")) }
+}
+fn string<'a>(v: &'a Json, name: &str) -> Result<&'a str, String> {
+    if let Json::String(s) = v { Ok(s) } else { Err(format!("{name} must be a string")) }
+}
+fn number(v: &Json, name: &str) -> Result<f64, String> {
+    if let Json::Number(n) = v { Ok(*n) } else { Err(format!("{name} must be a number")) }
+}
+fn boolean(v: &Json, name: &str) -> Result<bool, String> {
+    if let Json::Bool(b) = v { Ok(*b) } else { Err(format!("{name} must be a boolean")) }
+}
+fn required<'a>(o: &'a BTreeMap<String, Json>, key: &str, parent: &str) -> Result<&'a Json, String> {
+    o.get(key).ok_or_else(|| format!("{parent}.{key} is required"))
+}
+fn keys(o: &BTreeMap<String, Json>, allowed: &[&str], parent: &str) -> Result<(), String> {
+    for k in o.keys() { if !allowed.contains(&k.as_str()) { return Err(format!("unknown field '{parent}.{k}'")); } }
+    Ok(())
+}
+fn color(v: &Json, name: &str) -> Result<String, String> {
+    let s = string(v, name)?;
+    if s.len() != 7 || !s.starts_with('#') || !s[1..].chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err(format!("{name} must be a six-digit hexadecimal color"));
+    }
+    Ok(s.to_string())
+}
+
+#[derive(Debug, Clone)]
+pub struct Publication {
+    pub labels: Vec<String>, pub values: Vec<Vec<Option<f64>>>,
+    pub kind: String, pub method: String, pub display: String, pub ordering: String,
+    pub show_values: bool, pub negative: String, pub neutral: String, pub positive: String,
+    pub missing: String, pub width: f64, pub height: f64, pub unit: String,
+    pub family: String, pub base_size: f64, pub output: String,
+}
+impl Publication {
+    pub fn load(config_path: &str) -> Result<Self, String> {
+        let source = std::fs::read_to_string(config_path).map_err(|e| format!("cannot read config '{config_path}': {e}"))?;
+        let root = parse_json(&source)?;
+        let root = object(&root, "config")?;
+        keys(root, &["config_version","input","matrix","plot","colors","dimensions","typography","output"], "config")?;
+        if number(required(root,"config_version","config")?, "config.config_version")? != 1.0 { return Err("config.config_version must equal 1".into()); }
+
+        let matrix_cfg = object(required(root,"matrix","config")?, "matrix")?;
+        keys(matrix_cfg, &["kind","method","missing","col_limits"], "matrix")?;
+        let kind = string(required(matrix_cfg,"kind","matrix")?, "matrix.kind")?.to_string();
+        if kind != "correlation" && kind != "general_numeric" { return Err("matrix.kind must be correlation or general_numeric".into()); }
+        if matrix_cfg.contains_key("col_limits") { return Err("matrix.col_limits is not yet supported by the native CLI".into()); }
+        if kind == "correlation" {
+            let method = string(required(matrix_cfg,"method","matrix")?, "matrix.method")?;
+            if !["pearson","spearman","kendall"].contains(&method) { return Err("unsupported matrix.method".into()); }
+        } else if matrix_cfg.contains_key("method") { return Err("matrix.method is only valid for correlation matrices".into()); }
+        let missing = string(required(matrix_cfg,"missing","matrix")?, "matrix.missing")?;
+        if missing != "preserve" && missing != "error" { return Err("matrix.missing must be preserve or error".into()); }
+
+        let input = object(required(root,"input","config")?, "input")?;
+        let input_kind = string(required(input,"kind","input")?, "input.kind")?;
+        let (mut labels, mut values) = match input_kind {
+            "inline_matrix" => {
+                keys(input, &["kind","labels","values"], "input")?;
+                let labels: Vec<String> = array(required(input,"labels","input")?, "input.labels")?.iter().enumerate()
+                    .map(|(i,v)| string(v,&format!("input.labels[{i}]")).map(str::to_string)).collect::<Result<_,_>>()?;
+                let rows = array(required(input,"values","input")?, "input.values")?;
+                let mut values = Vec::new();
+                for (r,row) in rows.iter().enumerate() {
+                    let mut out = Vec::new();
+                    for (c,v) in array(row,&format!("input.values[{r}]"))?.iter().enumerate() {
+                        out.push(match v { Json::Null => None, Json::Number(n) => Some(*n), _ => return Err(format!("input.values[{r}][{c}] must be a number or null")) });
+                    }
+                    values.push(out);
+                }
+                (labels, values)
+            }
+            "matrix_csv" => {
+                keys(input, &["kind","path","delimiter","header","row_labels"], "input")?;
+                let path = string(required(input,"path","input")?, "input.path")?;
+                let delimiter = string(required(input,"delimiter","input")?, "input.delimiter")?;
+                if delimiter != "," && delimiter != "\t" { return Err("native CLI currently supports only comma or tab delimiters".into()); }
+                if !boolean(required(input,"header","input")?, "input.header")? || !boolean(required(input,"row_labels","input")?, "input.row_labels")? {
+                    return Err("matrix_csv currently requires header=true and row_labels=true".into());
+                }
+                let base = std::path::Path::new(config_path).parent().unwrap_or_else(|| std::path::Path::new("."));
+                let path = base.join(path);
+                let text = std::fs::read_to_string(&path).map_err(|e| format!("cannot read matrix CSV '{}': {e}", path.display()))?;
+                let parsed = crate::parse_matrix(&text, if kind == "correlation" { crate::Kind::Correlation } else { crate::Kind::General })?;
+                (parsed.labels, parsed.values)
+            }
+            other => return Err(format!("unsupported input.kind '{other}'")),
+        };
+        if labels.is_empty() { return Err("input.labels must not be empty".into()); }
+        let n = labels.len();
+        let mut seen = std::collections::HashSet::new();
+        if labels.iter().any(|s| s.trim().is_empty() || !seen.insert(s)) { return Err("input.labels must be non-empty and unique".into()); }
+        if values.len() != n || values.iter().any(|r| r.len() != n) { return Err("input.values must be a square matrix matching labels".into()); }
+        if values.iter().flatten().all(Option::is_none) { return Err("matrix contains no numeric values".into()); }
+        if missing == "error" && values.iter().flatten().any(Option::is_none) { return Err("matrix.missing is 'error' but matrix contains missing values".into()); }
+        for (r,row) in values.iter().enumerate() {
+            for (c,v) in row.iter().enumerate() {
+                if let Some(x) = v { if !x.is_finite() || (kind == "correlation" && !(-1.0..=1.0).contains(x)) {
+                    return Err(format!("invalid matrix value at row {}, column '{}'", r+1, labels[c]));
+                }}
+            }
+        }
+        if kind == "correlation" {
+            for r in 0..n { for c in 0..n {
+                match (values[r][c], values[c][r]) {
+                    (Some(a),Some(b)) if (a-b).abs() <= 1e-8 => {},
+                    (None,None) => {},
+                    _ => return Err(format!("correlation matrix is not symmetric at ('{}', '{}')",labels[r],labels[c])),
+                }
+            }}
+            for i in 0..n { if values[i][i].map_or(true,|v|(v-1.0).abs()>1e-8) { return Err(format!("correlation diagonal for '{}' must equal 1",labels[i])); } }
+        }
+
+        let plot = object(required(root,"plot","config")?, "plot")?;
+        keys(plot,&["method","display","ordering","show_values","significance"],"plot")?;
+        let method = string(required(plot,"method","plot")?,"plot.method")?.to_string();
+        if method != "circle" && method != "number" { return Err(format!("plot.method '{method}' is not yet supported by the native CLI")); }
+        let display = string(required(plot,"display","plot")?,"plot.display")?.to_string();
+        if !["full","upper","lower"].contains(&display.as_str()) { return Err(format!("plot.display '{display}' is not yet supported by the native CLI")); }
+        let ordering = string(required(plot,"ordering","plot")?,"plot.ordering")?.to_string();
+        if ordering != "original" && ordering != "alphabetical" { return Err(format!("plot.ordering '{ordering}' is not yet supported by the native CLI")); }
+        let show_values = boolean(required(plot,"show_values","plot")?,"plot.show_values")?;
+        let sig = object(required(plot,"significance","plot")?,"plot.significance")?;
+        keys(sig,&["enabled","p_values","thresholds"],"plot.significance")?;
+        if boolean(required(sig,"enabled","plot.significance")?,"plot.significance.enabled")? { return Err("plot.significance is not yet supported by the native CLI".into()); }
+        let _ = required(sig,"p_values","plot.significance")?;
+        let thresholds = array(required(sig,"thresholds","plot.significance")?,"plot.significance.thresholds")?;
+        if thresholds.is_empty() { return Err("plot.significance.thresholds must not be empty".into()); }
+        for v in thresholds { let x=number(v,"plot.significance.thresholds[]")?; if x<=0.0 || x>1.0 { return Err("significance thresholds must be in (0, 1]".into()); } }
+
+        let colors = object(required(root,"colors","config")?,"colors")?;
+        keys(colors,&["negative","neutral","positive","missing","scale"],"colors")?;
+        if colors.contains_key("scale") { return Err("colors.scale is not yet supported by the native CLI".into()); }
+        let negative=color(required(colors,"negative","colors")?,"colors.negative")?;
+        let neutral=color(required(colors,"neutral","colors")?,"colors.neutral")?;
+        let positive=color(required(colors,"positive","colors")?,"colors.positive")?;
+        let missing_color=color(required(colors,"missing","colors")?,"colors.missing")?;
+
+        let dims=object(required(root,"dimensions","config")?,"dimensions")?;
+        keys(dims,&["width","height","unit"],"dimensions")?;
+        let width=number(required(dims,"width","dimensions")?,"dimensions.width")?;
+        let height=number(required(dims,"height","dimensions")?,"dimensions.height")?;
+        let unit=string(required(dims,"unit","dimensions")?,"dimensions.unit")?.to_string();
+        if width<=0.0 || height<=0.0 || !["mm","in"].contains(&unit.as_str()) { return Err("dimensions require positive width/height and unit mm or in".into()); }
+
+        let typography=object(required(root,"typography","config")?,"typography")?;
+        keys(typography,&["family","base_size"],"typography")?;
+        let family=string(required(typography,"family","typography")?,"typography.family")?.to_string();
+        let base_size=number(required(typography,"base_size","typography")?,"typography.base_size")?;
+        if family.trim().is_empty() || base_size<=0.0 { return Err("typography.family and typography.base_size must be positive/non-empty".into()); }
+
+        let output=object(required(root,"output","config")?,"output")?;
+        keys(output,&["format","path"],"output")?;
+        if string(required(output,"format","output")?,"output.format")? != "svg" { return Err("output.format must be svg".into()); }
+        let output_path=string(required(output,"path","output")?,"output.path")?.to_string();
+        if output_path.trim().is_empty() { return Err("output.path must not be empty".into()); }
+
+        if ordering == "alphabetical" {
+            let mut indices: Vec<usize>=(0..n).collect();
+            indices.sort_by(|a,b| labels[*a].to_lowercase().cmp(&labels[*b].to_lowercase()).then(labels[*a].cmp(&labels[*b])).then(a.cmp(b)));
+            let old_labels=labels.clone(); let old_values=values.clone();
+            labels=indices.iter().map(|i|old_labels[*i].clone()).collect();
+            values=indices.iter().map(|i|indices.iter().map(|j|old_values[*i][*j]).collect()).collect();
+        }
+        Ok(Self { labels, values, kind, method, display, ordering, show_values, negative, neutral, positive,
+            missing: missing_color, width, height, unit, family, base_size, output: output_path })
+    }
+
+    pub fn svg(&self, title: &str) -> String {
+        let n=self.labels.len(); let cell=64.0; let left=120.0; let top=76.0;
+        let vw=left+n as f64*cell+24.0; let vh=top+n as f64*cell+32.0;
+        let esc=|s:&str|s.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;").replace('\'',"&apos;");
+        let mut out=format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\">\n<title>{}</title>\n",self.width,self.unit,self.height,self.unit,vw,vh,esc(title));
+        out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n<text x=\"{}\" y=\"28\" font-family=\"{}\" font-size=\"{}\" font-weight=\"bold\">{}</text>\n",left,esc(&self.family),self.base_size*1.5,esc(title)));
+        for (i,label) in self.labels.iter().enumerate() {
+            let cy=top+i as f64*cell+cell/2.0; let cx=left+i as f64*cell+cell/2.0;
+            out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"end\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\">{}</text>\n",left-12.0,cy,esc(&self.family),self.base_size,esc(label)));
+            out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" font-family=\"{}\" font-size=\"{}\">{}</text>\n",cx,top-12.0,esc(&self.family),self.base_size,esc(label)));
+        }
+        let max_abs=self.values.iter().flatten().filter_map(|v|*v).map(f64::abs).fold(0.0_f64,f64::max).max(1.0);
+        for r in 0..n { for c in 0..n {
+            if (self.display=="upper" && r>c)||(self.display=="lower" && r<c) { continue; }
+            let x=left+c as f64*cell; let y=top+r as f64*cell; let cx=x+cell/2.0; let cy=y+cell/2.0;
+            let value=self.values[r][c];
+            let fill=match value { None=>&self.missing,Some(v) if v>0.0=>&self.positive,Some(v) if v<0.0=>&self.negative,_=>&self.neutral };
+            out.push_str(&format!("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\" stroke=\"#e0e0e0\"/>\n",x,y,cell,cell,fill));
+            match value {
+                None=>{},
+                Some(v) if self.method=="number" || self.show_values => {
+                    out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"white\">{}</text>\n",cx,cy,esc(&self.family),self.base_size,format!("{v:.2}")));
+                }
+                Some(v)=>{
+                    let radius=if self.kind=="correlation" { v.abs()*25.0+2.0 } else { (v.abs()/max_abs)*27.0+2.0 };
+                    out.push_str(&format!("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n",cx,cy,radius,fill));
+                }
+            }
+        }}
+        out.push_str("</svg>\n"); out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn parses_json_unicode_and_rejects_trailing_content() {
+        assert!(parse_json(r#"{"x":"λ","y":[1,null,true]}"#).is_ok());
+        assert!(parse_json("{} trailing").is_err());
+    }
+}

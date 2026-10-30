@@ -4,6 +4,8 @@ use std::fs;
 use std::io::{self, Read, Write};
 use std::process;
 
+mod publication;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const CELL: f64 = 84.0;
 const LEFT: f64 = 104.0;
@@ -11,12 +13,12 @@ const TOP: f64 = 76.0;
 
 #[derive(Debug, Clone)]
 struct Matrix {
-    labels: Vec<String>,
-    values: Vec<Vec<Option<f64>>>,
+    pub(crate) labels: Vec<String>,
+    pub(crate) values: Vec<Vec<Option<f64>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Kind { Correlation, General }
+pub(crate) enum Kind { Correlation, General }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Format { Svg, SceneJson }
@@ -24,6 +26,7 @@ enum Format { Svg, SceneJson }
 #[derive(Debug)]
 struct Options {
     input: String,
+    config: Option<String>,
     output: Option<String>,
     format: Format,
     kind: Kind,
@@ -46,7 +49,7 @@ COMMANDS:
   help       Show this help
 
 RENDER OPTIONS:
-  -i, --input PATH       Input CSV/TSV file; use - for stdin (required)
+  -i, --input PATH       Input CSV/TSV file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
   -o, --output PATH      Output file; default is stdout
       --format FORMAT    svg (default) or scene-json
       --kind KIND        correlation (default) or general
@@ -70,7 +73,7 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
 
 fn parse_args(args: &[String]) -> Result<Options, String> {
     if args.len() < 2 { return Err(usage().to_string()); }
-    let mut input = None;
+    let mut input = None;\n    let mut config = None;
     let mut output = None;
     let mut format = Format::Svg;
     let mut kind = Kind::Correlation;
@@ -83,7 +86,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
         if i + 1 >= args.len() { return Err(format!("missing value for {arg}\n\n{}", usage())); }
         let value = args[i + 1].clone();
         match arg {
-            "-i" | "--input" => input = Some(value),
+            "-i" | "--input" => input = Some(value),\n            "--config" => config = Some(value),
             "-o" | "--output" => output = Some(value),
             "--format" => format = match value.as_str() {
                 "svg" => Format::Svg,
@@ -156,7 +159,7 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
     Ok(records)
 }
 
-fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
+pub(crate) fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
     let records = parse_csv_records(source)?;
     if records.len() < 2 { return Err("expected a header and at least one matrix row".into()); }
     let header = &records[0];
@@ -378,7 +381,7 @@ fn run() -> Result<(), String> {
 
 fn main() {
     if let Err(message) = run() {
-        let usage_error = message.contains("requires --input") || message.contains("unknown option") ||
+        let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported method") ||
             message.contains("missing value for");
