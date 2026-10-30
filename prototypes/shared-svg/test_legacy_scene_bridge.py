@@ -36,6 +36,16 @@ def verify_case(name: str, config: dict) -> None:
     assert scene["width"] == 104 + size * 84 + 24
     assert scene["height"] == 76 + size * 84 + 64
 
+    if name == "perfect_correlations_and_constant":
+        assert matrix[0][1] == 1
+        assert matrix[0][2] == -1
+        assert all(matrix[row][3] is None for row in range(3))
+        assert matrix[3][3] == 1
+    elif name == "fully_missing_variable":
+        assert all(matrix[row][2] is None for row in range(size))
+        assert all(matrix[2][column] is None for column in range(size))
+        assert sum(value is None for row in matrix for value in row) == 5
+
     print(
         f"{name}: {size} labels, {len(scene['cells'])} cells, "
         f"{missing} missing values"
@@ -54,6 +64,8 @@ def main() -> None:
         "three_alphabetic_order",
         "two_variables",
         "four_variables_with_missing",
+        "perfect_correlations_and_constant",
+        "fully_missing_variable",
     }
     assert set(cases) == expected_cases
 
