@@ -24,12 +24,16 @@ pub(crate) enum Kind { Correlation, General }
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Format { Svg, SceneJson }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum InputFormat { Auto, Csv, Tsv, Json }
+
 #[derive(Debug)]
 struct Options {
     input: String,
     config: Option<String>,
     output: Option<String>,
     format: Format,
+    input_format: InputFormat,
     kind: Kind,
     method: String,
     title: String,
@@ -51,9 +55,9 @@ COMMANDS:
   help       Show this help
 
 RENDER OPTIONS:
-  -i, --input PATH       Input CSV/TSV file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
+  -i, --input PATH       Input CSV/TSV/JSON file; use - for stdin\n      --input-format FMT auto (default), csv, tsv, or json\n      --config PATH      Publication configuration v1 JSON file (render/validate)
   -o, --output PATH      Output file; default is stdout
-      --format FORMAT    svg (default) or scene-json
+      --format FORMAT    svg (default) or scene-json; png/pdf/html unsupported
       --kind KIND        correlation (default) or general
       --method METHOD    circle (default) or number
       --title TEXT       Figure title
@@ -79,6 +83,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     let mut config = None;
     let mut output = None;
     let mut format = Format::Svg;
+    let mut input_format = InputFormat::Auto;
     let mut kind = Kind::Correlation;
     let mut method = "circle".to_string();
     let mut title = "corrplot-ng".to_string();
@@ -92,6 +97,13 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
             "-i" | "--input" => input = Some(value),
             "--config" => config = Some(value),
             "-o" | "--output" => output = Some(value),
+            "--input-format" => input_format = match value.as_str() {
+                "auto" => InputFormat::Auto,
+                "csv" => InputFormat::Csv,
+                "tsv" => InputFormat::Tsv,
+                "json" => InputFormat::Json,
+                _ => return Err(format!("unsupported input format '{value}' (expected auto, csv, tsv, or json)")),
+            },
             "--format" => format = match value.as_str() {
                 "svg" => Format::Svg,
                 "scene-json" => Format::SceneJson,
@@ -115,11 +127,11 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     }
     Ok(Options {
         input: input.unwrap_or_default(), config,
-        output, format, kind, method, title,
+        output, format, input_format, kind, method, title,
     })
 }
 
-fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
+fn parse_csv_records(source: &str, delimiter: char) -> Result<Vec<Vec<String>>, String> {
     let mut records = Vec::new();
     let mut row = Vec::new();
     let mut field = String::new();
@@ -137,7 +149,7 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
             }
         } else if after_quote {
             match ch {
-                ',' | '\t' => { row.push(std::mem::take(&mut field)); after_quote = false; }
+                c if c == delimiter => { row.push(std::mem::take(&mut field)); after_quote = false; }
                 '\r' => { if chars.peek() == Some(&'\n') { chars.next(); } row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); after_quote = false; }
                 '\n' => { row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); after_quote = false; }
                 ' ' => {}
@@ -146,7 +158,7 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
         } else {
             match ch {
                 '"' if field.is_empty() => quoted = true,
-                ',' | '\t' => row.push(std::mem::take(&mut field)),
+                c if c == delimiter => row.push(std::mem::take(&mut field)),
                 '\r' => { if chars.peek() == Some(&'\n') { chars.next(); } row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); }
                 '\n' => { row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); }
                 _ => field.push(ch),
@@ -163,8 +175,9 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
     Ok(records)
 }
 
-pub(crate) fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
-    let records = parse_csv_records(source)?;
+pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: char) -> Result<Matrix, String> {
+    if delimiter != ',' && delimiter != '\t' { return Err("only comma and tab delimiters are supported".into()); }
+    let records = parse_csv_records(source, delimiter)?;
     if records.len() < 2 { return Err("expected a header and at least one matrix row".into()); }
     let header = &records[0];
     if header.len() < 2 { return Err("header must contain an empty corner cell and column labels".into()); }
@@ -325,12 +338,50 @@ fn svg(matrix: &Matrix, title: &str, method: &str, kind: Kind) -> String {
 }
 
 fn read_input(path: &str) -> Result<String, String> {
-    if path == "-" {
-        let mut s = String::new();
-        io::stdin().read_to_string(&mut s).map_err(|e| format!("cannot read stdin: {e}"))?;
-        Ok(s)
+    let bytes = if path == "-" {
+        let mut bytes = Vec::new();
+        io::stdin().read_to_end(&mut bytes).map_err(|e| format!("cannot read stdin: {e}"))?;
+        bytes
     } else {
-        fs::read_to_string(path).map_err(|e| format!("cannot read '{path}': {e}"))
+        fs::read(path).map_err(|e| format!("cannot read '{path}': {e}"))?
+    };
+    let mut source = String::from_utf8(bytes).map_err(|e| {
+        format!("input '{}' is not valid UTF-8 at byte {}; save it as UTF-8 or convert it before reading",
+            if path == "-" { "stdin" } else { path }, e.utf8_error().valid_up_to())
+    })?;
+    if source.starts_with('\u{feff}') { source.remove(0); }
+    Ok(source)
+}
+
+fn detect_input_format(path: &str, source: &str, requested: InputFormat) -> Result<InputFormat, String> {
+    if requested != InputFormat::Auto { return Ok(requested); }
+    if path != "-" {
+        match std::path::Path::new(path).extension().and_then(|x| x.to_str()).unwrap_or("").to_ascii_lowercase().as_str() {
+            "csv" => return Ok(InputFormat::Csv),
+            "tsv" | "tab" => return Ok(InputFormat::Tsv),
+            "json" => return Ok(InputFormat::Json),
+            _ => {}
+        }
+    }
+    let trimmed = source.trim_start();
+    if trimmed.starts_with('{') || trimmed.starts_with('[') { return Ok(InputFormat::Json); }
+    let first = trimmed.lines().find(|line| !line.trim().is_empty())
+        .ok_or_else(|| "input is empty".to_string())?;
+    let commas = first.matches(',').count();
+    let tabs = first.matches('\t').count();
+    match (commas, tabs) {
+        (0, 0) => Err("cannot detect input format; use --input-format csv, tsv, or json".into()),
+        (c, t) if c > t => Ok(InputFormat::Csv),
+        (c, t) if t > c => Ok(InputFormat::Tsv),
+        _ => Err("input delimiter is ambiguous; specify --input-format csv or tsv".into()),
+    }
+}
+
+fn detect_delimiter(format: InputFormat) -> Result<char, String> {
+    match format {
+        InputFormat::Csv => Ok(','),
+        InputFormat::Tsv => Ok('\t'),
+        _ => Err("CSV or TSV input format is required".into()),
     }
 }
 
@@ -380,7 +431,13 @@ fn run() -> Result<(), String> {
             }
             if opts.input.is_empty() { return Err(format!("{} requires --input PATH or --config PATH", args[1])); }
             let source = read_input(&opts.input)?;
-            let matrix = parse_matrix(&source, opts.kind)?;
+            let input_format = detect_input_format(&opts.input, &source, opts.input_format)?;
+            let (matrix, kind) = if input_format == InputFormat::Json {
+                publication::parse_json_matrix(&source, opts.kind)?
+            } else {
+                let matrix = parse_matrix_with_delimiter(&source, opts.kind, detect_delimiter(input_format)?)?;
+                (matrix, opts.kind)
+            };
             match args[1].as_str() {
                 "validate" => println!("valid: {} x {} matrix ({} missing values)", matrix.labels.len(), matrix.labels.len(), matrix.values.iter().flatten().filter(|v| v.is_none()).count()),
                 "inspect" => {
@@ -394,8 +451,8 @@ fn run() -> Result<(), String> {
                 }
                 "render" => {
                     let output = match opts.format {
-                        Format::Svg => svg(&matrix, &opts.title, &opts.method, opts.kind),
-                        Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, opts.kind),
+                        Format::Svg => svg(&matrix, &opts.title, &opts.method, kind),
+                        Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, kind),
                     };
                     write_output(opts.output.as_deref(), &output)?;
                 }
@@ -425,14 +482,14 @@ mod tests {
 
     #[test]
     fn parses_square_correlation_matrix() {
-        let m = parse_matrix(SAMPLE, Kind::Correlation).unwrap();
+        let m = parse_matrix_with_delimiter(SAMPLE, Kind::Correlation, ',').unwrap();
         assert_eq!(m.labels, vec!["alpha", "beta"]);
         assert_eq!(m.values[0][1], Some(0.5));
     }
 
     #[test]
     fn preserves_missing_values() {
-        let m = parse_matrix(",a,b\na,1,NA\nb,null,1\n", Kind::Correlation).unwrap();
+        let m = parse_matrix_with_delimiter(",a,b\na,1,NA\nb,null,1\n", Kind::Correlation, ',').unwrap();
         assert_eq!(m.values[0][1], None);
     }
 
@@ -445,12 +502,12 @@ mod tests {
 
     #[test]
     fn rejects_asymmetric_correlation() {
-        assert!(parse_matrix(",a,b\na,1,0.2\nb,0.3,1\n", Kind::Correlation).unwrap_err().contains("not symmetric"));
+        assert!(parse_matrix_with_delimiter(",a,b\na,1,0.2\nb,0.3,1\n", Kind::Correlation, ',').unwrap_err().contains("not symmetric"));
     }
 
     #[test]
     fn general_matrix_allows_values_outside_unit_interval() {
-        let m = parse_matrix(",a,b\na,10,-4\nb,2,8\n", Kind::General).unwrap();
+        let m = parse_matrix_with_delimiter(",a,b\na,10,-4\nb,2,8\n", Kind::General, ',').unwrap();
         assert_eq!(m.values[0][0], Some(10.0));
     }
 
