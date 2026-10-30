@@ -183,7 +183,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       if (!is.na(value) && !options$is.corr) {
         normalized <- (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
         position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
-        palette_index <- max(1L, min(length(scale$palette), floor(position * (length(scale$palette) - 1L)) + 1L))
+        palette_index <- max(1L, min(length(scale$palette), floor(position * length(scale$palette)) + 1L))
         cell$color <- scale$palette[[palette_index]]
       }
       cells[[index]] <- cell
