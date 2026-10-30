@@ -95,6 +95,31 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
 
+    p_values = config.get("p_values")
+    if p_values is not None:
+        if not isinstance(p_values, list) or len(p_values) != len(labels) or any(
+            not isinstance(row, list) or len(row) != len(labels) for row in p_values
+        ):
+            raise ValueError("p_values must be square and match labels")
+        for row in p_values:
+            for value in row:
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 1:
+                    raise ValueError("p_values must contain numbers between 0 and 1")
+    variable_order = config.get("variable_order")
+    if variable_order is not None:
+        if not isinstance(variable_order, dict) or set(variable_order) != {"strategy", "indices", "labels"}:
+            raise ValueError("variable_order must contain strategy, indices, and labels")
+        indices = variable_order["indices"]
+        original_labels = variable_order["labels"]
+        if (not isinstance(variable_order["strategy"], str)
+            or not isinstance(indices, list) or len(indices) != len(labels)
+            or any(isinstance(i, bool) or not isinstance(i, int) or i < 0 for i in indices)
+            or len(set(indices)) != len(indices)
+            or not isinstance(original_labels, list) or len(original_labels) != len(labels)
+            or any(not isinstance(label, str) for label in original_labels)):
+            raise ValueError("variable_order must preserve one unique original index and label per variable")
+
+
     method = config.get("method", "circle")
     if method not in ("circle", "number"):
         raise ValueError("method must be 'circle' or 'number' in this scene slice")
@@ -153,6 +178,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 })
             if cell_colors is not None:
                 item["color"] = cell_colors[row_index * len(labels) + column_index]
+            if p_values is not None:
+                item["p_value"] = p_values[row_index][column_index]
             cells.append(item)
 
     # Coefficient/value text is semantic scene data, not an SVG-specific detail.
@@ -249,4 +276,6 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         }
     if legend is not None:
         scene["legend"] = legend
+    if variable_order is not None:
+        scene["variable_order"] = variable_order
     return scene

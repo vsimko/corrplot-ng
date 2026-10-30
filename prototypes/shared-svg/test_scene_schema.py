@@ -32,6 +32,23 @@ class SceneSchemaTests(unittest.TestCase):
             "\n".join(f"{list(error.path)}: {error.message}" for error in errors),
         )
 
+    def test_variable_order_and_cell_p_values_are_part_of_scene_contract(self):
+        config = dict(self.config)
+        config["variable_order"] = {
+            "strategy": "alphabetical",
+            "indices": [1, 0, 2],
+            "labels": ["beta", "alpha", "gamma"],
+        }
+        config["p_values"] = [
+            [0.0, 0.01, 0.02],
+            [0.01, 0.0, 0.03],
+            [0.02, 0.03, 0.0],
+        ]
+        scene = build_scene(config)
+        self.assertEqual(scene["variable_order"]["indices"], [1, 0, 2])
+        self.assertEqual(scene["cells"][1]["p_value"], 0.01)
+        self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
+
     def test_schema_rejects_unknown_top_level_fields(self):
         scene = build_scene(self.config)
         scene["renderer_specific_hint"] = "should not be in the shared contract"

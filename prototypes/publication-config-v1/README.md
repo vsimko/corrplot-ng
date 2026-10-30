@@ -18,7 +18,7 @@ This directory defines the first declarative configuration format for reproducib
 
 The JSON Schema rejects unknown fields and validates local field constraints. The Python validator additionally checks square dimensions, unique labels, matrix symmetry, diagonal values, and color-scale coverage, ordering, zero handling, and signed-domain symmetry. CSV parsing and validation are performed by the eventual data-loading consumer.
 
-Normalized configurations preserve supplied values and matrix/label order. Canonical JSON uses lexicographically sorted object keys, compact separators, UTF-8 text, and no numeric rounding. This provides stable semantic comparisons without changing numeric precision. A JSON Schema validator does not mutate input documents.
+Normalized configurations preserve supplied values and source matrix/label order. Scene adaptation applies the requested display permutation without mutating the source config. Canonical JSON uses lexicographically sorted object keys, compact separators, UTF-8 text, and no numeric rounding. This provides stable semantic comparisons without changing numeric precision. A JSON Schema validator does not mutate input documents.
 
 ## Scene adaptation
 
@@ -33,6 +33,13 @@ Normalized configurations preserve supplied values and matrix/label order. Canon
 5. Discrete intervals are left-closed/right-open, except for the final interval, which includes its upper endpoint.
 6. CSV input resolves to a square numeric matrix with unique, non-empty labels.
 7. Ordering changes display order only; it must not rewrite source data or labels.
+
+## Ordering semantics
+
+- `original` preserves input order.
+- `alphabetical` sorts labels by Unicode case-folded text, then original text, then original index.
+- `hclust` uses average linkage over `d(i,j) = 1 - r(i,j)`. Cluster-pair distance is the arithmetic mean of observed cross-cluster distances; missing correlations are omitted. If a variable has no observed off-diagonal correlation, or remaining clusters have no observed cross-pair, clustering fails with a diagnostic. Equal distances are broken by the smallest original index in each cluster, and child orientation uses that same key.
+- `aoe` remains in the schema for compatibility but is rejected during scene adaptation until its eigenvector sign, tie, and degenerate-matrix semantics are specified.
 
 ## Evolution
 
