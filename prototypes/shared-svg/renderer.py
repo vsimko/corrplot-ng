@@ -94,6 +94,9 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
         parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
+        significance = cell.get("significance")
+        if significance is not None and significance["blank"]:
+            continue
         encoding = cell.get("encoding")
         if encoding is None:
             # Backward compatibility for pre-encoding scene-v1 payloads.
@@ -165,8 +168,23 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         else:
             raise ValueError(f"unsupported prepared cell encoding {kind!r}")
 
+        interval = cell.get("confidence_interval")
+        if interval is not None:
+            parts.append(
+                f'<line x1="{interval["x1"]:.2f}" y1="{interval["y"]:.2f}" '
+                f'x2="{interval["x2"]:.2f}" y2="{interval["y"]:.2f}" '
+                f'stroke="{interval["color"]}" stroke-width="{interval["stroke_width"]:.2f}"/>'
+            )
+            half_cap = interval["cap_height"] / 2
+            for endpoint in (interval["x1"], interval["x2"]):
+                parts.append(
+                    f'<line x1="{endpoint:.2f}" y1="{interval["y"] - half_cap:.2f}" '
+                    f'x2="{endpoint:.2f}" y2="{interval["y"] + half_cap:.2f}" '
+                    f'stroke="{interval["color"]}" stroke-width="{interval["stroke_width"]:.2f}"/>'
+                )
+
     cells_by_position = {
-        (item["row"], item["column"]): item for item in scene["cells"] if item.get("visible", True)
+        (item["row"], item["column"]): item for item in scene["cells"] if item.get("visible", True) and not item.get("significance", {}).get("blank", False)
     }
     for label in scene.get("text_annotations", []):
         cell = cells_by_position.get((label["row"], label["column"]))
@@ -178,6 +196,18 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             f'font-family="{family}" font-size="{label["font_size"]:g}" '
             f'font-weight="{label["font_weight"]}" font-style="{label["font_style"]}" '
             f'fill="{html.escape(label["color"], quote=True)}">{html.escape(label["text"])}</text>'
+        )
+
+    for cell in scene["cells"]:
+        significance = cell.get("significance")
+        if not significance or not significance["annotation"] or not cell.get("visible", True):
+            continue
+        parts.append(
+            f'<text x="{cell["center_x"] + cell["size"] * 0.30:.1f}" '
+            f'y="{cell["center_y"] - cell["size"] * 0.30:.1f}" '
+            f'text-anchor="middle" dominant-baseline="middle" '
+            f'font-family="{family}" font-size="{min(font_size, 10):g}" '
+            f'font-weight="bold" fill="#222222">{html.escape(significance["annotation"])}</text>'
         )
 
     if scene["annotation"]:
