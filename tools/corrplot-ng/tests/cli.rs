@@ -210,3 +210,64 @@ fn publication_svg_respects_display_visibility_and_value_annotations() {
 
     fs::remove_dir_all(directory).ok();
 }
+
+
+#[test]
+fn inline_and_relative_csv_inputs_produce_identical_scenes() {
+    let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(fixture).unwrap();
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-input-equivalence-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let inline_config = directory.join("inline.json");
+    let csv_config = directory.join("csv.json");
+    let csv_path = directory.join("matrix.csv");
+    let inline_scene = directory.join("inline-scene.json");
+    let csv_scene = directory.join("csv-scene.json");
+
+    let input_start = source.find("\"input\": {").unwrap();
+    let matrix_start = input_start + source[input_start..].find("\n  \"matrix\":").unwrap();
+    let csv_source = format!(
+        "{}\"input\": {{\"kind\":\"matrix_csv\",\"path\":\"matrix.csv\",\"delimiter\":\",\",\"header\":true,\"row_labels\":true}},{}",
+        &source[..input_start],
+        &source[matrix_start..],
+    );
+    fs::write(&inline_config, &source).unwrap();
+    fs::write(&csv_config, csv_source).unwrap();
+    fs::write(
+        &csv_path,
+        ",temperature,humidity,yield\ntemperature,1,-0.42,0.71\nhumidity,-0.42,1,-0.18\nyield,0.71,-0.18,1\n",
+    ).unwrap();
+
+    for (config, output_path) in [(&inline_config, &inline_scene), (&csv_config, &csv_scene)] {
+        let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+            .args(["render", "--config"]).arg(config)
+            .args(["--format", "scene-json", "--output"]).arg(output_path)
+            .output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    }
+    assert_eq!(fs::read(&inline_scene).unwrap(), fs::read(&csv_scene).unwrap());
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn invalid_publication_matrix_fails_before_creating_output() {
+    let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(fixture).unwrap();
+    let invalid = source.replace("[1.0, -0.42, 0.71]", "[1.0, -0.41, 0.71]");
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-invalid-matrix-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let config_path = directory.join("invalid-matrix.json");
+    let output_path = directory.join("must-not-exist.svg");
+    fs::write(&config_path, invalid).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("not symmetric"));
+    assert!(!output_path.exists(), "invalid matrix must not leave a partial output file");
+    fs::remove_dir_all(directory).ok();
+}
