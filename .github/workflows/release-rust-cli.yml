@@ -141,6 +141,22 @@ jobs:
           cp tools/corrplot-ng/README.md "$stage/README.md"
           cp tools/corrplot-ng/examples/smoke-matrix.csv "$stage/smoke-matrix.csv"
 
+      - name: Inspect Windows PE runtime dependencies
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio/Installer/vswhere.exe"
+          if (-not (Test-Path $vswhere)) { throw "vswhere.exe is missing; cannot audit PE imports" }
+          $dumpbin = & $vswhere -latest -products '*' -find 'VC\Tools\MSVC\*\bin\Host*\*\dumpbin.exe' | Select-Object -First 1
+          if (-not $dumpbin) { throw "dumpbin.exe is missing; cannot audit PE imports" }
+          $binary = Join-Path $PWD "tools/corrplot-ng/target/${{ matrix.target }}/release/corrplot-ng.exe"
+          $report = "dist/corrplot-ng-${{ matrix.target }}/runtime-dependencies.txt"
+          & $dumpbin /DEPENDENTS $binary 2>&1 | Tee-Object -FilePath $report
+          if ($LASTEXITCODE -ne 0) { throw "dumpbin failed to inspect the release executable" }
+          if (Select-String -Path $report -Pattern 'python|libpython|libR' -Quiet) {
+            throw "Unexpected Python or R runtime dependency"
+          }
+
       - name: Verify static Linux binary in a minimal container
         if: runner.os == 'Linux'
         shell: bash
