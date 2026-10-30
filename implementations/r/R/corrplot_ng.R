@@ -169,7 +169,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
         value = if (is.na(value)) NULL else as.numeric(value),
         normalized_value = if (is.na(value)) NULL else if (options$is.corr) as.numeric(value) else
           (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom,
-        color = if (is.na(value)) NULL else {
+        color = if (is.na(value) || options$is.corr) NULL else {
           normalized <- if (options$is.corr) as.numeric(value) else
             (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
           position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
