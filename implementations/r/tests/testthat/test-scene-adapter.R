@@ -8,7 +8,7 @@ test_that("the scene engine builds a renderer-neutral scene-v1 object", {
   expect_identical(vapply(scene$labels, function(item) item$text, character(1)), c("A", "B"))
   expect_length(scene$cells, 4L)
   expect_identical(lapply(scene$cells, function(cell) c(cell$row, cell$column)),
-    list(c(0, 0), c(0, 1), c(1, 0), c(1, 1)))
+    list(c(0L, 0L), c(0L, 1L), c(1L, 0L), c(1L, 1L)))
   expect_equal(vapply(scene$cells, function(cell) {
     if (is.null(cell$value)) NA_real_ else cell$value
   }, numeric(1)), c(1, 0.6, NA_real_, 1))
