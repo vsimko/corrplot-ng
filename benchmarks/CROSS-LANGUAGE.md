@@ -97,3 +97,50 @@ The machine-readable inputs and raw measurements are retained in the workflow
 artifact linked above. Re-run on Windows and macOS, and compare install/package
 readiness, API ergonomics, maintenance cost and full corrplot feature coverage
 before choosing a production shared core.
+
+## Follow-up CI results and packaging matrix (2026-10-30)
+
+A follow-up run on the PR #38 head,
+[workflow run 41051285476](https://github.com/vsimko/corrplot-ng/actions/runs/41051285476),
+repeated all benchmark measurements and added source-package smoke tests on
+Ubuntu, macOS and Windows. All 40 benchmark measurements passed their
+correctness gates, and all three platform package-smoke jobs passed. The run
+used Ubuntu x86_64, R 4.6.2, Rcpp 1.1.2, rextendr 0.5.0 and jsonlite 2.0.0
+for performance measurements.
+
+Updated end-to-end median milliseconds:
+
+| Workload | Python | Pure R | C++/Rcpp | Rust/rextendr |
+|---|---:|---:|---:|---:|
+| B01, 20x20 | 0.954 | 260 | 0.883 | 0.738 |
+| B02, 100x100 | 22.987 | 6473 | 21.438 | 18.250 |
+| B05, 10% missing | 22.575 | 6448 | 21.125 | 18.125 |
+| B06, long labels | 22.983 | 6452 | 21.500 | 18.375 |
+| B07, reorder | 23.100 | 6431 | 21.375 | 18.250 |
+
+The follow-up confirms the earlier ordering: Rust/rextendr is about 14–16%
+faster than C++/Rcpp and around 20% faster than Python for these workloads.
+The pure-R end-to-end path remains dominated by JSON encoding: on B02 its
+isolated construction median is about 34.5 ms, while JSON encoding alone is
+about 6.33 seconds. This is a property of the current prototype and serializer,
+not a general statement about R performance.
+
+The updated measurements are still implementation-specific and limited to
+scene-v1 on one Linux runner. The Windows/macOS jobs validate source builds and
+semantic behavior only; they do not measure cross-platform performance or
+binary distribution readiness. The result is evidence for continued Rust and
+C++ evaluation, not a production-language decision.
+
+The complete raw inputs and measurements are retained in the
+[workflow artifact](https://github.com/vsimko/corrplot-ng/actions/runs/41051285476).
+
+## Cross-platform package smoke tests
+
+The `package-smoke` job in
+`.github/workflows/cross-language-benchmarks.yml` builds and installs the
+C++/Rcpp and Rust/rextendr prototype packages on Ubuntu, macOS and Windows.
+It then runs `benchmarks/test_native_scene_v1.R` against the same five
+deterministic fixtures and checks semantic parity for pure R and both native
+bindings. This job is separate from the Ubuntu-only performance comparison:
+it validates source-build portability and runtime behavior, not speed or
+binary distribution readiness.
