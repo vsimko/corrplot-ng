@@ -59,7 +59,7 @@ jobs:
           set -euxo pipefail
           cd prototypes/rust-rextendr/.ci-r-package/src/rust
           cp ../../../deny.toml deny.toml
-          cargo metadata --offline --format-version 1 > /dev/null
+          cargo metadata --format-version 1 > /dev/null
           cargo deny check licenses
           cargo vendor --locked vendor > vendor-config.toml
           mkdir -p .cargo
