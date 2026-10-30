@@ -363,8 +363,8 @@ fn detect_input_format(path: &str, source: &str, requested: InputFormat) -> Resu
             _ => {}
         }
     }
-    let trimmed = source.trim_start();
-    if trimmed.starts_with('{') { return Ok(InputFormat::Json); }
+    if source.trim_start().starts_with('{') { return Ok(InputFormat::Json); }
+    let trimmed = source.trim_start_matches(|c: char| c == ' ' || c == '\r' || c == '\n');
     let mut commas = 0usize;
     let mut tabs = 0usize;
     let mut quoted = false;
