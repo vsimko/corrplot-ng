@@ -1,4 +1,5 @@
 name: Python prototype checks
+# Executes the prototype suites for every color-scale and scene contract change.
 
 on:
   pull_request:
