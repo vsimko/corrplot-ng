@@ -1,3 +1,26 @@
+#' Parse a legacy corrplot label
+#'
+#' Labels prefixed with `: `, `=`, or `$` (without the space after the
+#' prefix) are parsed as native R plotmath expressions. Other labels are
+#' returned unchanged as character strings.
+#'
+#' @param label One non-missing character string.
+#' @return A character string or a native R expression.
+#' @export
+corrplot_ng_parse_label <- function(label) {
+  if (!is.character(label) || length(label) != 1L || is.na(label)) {
+    stop("label must be one non-missing character string", call. = FALSE)
+  }
+  if (startsWith(label, ":") || startsWith(label, "=") || startsWith(label, "$")) {
+    source <- substring(label, 2L)
+    tryCatch(parse(text = source), error = function(e) {
+      stop("invalid plotmath label '", label, "': ", conditionMessage(e), call. = FALSE)
+    })
+  } else {
+    label
+  }
+}
+
 corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   engine <- match.arg(engine)
   args <- list(...)
@@ -135,11 +158,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     raw <- labels[[i]]
     prefix <- if (startsWith(raw, ":") || startsWith(raw, "=") || startsWith(raw, "$")) substr(raw, 1L, 1L) else NULL
     source <- if (is.null(prefix)) NULL else substring(raw, 2L)
-    if (!is.null(source)) {
-      tryCatch(parse(text = source), error = function(e) {
-        stop("invalid plotmath label '", raw, "': ", conditionMessage(e), call. = FALSE)
-      })
-    }
+    parsed_label <- corrplot_ng_parse_label(raw)
     list(text = raw, row_x = if (row_position == "left") left_margin - 12 else
         left_margin + (i - 1L) * cell_size,
       row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
