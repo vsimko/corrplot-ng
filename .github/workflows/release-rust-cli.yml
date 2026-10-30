@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/corrplot-ng/**"
+      - "benchmarks/cli_release_audit.py"
       - ".github/workflows/release-rust-cli.yml"
   push:
     tags:
@@ -50,6 +51,7 @@ jobs:
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
+          audit: RELEASE-AUDIT.json
           runtime: statically linked musl; no Python or R runtime
           EOF
           file dist/corrplot-ng
@@ -106,6 +108,7 @@ jobs:
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
+          audit: RELEASE-AUDIT.json
           runtime: macOS system libraries only; no Python or R runtime
           EOF
           lipo -info dist/corrplot-ng
@@ -154,6 +157,7 @@ jobs:
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
+          audit: RELEASE-AUDIT.json
           runtime: statically linked MSVC CRT; no Python or R runtime
           "@ | Set-Content -Encoding utf8NoBOM dist/BUILD-INFO.txt
           & dist/corrplot-ng.exe --help | Out-Null
