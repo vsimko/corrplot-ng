@@ -75,14 +75,14 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install pinned legacy corrplot
-        shell: Rscript {0}
+      - name: Download pinned legacy corrplot source
         run: |
-          install.packages("remotes")
-          remotes::install_github(
-            "taiyun/corrplot@62532f700e6c9d04b93ffbf0bf56e264b0e0368e",
-            upgrade = "never"
-          )
+          curl --fail --location --retry 3 \
+            https://github.com/taiyun/corrplot/archive/62532f700e6c9d04b93ffbf0bf56e264b0e0368e.tar.gz \
+            --output /tmp/corrplot-legacy.tar.gz
+
+      - name: Install pinned legacy corrplot
+        run: R CMD INSTALL /tmp/corrplot-legacy.tar.gz
 
       - name: Verify legacy semantic oracle
         run: Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R
