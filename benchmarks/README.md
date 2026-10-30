@@ -22,6 +22,18 @@ one result per workload. This keeps the committed source compact while making
 each run independently reproducible and preserving the exact input data in
 the artifact.
 
+## Cross-language stress benchmark (B03/B04)
+
+The cross-language workflow exports only B03 (500x500) and B04 (1000x1000)
+fixtures and benchmarks Python, C++/Rcpp and Rust/rextendr on the same inputs.
+Pure R is intentionally excluded from these large workloads; it remains in the
+small-fixture comparison. All three candidates must pass semantic comparison
+against the Python-generated expected scene before timing. Stress measurements
+use one warmup and five measured samples with batch size one to avoid repeating
+multi-second workloads unnecessarily. The stress artifact includes the shared
+fixture and raw timing samples. These measurements are specific to the CI runner
+and are not a production-language decision by themselves.
+
 ## Workloads
 
 - B01: 20x20 dense symmetric matrix.
