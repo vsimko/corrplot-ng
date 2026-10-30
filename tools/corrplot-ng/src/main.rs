@@ -63,9 +63,9 @@ RENDER OPTIONS:
       --title TEXT       Figure title
 
 INPUT FORMAT:
-  A square labelled matrix. The first row contains an empty corner cell
-  followed by column labels; each following row starts with its row label.
-  Empty cells, NA, and null represent missing values.
+  CSV/TSV: labelled square matrix with an empty corner cell, column labels,
+  and matching row labels. JSON: labels/values matrix or scene-v1 document.
+  Empty CSV/TSV cells and JSON null represent missing values.
 
 EXIT STATUS:
   0 success; 2 usage error; 1 input, validation, or rendering error.
@@ -364,7 +364,7 @@ fn detect_input_format(path: &str, source: &str, requested: InputFormat) -> Resu
         }
     }
     let trimmed = source.trim_start();
-    if trimmed.starts_with('{') || trimmed.starts_with('[') { return Ok(InputFormat::Json); }
+    if trimmed.starts_with('{') { return Ok(InputFormat::Json); }
     let mut commas = 0usize;
     let mut tabs = 0usize;
     let mut quoted = false;
