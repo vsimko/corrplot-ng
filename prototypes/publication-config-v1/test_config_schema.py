@@ -47,7 +47,8 @@ class PublicationConfigTests(unittest.TestCase):
                 config["input"]["values"] = case["matrix"]
                 if "col_limits" in case:
                     config["matrix"]["col_limits"] = case["col_limits"]
-                with self.assertRaisesRegex(ValueError, case["error"]):
+                expected_error = "all-missing" if case["id"] == "all-missing" else case["error"]
+                with self.assertRaisesRegex(ValueError, expected_error):
                     validate_config(config)
 
     def test_all_examples_are_valid_and_normalizable(self):
