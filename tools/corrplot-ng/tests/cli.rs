@@ -1,5 +1,6 @@
 use std::fs;
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 fn fixture(name: &str, contents: &str) -> std::path::PathBuf {
     let path = std::env::temp_dir().join(format!("corrplot-ng-{}-{name}.csv", std::process::id()));
@@ -305,4 +306,113 @@ fn init_help_is_available_without_a_tty() {
         .unwrap();
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("publication-config v1"));
+}
+
+
+#[test]
+fn tsv_file_is_detected_and_validated() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-tsv-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("matrix.tsv");
+    fs::write(&input, "\talpha\tbeta\nalpha\t1\t0.4\nbeta\t0.4\t1\n").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&input).output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("2 x 2 matrix"));
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn json_matrix_input_renders_a_scene() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-json-matrix-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("matrix.json");
+    let output_path = directory.join("scene.json");
+    fs::write(&input, r#"{"labels":["alpha","beta"],"values":[[1,0.4],[0.4,1]]}"#).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&input)
+        .args(["--format", "scene-json", "--output"]).arg(&output_path)
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let scene = fs::read_to_string(&output_path).unwrap();
+    assert!(scene.contains("\"kind\":\"correlation_plot\""));
+    assert!(scene.contains("\"value\":0.4"));
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn scene_v1_json_can_be_reused_as_matrix_input() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-scene-input-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let csv = directory.join("matrix.csv");
+    let scene = directory.join("scene.json");
+    let roundtrip = directory.join("roundtrip.json");
+    fs::write(&csv, ",alpha,beta\nalpha,1,0.4\nbeta,0.4,1\n").unwrap();
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+    let first = Command::new(binary).args(["render", "--input"]).arg(&csv)
+        .args(["--format", "scene-json", "--output"]).arg(&scene).output().unwrap();
+    assert!(first.status.success(), "{}", String::from_utf8_lossy(&first.stderr));
+    let second = Command::new(binary).args(["render", "--input"]).arg(&scene)
+        .args(["--input-format", "json", "--format", "scene-json", "--output"]).arg(&roundtrip)
+        .output().unwrap();
+    assert!(second.status.success(), "{}", String::from_utf8_lossy(&second.stderr));
+    assert_eq!(fs::read(&scene).unwrap(), fs::read(&roundtrip).unwrap());
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn stdin_to_stdout_keeps_scene_stream_free_of_diagnostics() {
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+    let mut child = Command::new(binary)
+        .args(["render", "--input", "-", "--input-format", "tsv", "--format", "scene-json", "--output", "-"])
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
+        .spawn().unwrap();
+    child.stdin.take().unwrap()
+        .write_all(b"\talpha\tbeta\nalpha\t1\t0.4\nbeta\t0.4\t1\n").unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.starts_with("{\"schema_version\":1"));
+    assert!(output.stderr.is_empty(), "diagnostics must not be mixed into the artifact stream");
+}
+
+#[test]
+fn invalid_utf8_has_an_actionable_diagnostic() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-invalid-utf8-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("matrix.csv");
+    fs::write(&input, [0xff, 0xfe, 0xfd]).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&input).output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("not valid UTF-8"));
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn ambiguous_stdin_format_requires_an_explicit_override() {
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+    let mut child = Command::new(binary).args(["validate", "--input", "-"])
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
+        .spawn().unwrap();
+    child.stdin.take().unwrap().write_all(b",a\tb\n,a\t1\n").unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ambiguous"));
+}
+
+#[test]
+fn invalid_input_does_not_truncate_an_existing_output() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-no-truncate-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("invalid.csv");
+    let output_path = directory.join("existing.svg");
+    fs::write(&input, ",alpha,beta\nalpha,1,0.2\nbeta,0.5,1\n").unwrap();
+    fs::write(&output_path, "keep existing artifact").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&input)
+        .args(["--output"]).arg(&output_path).output().unwrap();
+    assert!(!output.status.success());
+    assert_eq!(fs::read_to_string(&output_path).unwrap(), "keep existing artifact");
+    fs::remove_dir_all(directory).ok();
 }
