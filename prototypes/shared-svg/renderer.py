@@ -48,12 +48,14 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
                 column_text = ""
             if column_text and collision == "wrap":
                 lines = [column_text[index:index + max_chars] for index in range(0, len(column_text), max_chars)]
+                line_height = font_size * 1.1
+                start_y = scene["cells"][0]["y"] - (len(lines) - 1) * line_height - font_size
                 spans = "".join(
-                    f'<tspan x="{label["column_x"]:.1f}" dy="{0 if line_index == 0 else font_size * 1.1:g}">{html.escape(line)}</tspan>'
+                    f'<tspan x="{label["column_x"]:.1f}" dy="{0 if line_index == 0 else line_height:g}">{html.escape(line)}</tspan>'
                     for line_index, line in enumerate(lines)
                 )
                 parts.append(
-                    f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" text-anchor="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{spans}</text>'
+                    f'<text x="{label["column_x"]:.1f}" y="{start_y:g}" text-anchor="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{spans}</text>'
                 )
             elif column_text:
                 parts.append(
