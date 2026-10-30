@@ -23,11 +23,16 @@ The Python test suite compares the generated scene with this canonical output. T
 - Optional `legend` is an ordered array of renderer-neutral `kind`, `label`, and `color` entries. It describes the exact mapping used by cells and may include a distinct missing-value entry.
 - `x`, `y`, and `size` describe the cell's top-left position and square extent. `center_x` and `center_y` are its center.
 - `annotation` is plain text. This version supports one annotation string, not arbitrary positioned/layered elements.
+- Optional `glyph_method` identifies the current cell text/glyph mode (`circle` or `number`). A number scene renders the formatted coefficient as text instead of the circle glyph.
+- Optional `text_annotations` is a row-major list of positioned cell labels. Each entry carries zero-based `row` and `column` identity, a `role` (`coefficient` or `value`), preformatted text, color, font size, weight, and style. Renderers must place each label at the matching cell center; labels are not re-associated by array position.
+- Coefficient labels are emitted only when a coefficient color is supplied. Missing cells are never formatted as zero. Upper/lower display filtering and diagonal visibility are applied before labels are created.
+- The number method takes precedence over the coefficient overlay, matching corrplot 0.95: it emits value labels using the number typography and does not emit a second coefficient label.
+- `number_digits` defaults to 2 for decimal output and 0 for percentage output. Percent formatting multiplies the original coefficient by 100 before rounding. `number_cex` scales the default logical text size; `number_font` maps R font values 1–4 to plain, bold, italic, and bold-italic.
 - `style` contains six-digit sRGB fallback colors. It defines semantic colors only; it does not prescribe a particular shape or renderer.
 
 ## Deliberate limits
 
-Version 1 is only enough for the current synthetic example. It does not yet define ordering algorithms, significance markers, confidence intervals, arbitrary annotations, typography, accessibility metadata, or native R graphics-device behavior. The optional legend is a semantic scene capability; individual renderers remain responsible for layout and clipping.
+Version 1 remains an experimental subset. It does not yet define ordering algorithms, significance markers, confidence intervals, arbitrary positioned annotations, full label typography, accessibility metadata, or native R graphics-device behavior. Coefficient/value text typography is limited to the explicit fields above. The optional legend is a semantic scene capability; individual renderers remain responsible for layout and clipping.
 
 ## Compatibility and evolution
 

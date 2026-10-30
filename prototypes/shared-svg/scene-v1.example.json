@@ -127,5 +127,7 @@
     "grid_color": "#e0e0e0"
   },
   "title": "Example correlation matrix",
-  "description": "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable."
+  "description": "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.",
+  "glyph_method": "circle",
+  "text_annotations": []
 }

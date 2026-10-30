@@ -240,5 +240,87 @@ class PlotSceneTests(unittest.TestCase):
         self.assertIn("customer", svg)
         self.assertIn("satisfaction", svg)
 
+
+    def test_coefficient_labels_are_separate_cell_annotations(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, -0.125], [-0.125, None]],
+            "add_coef_color": "#222222",
+        })
+        labels = scene["text_annotations"]
+        self.assertEqual([item["text"] for item in labels], ["1.00", "-0.12", "-0.12"])
+        self.assertTrue(all(item["role"] == "coefficient" for item in labels))
+        self.assertTrue(all(item["color"] == "#222222" for item in labels))
+        self.assertEqual([(item["row"], item["column"]) for item in labels],
+                         [(0, 0), (0, 1), (1, 0)])
+
+    def test_percent_formatting_and_custom_number_typography(self):
+        scene = build_scene({
+            "labels": ["A"], "matrix": [[0.456]],
+            "add_coef_color": "navy", "add_coef_as_percent": True,
+            "number_digits": 1, "number_cex": 1.5, "number_font": 4,
+        })
+        label = scene["text_annotations"][0]
+        self.assertEqual(label["text"], "45.6")
+        self.assertEqual(label["font_size"], 19.5)
+        self.assertEqual(label["font_weight"], "bold")
+        self.assertEqual(label["font_style"], "italic")
+        self.assertIn('font-style="italic"', render_scene_svg(scene))
+        self.assertIn('fill="navy">45.6</text>', render_scene_svg(scene))
+
+    def test_number_method_takes_precedence_over_coefficient_overlay(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, -0.5], [-0.5, 1.0]],
+            "method": "number", "add_coef_color": "red",
+            "number_digits": 1, "number_font": 3,
+        })
+        self.assertEqual(scene["glyph_method"], "number")
+        self.assertTrue(all(item["role"] == "value" for item in scene["text_annotations"]))
+        self.assertNotIn("red", [item["color"] for item in scene["text_annotations"]])
+        svg = render_scene_svg(scene)
+        self.assertNotIn("<circle ", svg)
+        self.assertIn(">1.0</text>", svg)
+        self.assertIn('font-style="italic"', svg)
+
+    def test_coefficient_labels_respect_triangle_and_diagonal_visibility(self):
+        scene = build_scene({
+            "labels": ["A", "B", "C"],
+            "matrix": [[1.0, 0.2, 0.3], [0.2, 1.0, 0.4], [0.3, 0.4, 1.0]],
+            "add_coef_color": "black", "display_type": "upper",
+            "show_diagonal": False,
+        })
+        self.assertEqual(
+            [(item["row"], item["column"]) for item in scene["text_annotations"]],
+            [(0, 1), (0, 2), (1, 2)],
+        )
+
+
+    def test_legacy_default_digits_and_rounding_boundaries(self):
+        decimal = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[0.125, -0.125], [-0.125, 0.0]],
+            "add_coef_color": "black",
+        })
+        self.assertEqual(
+            [item["text"] for item in decimal["text_annotations"]],
+            ["0.12", "-0.12", "-0.12", "0.00"],
+        )
+        percent = build_scene({
+            "labels": ["A"], "matrix": [[0.125]],
+            "add_coef_color": "black", "add_coef_as_percent": True,
+        })
+        self.assertEqual(percent["text_annotations"][0]["text"], "12")
+
+    def test_invalid_coefficient_formatting_options_are_rejected(self):
+        base = {"labels": ["A"], "matrix": [[1.0]]}
+        for key, value in (("number_digits", -1), ("number_digits", 1.5),
+                           ("number_cex", 0), ("number_font", 5),
+                           ("add_coef_as_percent", "yes"),
+                           ("display_type", "diagonal")):
+            with self.subTest(option=key, value=value):
+                with self.assertRaises(ValueError):
+                    build_scene({**base, key: value, "add_coef_color": "black"})
+
 if __name__ == "__main__":
     unittest.main()

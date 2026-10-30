@@ -222,6 +222,68 @@
     },
     "description": {
       "type": "string"
+    },
+    "glyph_method": {
+      "enum": [
+        "circle",
+        "number"
+      ]
+    },
+    "text_annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "row",
+          "column",
+          "role",
+          "text",
+          "color",
+          "font_size",
+          "font_weight",
+          "font_style"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "column": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "role": {
+            "enum": [
+              "coefficient",
+              "value"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "minLength": 1
+          },
+          "font_size": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "font_weight": {
+            "enum": [
+              "normal",
+              "bold"
+            ]
+          },
+          "font_style": {
+            "enum": [
+              "normal",
+              "italic"
+            ]
+          }
+        }
+      }
     }
   },
   "$defs": {

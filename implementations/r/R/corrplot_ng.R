@@ -8,19 +8,50 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (length(args) > 0L) {
     arg_names <- names(args)
     if (is.null(arg_names) || anyNA(arg_names) || any(!nzchar(arg_names)) || anyDuplicated(arg_names)) stop("The scene engine requires uniquely named arguments", call. = FALSE)
-    unsupported <- setdiff(arg_names, "annotation")
+    supported <- c("annotation", "method", "type", "diag", "addCoef.col",
+      "addCoefasPercent", "number.digits", "number.cex", "number.font")
+    unsupported <- setdiff(arg_names, supported)
+    if ("method" %in% arg_names) {
+      requested_method <- args$method
+      if (length(requested_method) > 1L && !identical(requested_method, c("circle", "number"))) {
+        unsupported <- unique(c(unsupported, "method"))
+      } else if (length(requested_method) == 1L && !requested_method %in% c("circle", "number")) {
+        unsupported <- unique(c(unsupported, "method"))
+      } else if (length(requested_method) == 0L) {
+        unsupported <- unique(c(unsupported, "method"))
+      }
+    }
     if (length(unsupported) > 0L) stop("The scene engine does not support: ", paste(unsupported, collapse = ", "), ". Use engine = 'legacy' for these options.", call. = FALSE)
   }
-  annotation <- if ("annotation" %in% names(args)) args[["annotation"]] else ""
-  .corrplot_ng_build_scene_v1(corr, annotation = annotation)
+  defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
+    addCoef.col = NULL, addCoefasPercent = FALSE, number.digits = NULL,
+    number.cex = 1, number.font = 2)
+  options <- utils::modifyList(defaults, args)
+  .corrplot_ng_build_scene_v1(corr, options)
 }
-.corrplot_ng_build_scene_v1 <- function(corr, annotation = "") {
+
+.corrplot_ng_build_scene_v1 <- function(corr, options = list()) {
   if (!is.matrix(corr) || !is.numeric(corr)) stop("corr must be a numeric matrix for engine = 'scene'", call. = FALSE)
   n <- nrow(corr)
   if (n < 1L || ncol(corr) != n) stop("the scene engine requires a non-empty square matrix", call. = FALSE)
   observed <- !is.na(corr)
   if (any(!is.finite(corr[observed])) || any(corr[observed] < -1 | corr[observed] > 1)) stop("the scene engine requires finite observed values in [-1, 1]", call. = FALSE)
+
+  annotation <- options$annotation
   if (!is.character(annotation) || length(annotation) != 1L || is.na(annotation)) stop("annotation must be one non-missing character string", call. = FALSE)
+  method <- match.arg(options$method, c("circle", "number"))
+  display_type <- match.arg(options$type, c("full", "upper", "lower"))
+  if (!is.logical(options$diag) || length(options$diag) != 1L || is.na(options$diag)) stop("diag must be one non-missing logical value", call. = FALSE)
+  if (!is.logical(options$addCoefasPercent) || length(options$addCoefasPercent) != 1L || is.na(options$addCoefasPercent)) stop("addCoefasPercent must be one non-missing logical value", call. = FALSE)
+  if (!is.null(options$addCoef.col) && (!is.character(options$addCoef.col) || length(options$addCoef.col) != 1L || is.na(options$addCoef.col) || !nzchar(options$addCoef.col))) stop("addCoef.col must be one non-empty color string or NULL", call. = FALSE)
+  digits <- options$number.digits
+  if (is.null(digits)) digits <- if (options$addCoefasPercent) 0L else 2L
+  if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || !is.finite(digits) || digits < 0 || digits %% 1 != 0) stop("number.digits must be a non-negative integer", call. = FALSE)
+  cex <- options$number.cex
+  if (!is.numeric(cex) || length(cex) != 1L || is.na(cex) || !is.finite(cex) || cex <= 0) stop("number.cex must be greater than 0", call. = FALSE)
+  font <- options$number.font
+  if (!is.numeric(font) || length(font) != 1L || is.na(font) || !(font %in% 1:4)) stop("number.font must be one of 1, 2, 3, or 4", call. = FALSE)
+
   row_labels <- rownames(corr)
   column_labels <- colnames(corr)
   if (is.null(row_labels) && is.null(column_labels)) {
@@ -34,11 +65,14 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     labels <- row_labels
   }
   if (!is.character(labels) || length(labels) != n || anyNA(labels)) stop("matrix labels must be non-missing character values", call. = FALSE)
+
   cell_size <- 84
   left_margin <- 104
   top_margin <- 76
   cells <- vector("list", n * n)
+  text_annotations <- list()
   index <- 1L
+  annotation_index <- 1L
   for (row in seq_len(n)) {
     for (column in seq_len(n)) {
       value <- corr[row, column]
@@ -49,6 +83,23 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
         center_x = left_margin + (column - 1L) * cell_size + cell_size / 2,
         center_y = top_margin + (row - 1L) * cell_size + cell_size / 2,
         size = cell_size)
+      visible <- !is.na(value) && (options$diag || row != column) &&
+        (display_type == "full" || (display_type == "upper" && row <= column) ||
+          (display_type == "lower" && row >= column))
+      role <- if (method == "number") "value" else if (!is.null(options$addCoef.col)) "coefficient" else NULL
+      if (visible && !is.null(role)) {
+        label_value <- value * if (options$addCoefasPercent) 100 else 1
+        label_color <- if (role == "coefficient") options$addCoef.col else
+          if (value > 0) "#2166ac" else if (value < 0) "#b2182b" else "#bdbdbd"
+        text_annotations[[annotation_index]] <- list(
+          row = row - 1L, column = column - 1L, role = role,
+          text = format(round(label_value, digits), nsmall = digits,
+            trim = TRUE, scientific = FALSE),
+          color = label_color, font_size = 13 * cex,
+          font_weight = if (font %in% c(2, 4)) "bold" else "normal",
+          font_style = if (font %in% c(3, 4)) "italic" else "normal")
+        annotation_index <- annotation_index + 1L
+      }
       index <- index + 1L
     }
   }
@@ -58,6 +109,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   scene <- list(schema_version = 1L, kind = "correlation_plot",
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,
+    glyph_method = method, text_annotations = text_annotations,
+    title = "", description = "",
     style = list(positive_color = "#2166ac", negative_color = "#b2182b", zero_color = "#bdbdbd", missing_fill = "#f2f2f2", grid_color = "#e0e0e0"))
   class(scene) <- c("corrplot_ng_scene", "list")
   scene

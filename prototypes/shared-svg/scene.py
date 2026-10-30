@@ -5,7 +5,7 @@ This module owns validation and deterministic layout, not SVG serialization.
 from __future__ import annotations
 
 from typing import Any
-from math import ceil
+from math import ceil, isfinite
 
 LABEL_FONT_SIZE = 13
 LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6  # Backwards-compatible estimate used by the legacy bridge.
@@ -115,6 +115,68 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 item["color"] = cell_colors[row_index * len(labels) + column_index]
             cells.append(item)
 
+    # Coefficient/value text is semantic scene data, not an SVG-specific detail.
+    method = config.get("method", "circle")
+    if method not in ("circle", "number"):
+        raise ValueError("method must be 'circle' or 'number' in this scene slice")
+    display_type = config.get("display_type", "full")
+    if display_type not in ("full", "upper", "lower"):
+        raise ValueError("display_type must be full, upper, or lower")
+    show_diagonal = config.get("show_diagonal", True)
+    if not isinstance(show_diagonal, bool):
+        raise ValueError("show_diagonal must be a boolean")
+    add_coef_color = config.get("add_coef_color")
+    if add_coef_color is not None and (not isinstance(add_coef_color, str) or not add_coef_color.strip()):
+        raise ValueError("add_coef_color must be a non-empty color string or null")
+    add_coef_as_percent = config.get("add_coef_as_percent", False)
+    if not isinstance(add_coef_as_percent, bool):
+        raise ValueError("add_coef_as_percent must be a boolean")
+    digits = config.get("number_digits")
+    if digits is None:
+        digits = 0 if add_coef_as_percent else 2
+    if isinstance(digits, bool) or not isinstance(digits, (int, float)) or not float(digits).is_integer() or digits < 0:
+        raise ValueError("number_digits must be a non-negative integer")
+    digits = int(digits)
+    number_cex = config.get("number_cex", 1)
+    if isinstance(number_cex, bool) or not isinstance(number_cex, (int, float)) or not isfinite(number_cex) or not number_cex > 0:
+        raise ValueError("number_cex must be greater than 0")
+    number_font = config.get("number_font", 2)
+    if isinstance(number_font, bool) or not isinstance(number_font, (int, float)) or number_font not in (1, 2, 3, 4):
+        raise ValueError("number_font must be one of 1, 2, 3, or 4")
+    number_font = int(number_font)
+
+    def format_number(value: float) -> str:
+        # Python's round and the legacy R round both use ties-to-even semantics.
+        scaled = value * (100 if add_coef_as_percent else 1)
+        return f"{round(scaled, digits):.{digits}f}"
+
+    text_annotations = []
+    for cell_item in cells:
+        row_index, column_index, value = cell_item["row"], cell_item["column"], cell_item["value"]
+        if value is None or (not show_diagonal and row_index == column_index):
+            continue
+        if display_type == "upper" and row_index > column_index:
+            continue
+        if display_type == "lower" and row_index < column_index:
+            continue
+        if method == "number":
+            role = "value"
+            color = (
+                cell_item.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
+            )
+        elif add_coef_color is not None:
+            role = "coefficient"
+            color = add_coef_color
+        else:
+            continue
+        text_annotations.append({
+            "row": row_index, "column": column_index, "role": role,
+            "text": format_number(value), "color": color,
+            "font_size": LABEL_FONT_SIZE * float(number_cex),
+            "font_weight": "bold" if number_font in (2, 4) else "normal",
+            "font_style": "italic" if number_font in (3, 4) else "normal",
+        })
+
     legend = config.get("legend")
     if legend is not None:
         if not isinstance(legend, list) or any(
@@ -139,6 +201,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         "schema_version": 1, "kind": "correlation_plot",
         "width": width, "height": height, "labels": label_items, "cells": cells,
         "annotation": annotation,
+        "glyph_method": method, "text_annotations": text_annotations,
         "title": title, "description": description,
         "style": {
             "positive_color": "#2166ac", "negative_color": "#b2182b",
