@@ -134,6 +134,22 @@ fn color(v: &Json, name: &str) -> Result<String, String> {
     Ok(s.to_string())
 }
 
+fn scene_get<'a>(object: &'a BTreeMap<String, Json>, key: &str) -> &'a Json {
+    object.get(key).expect("required scene property")
+}
+
+fn scene_num(value: &Json) -> f64 {
+    match value { Json::Number(number) => *number, _ => 0.0 }
+}
+
+fn scene_str(value: &Json) -> &str {
+    match value { Json::String(string) => string.as_str(), _ => "" }
+}
+
+fn scene_bool(value: &Json) -> bool {
+    matches!(value, Json::Bool(true))
+}
+
 #[derive(Debug, Clone)]
 pub struct Publication {
     pub labels: Vec<String>, pub values: Vec<Vec<Option<f64>>>,
@@ -410,10 +426,10 @@ impl Publication {
         // Keep matrix semantics and ordering in scene construction, not here.
         let scene = parse_json(&self.scene_json(title)).expect("scene builder must emit valid JSON");
         let root = match scene { Json::Object(ref o) => o, _ => unreachable!() };
-        let get = |o: &BTreeMap<String, Json>, k: &str| o.get(k).expect("required scene property");
-        let num = |v: &Json| match v { Json::Number(n) => *n, _ => 0.0 };
-        let strv = |v: &Json| match v { Json::String(s) => s.as_str(), _ => "" };
-        let boolv = |v: &Json| matches!(v, Json::Bool(true));
+        let get = scene_get;
+        let num = scene_num;
+        let strv = scene_str;
+        let boolv = scene_bool;
         let esc = |v: &str| v.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;").replace('\'',"&apos;");
         let width = num(get(root,"width"));
         let height = num(get(root,"height"));
