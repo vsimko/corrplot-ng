@@ -52,7 +52,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
 
 def _validate_square(matrix: list[list[Any]], size: int, path: str) -> None:
     if len(matrix) != size or any(len(row) != size for row in matrix):
-        raise ValueError(f"{path}: expected a {size} by {size} matrix")
+        raise ValueError(f"{path}: expected a square {size} by {size} matrix")
 
 
 def _validate_diagonal(matrix: list[list[Any]], path: str) -> None:
