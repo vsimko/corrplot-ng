@@ -93,8 +93,8 @@ fn build_config(
 }}
 "##,
         json_string(input), json_string(delimiter), matrix, json_string(glyph),
-        json_string(display), json_string(ordering), json_string(negative), json_string(neutral),
-        json_string(positive), json_string(missing_color), json_string(font_family), show_values, json_string(output))
+        json_string(display), json_string(ordering), show_values, json_string(negative), json_string(neutral),
+        json_string(positive), json_string(missing_color), json_string(font_family), json_string(output))
 }
 
 fn temporary_path(config_path: &Path) -> PathBuf {
