@@ -11,7 +11,11 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     supported <- c("annotation", "method", "type", "diag", "addCoef.col",
       "addCoefasPercent", "number.digits", "number.cex", "number.font")
     unsupported <- setdiff(arg_names, supported)
-    if ("method" %in% arg_names && !args$method %in% c("circle", "number")) unsupported <- unique(c(unsupported, "method"))
+    if ("method" %in% arg_names) {
+      requested_method <- args$method[[1]]
+      if (length(args$method) > 1L && !identical(args$method, c("circle", "number"))) requested_method <- args$method
+      if (length(requested_method) != 1L || !requested_method %in% c("circle", "number")) unsupported <- unique(c(unsupported, "method"))
+    }
     if (length(unsupported) > 0L) stop("The scene engine does not support: ", paste(unsupported, collapse = ", "), ". Use engine = 'legacy' for these options.", call. = FALSE)
   }
   defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
@@ -37,7 +41,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (!is.null(options$addCoef.col) && (!is.character(options$addCoef.col) || length(options$addCoef.col) != 1L || is.na(options$addCoef.col) || !nzchar(options$addCoef.col))) stop("addCoef.col must be one non-empty color string or NULL", call. = FALSE)
   digits <- options$number.digits
   if (is.null(digits)) digits <- if (options$addCoefasPercent) 0L else 2L
-  if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || !is.finite(digits) || digits < 0 || digits %% 1 != 0) stop("number.digits must be a non-negative integer ", call. = FALSE)
+  if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || !is.finite(digits) || digits < 0 || digits %% 1 != 0) stop("number.digits must be a non-negative integer", call. = FALSE)
   cex <- options$number.cex
   if (!is.numeric(cex) || length(cex) != 1L || is.na(cex) || !is.finite(cex) || cex <= 0 || cex > 10) stop("number.cex must be greater than 0 and at most 10", call. = FALSE)
   font <- options$number.font
