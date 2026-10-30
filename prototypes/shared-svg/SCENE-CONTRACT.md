@@ -4,6 +4,13 @@
 
 The JSON Schema in [scene-v1.schema.json](scene-v1.schema.json) describes the prepared scene produced by the shared-SVG prototype. Language adapters may construct this data and independent renderers may consume it without sharing implementation code.
 
+The two JSON examples have distinct roles:
+
+- [example.json](example.json) is the input configuration for the Python scene builder.
+- [scene-v1.example.json](scene-v1.example.json) is the canonical expected scene output. It is also the language-neutral payload consumed by the R smoke test.
+
+The Python test suite compares the generated scene with this canonical output. This makes changes to geometry, cell order, labels, missing values, or style explicit and reviewable across language consumers.
+
 ## Semantics
 
 - `schema_version` is `1`; incompatible structural changes require a new version.
