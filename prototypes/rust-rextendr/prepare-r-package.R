@@ -23,6 +23,20 @@ writeLines(c(
 dir.create(file.path(pkg_dir, "R"))
 writeLines("# Temporary package generated in CI.", file.path(pkg_dir, "R", "placeholder.R"))
 
+# Preserve the upstream MIT notice for the extendr crates. The source notice is
+# pinned in this repository to the exact upstream extendr-api-v0.8.2 tag.
+license_source <- file.path(root, "licenses", "extendr-MIT.txt")
+license_readme_source <- file.path(root, "licenses", "README.md")
+if (!file.exists(license_source) || !file.exists(license_readme_source)) {
+  stop("Pinned extendr license notice or its provenance README is missing")
+}
+license_dir <- file.path(pkg_dir, "inst", "licenses")
+dir.create(license_dir, recursive = TRUE)
+if (!file.copy(license_source, file.path(license_dir, "extendr-MIT.txt"), overwrite = TRUE) ||
+    !file.copy(license_readme_source, file.path(license_dir, "README.md"), overwrite = TRUE)) {
+  stop("Could not copy extendr third-party license notices into generated package")
+}
+
 # usethis/rextendr discover the package from the working directory. Enter the
 # disposable package before invoking the scaffolding helpers.
 setwd(pkg_dir)
