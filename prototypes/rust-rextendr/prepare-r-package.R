@@ -28,6 +28,38 @@ writeLines("# Temporary package generated in CI.", file.path(pkg_dir, "R", "plac
 setwd(pkg_dir)
 rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
+# rextendr's generated Makevars sets TARGET_DIR to ./rust/target and removes
+# that directory in its rust_clean target. Override both behaviors so Cargo
+# writes to the persistent CI cache directory and the build does not delete it.
+target_dir <- normalizePath(
+  file.path(root, ".ci-rust-target"),
+  winslash = "/",
+  mustWork = FALSE
+)
+makevars_file <- file.path(
+  pkg_dir,
+  "src",
+  if (.Platform[["OS.type"]] == "windows") "Makevars.win" else "Makevars"
+)
+makevars <- readLines(makevars_file, warn = FALSE)
+
+target_dir_idx <- grep("^TARGET_DIR[[:space:]]*=[[:space:]]*\\./rust/target[[:space:]]*$", makevars)
+if (length(target_dir_idx) != 1L) {
+  stop("Could not identify the generated rextendr TARGET_DIR setting in ", makevars_file)
+}
+makevars[target_dir_idx] <- paste0("TARGET_DIR = ", target_dir)
+
+cleanup_idx <- which(vapply(
+  makevars,
+  function(line) grepl('rm -Rf "$(CARGOTMP)" "$(VENDOR_DIR)"', line, fixed = TRUE),
+  logical(1)
+))
+if (length(cleanup_idx) != 1L) {
+  stop("Could not identify the generated rextendr rust_clean command in ", makevars_file)
+}
+makevars[cleanup_idx] <- '\\trm -Rf "$(CARGOTMP)" "$(VENDOR_DIR)"'
+writeLines(makevars, makevars_file)
+
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
 writeLines(rust_src, file.path(pkg_dir, "src", "rust", "src", "lib.rs"))
 
@@ -45,7 +77,7 @@ if (!file.exists(namespace_file)) {
 # rextendr versions: the exported wrapper calls the registered extendr symbol.
 wrapper_file <- file.path(pkg_dir, "R", "scene_cell_count.R")
 if (!file.exists(wrapper_file) ||
-    !grepl("scene_cell_count", paste(readLines(wrapper_file, warn = FALSE), collapse = "\n"), fixed = TRUE)) {
+    !grepl("scene_cell_count", paste(readLines(wrapper_file, warn = FALSE), collapse = "\\n"), fixed = TRUE)) {
   writeLines(c(
     "#' Return the number of cells in a square plot scene.",
     "#' @export",
