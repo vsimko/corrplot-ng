@@ -25,8 +25,8 @@ fn validate_and_render_commands_work() {
     let rendered = Command::new(binary).args(["render", "--input"]).arg(&path).args(["--format", "scene-json"]).output().unwrap();
     assert!(rendered.status.success(), "{}", String::from_utf8_lossy(&rendered.stderr));
     let json = String::from_utf8(rendered.stdout).unwrap();
-    assert!(json.contains("\\"schema_version\\":1"));
-    assert!(json.contains("\\"kind\\":\\"correlation_plot\\""));
+    assert!(json.contains(r#""schema_version":1"#));
+    assert!(json.contains(r#""kind":"correlation_plot""#));
     fs::remove_file(path).ok();
 }
 
@@ -38,8 +38,8 @@ fn general_matrix_scene_keeps_general_semantics() {
         .args(["--kind", "general", "--format", "scene-json"]).output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
-    assert!(json.contains("\\"kind\\":\\"general_matrix_plot\\""));
-    assert!(json.contains("\\"value\\":10"));
+    assert!(json.contains(r#""kind":"general_matrix_plot""#));
+    assert!(json.contains(r#""value":10"#));
     fs::remove_file(path).ok();
 }
 
