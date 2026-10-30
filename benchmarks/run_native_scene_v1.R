@@ -1,7 +1,8 @@
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 2L) stop("usage: run_native_scene_v1.R fixtures.json results.json")
+if (length(args) < 2L || length(args) > 3L) stop("usage: run_native_scene_v1.R fixtures.json results.json [--stress-mode]")
 fixtures_path <- args[[1]]
 output_path <- args[[2]]
+stress_mode <- length(args) == 3L && identical(args[[3]], "--stress-mode")
 
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(corrplotngcppspike))
@@ -9,11 +10,15 @@ suppressPackageStartupMessages(library(corrplotngrustspike))
 source("benchmarks/scene_v1_reference.R")
 
 target_sample_ms <- 100
-sample_count <- 30L
-warmups <- 5L
+regular_sample_count <- 30L
+regular_warmups <- 5L
+stress_sample_count <- 5L
+stress_warmups <- 1L
 
 measure_one <- function(fun, validate, workload, candidate, measurement,
-                        scene_cells, scene_json_bytes) {
+                        scene_cells, scene_json_bytes, stress = FALSE) {
+  sample_count <- if (stress) stress_sample_count else regular_sample_count
+  warmups <- if (stress) stress_warmups else regular_warmups
   first_started <- proc.time()[["elapsed"]]
   first_value <- fun()
   first_time <- (proc.time()[["elapsed"]] - first_started) * 1000
@@ -27,6 +32,7 @@ measure_one <- function(fun, validate, workload, candidate, measurement,
 
   batch <- 1L
   repeat {
+    if (stress) break
     started <- proc.time()[["elapsed"]]
     for (j in seq_len(batch)) fun()
     elapsed <- (proc.time()[["elapsed"]] - started) * 1000
@@ -47,7 +53,7 @@ measure_one <- function(fun, validate, workload, candidate, measurement,
     min_ms = min(samples), max_ms = max(samples),
     samples_ms = as.list(samples), batch_size = batch,
     sample_target_ms = target_sample_ms, sample_count = sample_count,
-    warmup_iterations = warmups, scene_cells = scene_cells,
+    warmup_iterations = warmups, stress_mode = stress, scene_cells = scene_cells,
     scene_json_bytes = output_bytes
   )
 }
@@ -72,29 +78,31 @@ for (case in fixture$workloads) {
   }))
   annotation <- case$annotation
   expected <- case$expected_scene
-  r_scene <- build_scene_v1_r(labels, matrix, annotation)
-  r_json <- encode_scene_v1_r(r_scene)
-  if (!isTRUE(same_json_scene(r_json, expected))) {
-    stop(case$id, ": pure R scene-v1 output differs from Python oracle")
-  }
-
   cells <- length(expected$cells)
-  json_bytes <- nchar(r_json, type = "bytes")
-  results[[length(results) + 1L]] <- measure_one(
-    function() build_scene_v1_r(labels, matrix, annotation),
-    function(value) same_scene(value, expected),
-    case$id, "R_pure", "scene_construction_only", cells, json_bytes
-  )
-  results[[length(results) + 1L]] <- measure_one(
-    function() encode_scene_v1_r(r_scene),
-    function(value) same_json_scene(value, expected),
-    case$id, "R_pure", "json_encoding_only", cells, json_bytes
-  )
-  results[[length(results) + 1L]] <- measure_one(
-    function() build_scene_json_r(labels, matrix, annotation),
-    function(value) same_json_scene(value, expected),
-    case$id, "R_pure", "scene_construction_plus_json_encoding", cells, json_bytes
-  )
+  json_bytes <- NA_integer_
+  if (!stress_mode) {
+    r_scene <- build_scene_v1_r(labels, matrix, annotation)
+    r_json <- encode_scene_v1_r(r_scene)
+    if (!isTRUE(same_json_scene(r_json, expected))) {
+      stop(case$id, ": pure R scene-v1 output differs from Python oracle")
+    }
+    json_bytes <- nchar(r_json, type = "bytes")
+    results[[length(results) + 1L]] <- measure_one(
+      function() build_scene_v1_r(labels, matrix, annotation),
+      function(value) same_scene(value, expected),
+      case$id, "R_pure", "scene_construction_only", cells, json_bytes
+    )
+    results[[length(results) + 1L]] <- measure_one(
+      function() encode_scene_v1_r(r_scene),
+      function(value) same_json_scene(value, expected),
+      case$id, "R_pure", "json_encoding_only", cells, json_bytes
+    )
+    results[[length(results) + 1L]] <- measure_one(
+      function() build_scene_json_r(labels, matrix, annotation),
+      function(value) same_json_scene(value, expected),
+      case$id, "R_pure", "scene_construction_plus_json_encoding", cells, json_bytes
+    )
+  }
 
   candidates <- list(
     Cpp_Rcpp = function() build_scene_json_cpp(labels, matrix, annotation),
@@ -105,7 +113,7 @@ for (case in fixture$workloads) {
       candidates[[candidate_name]],
       function(value) same_json_scene(value, expected),
       case$id, candidate_name, "scene_construction_plus_json_encoding",
-      cells, json_bytes
+      cells, json_bytes, stress = stress_mode
     )
   }
 }
@@ -113,12 +121,14 @@ for (case in fixture$workloads) {
 payload <- list(
   schema_version = 2L,
   suite = "corrplot-ng-cross-language-scene-v1",
-  candidates = c("Python", "R_pure", "Cpp_Rcpp", "Rust_rextendr"),
+  candidates = if (stress_mode) c("Python", "Cpp_Rcpp", "Rust_rextendr") else c("Python", "R_pure", "Cpp_Rcpp", "Rust_rextendr"),
   timing_method = list(
     clock = "R proc.time elapsed with calibrated repeated batches",
-    target_sample_ms = target_sample_ms, samples = sample_count,
-    warmups = warmups,
-    batching = "double batch size until one sample reaches target duration"
+    target_sample_ms = target_sample_ms,
+    samples = if (stress_mode) stress_sample_count else regular_sample_count,
+    warmups = if (stress_mode) stress_warmups else regular_warmups,
+    stress_mode = stress_mode, stress_batch_size = if (stress_mode) 1L else NULL,
+    batching = "calibrate batch size for regular workloads; fixed batch size 1 for B03/B04"
   ),
   environment = list(
     R = R.version.string, platform = R.version$platform,
