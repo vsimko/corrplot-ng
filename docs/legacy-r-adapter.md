@@ -27,16 +27,16 @@ The scene selector is intentionally explicit. It avoids guessing whether a call 
 | order, hclust.method | No permutation/order semantics in scene-v1 | Rejected in scene mode |
 | col, col.lim, is.corr | Semantic color-scale and general-matrix rules are not represented sufficiently | Rejected in scene mode |
 | Labels (tl.*) | Text styling, plotmath parsing, placement and rotation are not represented | Rejected in scene mode |
-| Coefficients, significance and confidence intervals | No corresponding annotation metadata in scene-v1 | Rejected in scene mode |
+| Coefficients and number typography | `addCoef.col`, `addCoefasPercent`, `number.digits`, `number.cex`, and `number.font` map to renderer-neutral cell text annotations; `method = "number"` takes precedence over `addCoef.col` | Supported for circle coefficient overlays and number text; significance/CI remain rejected |
 | add, mar, device state and helper drawing | R graphics-device behavior remains legacy-only | Legacy-only |
 
-The scene mode accepts only the adapter-specific annotation option in addition to corr. All other ... arguments are rejected rather than ignored.
+The scene mode accepts the adapter-specific annotation option, coefficient/value text options, and the `method`, `type`, and `diag` subset described above. Other arguments are rejected rather than ignored.
 
 ## Migration sequence
 
 1. Establish explicit routing and preserve the default legacy path.
 2. Implement and test a narrow scene-v1 input slice (matrix, labels, missing values, annotation).
-3. Extend the versioned scene contract before routing additional legacy semantics, starting with ordering and glyph/display semantics.
+3. Extend the versioned scene contract before routing additional legacy semantics. Coefficient/value text is the first annotation slice; ordering, the remaining glyph methods, significance, and confidence intervals remain separate work.
 4. Add a renderer integration before describing scene mode as a plotting backend.
 5. Expand compatibility fixtures and compare semantic results against the pinned upstream implementation for each newly routed capability.
 6. Keep R graphics-device operations and unsupported options on the legacy path until an equivalent behavior is specified and tested.
