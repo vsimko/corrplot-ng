@@ -41,14 +41,23 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             )
         if orientation == "horizontal":
             column_text = text
+            max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
             if collision == "truncate":
-                max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
                 column_text = column_text if len(column_text) <= max_chars else column_text[:max(1, max_chars - 1)] + "…"
             elif collision == "omit":
                 column_text = ""
-            if column_text:
+            if column_text and collision == "wrap":
+                lines = [column_text[index:index + max_chars] for index in range(0, len(column_text), max_chars)]
+                spans = "".join(
+                    f'<tspan x="{label["column_x"]:.1f}" dy="{0 if line_index == 0 else font_size * 1.1:g}">{html.escape(line)}</tspan>'
+                    for line_index, line in enumerate(lines)
+                )
                 parts.append(
-                    f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" text-anchor="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{column_text}</text>'
+                    f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" text-anchor="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{spans}</text>'
+                )
+            elif column_text:
+                parts.append(
+                    f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" text-anchor="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{html.escape(column_text)}</text>'
                 )
         else:
             parts.append(
