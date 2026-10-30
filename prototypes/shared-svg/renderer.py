@@ -88,7 +88,8 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         x, y, size = cell["x"], cell["y"], cell["size"]
         cx, cy, value = cell["center_x"], cell["center_y"], cell["value"]
         if value is None:
-            parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{style["missing_fill"]}" stroke="#ffffff"/>')
+            missing_color = cell.get("color") or style["missing_fill"]
+            parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{missing_color}" stroke="#ffffff"/>')
             parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
             continue
         color = cell.get("color") or (style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"])
