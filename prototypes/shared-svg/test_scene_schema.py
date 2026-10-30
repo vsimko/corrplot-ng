@@ -49,6 +49,30 @@ class SceneSchemaTests(unittest.TestCase):
         self.assertEqual(scene["cells"][1]["p_value"], 0.01)
         self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
 
+
+    def test_general_matrix_values_and_semantics_match_scene_schema(self):
+        scene = build_scene(self.config)
+        scene["kind"] = "general_matrix_plot"
+        scene["matrix_semantics"] = {
+            "mode": "general_numeric",
+            "color_limits": [-10.0, 25.0],
+            "color_mapping": "diverging",
+            "normalization": {"intercept": 0.0, "zoom": 0.04},
+        }
+        scene["cells"][1]["value"] = 12.5
+        errors = list(Draft202012Validator(self.schema).iter_errors(scene))
+        self.assertEqual(errors, [])
+
+        scene["matrix_semantics"]["mode"] = "correlation"
+        errors = list(Draft202012Validator(self.schema).iter_errors(scene))
+        self.assertTrue(errors)
+
+    def test_correlation_scene_still_rejects_values_outside_signed_domain(self):
+        scene = build_scene(self.config)
+        scene["cells"][1]["value"] = 1.5
+        errors = list(Draft202012Validator(self.schema).iter_errors(scene))
+        self.assertTrue(errors)
+
     def test_schema_rejects_unknown_top_level_fields(self):
         scene = build_scene(self.config)
         scene["renderer_specific_hint"] = "should not be in the shared contract"
