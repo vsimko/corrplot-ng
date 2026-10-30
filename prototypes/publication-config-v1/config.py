@@ -48,17 +48,9 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             _validate_symmetric(values, "$.input.values", allow_null=True)
             _validate_diagonal(values, "$.input.values")
 
-    scale_spec = normalized["colors"].get("scale") or {
-        "type": "continuous",
-        "interpolation": "rgb",
-        "stops": [
-            {"value": -1, "color": normalized["colors"]["negative"]},
-            {"value": 0, "color": normalized["colors"]["neutral"]},
-            {"value": 1, "color": normalized["colors"]["positive"]},
-        ],
-    }
+    semantics = _resolve_matrix_scale(normalized)
+    scale_spec = _resolve_color_scale(normalized, semantics)
     build_color_scale(scale_spec, normalized["colors"]["missing"])
-    _resolve_matrix_scale(normalized)
 
     significance = normalized["plot"]["significance"]
     if significance["enabled"]:
@@ -75,7 +67,7 @@ def _resolve_matrix_scale(config: dict[str, Any]) -> dict[str, Any]:
     """Resolve the visual domain while preserving original matrix values."""
     if config["matrix"]["kind"] == "correlation":
         return {"mode": "correlation", "color_limits": [-1.0, 1.0],
-                "color_mapping": "diverging",
+                "color_mapping": "diverging", "palette": "RdBu",
                 "normalization": {"intercept": 0.0, "zoom": 1.0}}
     import math
     explicit = config["matrix"].get("col_limits")
@@ -108,8 +100,29 @@ def _resolve_matrix_scale(config: dict[str, Any]) -> dict[str, Any]:
     else:
         zoom, intercept, family = 1.0 / (upper - lower), -lower, "sequential"
     return {"mode": "general_numeric", "color_limits": [lower, upper],
-            "color_mapping": family,
+            "color_mapping": family, "palette": "RdBu" if family == "diverging" else "YlOrBr",
             "normalization": {"intercept": intercept, "zoom": zoom}}
+
+
+
+def _resolve_color_scale(config: dict[str, Any], semantics: dict[str, Any]) -> dict[str, Any]:
+    """Select an explicit scale or the legacy-compatible default palette."""
+    explicit = config["colors"].get("scale")
+    if explicit is not None:
+        semantics["palette"] = "custom"
+        return explicit
+    if semantics["color_mapping"] == "sequential":
+        anchors = ["#ffffe5", "#fff7bc", "#fee391", "#fec44f", "#fe9929",
+                   "#ec7014", "#cc4c02", "#993404", "#662506"]
+        return {"type": "sequential", "interpolation": "rgb",
+                "stops": [{"value": index / (len(anchors) - 1), "color": color}
+                          for index, color in enumerate(anchors)]}
+    colors = config["colors"]
+    return {"type": "continuous", "interpolation": "rgb", "stops": [
+        {"value": -1, "color": colors["negative"]},
+        {"value": 0, "color": colors["neutral"]},
+        {"value": 1, "color": colors["positive"]},
+    ]}
 
 
 def _validate_square(matrix: list[list[Any]], size: int, path: str) -> None:
@@ -151,17 +164,9 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
     values = [[source["values"][row][column] for column in permutation] for row in permutation]
 
     colors = normalized["colors"]
-    scale_spec = colors.get("scale") or {
-        "type": "continuous",
-        "interpolation": "rgb",
-        "stops": [
-            {"value": -1, "color": colors["negative"]},
-            {"value": 0, "color": colors["neutral"]},
-            {"value": 1, "color": colors["positive"]},
-        ],
-    }
-    scale = build_color_scale(scale_spec, colors["missing"])
     semantics = _resolve_matrix_scale(normalized)
+    scale_spec = _resolve_color_scale(normalized, semantics)
+    scale = build_color_scale(scale_spec, colors["missing"])
     transform = semantics["normalization"]
     cell_colors = [scale.map_value(None if value is None else
                     (value + transform["intercept"]) * transform["zoom"])
