@@ -189,6 +189,14 @@ jobs:
           & $binary version
           & $binary render --input tools/corrplot-ng/examples/smoke-matrix.csv --output extracted/smoke.svg
           if (-not (Select-String -Path extracted/smoke.svg -Pattern '<svg')) { throw "SVG smoke output missing" }
+          $oldPath = $env:PATH
+          try {
+            $env:PATH = "$env:SystemRoot\System32"
+            & $binary version
+            if ($LASTEXITCODE -ne 0) { throw "CLI failed with a system-only PATH" }
+          } finally {
+            $env:PATH = $oldPath
+          }
 
       - uses: actions/upload-artifact@v4
         with:
