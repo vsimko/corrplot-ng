@@ -106,10 +106,24 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     for row_index, row in enumerate(matrix):
         for column_index, value in enumerate(row):
             x, y = left + column_index * cell, top + row_index * cell
+            is_diagonal = row_index == column_index
+            visible = (
+                (display_type == "full")
+                or (display_type == "upper" and row_index <= column_index)
+                or (display_type == "lower" and row_index >= column_index)
+                or (display_type == "diagonal" and is_diagonal)
+            )
+            if is_diagonal and not show_diagonal:
+                visible = False
+            selected_method = diagonal_method if is_diagonal else (
+                upper_method if row_index < column_index else lower_method
+            )
             item = {
                 "row": row_index, "column": column_index, "value": value,
                 "x": x, "y": y, "center_x": x + cell / 2,
                 "center_y": y + cell / 2, "size": cell,
+                "visible": visible, "method": selected_method,
+                "region": "diagonal" if is_diagonal else ("upper" if row_index < column_index else "lower"),
             }
             if cell_colors is not None:
                 item["color"] = cell_colors[row_index * len(labels) + column_index]
@@ -120,11 +134,21 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     if method not in ("circle", "number"):
         raise ValueError("method must be 'circle' or 'number' in this scene slice")
     display_type = config.get("display_type", "full")
-    if display_type not in ("full", "upper", "lower"):
-        raise ValueError("display_type must be full, upper, or lower")
+    if display_type not in ("full", "upper", "lower", "diagonal"):
+        raise ValueError("display_type must be full, upper, lower, or diagonal")
     show_diagonal = config.get("show_diagonal", True)
     if not isinstance(show_diagonal, bool):
         raise ValueError("show_diagonal must be a boolean")
+    supported_methods = ("circle", "number")
+    upper_method = config.get("upper_method", method)
+    lower_method = config.get("lower_method", method)
+    diagonal_method = config.get("diagonal_method", method)
+    for name, selected in (("upper_method", upper_method), ("lower_method", lower_method),
+                           ("diagonal_method", diagonal_method)):
+        if selected not in supported_methods:
+            raise ValueError(f"{name} must be one of {', '.join(supported_methods)}")
+    if display_type == "diagonal" and not show_diagonal:
+        raise ValueError("diagonal display requires show_diagonal=true")
     add_coef_color = config.get("add_coef_color")
     if add_coef_color is not None and (not isinstance(add_coef_color, str) or not add_coef_color.strip()):
         raise ValueError("add_coef_color must be a non-empty color string or null")
@@ -153,13 +177,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     text_annotations = []
     for cell_item in cells:
         row_index, column_index, value = cell_item["row"], cell_item["column"], cell_item["value"]
-        if value is None or (not show_diagonal and row_index == column_index):
+        if value is None or not cell_item["visible"]:
             continue
-        if display_type == "upper" and row_index > column_index:
-            continue
-        if display_type == "lower" and row_index < column_index:
-            continue
-        if method == "number":
+        if cell_item["method"] == "number":
             role = "value"
             color = (
                 cell_item.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
@@ -201,7 +221,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         "schema_version": 1, "kind": "correlation_plot",
         "width": width, "height": height, "labels": label_items, "cells": cells,
         "annotation": annotation,
-        "glyph_method": method, "text_annotations": text_annotations,
+        "glyph_method": method, "display_type": display_type,
+        "show_diagonal": show_diagonal, "text_annotations": text_annotations,
         "title": title, "description": description,
         "style": {
             "positive_color": "#2166ac", "negative_color": "#b2182b",
