@@ -7,7 +7,7 @@ tags:
   - testing
   - compatibility
   - quality
-status: proposed
+status: active
 ---
 
 # Testing strategy
@@ -98,13 +98,13 @@ The initial fixture file is a seed, not a complete compatibility corpus. Expand 
 
 ## Continuous integration
 
-Use three levels as the implementation grows:
+Keep pull-request checks fast and correctness-focused. Performance measurements are not part of routine pull-request CI.
 
-1. **Pull request:** fixture integrity, fast unit tests, linting, and core compatibility cases.
-2. **Main branch:** the full supported test suite and package installation checks.
-3. **Scheduled run:** broader runtime matrices, generated inputs, visual regression, and performance checks.
+1. **Pull requests:** run fixture integrity, shared SVG tests, the legacy semantic bridge, and the R package check only when relevant paths change. Workflow concurrency cancels superseded runs for the same PR.
+2. **Pushes to main:** run the same path-filtered correctness checks against the merged state.
+3. **Manual performance workflow:** run the shared-core and cross-language benchmark suites only through `workflow_dispatch`. B03/B04 stress workloads and the three-platform native package smoke matrix are separate opt-in inputs.
 
-A required check must fail when its tests fail. Do not report a compatibility status from a workflow that only validates fixture structure.
+The dedicated workflow is documented in [the benchmark guide](../benchmarks/README.md). Benchmark timing is informational and must never be used as a flaky required PR check. A required correctness check must fail when its tests fail.
 
 ## Compatibility status
 
@@ -129,8 +129,9 @@ The ledger should link to the test case and reference version. Test coverage per
 ## Acceptance criteria
 
 - Test fixtures have stable IDs and documented expected properties.
-- CI validates fixture integrity on each pull request.
+- CI validates fixture integrity on relevant pull requests.
 - Visual regression cases identify their original source and pinned reference version.
 - Compatibility tests identify the reference version.
 - Claims about supported behavior link to passing tests.
+- Performance benchmarks never run as part of an ordinary pull-request check.
 - Failures are reproducible and explain which rule was broken.

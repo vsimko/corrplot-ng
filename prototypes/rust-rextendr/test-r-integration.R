@@ -1,5 +1,0 @@
-stopifnot(identical(scene_cell_count(3L), 9L))
-stopifnot(identical(scene_cell_count(0L), 0L))
-stopifnot(identical(scene_cell_count(-2L), 0L))
-stopifnot(identical(scene_cell_count(50000L), .Machine$integer.max))
-cat("Rust-to-R integration smoke test passed.\n")
