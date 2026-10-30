@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   compare:
-    name: Compare Python, C++/Rcpp and Rust/rextendr
+    name: Compare Python, pure R, C++/Rcpp and Rust/rextendr
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -39,11 +39,14 @@ jobs:
             any::rextendr
             any::usethis
 
+      - name: Test benchmark timing harness
+        run: python -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
+
       - name: Export deterministic shared fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
 
       - name: Benchmark Python reference
-        run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json --iterations 20
+        run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
 
       - name: Generate Rcpp wrappers
         shell: Rscript {0}
@@ -60,7 +63,7 @@ jobs:
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
 
-      - name: Benchmark native candidates and validate semantic parity
+      - name: Benchmark pure R and native candidates
         run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
 
       - name: Upload comparison inputs and results
