@@ -126,7 +126,7 @@ writeLines(c(
   "\\title{Count Cells in a Plot Scene}",
   "\\description{Return the number of cells in a square plot scene.}",
   "\\usage{",
-  "\\scene_cell_count(n_labels)",
+  "scene_cell_count(n_labels)",
   "}",
   "\\arguments{",
   "\\item{n_labels}{Number of labels in the scene.}",
