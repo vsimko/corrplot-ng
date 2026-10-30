@@ -61,6 +61,8 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("$.plot.significance.thresholds: values must be strictly increasing")
     if significance["enabled"]:
         p_values = significance["p_values"]
+        if p_values is None:
+            raise ValueError("$.plot.significance.p_values: required when significance is enabled")
         size = len(source["labels"]) if source["kind"] == "inline_matrix" else None
         if size is not None:
             _validate_square(p_values, size, "$.plot.significance.p_values")
@@ -72,7 +74,9 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("$.plot.confidence_intervals: confidence intervals currently require a correlation matrix")
         if source["kind"] != "inline_matrix":
             raise ValueError("$.plot.confidence_intervals: confidence intervals currently require inline_matrix input")
-        _validate_confidence_intervals(confidence_intervals, len(source["labels"]))
+        _validate_confidence_intervals(
+            confidence_intervals, len(source["labels"]), source["values"]
+        )
 
     return normalized
 
@@ -145,7 +149,9 @@ def _resolve_color_scale(config: dict[str, Any], semantics: dict[str, Any]) -> d
 
 
 
-def _validate_confidence_intervals(intervals: dict[str, Any], size: int) -> None:
+def _validate_confidence_intervals(
+    intervals: dict[str, Any], size: int, values: list[list[Any]]
+) -> None:
     lower = intervals["lower"]
     upper = intervals["upper"]
     _validate_square(lower, size, "$.plot.confidence_intervals.lower")
@@ -162,6 +168,15 @@ def _validate_confidence_intervals(intervals: dict[str, Any], size: int) -> None
                     raise ValueError(f"$.plot.confidence_intervals[{row}][{column}]: correlation bounds must be between -1 and 1")
                 if low > high:
                     raise ValueError(f"$.plot.confidence_intervals[{row}][{column}]: lower bound exceeds upper bound")
+                estimate = values[row][column]
+                if estimate is None:
+                    raise ValueError(
+                        f"$.plot.confidence_intervals[{row}][{column}]: interval must be null when the correlation is missing"
+                    )
+                if low > estimate or estimate > high:
+                    raise ValueError(
+                        f"$.plot.confidence_intervals[{row}][{column}]: interval must contain the correlation estimate"
+                    )
 
 
 def _validate_square(matrix: list[list[Any]], size: int, path: str) -> None:

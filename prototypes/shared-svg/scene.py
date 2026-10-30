@@ -250,8 +250,14 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 low, high = lower[row_index][column_index], upper[row_index][column_index]
                 if (low is None) != (high is None):
                     raise ValueError("confidence interval lower and upper must both be null or numeric")
-                if low is not None and low > high:
-                    raise ValueError("confidence interval lower bound must not exceed upper bound")
+                if low is not None:
+                    if low > high:
+                        raise ValueError("confidence interval lower bound must not exceed upper bound")
+                    estimate = matrix[row_index][column_index]
+                    if estimate is None:
+                        raise ValueError("confidence intervals must be null when the correlation is missing")
+                    if low > estimate or estimate > high:
+                        raise ValueError("confidence interval must contain the correlation estimate")
     variable_order = config.get("variable_order")
     if variable_order is not None:
         if not isinstance(variable_order, dict) or set(variable_order) != {"strategy", "indices", "labels"}:

@@ -546,6 +546,41 @@ class PlotSceneTests(unittest.TestCase):
         self.assertIn('stroke="#333333"', svg)
         self.assertEqual(svg, render_scene_svg(scene))
 
+
+    def test_significance_threshold_boundaries_are_inclusive_and_ordered(self):
+        p_values = [
+            [0.0, 0.001, 0.001001, 0.01],
+            [0.001, 0.0, 0.01, 0.05],
+            [0.001001, 0.01, 0.0, 0.050001],
+            [0.01, 0.05, 0.050001, 0.0],
+        ]
+        scene = build_scene({
+            "labels": ["A", "B", "C", "D"],
+            "matrix": [[1.0 if i == j else 0.2 for j in range(4)] for i in range(4)],
+            "p_values": p_values,
+            "significance": {"mode": "stars", "thresholds": [0.001, 0.01, 0.05], "symbol": "×"},
+        })
+        cells = {(cell["row"], cell["column"]): cell for cell in scene["cells"]}
+        self.assertEqual(cells[(0, 1)]["significance"]["annotation"], "***")
+        self.assertEqual(cells[(0, 2)]["significance"]["annotation"], "**")
+        self.assertEqual(cells[(0, 3)]["significance"]["annotation"], "**")
+        self.assertEqual(cells[(1, 2)]["significance"]["annotation"], "**")
+        self.assertEqual(cells[(1, 3)]["significance"]["annotation"], "*")
+        self.assertIsNone(cells[(2, 3)]["significance"]["annotation"])
+
+    def test_confidence_interval_must_contain_correlation_estimate(self):
+        with self.assertRaisesRegex(ValueError, "must contain the correlation estimate"):
+            build_scene({
+                "labels": ["A", "B"],
+                "matrix": [[1.0, 0.6], [0.6, 1.0]],
+                "confidence_intervals": {
+                    "lower": [[1.0, 0.7], [0.7, 1.0]],
+                    "upper": [[1.0, 0.8], [0.8, 1.0]],
+                },
+            })
+
+
+
     def test_missing_p_values_remain_unknown_and_do_not_blank_cells(self):
         scene = build_scene({
             "labels": ["A", "B"],

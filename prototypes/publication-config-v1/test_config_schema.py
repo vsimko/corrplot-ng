@@ -129,6 +129,22 @@ class PublicationConfigTests(unittest.TestCase):
             self.assertEqual(scene["confidence_intervals"][key],
                              [[original[i][j] for j in permutation] for i in permutation])
 
+
+    def test_enabled_significance_requires_p_values(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["plot"]["significance"]["p_values"] = None
+        with self.assertRaisesRegex(ValueError, r"significance.p_values.*required"):
+            validate_config(config)
+
+    def test_confidence_interval_must_contain_correlation_estimate(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["plot"]["confidence_intervals"]["lower"][0][1] = 0.7
+        config["plot"]["confidence_intervals"]["lower"][1][0] = 0.7
+        with self.assertRaisesRegex(ValueError, "must contain the correlation estimate"):
+            validate_config(config)
+
+
+
     def test_confidence_intervals_reject_invalid_pairs_and_general_numeric(self):
         config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
         config["plot"]["confidence_intervals"]["lower"][0][1] = 0.9
