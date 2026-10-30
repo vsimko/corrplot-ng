@@ -110,3 +110,34 @@ test_that("the default engine remains the legacy corrplot implementation", {
       unlink(path)
     })
 })
+
+
+test_that("coefficient annotation fixtures match pinned corrplot 0.95 semantics", {
+  fixture_path <- test_path("fixtures", "coefficient-annotation-cases.json")
+  fixture <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
+  expect_identical(fixture$reference$version, as.character(utils::packageVersion("corrplot")))
+  expect_identical(fixture$reference$commit,
+    "62532f700e6c9d04b93ffbf0bf56e264b0e0368e")
+
+  for (case in fixture$cases) {
+    corr <- matrix(
+      unlist(case$matrix, use.names = FALSE),
+      nrow = length(case$labels), byrow = TRUE,
+      dimnames = list(unlist(case$labels), unlist(case$labels))
+    )
+    options <- case$options
+    args <- list(engine = "scene")
+    if (!is.null(options$addCoef_col)) args$addCoef.col <- options$addCoef_col
+    if (!is.null(options$add_coef_as_percent)) args$addCoefasPercent <- options$add_coef_as_percent
+    if (!is.null(options$type)) args$type <- options$type
+    if (!is.null(options$diag)) args$diag <- options$diag
+    if (!is.null(options$method)) args$method <- options$method
+    if (!is.null(options$number_digits)) args$number.digits <- options$number_digits
+
+    scene <- do.call(corrplot_ng, c(list(corr = corr), args))
+    actual <- lapply(scene$text_annotations, function(item) {
+      list(row = item$row, column = item$column, role = item$role, text = item$text)
+    })
+    expect_identical(actual, case$expected, info = case$id)
+  }
+})
