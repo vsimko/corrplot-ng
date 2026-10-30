@@ -416,3 +416,46 @@ fn invalid_input_does_not_truncate_an_existing_output() {
     assert_eq!(fs::read_to_string(&output_path).unwrap(), "keep existing artifact");
     fs::remove_dir_all(directory).ok();
 }
+
+
+#[test]
+fn ragged_rows_and_duplicate_labels_are_rejected() {
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+    for (name, contents, diagnostic) in [
+        ("ragged", ",alpha,beta\nalpha,1,0.4\nbeta,0.4\n", "row 2 has 1 values"),
+        ("duplicate", ",alpha,alpha\nalpha,1,0.4\nalpha,0.4,1\n", "duplicate column label"),
+    ] {
+        let input = fixture(name, contents);
+        let output = Command::new(binary).args(["validate", "--input"]).arg(&input).output().unwrap();
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains(diagnostic));
+        fs::remove_file(input).ok();
+    }
+}
+
+#[test]
+fn unsupported_output_formats_fail_explicitly() {
+    let input = fixture("unsupported-format", ",alpha,beta\nalpha,1,0.4\nbeta,0.4,1\n");
+    for format in ["png", "pdf", "html"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+            .args(["render", "--input"]).arg(&input)
+            .args(["--format", format]).output().unwrap();
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("unsupported format"));
+    }
+    fs::remove_file(input).ok();
+}
+
+#[test]
+fn utf8_bom_is_accepted() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-bom-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("matrix.csv");
+    let mut bytes = vec![0xef, 0xbb, 0xbf];
+    bytes.extend_from_slice(b",alpha,beta\nalpha,1,0.4\nbeta,0.4,1\n");
+    fs::write(&input, bytes).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&input).output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    fs::remove_dir_all(directory).ok();
+}
