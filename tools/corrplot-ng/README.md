@@ -104,7 +104,7 @@ render a figure without installing Python or R:
     VERSION: "0.1.0"
     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   run: |
-    gh release download "cli-v\${VERSION}" \
+    gh release download "cli-v${VERSION}" \
       --repo vsimko/corrplot-ng \
       --pattern 'corrplot-ng-linux-x86_64-musl.tar.gz' \
       --pattern SHA256SUMS
