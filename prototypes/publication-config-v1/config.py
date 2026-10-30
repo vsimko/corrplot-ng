@@ -39,6 +39,11 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         if len(set(labels)) != size:
             raise ValueError("$.input.labels: labels must be unique")
         _validate_square(values, size, "$.input.values")
+        import math
+        for row_index, row in enumerate(values):
+            for column_index, value in enumerate(row):
+                if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)):
+                    raise ValueError(f"$.input.values[{row_index}][{column_index}]: expected a finite number or null")
         if normalized["matrix"]["kind"] == "correlation":
             _validate_symmetric(values, "$.input.values", allow_null=True)
             _validate_diagonal(values, "$.input.values")
