@@ -2,7 +2,7 @@ test_that("legacy API inventory is pinned and covers every upstream export", {
   inventory_path <- testthat::test_path("fixtures", "legacy-api-inventory.json")
   inventory <- jsonlite::fromJSON(inventory_path, simplifyVector = FALSE)
 
-  expect_identical(inventory$schema_version, 1L)
+  expect_equal(inventory$schema_version, 1)
   expect_identical(inventory$reference$package, "corrplot")
   expect_identical(inventory$reference$version, "0.95")
   expect_identical(
