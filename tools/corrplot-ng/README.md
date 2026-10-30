@@ -26,6 +26,18 @@ gamma,-0.4,NA,1
 
 Correlation mode (default) requires finite values in [-1, 1], symmetry, and a unit diagonal. General-matrix mode accepts arbitrary finite values and does not impose correlation semantics.
 
+The native CLI also accepts renderer-neutral **scene-v1 JSON** as an input.
+It reads the label text and complete cell matrix from `labels` and `cells`;
+layout and style metadata are ignored because the CLI creates its own output
+scene. The imported values pass through the same correlation/general-matrix
+validation used for CSV and TSV inputs.
+
+Input format detection is automatic by default: `.json` selects scene-v1,
+`.tsv` selects tab-separated input, and other files default to CSV. For stdin
+or ambiguous extensions, use `--input-format auto|csv|tsv|scene-json` to
+override detection. CSV and TSV delimiters are strict when explicitly selected.
+
+
 ## Commands
 
 ```sh
@@ -35,6 +47,8 @@ corrplot-ng render --input matrix.csv --output figure.svg
 corrplot-ng render --input matrix.csv --format scene-json --output scene.json
 corrplot-ng render --input matrix.csv --method number --title "My correlations" > figure.svg
 cat matrix.csv | corrplot-ng render --input - > figure.svg
+corrplot-ng render --input scene.json --input-format scene-json --output imported.svg
+cat scene.json | corrplot-ng validate --input - --input-format scene-json
 corrplot-ng presets
 corrplot-ng version
 ```

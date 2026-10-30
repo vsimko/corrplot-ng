@@ -904,3 +904,114 @@ mod tests {
     }
 
 }
+
+
+fn csv_field(value: &str) -> String {
+    if value.chars().any(|ch| matches!(ch, ',' | '"' | '\n' | '\r' | '\t')) {
+        format!("\"{}\"", value.replace('"', "\"\""))
+    } else {
+        value.to_owned()
+    }
+}
+
+/// Import the matrix payload from a renderer-neutral scene-v1 document.
+/// Layout and rendering metadata are intentionally ignored; only labels and
+/// cell values enter the native CLI's shared matrix validation path.
+pub(crate) fn parse_scene_matrix(source: &str) -> Result<(crate::Matrix, crate::Kind), String> {
+    let parsed = parse_json(source).map_err(|e| format!("invalid scene-v1 JSON: {e}"))?;
+    let root = object(&parsed, "scene")?;
+    let version = number(required(root, "schema_version", "scene")?, "scene.schema_version")?;
+    if version != 1.0 { return Err("scene.schema_version must equal 1".into()); }
+    let kind = match string(required(root, "kind", "scene")?, "scene.kind")? {
+        "correlation_plot" => crate::Kind::Correlation,
+        "general_matrix_plot" => crate::Kind::General,
+        other => return Err(format!("unsupported scene.kind '{other}'")),
+    };
+    let labels_json = array(required(root, "labels", "scene")?, "scene.labels")?;
+    if labels_json.is_empty() { return Err("scene.labels must not be empty".into()); }
+    let mut labels = Vec::with_capacity(labels_json.len());
+    for (index, label) in labels_json.iter().enumerate() {
+        let label = object(label, &format!("scene.labels[{index}]"))?;
+        labels.push(string(required(label, "text", &format!("scene.labels[{index}]"))?,
+            &format!("scene.labels[{index}].text"))?.to_owned());
+    }
+    let n = labels.len();
+    let cells = array(required(root, "cells", "scene")?, "scene.cells")?;
+    if cells.len() != n * n {
+        return Err(format!("scene.cells must contain exactly {} cells for {n} labels", n * n));
+    }
+    let mut values = vec![vec![None; n]; n];
+    let mut seen = vec![vec![false; n]; n];
+    for (index, cell) in cells.iter().enumerate() {
+        let cell = object(cell, &format!("scene.cells[{index}]"))?;
+        let row_value = number(required(cell, "row", &format!("scene.cells[{index}]"))?,
+            &format!("scene.cells[{index}].row"))?;
+        let column_value = number(required(cell, "column", &format!("scene.cells[{index}]"))?,
+            &format!("scene.cells[{index}].column"))?;
+        if row_value.fract() != 0.0 || column_value.fract() != 0.0
+            || row_value < 0.0 || column_value < 0.0
+            || row_value >= n as f64 || column_value >= n as f64 {
+            return Err(format!("scene.cells[{index}] has an out-of-range or non-integer row/column index"));
+        }
+        let row = row_value as usize;
+        let column = column_value as usize;
+        if seen[row][column] {
+            return Err(format!("scene.cells contains duplicate cell ({row}, {column})"));
+        }
+        seen[row][column] = true;
+        values[row][column] = match required(cell, "value", &format!("scene.cells[{index}]"))? {
+            Json::Null => None,
+            Json::Number(value) => Some(*value),
+            _ => return Err(format!("scene.cells[{index}].value must be a number or null")),
+        };
+    }
+    if seen.iter().flatten().any(|present| !present) {
+        return Err("scene.cells must contain every row/column position exactly once".into());
+    }
+
+    let mut csv = String::new();
+    csv.push(',');
+    csv.push_str(&labels.iter().map(|label| csv_field(label)).collect::<Vec<_>>().join(","));
+    for (row, label) in labels.iter().enumerate() {
+        csv.push('\n');
+        csv.push_str(&csv_field(label));
+        for value in &values[row] {
+            csv.push(',');
+            if let Some(value) = value { csv.push_str(&value.to_string()); }
+        }
+    }
+    let matrix = crate::parse_matrix_with_delimiter(&csv, kind, ',')?;
+    Ok((matrix, kind))
+}
+
+#[cfg(test)]
+mod scene_input_tests {
+    use super::*;
+
+    const SCENE: &str = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+
+    #[test]
+    fn imports_scene_v1_labels_values_and_kind() {
+        let (matrix, kind) = parse_scene_matrix(SCENE).unwrap();
+        assert_eq!(kind, crate::Kind::Correlation);
+        assert_eq!(matrix.labels, vec!["alpha", "beta", "gamma"]);
+        assert_eq!(matrix.values[0][1], Some(0.65));
+        assert_eq!(matrix.values[1][2], None);
+    }
+
+    #[test]
+    fn rejects_incomplete_and_duplicate_scene_cells() {
+        let missing = SCENE.replace("\"column\": 2,", "\"column\": 9,");
+        assert!(parse_scene_matrix(&missing).unwrap_err().contains("out-of-range"));
+        let duplicate = SCENE.replace("\"row\": 1,", "\"row\": 0,");
+        assert!(parse_scene_matrix(&duplicate).unwrap_err().contains("duplicate cell"));
+    }
+
+    #[test]
+    fn rejects_unknown_scene_versions_and_kinds() {
+        let version = SCENE.replace("\"schema_version\": 1", "\"schema_version\": 2");
+        assert!(parse_scene_matrix(&version).unwrap_err().contains("schema_version"));
+        let kind = SCENE.replace("correlation_plot", "unknown_plot");
+        assert!(parse_scene_matrix(&kind).unwrap_err().contains("unsupported scene.kind"));
+    }
+}
