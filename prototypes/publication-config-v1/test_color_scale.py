@@ -115,7 +115,8 @@ class ColorScaleTests(unittest.TestCase):
                 self.assertIn(0.0, spec["breaks"])
                 self.assertEqual(len(spec["colors"]), len(spec["breaks"]) - 1)
                 for index, color in enumerate(colors):
-                    lower, upper = spec["breaks"][index], spec["breaks"][index + 1]
+                    lower = -1.0 + 2.0 * index / count
+                    upper = -1.0 + 2.0 * (index + 1) / count
                     self.assertEqual(scale.map_value((lower + upper) / 2), color)
 
     def test_legacy_palette_adapter_validates_colors(self):
