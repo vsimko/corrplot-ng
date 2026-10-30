@@ -152,6 +152,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   }
   show_rows <- tl_pos %in% c("lt", "ld", "td", "l")
   show_columns <- tl_pos %in% c("lt", "ld", "td", "d")
+  label_offset <- 13 * 0.6 * options$tl.offset
   row_position <- if (tl_pos == "td") "diagonal" else "left"
   column_position <- if (tl_pos %in% c("ld", "d")) "diagonal" else "top"
   label_items <- lapply(seq_len(n), function(i) {
@@ -159,11 +160,11 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     prefix <- if (startsWith(raw, ":") || startsWith(raw, "=") || startsWith(raw, "$")) substr(raw, 1L, 1L) else NULL
     source <- if (is.null(prefix)) NULL else substring(raw, 2L)
     corrplot_ng_parse_label(raw)
-    list(text = raw, row_x = if (row_position == "left") left_margin - 12 else
+    list(text = raw, row_x = if (row_position == "left") left_margin - 12 - label_offset else
         left_margin + (i - 1L) * cell_size,
       row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
       column_x = left_margin + (i - 1L) * cell_size + cell_size / 2,
-      column_y = if (column_position == "top") top_margin - 16 else
+      column_y = if (column_position == "top") top_margin - 16 - label_offset else
         top_margin + (i - 1L) * cell_size + cell_size / 2,
       row_visible = show_rows, column_visible = show_columns,
       row_position = row_position, column_position = column_position,
