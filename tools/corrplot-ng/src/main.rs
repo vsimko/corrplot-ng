@@ -47,8 +47,8 @@ USAGE:
 
 COMMANDS:
   init       Interactively create a publication-config v1 file
-  render     Render a labelled CSV/TSV matrix to SVG or scene-v1 JSON
-  validate   Validate a labelled CSV/TSV matrix without rendering
+  render     Render a labelled CSV/TSV/JSON matrix to SVG or scene-v1 JSON
+  validate   Validate a labelled CSV/TSV/JSON matrix without rendering
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
   version    Print version and build information
@@ -365,10 +365,21 @@ fn detect_input_format(path: &str, source: &str, requested: InputFormat) -> Resu
     }
     let trimmed = source.trim_start();
     if trimmed.starts_with('{') || trimmed.starts_with('[') { return Ok(InputFormat::Json); }
-    let first = trimmed.lines().find(|line| !line.trim().is_empty())
-        .ok_or_else(|| "input is empty".to_string())?;
-    let commas = first.matches(',').count();
-    let tabs = first.matches('\t').count();
+    let mut commas = 0usize;
+    let mut tabs = 0usize;
+    let mut quoted = false;
+    let mut chars = trimmed.chars().peekable();
+    while let Some(ch) = chars.next() {
+        match ch {
+            '"' if quoted && chars.peek() == Some(&'"') => { chars.next(); }
+            '"' => quoted = !quoted,
+            '\n' | '\r' if !quoted => break,
+            ',' if !quoted => commas += 1,
+            '\t' if !quoted => tabs += 1,
+            _ => {}
+        }
+    }
+    if commas == 0 && tabs == 0 && trimmed.is_empty() { return Err("input is empty".into()); }
     match (commas, tabs) {
         (0, 0) => Err("cannot detect input format; use --input-format csv, tsv, or json".into()),
         (c, t) if c > t => Ok(InputFormat::Csv),
