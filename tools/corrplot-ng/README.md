@@ -63,6 +63,59 @@ triggered only by a matching `cli-vX.Y.Z` tag. DEB/RPM and distribution
 repository packaging remain deferred to issue #99.
 
 
+### Make
+
+After installing the binary, a Make target can render figures only when the
+input changes:
+
+```make
+figures/correlation.svg: data/correlation.csv
+	mkdir -p figures
+	corrplot-ng render --input $< --output $@
+
+.PHONY: figures
+figures: figures/correlation.svg
+```
+
+### LaTeX
+
+The CLI writes SVG directly. With the LaTeX `svg` package and Inkscape
+available in the document build environment, include the generated figure:
+
+```tex
+\usepackage{svg}
+
+\begin{document}
+\includesvg[width=\linewidth]{figures/correlation}
+\end{document}
+```
+
+Compile with shell escape enabled when required by the `svg` package
+(for example, `lualatex --shell-escape paper.tex`).
+
+### CI
+
+A CI job can download the versioned Linux archive, verify its checksum, and
+render a figure without installing Python or R:
+
+```yaml
+- name: Install corrplot-ng
+  env:
+    VERSION: "0.1.0"
+  run: |
+    gh release download "cli-v\${VERSION}" \
+      --repo vsimko/corrplot-ng \
+      --pattern 'corrplot-ng-linux-x86_64-musl.tar.gz' \
+      --pattern SHA256SUMS
+    sha256sum -c SHA256SUMS
+    tar -xzf corrplot-ng-linux-x86_64-musl.tar.gz
+    sudo install -m 0755 corrplot-ng /usr/local/bin/corrplot-ng
+- name: Render figure
+  run: corrplot-ng render --input data/correlation.csv --output figures/correlation.svg
+```
+
+
+
 ## Input format
 
 The first version accepts a square labelled CSV or TSV matrix. The first cell is empty (or `label`), followed by column labels. Each subsequent row begins with the corresponding row label. Empty cells, `NA`, `NaN`, and `null` mean missing values.
