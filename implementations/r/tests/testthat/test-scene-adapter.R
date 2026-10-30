@@ -161,3 +161,9 @@ test_that("coefficient labels are opt-in and missing values stay unformatted", {
     item$row == 0L && item$column == 1L
   }, logical(1))))
 })
+
+
+test_that("coefficient overlay colors must be valid R colors", {
+  expect_error(corrplot_ng(diag(2), engine = "scene", addCoef.col = ""), "addCoef.col")
+  expect_error(corrplot_ng(diag(2), engine = "scene", addCoef.col = "not-a-color"), "valid R color")
+})
