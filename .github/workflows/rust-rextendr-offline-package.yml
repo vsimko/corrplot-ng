@@ -43,6 +43,14 @@ jobs:
             any::usethis
       - name: Generate temporary R package with rextendr
         run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+      - name: Verify third-party license notice is included
+        shell: bash
+        run: |
+          set -euxo pipefail
+          license_dir=prototypes/rust-rextendr/.ci-r-package/inst/licenses
+          test -s "$license_dir/extendr-MIT.txt"
+          grep -q "Copyright (c) 2021 The Extendr contributors" "$license_dir/extendr-MIT.txt"
+          grep -q "extendr-api-v0.8.2" "$license_dir/README.md"
       - name: Resolve, audit, and vendor dependencies of the generated package
         shell: bash
         run: |
