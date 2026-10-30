@@ -98,6 +98,7 @@ jobs:
           binary="tools/corrplot-ng/target/${{ matrix.target }}/release/corrplot-ng${{ matrix.suffix }}"
           stage="dist/corrplot-ng-${{ matrix.target }}"
           mkdir -p "$stage"
+          cp "$binary" "$stage/corrplot-ng${{ matrix.suffix }}"
           "$binary" --help > "$stage/help.txt"
           "$binary" version | tee "$stage/version.txt"
           "$binary" validate --input tools/corrplot-ng/examples/smoke-matrix.csv
@@ -160,7 +161,7 @@ jobs:
         shell: pwsh
         run: |
           $version = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
-          Compress-Archive -Path "dist/corrplot-ng-${{ matrix.target }}/*" -DestinationPath "dist/corrplot-ng-$version-${{ matrix.target }}.zip"
+          Compress-Archive -Path "dist/corrplot-ng-${{ matrix.target }}" -DestinationPath "dist/corrplot-ng-$version-${{ matrix.target }}.zip"
 
       - name: Smoke-test extracted Unix archive
         if: runner.os != 'Windows'
@@ -183,7 +184,7 @@ jobs:
         run: |
           $version = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
           Expand-Archive "dist/corrplot-ng-$version-${{ matrix.target }}.zip" -DestinationPath extracted
-          $binary = "extracted/corrplot-ng-${{ matrix.target }}/corrplot-ng.exe"
+          $binary = Join-Path $PWD "extracted/corrplot-ng-${{ matrix.target }}/corrplot-ng.exe"
           & $binary --help
           & $binary version
           & $binary render --input tools/corrplot-ng/examples/smoke-matrix.csv --output extracted/smoke.svg
