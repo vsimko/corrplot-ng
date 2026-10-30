@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
 
-      - name: Benchmark pure R and native candidates
+      - name: Benchmark C++/Rcpp and Rust/rextendr stress candidates
         run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json --stress-mode
 
       - name: Upload comparison inputs and results
