@@ -235,6 +235,9 @@ test_that("general-matrix mode preserves values and resolves legacy color domain
   expect_identical(scene$matrix_semantics$mode, "general_numeric")
   expect_equal(scene$matrix_semantics$color_limits, c(2, 8))
   expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+  expect_identical(scene$matrix_semantics$palette, "YlOrBr")
+  expect_identical(scene$cells[[1]]$color, "#ffffe5")
+  expect_identical(scene$cells[[4]]$color, "#662506")
   expect_equal(scene$matrix_semantics$normalization,
     list(intercept = -2, zoom = 1 / 6))
   expect_equal(vapply(scene$cells, function(cell) cell$value, numeric(1)),
@@ -247,6 +250,7 @@ test_that("general-matrix mode preserves values and resolves legacy color domain
     col.lim = c(-5, 5))
   expect_equal(scene$matrix_semantics$color_limits, c(-5, 5))
   expect_identical(scene$matrix_semantics$color_mapping, "diverging")
+  expect_identical(scene$matrix_semantics$palette, "RdBu")
   expect_equal(scene$matrix_semantics$normalization,
     list(intercept = 0, zoom = 0.2))
   expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
