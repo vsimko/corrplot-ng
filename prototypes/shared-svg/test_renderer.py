@@ -150,6 +150,32 @@ class PlotSceneTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "square"):
             build_scene({"labels": ["alpha", "beta"], "matrix": [[1.0]]})
 
+    def test_general_numeric_scene_preserves_values_and_uses_mapped_colors(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[12.0, 8.0], [8.0, 10.0]],
+            "matrix_mode": "general_numeric",
+            "matrix_semantics": {
+                "mode": "general_numeric", "color_limits": [8.0, 12.0],
+                "color_mapping": "sequential",
+                "normalization": {"intercept": -8.0, "zoom": 0.25},
+            },
+            "cell_colors": ["#b2182b", "#f7f7f7", "#f7f7f7", "#d6604d"],
+        })
+        self.assertEqual(scene["kind"], "general_matrix_plot")
+        self.assertEqual(scene["cells"][0]["value"], 12.0)
+        self.assertEqual(scene["cells"][0]["normalized_value"], 1.0)
+        svg = render_scene_svg(scene)
+        self.assertIn('fill="#b2182b"', svg)
+        self.assertIn('r="36.12"', svg)
+
+    def test_general_numeric_accepts_values_outside_correlation_domain(self):
+        scene = build_scene({
+            "labels": ["A"], "matrix": [[125.0]], "matrix_mode": "general_numeric",
+        })
+        self.assertEqual(scene["kind"], "general_matrix_plot")
+        self.assertEqual(scene["cells"][0]["value"], 125.0)
+
     def test_rejects_out_of_range_values(self):
         with self.assertRaisesRegex(ValueError, "between -1 and 1"):
             build_scene({"labels": ["alpha"], "matrix": [[1.2]]})
