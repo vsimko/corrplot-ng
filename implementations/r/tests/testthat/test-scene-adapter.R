@@ -235,7 +235,7 @@ test_that("general-matrix adapter matches the shared corrplot 0.95 reference fix
     "general-matrix-cases.json")
   fixtures <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
   for (case in fixtures$cases) {
-    values <- do.call(rbind, lapply(case$matrix, function(row) as.numeric(unlist(row))))
+    values <- do.call(rbind, lapply(case$matrix, function(row) vapply(row, function(value) if (is.null(value)) NA_real_ else as.numeric(value), numeric(1))))
     args <- list(corr = values, engine = "scene", is.corr = FALSE,
       diag = isTRUE(case$diag))
     if (case$id != "hidden-diagonal-negative-constant") {
@@ -253,7 +253,7 @@ test_that("general-matrix adapter matches the shared corrplot 0.95 reference fix
   }
   for (case in fixtures$invalid_cases) {
     values <- do.call(rbind, lapply(case$matrix, function(row) {
-      as.numeric(unlist(row, use.names = FALSE))
+      vapply(row, function(value) if (is.null(value)) NA_real_ else as.numeric(value), numeric(1))
     }))
     args <- list(corr = values, engine = "scene", is.corr = FALSE)
     if (!is.null(case$col_limits)) args$col.lim <- as.numeric(unlist(case$col_limits))
