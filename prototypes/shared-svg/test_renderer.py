@@ -321,6 +321,21 @@ class PlotSceneTests(unittest.TestCase):
             with self.subTest(option=key, value=value):
                 with self.assertRaises(ValueError):
                     build_scene({**base, key: value, "add_coef_color": "black"})
+    def test_svg_renderer_rejects_plotmath_instead_of_silently_misrendering(self):
+        scene = build_scene({"labels": [":alpha + beta"], "matrix": [[1.0]]})
+        scene["labels"][0]["plotmath"] = {"prefix": ":", "source": "alpha + beta"}
+        with self.assertRaisesRegex(ValueError, "does not interpret R plotmath"):
+            render_scene_svg(scene)
+
+    def test_svg_renderer_respects_label_visibility_and_rotation(self):
+        scene = build_scene({"labels": ["alpha", "beta"], "matrix": [[1.0, 0.2], [0.2, 1.0]]})
+        scene["labels"][0].update({"row_visible": False, "column_visible": True, "column_rotation": 35})
+        scene["labels"][1].update({"row_visible": True, "column_visible": False})
+        svg = render_scene_svg(scene)
+        self.assertEqual(svg.count(">alpha</text>"), 1)
+        self.assertIn("rotate(-35", svg)
+        self.assertEqual(svg.count(">beta</text>"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

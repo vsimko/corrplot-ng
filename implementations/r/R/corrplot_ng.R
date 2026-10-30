@@ -1,3 +1,31 @@
+#' Parse a legacy corrplot label
+#'
+#' Labels prefixed with `:`, `=`, or `#' Parse a legacy corrplot label
+#'
+#' 
+#' prefix) are parsed as native R plotmath expressions. Other labels are
+#' returned unchanged as character strings.
+#'
+#' @param label One non-missing character string.
+#' @return A character string or a native R expression.
+#' @export
+corrplot_ng_parse_label <- function(label) {
+  if (!is.character(label) || length(label) != 1L || is.na(label)) {
+    stop("label must be one non-missing character string", call. = FALSE)
+  }
+  if (startsWith(label, ":") || startsWith(label, "=") || startsWith(label, "$")) {
+    source <- substring(label, 2L)
+    if (!nzchar(trimws(source))) {
+      stop("invalid plotmath label '", label, "': expression is empty", call. = FALSE)
+    }
+    tryCatch(parse(text = source), error = function(e) {
+      stop("invalid plotmath label '", label, "': ", conditionMessage(e), call. = FALSE)
+    })
+  } else {
+    label
+  }
+}
+
 corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   engine <- match.arg(engine)
   args <- list(...)
@@ -9,7 +37,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     arg_names <- names(args)
     if (is.null(arg_names) || anyNA(arg_names) || any(!nzchar(arg_names)) || anyDuplicated(arg_names)) stop("The scene engine requires uniquely named arguments", call. = FALSE)
     supported <- c("annotation", "method", "type", "diag", "addCoef.col",
-      "addCoefasPercent", "number.digits", "number.cex", "number.font")
+      "addCoefasPercent", "number.digits", "number.cex", "number.font", "tl.pos", "tl.offset", "tl.srt")
     unsupported <- setdiff(arg_names, supported)
     if ("method" %in% arg_names) {
       requested_method <- args$method
@@ -25,7 +53,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   }
   defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
     addCoef.col = NULL, addCoefasPercent = FALSE, number.digits = NULL,
-    number.cex = 1, number.font = 2)
+    number.cex = 1, number.font = 2,
+    tl.pos = NULL, tl.offset = 0.4, tl.srt = 90)
   options <- utils::modifyList(defaults, args)
   .corrplot_ng_build_scene_v1(corr, options)
 }
@@ -104,9 +133,53 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       index <- index + 1L
     }
   }
-  label_items <- lapply(seq_len(n), function(i) list(text = labels[[i]], row_x = 92,
-    row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
-    column_x = left_margin + (i - 1L) * cell_size + cell_size / 2, column_y = 60))
+  tl_pos <- options$tl.pos
+  if (identical(tl_pos, FALSE)) tl_pos <- "n"
+  if (is.null(tl_pos) || identical(tl_pos, TRUE)) {
+    tl_pos <- switch(display_type, full = "lt", lower = "ld", upper = "td")
+  }
+  if (!is.character(tl_pos) || length(tl_pos) != 1L || is.na(tl_pos) ||
+      !tl_pos %in% c("lt", "ld", "td", "d", "l", "n")) {
+    stop("tl.pos must be one of 'lt', 'ld', 'td', 'd', 'l', or 'n'", call. = FALSE)
+  }
+  if (tl_pos == "ld" && display_type != "lower") {
+    stop("tl.pos = 'ld' requires type = 'lower'", call. = FALSE)
+  }
+  if (tl_pos == "td" && display_type != "upper") {
+    stop("tl.pos = 'td' requires type = 'upper'", call. = FALSE)
+  }
+  if (!is.numeric(options$tl.offset) || length(options$tl.offset) != 1L ||
+      is.na(options$tl.offset) || !is.finite(options$tl.offset)) {
+    stop("tl.offset must be one finite number", call. = FALSE)
+  }
+  if (!is.numeric(options$tl.srt) || length(options$tl.srt) != 1L ||
+      is.na(options$tl.srt) || !is.finite(options$tl.srt)) {
+    stop("tl.srt must be one finite number", call. = FALSE)
+  }
+  show_rows <- tl_pos %in% c("lt", "ld", "td", "l")
+  show_columns <- tl_pos %in% c("lt", "ld", "td", "d")
+  label_offset <- 13 * 0.6 * options$tl.offset
+  row_position <- if (tl_pos == "td") "diagonal" else "left"
+  column_position <- if (tl_pos %in% c("ld", "d")) "diagonal" else "top"
+  label_items <- lapply(seq_len(n), function(i) {
+    raw <- labels[[i]]
+    prefix <- if (startsWith(raw, ":") || startsWith(raw, "=") || startsWith(raw, "$")) substr(raw, 1L, 1L) else NULL
+    source <- if (is.null(prefix)) NULL else substring(raw, 2L)
+    corrplot_ng_parse_label(raw)
+    item <- list(text = raw, row_x = if (row_position == "left") left_margin - 12 - label_offset else
+        left_margin + (i - 1L) * cell_size - label_offset,
+      row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
+      column_x = left_margin + (i - 1L) * cell_size + cell_size / 2 +
+        (if (column_position == "diagonal") label_offset * cos(options$tl.srt * pi / 180) else 0),
+      column_y = if (column_position == "top") top_margin - 16 - label_offset else
+        top_margin + (i - 1L) * cell_size + cell_size / 2 -
+          (if (column_position == "diagonal") label_offset * sin(options$tl.srt * pi / 180) else 0),
+      row_visible = show_rows, column_visible = show_columns,
+      row_position = row_position, column_position = column_position,
+      column_rotation = options$tl.srt, offset = options$tl.offset)
+    if (!is.null(source)) item$plotmath <- list(prefix = prefix, source = source)
+    item
+  })
   scene <- list(schema_version = 1L, kind = "correlation_plot",
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,

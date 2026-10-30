@@ -31,6 +31,11 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
     ]
 
     for label in scene["labels"]:
+        if label.get("plotmath") is not None:
+            raise ValueError(
+                "the SVG renderer does not interpret R plotmath labels; "
+                "use the R graphics renderer or convert the label explicitly"
+            )
         text = html.escape(label["text"])
         if collision == "omit":
             row_text = ""
@@ -39,10 +44,12 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             row_text = text if len(text) <= max_chars else text[:max(1, max_chars - 1)] + "…"
         else:
             row_text = text
-        if row_text:
+        if row_text and label.get("row_visible", True):
             parts.append(
                 f'<text x="{label["row_x"]:g}" y="{label["row_y"]:.1f}" text-anchor="end" dominant-baseline="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{row_text}</text>'
             )
+        if not label.get("column_visible", True):
+            continue
         if orientation == "horizontal":
             column_text = label["text"]
             max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
@@ -70,8 +77,9 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             if collision == "truncate":
                 max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
                 column_text = column_text if len(column_text) <= max_chars else column_text[:max(1, max_chars - 1)] + "…"
+            rotation = -label.get("column_rotation", 90)
             parts.append(
-                f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" transform="rotate(-90 {label["column_x"]:.1f} {label["column_y"]:g})" text-anchor="start" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{html.escape(column_text)}</text>'
+                f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]:g}" transform="rotate({rotation:g} {label["column_x"]:.1f} {label["column_y"]:g})" text-anchor="start" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{html.escape(column_text)}</text>'
             )
 
     for cell in scene["cells"]:
