@@ -57,6 +57,13 @@ Rust/Cargo versions, license, and runtime assumptions. The release workflow
 also runs the compiled executable's help/version smoke tests; the Linux static
 binary is additionally executed inside a minimal container without Python.
 
+Each platform archive also contains `RELEASE-AUDIT.json`. It records the
+executable size, version-command startup latency (30 samples, median and p95),
+runtime link inspection, and peak child-process RSS where the host standard
+library exposes it. Windows RSS is explicitly marked unavailable rather than
+inferred. The audit script is build-time tooling only; it is not a runtime
+dependency and is never launched by the native executable.
+
 A manual run of **Release native CLI** in GitHub Actions builds and stores
 workflow artifacts but does not publish a GitHub release. Publishing is
 triggered only by a matching `cli-vX.Y.Z` tag. DEB/RPM and distribution
