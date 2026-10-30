@@ -67,6 +67,13 @@ test_that("percentage labels and number typography follow corrplot defaults", {
   expect_identical(label$font_style, "italic")
 })
 
+
+test_that("percentage formatting defaults to whole percentages", {
+  scene <- corrplot_ng(matrix(.125, 1), engine = "scene",
+    addCoef.col = "black", addCoefasPercent = TRUE)
+  expect_identical(scene$text_annotations[[1]]$text, "12")
+})
+
 test_that("number method takes precedence over addCoef.col", {
   scene <- corrplot_ng(diag(2), engine = "scene", method = "number",
     addCoef.col = "red", number.digits = 1, number.font = 3)
