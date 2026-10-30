@@ -165,10 +165,10 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
         left_margin + (i - 1L) * cell_size - label_offset,
       row_y = top_margin + (i - 1L) * cell_size + cell_size / 2,
       column_x = left_margin + (i - 1L) * cell_size + cell_size / 2 +
-        if (column_position == "diagonal") label_offset * cos(options$tl.srt * pi / 180) else 0,
+        (if (column_position == "diagonal") label_offset * cos(options$tl.srt * pi / 180) else 0),
       column_y = if (column_position == "top") top_margin - 16 - label_offset else
         top_margin + (i - 1L) * cell_size + cell_size / 2 -
-          if (column_position == "diagonal") label_offset * sin(options$tl.srt * pi / 180) else 0,
+          (if (column_position == "diagonal") label_offset * sin(options$tl.srt * pi / 180) else 0),
       row_visible = show_rows, column_visible = show_columns,
       row_position = row_position, column_position = column_position,
       column_rotation = options$tl.srt, offset = options$tl.offset,
