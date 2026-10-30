@@ -75,7 +75,11 @@ payload <- list(
     R = R.version.string,
     platform = R.version$platform,
     os = Sys.info()[["sysname"]],
-    machine = Sys.info()[["machine"]]
+    machine = Sys.info()[["machine"]],
+    cxx_compiler = system2("R", c("CMD", "config", "CXX"), stdout = TRUE),
+    rustc = system2("rustc", "--version", stdout = TRUE),
+    rcpp_version = as.character(packageVersion("Rcpp")),
+    rextendr_version = as.character(packageVersion("rextendr"))
   ),
   results = results
 )
