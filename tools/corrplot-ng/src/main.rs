@@ -73,7 +73,8 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
 
 fn parse_args(args: &[String]) -> Result<Options, String> {
     if args.len() < 2 { return Err(usage().to_string()); }
-    let mut input = None;\n    let mut config = None;
+    let mut input = None;
+    let mut config = None;
     let mut output = None;
     let mut format = Format::Svg;
     let mut kind = Kind::Correlation;
@@ -86,7 +87,8 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
         if i + 1 >= args.len() { return Err(format!("missing value for {arg}\n\n{}", usage())); }
         let value = args[i + 1].clone();
         match arg {
-            "-i" | "--input" => input = Some(value),\n            "--config" => config = Some(value),
+            "-i" | "--input" => input = Some(value),
+            "--config" => config = Some(value),
             "-o" | "--output" => output = Some(value),
             "--format" => format = match value.as_str() {
                 "svg" => Format::Svg,
