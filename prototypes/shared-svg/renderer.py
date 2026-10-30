@@ -40,7 +40,7 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
                 f'<text x="{label["row_x"]:g}" y="{label["row_y"]:.1f}" text-anchor="end" dominant-baseline="middle" font-family="{family}" font-size="{font_size:g}" font-weight="{weight}">{row_text}</text>'
             )
         if orientation == "horizontal":
-            column_text = text
+            column_text = label["text"]
             max_chars = max(1, int(scene["cells"][0]["size"] / (font_size * 0.6)))
             if collision == "truncate":
                 column_text = column_text if len(column_text) <= max_chars else column_text[:max(1, max_chars - 1)] + "…"
