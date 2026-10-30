@@ -17,7 +17,9 @@ The Python test suite compares the generated scene with this canonical output. T
 - `kind` is `correlation_plot`.
 - `width`, `height`, positions, and sizes use logical canvas units. They are not pixels, points, or CSS units.
 - `labels` contains one item per matrix variable, in matrix order. `text` is always a string. Row and column label positions are independent.
-- `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the original matrix/labels order.
+- `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the original matrix/labels order. Triangle filtering never removes or renumbers source cells.
+- When display options are supplied, each cell carries `visible`, `region` (`upper`, `lower`, or `diagonal`), and its resolved `method`. `display_type` selects `full`, `upper`, `lower`, or `diagonal`; `show_diagonal` independently controls diagonal visibility. Upper means `row < column`, lower means `row > column`, and the diagonal is selected separately. Upper/lower methods default to the global `method`.
+- Renderers must skip cells with `visible: false` while retaining their identity and geometry in the scene. This keeps cell metadata aligned for other consumers and avoids treating a display mask as data removal.
 - `value` is a correlation coefficient in [-1, 1], or JSON `null` for a missing value. Missing must not be silently converted to zero.
 - Optional cell `color` is the mapped six-digit sRGB color for that value. It is absent in legacy scenes that use semantic style colors.
 - Optional `legend` is an ordered array of renderer-neutral `kind`, `label`, and `color` entries. It describes the exact mapping used by cells and may include a distinct missing-value entry.
@@ -25,14 +27,14 @@ The Python test suite compares the generated scene with this canonical output. T
 - `annotation` is plain text. This version supports one annotation string, not arbitrary positioned/layered elements.
 - Optional `glyph_method` identifies the current cell text/glyph mode (`circle` or `number`). A number scene renders the formatted coefficient as text instead of the circle glyph.
 - Optional `text_annotations` is a row-major list of positioned cell labels. Each entry carries zero-based `row` and `column` identity, a `role` (`coefficient` or `value`), preformatted text, color, font size, weight, and style. Renderers must place each label at the matching cell center; labels are not re-associated by array position.
-- Coefficient labels are emitted only when a coefficient color is supplied. Missing cells are never formatted as zero. Upper/lower display filtering and diagonal visibility are applied before labels are created.
+- Coefficient labels are emitted only when a coefficient color is supplied. Missing cells are never formatted as zero. Visibility is applied before labels are created; a per-cell `number` method takes precedence over coefficient labels.
 - The number method takes precedence over the coefficient overlay, matching corrplot 0.95: it emits value labels using the number typography and does not emit a second coefficient label.
 - `number_digits` defaults to 2 for decimal output and 0 for percentage output. Percent formatting multiplies the original coefficient by 100 before rounding. `number_cex` scales the default logical text size; `number_font` maps R font values 1–4 to plain, bold, italic, and bold-italic.
 - `style` contains six-digit sRGB fallback colors. It defines semantic colors only; it does not prescribe a particular shape or renderer.
 
 ## Deliberate limits
 
-Version 1 remains an experimental subset. It does not yet define ordering algorithms, significance markers, confidence intervals, arbitrary positioned annotations, full label typography, accessibility metadata, or native R graphics-device behavior. Coefficient/value text typography is limited to the explicit fields above. The optional legend is a semantic scene capability; individual renderers remain responsible for layout and clipping.
+Version 1 remains an experimental subset. It does not yet define ordering algorithms, significance markers, confidence intervals, arbitrary positioned annotations, full label typography, accessibility metadata, or native R graphics-device behavior. The current triangle/mixed-method slice supports `circle` and `number`; other glyph methods remain outside this prototype. Coefficient/value text typography is limited to the explicit fields above. The optional legend is a semantic scene capability; individual renderers remain responsible for layout and clipping.
 
 ## Compatibility and evolution
 

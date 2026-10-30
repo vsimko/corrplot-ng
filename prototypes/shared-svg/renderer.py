@@ -75,6 +75,8 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             )
 
     for cell in scene["cells"]:
+        if not cell.get("visible", True):
+            continue
         x, y, size = cell["x"], cell["y"], cell["size"]
         cx, cy, value = cell["center_x"], cell["center_y"], cell["value"]
         if value is None:
@@ -84,14 +86,16 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
         radius = abs(value) * (size * 0.43)
         parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
-        if scene.get("glyph_method", "circle") != "number" and radius > 0:
+        if cell.get("method", scene.get("glyph_method", "circle")) != "number" and radius > 0:
             parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
 
     cells_by_position = {
-        (item["row"], item["column"]): item for item in scene["cells"]
+        (item["row"], item["column"]): item for item in scene["cells"] if item.get("visible", True)
     }
     for label in scene.get("text_annotations", []):
-        cell = cells_by_position[(label["row"], label["column"])]
+        cell = cells_by_position.get((label["row"], label["column"]))
+        if cell is None:
+            continue
         parts.append(
             f'<text x="{cell["center_x"]:.1f}" y="{cell["center_y"]:.1f}" '
             f'text-anchor="middle" dominant-baseline="middle" '

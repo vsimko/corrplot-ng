@@ -113,6 +113,22 @@
           },
           "color": {
             "$ref": "#/$defs/color"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "method": {
+            "enum": [
+              "circle",
+              "number"
+            ]
+          },
+          "region": {
+            "enum": [
+              "upper",
+              "lower",
+              "diagonal"
+            ]
           }
         }
       }
@@ -284,6 +300,17 @@
           }
         }
       }
+    },
+    "display_type": {
+      "enum": [
+        "full",
+        "upper",
+        "lower",
+        "diagonal"
+      ]
+    },
+    "show_diagonal": {
+      "type": "boolean"
     }
   },
   "$defs": {

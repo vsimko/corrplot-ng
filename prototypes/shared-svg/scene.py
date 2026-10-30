@@ -95,6 +95,29 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
 
+    method = config.get("method", "circle")
+    if method not in ("circle", "number"):
+        raise ValueError("method must be 'circle' or 'number' in this scene slice")
+    display_type = config.get("display_type", "full")
+    if display_type not in ("full", "upper", "lower", "diagonal"):
+        raise ValueError("display_type must be full, upper, lower, or diagonal")
+    show_diagonal = config.get("show_diagonal", True)
+    if not isinstance(show_diagonal, bool):
+        raise ValueError("show_diagonal must be a boolean")
+    supported_methods = ("circle", "number")
+    upper_method = config.get("upper_method", method)
+    lower_method = config.get("lower_method", method)
+    diagonal_method = config.get("diagonal_method", method)
+    for name, selected in (("upper_method", upper_method), ("lower_method", lower_method),
+                           ("diagonal_method", diagonal_method)):
+        if selected not in supported_methods:
+            raise ValueError(f"{name} must be one of {', '.join(supported_methods)}")
+    if display_type == "diagonal" and not show_diagonal:
+        raise ValueError("diagonal display requires show_diagonal=true")
+
+    has_region_layout = any(key in config for key in (
+        "display_type", "show_diagonal", "upper_method", "lower_method", "diagonal_method"
+    ))
     cells = []
     cell_colors = config.get("cell_colors")
     if cell_colors is not None:
@@ -106,25 +129,33 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     for row_index, row in enumerate(matrix):
         for column_index, value in enumerate(row):
             x, y = left + column_index * cell, top + row_index * cell
+            is_diagonal = row_index == column_index
+            visible = (
+                (display_type == "full")
+                or (display_type == "upper" and row_index <= column_index)
+                or (display_type == "lower" and row_index >= column_index)
+                or (display_type == "diagonal" and is_diagonal)
+            )
+            if is_diagonal and not show_diagonal:
+                visible = False
+            selected_method = diagonal_method if is_diagonal else (
+                upper_method if row_index < column_index else lower_method
+            )
             item = {
                 "row": row_index, "column": column_index, "value": value,
                 "x": x, "y": y, "center_x": x + cell / 2,
                 "center_y": y + cell / 2, "size": cell,
             }
+            if has_region_layout:
+                item.update({
+                    "visible": visible, "method": selected_method,
+                    "region": "diagonal" if is_diagonal else ("upper" if row_index < column_index else "lower"),
+                })
             if cell_colors is not None:
                 item["color"] = cell_colors[row_index * len(labels) + column_index]
             cells.append(item)
 
     # Coefficient/value text is semantic scene data, not an SVG-specific detail.
-    method = config.get("method", "circle")
-    if method not in ("circle", "number"):
-        raise ValueError("method must be 'circle' or 'number' in this scene slice")
-    display_type = config.get("display_type", "full")
-    if display_type not in ("full", "upper", "lower"):
-        raise ValueError("display_type must be full, upper, or lower")
-    show_diagonal = config.get("show_diagonal", True)
-    if not isinstance(show_diagonal, bool):
-        raise ValueError("show_diagonal must be a boolean")
     add_coef_color = config.get("add_coef_color")
     if add_coef_color is not None and (not isinstance(add_coef_color, str) or not add_coef_color.strip()):
         raise ValueError("add_coef_color must be a non-empty color string or null")
@@ -153,13 +184,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     text_annotations = []
     for cell_item in cells:
         row_index, column_index, value = cell_item["row"], cell_item["column"], cell_item["value"]
-        if value is None or (not show_diagonal and row_index == column_index):
+        if value is None or not cell_item.get("visible", True):
             continue
-        if display_type == "upper" and row_index > column_index:
-            continue
-        if display_type == "lower" and row_index < column_index:
-            continue
-        if method == "number":
+        if cell_item.get("method", method) == "number":
             role = "value"
             color = (
                 cell_item.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
@@ -209,6 +236,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             "grid_color": "#e0e0e0",
         },
     }
+    if has_region_layout:
+        scene["display_type"] = display_type
+        scene["show_diagonal"] = show_diagonal
     if layout:
         scene["typography"] = {
             "label_font_family": font_family,

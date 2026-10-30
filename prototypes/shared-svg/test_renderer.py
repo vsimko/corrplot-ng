@@ -317,7 +317,7 @@ class PlotSceneTests(unittest.TestCase):
         for key, value in (("number_digits", -1), ("number_digits", 1.5),
                            ("number_cex", 0), ("number_font", 5),
                            ("add_coef_as_percent", "yes"),
-                           ("display_type", "diagonal")):
+                           ("display_type", "sideways")):
             with self.subTest(option=key, value=value):
                 with self.assertRaises(ValueError):
                     build_scene({**base, key: value, "add_coef_color": "black"})
