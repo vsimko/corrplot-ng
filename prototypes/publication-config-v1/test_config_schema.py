@@ -179,6 +179,19 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [1.0, 5.0])
         self.assertEqual(scene["matrix"][0][0], 2.0)
 
+    def test_general_numeric_csv_requires_explicit_limits(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"] = {
+            "kind": "matrix_csv", "path": "values.csv", "delimiter": ",",
+            "header": True, "row_labels": True,
+        }
+        config["matrix"]["col_limits"] = [-10.0, 10.0]
+        validate_config(config)
+        config["matrix"].pop("col_limits")
+        with self.assertRaisesRegex(ValueError, "CSV-backed general_numeric requires explicit limits"):
+            validate_config(config)
+
     def test_general_numeric_negative_only_and_constant_domains(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
