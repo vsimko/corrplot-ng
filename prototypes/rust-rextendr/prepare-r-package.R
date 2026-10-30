@@ -59,7 +59,15 @@ writeLines(cargo_lines, cargo_manifest)
 # lockfile. Only the generated root package identity differs.
 package_name_idx <- grep("^name = ", cargo_lines)[1]
 package_version_idx <- grep("^version = ", cargo_lines)[1]
-package_name <- sub('^name = "([^"]+)".*
+package_name <- gsub('^name = "|"$', "", cargo_lines[package_name_idx])
+package_version <- gsub('^version = "|"$', "", cargo_lines[package_version_idx])
+lock_lines <- readLines(file.path(root, "Cargo.lock"), warn = FALSE)
+root_name_idx <- grep('^name = "corrplotng_rust_spike"$', lock_lines)
+if (length(root_name_idx) != 1L) stop("Could not identify the prototype root package in Cargo.lock")
+lock_lines[root_name_idx] <- paste0('name = "', package_name, '"')
+lock_lines[root_name_idx + 1L] <- paste0('version = "', package_version, '"')
+writeLines(lock_lines, file.path(pkg_dir, "src", "rust", "Cargo.lock"))
+
 # Keep Cargo output outside the disposable package and preserve it across
 # package clean steps, matching the existing offline-validation experiment.
 target_dir <- normalizePath(file.path(root, ".ci-rust-target"),
