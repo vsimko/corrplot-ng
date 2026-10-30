@@ -165,6 +165,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       value <- corr[row, column]
       cells[[index]] <- list(row = row - 1L, column = column - 1L,
         value = if (is.na(value)) NULL else as.numeric(value),
+        normalized_value = if (is.na(value)) NULL else if (options$is.corr) as.numeric(value) else
+          (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom,
         x = left_margin + (column - 1L) * cell_size,
         y = top_margin + (row - 1L) * cell_size,
         center_x = left_margin + (column - 1L) * cell_size + cell_size / 2,
