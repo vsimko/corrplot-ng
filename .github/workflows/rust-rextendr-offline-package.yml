@@ -99,9 +99,9 @@ jobs:
                   for path, digest in entries.items()
                   if not path.startswith(".github/")
               }
-              with open(checksum_path, "w", encoding="utf-8", newline="\\n") as stream:
+              with open(checksum_path, "w", encoding="utf-8") as stream:
                   json.dump(checksum, stream, separators=(",", ":"))
-                  stream.write("\\n")
+                  stream.write(chr(10))
 
           for root, dirs, _ in os.walk("vendor"):
               if ".github" in dirs:
