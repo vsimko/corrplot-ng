@@ -12,9 +12,14 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       "addCoefasPercent", "number.digits", "number.cex", "number.font")
     unsupported <- setdiff(arg_names, supported)
     if ("method" %in% arg_names) {
-      requested_method <- args$method[[1]]
-      if (length(args$method) > 1L && !identical(args$method, c("circle", "number"))) requested_method <- args$method
-      if (length(requested_method) != 1L || !requested_method %in% c("circle", "number")) unsupported <- unique(c(unsupported, "method"))
+      requested_method <- args$method
+      if (length(requested_method) > 1L && !identical(requested_method, c("circle", "number"))) {
+        unsupported <- unique(c(unsupported, "method"))
+      } else if (length(requested_method) == 1L && !requested_method %in% c("circle", "number")) {
+        unsupported <- unique(c(unsupported, "method"))
+      } else if (length(requested_method) == 0L) {
+        unsupported <- unique(c(unsupported, "method"))
+      }
     }
     if (length(unsupported) > 0L) stop("The scene engine does not support: ", paste(unsupported, collapse = ", "), ". Use engine = 'legacy' for these options.", call. = FALSE)
   }
