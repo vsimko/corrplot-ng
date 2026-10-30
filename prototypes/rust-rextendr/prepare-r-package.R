@@ -20,6 +20,12 @@ writeLines(c(
   "Encoding: UTF-8"
 ), file.path(pkg_dir, "DESCRIPTION"))
 
+# Supply the standard MIT license file required by R package checks.
+writeLines(c(
+  "YEAR: 2026",
+  "COPYRIGHT HOLDER: corrplot-ng contributors"
+), file.path(pkg_dir, "LICENSE"))
+
 dir.create(file.path(pkg_dir, "R"))
 writeLines("# Temporary package generated in CI.", file.path(pkg_dir, "R", "placeholder.R"))
 
@@ -111,6 +117,24 @@ if (!file.exists(wrapper_file) ||
     "scene_cell_count <- function(n_labels) .Call(wrap__scene_cell_count, n_labels)"
   ), wrapper_file)
 }
+# R CMD check expects an Rd page for every exported function.
+man_dir <- file.path(pkg_dir, "man")
+dir.create(man_dir, showWarnings = FALSE)
+writeLines(c(
+  "\\name{scene_cell_count}",
+  "\\alias{scene_cell_count}",
+  "\\title{Count Cells in a Plot Scene}",
+  "\\description{Return the number of cells in a square plot scene.}",
+  "\\usage{",
+  "\\scene_cell_count(n_labels)",
+  "}",
+  "\\arguments{",
+  "\\item{n_labels}{Number of labels in the scene.}",
+  "}",
+  "\\value{The number of cells in the scene.}",
+  "\\keyword{internal}"
+), file.path(man_dir, "scene_cell_count.Rd"))
+
 namespace_lines <- readLines(namespace_file, warn = FALSE)
 # The initial empty NAMESPACE prevents pkgload from running before Rust
 # compilation, but it also makes rextendr skip its usual DLL registration.
