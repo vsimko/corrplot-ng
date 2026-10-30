@@ -1,5 +1,5 @@
 test_that("the scene engine builds a renderer-neutral scene-v1 object", {
-  corr <- matrix(c(1, 0.6, NA_real_, 1), nrow = 2,
+  corr <- matrix(c(1, 0.6, NA_real_, 1), nrow = 2, byrow = TRUE,
     dimnames = list(c("A", "B"), c("A", "B")))
   scene <- corrplot_ng(corr, engine = "scene", annotation = "Example")
   expect_s3_class(scene, "corrplot_ng_scene")
