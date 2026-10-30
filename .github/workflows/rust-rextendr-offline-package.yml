@@ -1,6 +1,12 @@
 name: Rust rextendr offline package install
 
 on:
+  push:
+    branches:
+      - experiment/rust-rextendr-offline-package
+    paths:
+      - ".github/workflows/rust-rextendr-offline-package.yml"
+      - "prototypes/rust-rextendr/**"
   workflow_dispatch:
   pull_request:
     paths:
