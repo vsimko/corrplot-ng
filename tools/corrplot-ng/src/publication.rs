@@ -166,43 +166,45 @@ fn aoe_order(values: &[Vec<Option<f64>>]) -> Result<Vec<usize>, String> {
     for i in 0..n { vectors[i][i] = 1.0; }
     let tolerance = 1e-12;
     let mut converged = false;
-    for _ in 0..(100 * n * n) {
-        let mut p = 0;
-        let mut q = 1;
+    // Cyclic Jacobi sweeps keep the symmetric eigensolver O(n^3) per sweep.
+    for _ in 0..100 {
         let mut largest = 0.0_f64;
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let candidate = matrix[i][j].abs();
-                if candidate > largest { largest = candidate; p = i; q = j; }
+        for p in 0..n {
+            for q in (p + 1)..n {
+                let apq = matrix[p][q];
+                largest = largest.max(apq.abs());
+                if apq.abs() <= tolerance { continue; }
+                let app = matrix[p][p];
+                let aqq = matrix[q][q];
+                let tau = (aqq - app) / (2.0 * apq);
+                let sign = if tau >= 0.0 { 1.0 } else { -1.0 };
+                let t = if tau == 0.0 { 1.0 } else { sign / (tau.abs() + (1.0 + tau * tau).sqrt()) };
+                let c = 1.0 / (1.0 + t * t).sqrt();
+                let s = t * c;
+                for k in 0..n {
+                    if k != p && k != q {
+                        let akp = matrix[k][p];
+                        let akq = matrix[k][q];
+                        matrix[k][p] = c * akp - s * akq;
+                        matrix[p][k] = matrix[k][p];
+                        matrix[k][q] = s * akp + c * akq;
+                        matrix[q][k] = matrix[k][q];
+                    }
+                    let vkp = vectors[k][p];
+                    let vkq = vectors[k][q];
+                    vectors[k][p] = c * vkp - s * vkq;
+                    vectors[k][q] = s * vkp + c * vkq;
+                }
+                matrix[p][p] = app - t * apq;
+                matrix[q][q] = aqq + t * apq;
+                matrix[p][q] = 0.0;
+                matrix[q][p] = 0.0;
             }
         }
-        if largest <= tolerance { converged = true; break; }
-        let app = matrix[p][p];
-        let aqq = matrix[q][q];
-        let apq = matrix[p][q];
-        let tau = (aqq - app) / (2.0 * apq);
-        let sign = if tau >= 0.0 { 1.0 } else { -1.0 };
-        let t = if tau == 0.0 { 1.0 } else { sign / (tau.abs() + (1.0 + tau * tau).sqrt()) };
-        let c = 1.0 / (1.0 + t * t).sqrt();
-        let s = t * c;
-        for k in 0..n {
-            if k != p && k != q {
-                let akp = matrix[k][p];
-                let akq = matrix[k][q];
-                matrix[k][p] = c * akp - s * akq;
-                matrix[p][k] = matrix[k][p];
-                matrix[k][q] = s * akp + c * akq;
-                matrix[q][k] = matrix[k][q];
-            }
-            let vkp = vectors[k][p];
-            let vkq = vectors[k][q];
-            vectors[k][p] = c * vkp - s * vkq;
-            vectors[k][q] = s * vkp + c * vkq;
+        if largest <= tolerance {
+            converged = true;
+            break;
         }
-        matrix[p][p] = app - t * apq;
-        matrix[q][q] = aqq + t * apq;
-        matrix[p][q] = 0.0;
-        matrix[q][p] = 0.0;
     }
     if !converged { return Err("plot.ordering 'aoe' eigen decomposition did not converge".into()); }
     let mut eigen_order: Vec<usize> = (0..n).collect();
