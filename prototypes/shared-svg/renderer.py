@@ -87,11 +87,11 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         if scene.get("glyph_method", "circle") != "number" and radius > 0:
             parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
 
+    cells_by_position = {
+        (item["row"], item["column"]): item for item in scene["cells"]
+    }
     for label in scene.get("text_annotations", []):
-        cell = next(
-            item for item in scene["cells"]
-            if item["row"] == label["row"] and item["column"] == label["column"]
-        )
+        cell = cells_by_position[(label["row"], label["column"])]
         parts.append(
             f'<text x="{cell["center_x"]:.1f}" y="{cell["center_y"]:.1f}" '
             f'text-anchor="middle" dominant-baseline="middle" '
