@@ -95,7 +95,8 @@ def _resolve_matrix_scale(config: dict[str, Any]) -> dict[str, Any]:
         if lower == upper:
             padding = max(0.5, abs(lower) * 0.05)
             lower, upper = lower - padding, upper + padding
-    if lower < 0 < upper:
+    mixed_sign = (lower < 0 < upper) if observed is None else (min(observed) < 0 < max(observed))
+    if mixed_sign:
         zoom, intercept, family = 1.0 / max(abs(lower), abs(upper)), 0.0, "diverging"
     else:
         zoom, intercept, family = 1.0 / (upper - lower), -lower, "sequential"
