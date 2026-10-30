@@ -5,24 +5,59 @@
   "description": "Output contract for a prepared correlation-plot scene. Coordinates are logical canvas units, not pixels.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "kind", "width", "height", "labels", "cells", "annotation", "style"],
+  "required": [
+    "schema_version",
+    "kind",
+    "width",
+    "height",
+    "labels",
+    "cells",
+    "annotation",
+    "style"
+  ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "kind": { "const": "correlation_plot" },
-    "width": { "type": "number", "exclusiveMinimum": 0 },
-    "height": { "type": "number", "exclusiveMinimum": 0 },
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "correlation_plot"
+    },
+    "width": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "height": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
     "labels": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["text", "row_x", "row_y", "column_x", "column_y"],
+        "required": [
+          "text",
+          "row_x",
+          "row_y",
+          "column_x",
+          "column_y"
+        ],
         "properties": {
-          "text": { "type": "string" },
-          "row_x": { "type": "number" },
-          "row_y": { "type": "number" },
-          "column_x": { "type": "number" },
-          "column_y": { "type": "number" }
+          "text": {
+            "type": "string"
+          },
+          "row_x": {
+            "type": "number"
+          },
+          "row_y": {
+            "type": "number"
+          },
+          "column_x": {
+            "type": "number"
+          },
+          "column_y": {
+            "type": "number"
+          }
         }
       }
     },
@@ -31,34 +66,130 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["row", "column", "value", "x", "y", "center_x", "center_y", "size"],
+        "required": [
+          "row",
+          "column",
+          "value",
+          "x",
+          "y",
+          "center_x",
+          "center_y",
+          "size"
+        ],
         "properties": {
-          "row": { "type": "integer", "minimum": 0 },
-          "column": { "type": "integer", "minimum": 0 },
-          "value": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
-          "x": { "type": "number" },
-          "y": { "type": "number" },
-          "center_x": { "type": "number" },
-          "center_y": { "type": "number" },
-          "size": { "type": "number", "exclusiveMinimum": 0 }
+          "row": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "column": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -1,
+            "maximum": 1
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "center_x": {
+            "type": "number"
+          },
+          "center_y": {
+            "type": "number"
+          },
+          "size": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
         }
       }
     },
-    "annotation": { "type": "string" },
+    "annotation": {
+      "type": "string"
+    },
     "style": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"],
+      "required": [
+        "positive_color",
+        "negative_color",
+        "zero_color",
+        "missing_fill",
+        "grid_color"
+      ],
       "properties": {
-        "positive_color": { "$ref": "#/$defs/color" },
-        "negative_color": { "$ref": "#/$defs/color" },
-        "zero_color": { "$ref": "#/$defs/color" },
-        "missing_fill": { "$ref": "#/$defs/color" },
-        "grid_color": { "$ref": "#/$defs/color" }
+        "positive_color": {
+          "$ref": "#/$defs/color"
+        },
+        "negative_color": {
+          "$ref": "#/$defs/color"
+        },
+        "zero_color": {
+          "$ref": "#/$defs/color"
+        },
+        "missing_fill": {
+          "$ref": "#/$defs/color"
+        },
+        "grid_color": {
+          "$ref": "#/$defs/color"
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label_font_family",
+        "label_font_size",
+        "label_font_weight",
+        "column_label_orientation",
+        "label_collision"
+      ],
+      "properties": {
+        "label_font_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label_font_size": {
+          "type": "number",
+          "minimum": 6,
+          "maximum": 48
+        },
+        "label_font_weight": {
+          "enum": [
+            "normal",
+            "bold"
+          ]
+        },
+        "column_label_orientation": {
+          "enum": [
+            "vertical",
+            "horizontal"
+          ]
+        },
+        "label_collision": {
+          "enum": [
+            "preserve",
+            "wrap",
+            "truncate",
+            "omit"
+          ]
+        }
       }
     }
   },
   "$defs": {
-    "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    }
   }
 }
