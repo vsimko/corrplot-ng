@@ -55,6 +55,17 @@ class SceneSchemaTests(unittest.TestCase):
         errors = list(Draft202012Validator(self.schema).iter_errors(scene))
         self.assertTrue(errors)
 
+    def test_legacy_label_metadata_matches_scene_schema(self):
+        scene = build_scene(self.config)
+        for label in scene["labels"]:
+            label.update({
+                "row_visible": True, "column_visible": True,
+                "row_position": "left", "column_position": "top",
+                "column_rotation": 90, "offset": 0.4,
+                "plotmath": {"prefix": ":", "source": "alpha + beta"},
+            })
+        self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
+
 
 if __name__ == "__main__":
     unittest.main()
