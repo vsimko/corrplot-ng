@@ -37,7 +37,7 @@ def make_matrix(size: int, seed: int = SEED) -> list[list[float]]:
     return values
 
 
-def make_cases() -> dict[str, dict[str, Any]]:
+def make_cases(include_stress: bool = False) -> dict[str, dict[str, Any]]:
     labels20 = [f"v{i:02d}" for i in range(20)]
     labels100 = [f"v{i:03d}" for i in range(100)]
     matrix20 = make_matrix(20)
@@ -51,7 +51,7 @@ def make_cases() -> dict[str, dict[str, Any]]:
         missing[j][i] = None
     permutation = list(reversed(range(100)))
     reordered = [[matrix100[i][j] for j in permutation] for i in permutation]
-    return {
+    cases = {
         "B01": {"labels": labels20, "matrix": matrix20},
         "B02": {"labels": labels100, "matrix": matrix100},
         "B05": {"labels": labels100, "matrix": missing},
@@ -61,6 +61,11 @@ def make_cases() -> dict[str, dict[str, Any]]:
             "permutation": permutation,
         },
     }
+    if include_stress:
+        for workload, size in (("B03", 500), ("B04", 1000)):
+            labels = [f"v{i:04d}" for i in range(size)]
+            cases[workload] = {"labels": labels, "matrix": make_matrix(size)}
+    return cases
 
 
 def canonical_hash(value: Any) -> str:
@@ -124,8 +129,8 @@ def summarize(samples: list[float]) -> dict[str, float]:
     }
 
 
-def run(iterations: int) -> dict[str, Any]:
-    cases = make_cases()
+def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
+    cases = make_cases(include_stress=include_stress)
     results: list[dict[str, Any]] = []
     serialized_inputs: dict[str, Any] = {}
 
@@ -189,6 +194,7 @@ def run(iterations: int) -> dict[str, Any]:
         "suite": "corrplot-ng-initial-shared-core",
         "seed": SEED,
         "iterations": iterations,
+        "include_stress": include_stress,
         "warmup_iterations": 3,
         "correctness_gate": "semantic assertions before timing",
         "environment": {
@@ -209,10 +215,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--iterations", type=int, default=20)
     parser.add_argument("--output", type=Path, default=Path("benchmark-results/results.json"))
+    parser.add_argument("--include-stress", action="store_true", help="also run B03 (500x500) and B04 (1000x1000)")
     args = parser.parse_args()
     if args.iterations < ITERATIONS_MINIMUM:
         parser.error(f"--iterations must be at least {ITERATIONS_MINIMUM}")
-    result = run(args.iterations)
+    result = run(args.iterations, include_stress=args.include_stress)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     for item in result["results"]:
