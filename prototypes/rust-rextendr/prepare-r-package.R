@@ -39,7 +39,7 @@ target_dir <- normalizePath(
 makevars_file <- file.path(
   pkg_dir,
   "src",
-  if (.Platform[["OS.type"]] == "windows") "Makevars.win" else "Makevars"
+  if (.Platform[["OS.type"]] == "windows") "Makevars.win.in" else "Makevars.in"
 )
 makevars <- readLines(makevars_file, warn = FALSE)
 
