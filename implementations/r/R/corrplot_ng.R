@@ -99,7 +99,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       stop("col.lim must cover every observed matrix value", call. = FALSE)
     }
   }
-  mixed_sign <- min(values) < 0 && max(values) > 0
+  mixed_sign <- min(scale_values) < 0 && max(scale_values) > 0
   if (mixed_sign) {
     list(limits = as.numeric(limits), mapping = "diverging",
       normalization = list(intercept = 0, zoom = 1 / max(abs(limits))))
