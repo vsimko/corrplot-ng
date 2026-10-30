@@ -1,0 +1,190 @@
+name: Release native CLI
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux x86_64 (static musl)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check release tag matches package version
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        shell: bash
+        run: |
+          tag_version="\${GITHUB_REF_NAME#cli-v}"
+          package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' tools/corrplot-ng/Cargo.toml | head -n1)"
+          test "$tag_version" = "$package_version"
+      - name: Install musl toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools
+          rustup target add x86_64-unknown-linux-musl
+      - name: Test and build static executable
+        run: |
+          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --release --target x86_64-unknown-linux-musl --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Package and smoke-test
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp tools/corrplot-ng/target/x86_64-unknown-linux-musl/release/corrplot-ng dist/corrplot-ng
+          cp tools/corrplot-ng/README.md tools/corrplot-ng/LICENSE dist/
+          cat > dist/BUILD-INFO.txt <<EOF
+          version: \${GITHUB_REF_NAME#cli-v}
+          ref: \${GITHUB_REF}
+          commit: \${GITHUB_SHA}
+          target: x86_64-unknown-linux-musl
+          rustc: $(rustc --version)
+          cargo: $(cargo --version)
+          license: MIT
+          runtime: statically linked musl; no Python or R runtime
+          EOF
+          file dist/corrplot-ng | grep -q "statically linked"
+          ./dist/corrplot-ng --help >/dev/null
+          ./dist/corrplot-ng version
+          docker run --rm --network none -v "$PWD/dist:/release:ro" alpine:3.21 /release/corrplot-ng --help >/dev/null
+          tar -C dist -czf corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-x86_64-musl
+          path: corrplot-ng-linux-x86_64-musl.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  macos:
+    name: macOS universal (x86_64 + arm64)
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check release tag matches package version
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        shell: bash
+        run: |
+          tag_version="\${GITHUB_REF_NAME#cli-v}"
+          package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' tools/corrplot-ng/Cargo.toml | head -n1)"
+          test "$tag_version" = "$package_version"
+      - name: Install Apple targets
+        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
+      - name: Test and build both architectures
+        run: |
+          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --release --target x86_64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --release --target aarch64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Create universal binary and smoke-test
+        shell: bash
+        run: |
+          mkdir -p dist
+          lipo -create \
+            tools/corrplot-ng/target/x86_64-apple-darwin/release/corrplot-ng \
+            tools/corrplot-ng/target/aarch64-apple-darwin/release/corrplot-ng \
+            -output dist/corrplot-ng
+          cp tools/corrplot-ng/README.md tools/corrplot-ng/LICENSE dist/
+          cat > dist/BUILD-INFO.txt <<EOF
+          version: \${GITHUB_REF_NAME#cli-v}
+          ref: \${GITHUB_REF}
+          commit: \${GITHUB_SHA}
+          targets: x86_64-apple-darwin, aarch64-apple-darwin
+          macOS minimum deployment target: \${MACOSX_DEPLOYMENT_TARGET}
+          rustc: $(rustc --version)
+          cargo: $(cargo --version)
+          license: MIT
+          runtime: macOS system libraries only; no Python or R runtime
+          EOF
+          lipo -info dist/corrplot-ng
+          ./dist/corrplot-ng --help >/dev/null
+          ./dist/corrplot-ng version
+          tar -C dist -czf corrplot-ng-macos-universal.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos-universal
+          path: corrplot-ng-macos-universal.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  windows:
+    name: Windows x86_64 (MSVC, static CRT)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check release tag matches package version
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        shell: pwsh
+        run: |
+          $tagVersion = $env:GITHUB_REF_NAME.Substring(4)
+          $packageVersion = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          if ($tagVersion -ne $packageVersion) { throw "Tag version $tagVersion does not match package version $packageVersion" }
+      - name: Test and build standalone executable
+        shell: pwsh
+        run: |
+          rustup target add x86_64-pc-windows-msvc
+          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
+          $env:RUSTFLAGS = "-C target-feature=+crt-static"
+          cargo build --locked --release --target x86_64-pc-windows-msvc --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Package and smoke-test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item tools/corrplot-ng/target/x86_64-pc-windows-msvc/release/corrplot-ng.exe dist/
+          Copy-Item tools/corrplot-ng/README.md, tools/corrplot-ng/LICENSE dist/
+          @"
+          version: $env:GITHUB_REF_NAME
+          ref: $env:GITHUB_REF
+          commit: $env:GITHUB_SHA
+          target: x86_64-pc-windows-msvc
+          rustc: $(rustc --version)
+          cargo: $(cargo --version)
+          license: MIT
+          runtime: statically linked MSVC CRT; no Python or R runtime
+          "@ | Set-Content -Encoding utf8NoBOM dist/BUILD-INFO.txt
+          & dist/corrplot-ng.exe --help | Out-Null
+          & dist/corrplot-ng.exe version
+          Compress-Archive -Path dist/corrplot-ng.exe, dist/README.md, dist/LICENSE, dist/BUILD-INFO.txt -DestinationPath corrplot-ng-windows-x86_64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-x86_64
+          path: corrplot-ng-windows-x86_64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/cli-v')
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: Generate SHA-256 checksums
+        run: |
+          cd dist
+          sha256sum corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng-macos-universal.tar.gz corrplot-ng-windows-x86_64.zip > SHA256SUMS
+      - name: Publish versioned release
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/corrplot-ng-linux-x86_64-musl.tar.gz \
+            dist/corrplot-ng-macos-universal.tar.gz \
+            dist/corrplot-ng-windows-x86_64.zip \
+            dist/SHA256SUMS \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
