@@ -110,6 +110,7 @@ jobs:
           rm "$tarball"
           tar -czf "$tarball" -C "$unpack_dir" corrplotngrustspike
           tar -tzf "$tarball" > source-tarball-files.txt
+          echo "R source tarball size: $(wc -c < "$tarball") bytes"
           grep -qx 'corrplotngrustspike/inst/licenses/extendr-MIT.txt' source-tarball-files.txt
           grep -qx 'corrplotngrustspike/inst/licenses/README.md' source-tarball-files.txt
           grep -qx 'corrplotngrustspike/src/rust/Cargo.lock' source-tarball-files.txt
