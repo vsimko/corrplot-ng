@@ -536,6 +536,16 @@ mod tests {
             let publication = Publication::load(path.to_str().unwrap()).unwrap();
             let scene = parse_json(&publication.scene_json("contract test")).unwrap();
             let root = object(&scene, "scene").unwrap();
+            keys(
+                root,
+                &[
+                    "schema_version", "kind", "width", "height", "labels", "cells",
+                    "annotation", "title", "description", "style", "typography", "legend",
+                    "glyph_method", "display_type", "show_diagonal", "variable_order",
+                    "matrix_semantics", "text_annotations",
+                ],
+                "scene",
+            ).unwrap();
 
             assert_eq!(number(required(root, "schema_version", "scene").unwrap(), "schema_version").unwrap(), 1.0);
             assert_eq!(string(required(root, "kind", "scene").unwrap(), "kind").unwrap(), expected_scene_kind);
@@ -546,26 +556,38 @@ mod tests {
 
             for label in labels {
                 let label = object(label, "label").unwrap();
+                keys(label, &["text", "row_x", "row_y", "column_x", "column_y", "row_visible", "column_visible"], "label").unwrap();
                 for key in ["text", "row_x", "row_y", "column_x", "column_y"] {
                     assert!(label.contains_key(key), "scene label missing {key}");
                 }
             }
             for cell in cells {
                 let cell = object(cell, "cell").unwrap();
+                keys(cell, &["row", "column", "value", "x", "y", "center_x", "center_y", "size", "color", "visible", "method", "region", "normalized_value"], "cell").unwrap();
                 for key in ["row", "column", "value", "x", "y", "center_x", "center_y", "size"] {
                     assert!(cell.contains_key(key), "scene cell missing {key}");
                 }
                 assert!(matches!(cell.get("value"), Some(Json::Number(_)) | Some(Json::Null)));
             }
             let style = object(required(root, "style", "scene").unwrap(), "style").unwrap();
+            keys(style, &["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"], "style").unwrap();
             for key in ["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"] {
                 assert!(style.contains_key(key), "scene style missing {key}");
             }
-            assert!(root.contains_key("typography"));
-            assert!(root.contains_key("legend"));
-            assert!(root.contains_key("variable_order"));
+            let typography = object(required(root, "typography", "scene").unwrap(), "typography").unwrap();
+            keys(typography, &["label_font_family", "label_font_size", "label_font_weight", "column_label_orientation", "label_collision"], "typography").unwrap();
+            let legend = array(required(root, "legend", "scene").unwrap(), "legend").unwrap();
+            for entry in legend {
+                let entry = object(entry, "legend entry").unwrap();
+                keys(entry, &["kind", "label", "color"], "legend entry").unwrap();
+            }
+            let order = object(required(root, "variable_order", "scene").unwrap(), "variable_order").unwrap();
+            keys(order, &["strategy", "indices", "labels"], "variable_order").unwrap();
             if kind == "general_numeric" {
                 let semantics = object(required(root, "matrix_semantics", "scene").unwrap(), "matrix_semantics").unwrap();
+                keys(semantics, &["mode", "color_limits", "color_mapping", "normalization"], "matrix_semantics").unwrap();
+                let normalization = object(required(semantics, "normalization", "matrix_semantics").unwrap(), "normalization").unwrap();
+                keys(normalization, &["intercept", "zoom"], "normalization").unwrap();
                 assert_eq!(string(required(semantics, "mode", "matrix_semantics").unwrap(), "mode").unwrap(), "general_numeric");
             } else {
                 assert!(!root.contains_key("matrix_semantics"));
