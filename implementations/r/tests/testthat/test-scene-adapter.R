@@ -167,3 +167,59 @@ test_that("coefficient overlay colors must be valid R colors", {
   expect_error(corrplot_ng(diag(2), engine = "scene", addCoef.col = ""), "addCoef.col")
   expect_error(corrplot_ng(diag(2), engine = "scene", addCoef.col = "not-a-color"), "valid R color")
 })
+
+
+test_that("legacy plotmath prefixes parse to native R expressions", {
+  expect_identical(corrplot_ng_parse_label("alpha"), "alpha")
+  for (label in c(":alpha + beta", "=alpha + beta", "$alpha + beta")) {
+    parsed <- corrplot_ng_parse_label(label)
+    expect_s3_class(parsed, "expression")
+    expect_identical(as.character(parsed[[1]]), "alpha + beta")
+  }
+  expect_error(corrplot_ng_parse_label(":alpha +"), "invalid plotmath label")
+  expect_error(corrplot_ng_parse_label(NA_character_), "one non-missing")
+})
+
+test_that("legacy label placement defaults and explicit modes are preserved", {
+  corr <- diag(3)
+  dimnames(corr) <- list(c("A", "B", "C"), c("A", "B", "C"))
+
+  full <- corrplot_ng(corr, engine = "scene")
+  expect_true(all(vapply(full$labels, function(x) x$row_visible && x$column_visible, logical(1))))
+  expect_identical(full$labels[[1]]$row_position, "left")
+  expect_identical(full$labels[[1]]$column_position, "top")
+
+  upper <- corrplot_ng(corr, engine = "scene", type = "upper")
+  expect_identical(upper$labels[[1]]$row_position, "diagonal")
+  expect_identical(upper$labels[[1]]$column_position, "top")
+
+  lower <- corrplot_ng(corr, engine = "scene", type = "lower")
+  expect_identical(lower$labels[[1]]$row_position, "left")
+  expect_identical(lower$labels[[1]]$column_position, "diagonal")
+
+  left <- corrplot_ng(corr, engine = "scene", tl.pos = "l")
+  expect_true(all(vapply(left$labels, function(x) x$row_visible && !x$column_visible, logical(1))))
+  diagonal <- corrplot_ng(corr, engine = "scene", tl.pos = "d")
+  expect_true(all(vapply(diagonal$labels, function(x) !x$row_visible && x$column_visible, logical(1))))
+  none <- corrplot_ng(corr, engine = "scene", tl.pos = FALSE)
+  expect_true(all(vapply(none$labels, function(x) !x$row_visible && !x$column_visible, logical(1))))
+})
+
+test_that("plotmath metadata, offset, and rotation survive scene preparation", {
+  corr <- diag(2)
+  dimnames(corr) <- list(c(":alpha", "$beta"), c(":alpha", "$beta"))
+  scene <- corrplot_ng(corr, engine = "scene", tl.offset = 0.7, tl.srt = 35)
+  expect_identical(scene$labels[[1]]$plotmath, list(prefix = ":", source = "alpha"))
+  expect_identical(scene$labels[[2]]$plotmath, list(prefix = "$", source = "beta"))
+  expect_equal(scene$labels[[1]]$offset, 0.7)
+  expect_equal(scene$labels[[1]]$column_rotation, 35)
+})
+
+test_that("label placement modes reject incompatible layouts and invalid offsets", {
+  corr <- diag(2)
+  expect_error(corrplot_ng(corr, engine = "scene", type = "full", tl.pos = "ld"), "requires type")
+  expect_error(corrplot_ng(corr, engine = "scene", type = "full", tl.pos = "td"), "requires type")
+  expect_error(corrplot_ng(corr, engine = "scene", tl.pos = "invalid"), "tl.pos")
+  expect_error(corrplot_ng(corr, engine = "scene", tl.offset = Inf), "tl.offset")
+  expect_error(corrplot_ng(corr, engine = "scene", tl.srt = NA_real_), "tl.srt")
+})
