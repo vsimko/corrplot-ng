@@ -1,8 +1,8 @@
-"""Verify that real legacy corrplot output can feed the scene-v1 builder.
+"""Verify real legacy corrplot outputs can feed the scene-v1 builder.
 
-The R oracle writes a minimal JSON input from the pinned legacy result. This
-test exercises the actual cross-language serialization boundary and checks
-that the scene preserves ordered labels, values, and missing cells.
+The R oracle exports original-order and alphabetically reordered matrices.
+This test exercises the serialization boundary and checks ordered labels,
+row-major values, and preservation of missing cells for both cases.
 """
 from __future__ import annotations
 
@@ -13,14 +13,8 @@ from pathlib import Path
 from scene import build_scene
 
 
-def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: test_legacy_scene_bridge.py LEGACY_INPUT.json")
-
-    source = Path(sys.argv[1])
-    config = json.loads(source.read_text(encoding="utf-8"))
+def verify_case(name: str, config: dict) -> None:
     scene = build_scene(config)
-
     labels = config["labels"]
     matrix = config["matrix"]
     size = len(labels)
@@ -33,15 +27,30 @@ def main() -> None:
         value for row in matrix for value in row
     ]
     assert scene["annotation"] == config["annotation"]
-    assert sum(cell["value"] is None for cell in scene["cells"]) == sum(
+    missing = sum(cell["value"] is None for cell in scene["cells"])
+    assert missing == sum(
         value is None for row in matrix for value in row
     )
 
     print(
-        f"Legacy-to-scene bridge passed: {size} labels, "
-        f"{len(scene['cells'])} cells, "
-        f"{sum(cell['value'] is None for cell in scene['cells'])} missing values"
+        f"{name}: {size} labels, {len(scene['cells'])} cells, "
+        f"{missing} missing values"
     )
+
+
+def main() -> None:
+    if len(sys.argv) != 2:
+        raise SystemExit("usage: test_legacy_scene_bridge.py LEGACY_INPUT.json")
+
+    source = Path(sys.argv[1])
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    cases = payload["cases"]
+    assert set(cases) == {"original_order", "alphabetic_order"}
+
+    for name, config in cases.items():
+        verify_case(name, config)
+
+    print(f"Legacy-to-scene bridge passed for {len(cases)} legacy orderings")
 
 
 if __name__ == "__main__":
