@@ -362,10 +362,10 @@ fn detect_input_format(path: &str, source: &str, requested: InputFormat) -> Inpu
 fn read_input(path: &str) -> Result<String, String> {
     if path == "-" {
         let mut s = String::new();
-        io::stdin().read_to_string(&mut s).map_err(|e| format!("cannot read stdin: {e}"))?;
+        io::stdin().read_to_string(&mut s).map_err(|e| format!("cannot read stdin as UTF-8 text: {e}"))?;
         Ok(s)
     } else {
-        fs::read_to_string(path).map_err(|e| format!("cannot read '{path}': {e}"))
+        fs::read_to_string(path).map_err(|e| format!("cannot read '{path}' as UTF-8 text: {e}"))
     }
 }
 
