@@ -1,0 +1,12 @@
+[package]
+name = "corrplotng_rust_spike"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "corrplotngrustspike"
+crate-type = ["staticlib"]
+
+[dependencies]
+extendr-api = "0.8"
