@@ -5,6 +5,7 @@ on:
     paths:
       - "prototypes/rust-rextendr/**"
       - ".github/workflows/test-rust-windows-binary.yml"
+      - "docs/cran-rust-dependency-audit-results.md"
   workflow_dispatch:
 
 permissions:
