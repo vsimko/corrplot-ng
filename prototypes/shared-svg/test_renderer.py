@@ -13,6 +13,9 @@ class PlotSceneTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = json.loads((HERE / "example.json").read_text(encoding="utf-8"))
+        cls.golden_scene = json.loads(
+            (HERE / "scene-v1.example.json").read_text(encoding="utf-8")
+        )
 
     def test_scene_is_renderer_neutral_json_data(self):
         scene = build_scene(self.config)
@@ -22,6 +25,17 @@ class PlotSceneTests(unittest.TestCase):
         self.assertEqual(scene["cells"][1]["value"], 0.65)
         self.assertIsNone(scene["cells"][5]["value"])
         json.dumps(scene)
+
+    def test_generated_scene_matches_versioned_golden_fixture(self):
+        # This fixture is the cross-language contract example consumed by R.
+        self.assertEqual(build_scene(self.config), self.golden_scene)
+
+    def test_cells_are_in_row_major_order(self):
+        cells = build_scene(self.config)["cells"]
+        self.assertEqual(
+            [(cell["row"], cell["column"]) for cell in cells],
+            [(row, column) for row in range(3) for column in range(3)],
+        )
 
     def test_scene_and_svg_output_are_deterministic(self):
         scene = build_scene(self.config)
