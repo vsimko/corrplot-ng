@@ -491,7 +491,7 @@ impl Publication {
                 let base = std::path::Path::new(config_path).parent().unwrap_or_else(|| std::path::Path::new("."));
                 let path = base.join(path);
                 let text = std::fs::read_to_string(&path).map_err(|e| format!("cannot read matrix CSV '{}': {e}", path.display()))?;
-                let parsed = crate::parse_matrix(&text, if kind == "correlation" { crate::Kind::Correlation } else { crate::Kind::General })?;
+                let parsed = crate::parse_matrix_with_delimiter(&text, if kind == "correlation" { crate::Kind::Correlation } else { crate::Kind::General }, if delimiter == "," { ',' } else { '\t' })?;
                 (parsed.labels, parsed.values)
             }
             other => return Err(format!("unsupported input.kind '{other}'")),
