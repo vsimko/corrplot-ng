@@ -9,10 +9,37 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      r_package: ${{ steps.filter.outputs.r_package }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Filter changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            r_package:
+              - 'implementations/r/**'
+              - 'prototypes/shared-svg/**'
+              - 'tests/fixtures/**'
+              - 'schemas/**'
+              - '**/*.schema.json'
+              - '.github/workflows/test-r.yml'
+
   r-cmd-check:
     name: R CMD check
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.r_package == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -36,6 +63,9 @@ jobs:
           if (as.character(utils::packageVersion("corrplot")) != "0.95") {
             stop("Expected corrplot reference version 0.95")
           }
+
+      - name: Check R scene contract consumer
+        run: Rscript prototypes/shared-svg/test_r_scene_consumer.R
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2

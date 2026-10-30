@@ -5,10 +5,10 @@ on:
     paths:
       - "prototypes/rust-rextendr/**"
       - ".github/workflows/test-rust-windows-binary.yml"
-  push:
-    branches:
-      - prototype/rust-rextendr-spike
-      - test/windows-binary-install-rust
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-windows-binary:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -31,13 +33,13 @@ jobs:
           mkdir -p dist
           cd dist
           R CMD INSTALL --build ../prototypes/rust-rextendr/.ci-r-package
-          ls -la
           test -n "$(find . -maxdepth 1 -type f -name '*.zip' -print -quit)"
       - uses: actions/upload-artifact@v4
         with:
           name: rust-windows-binary
           path: dist/*.zip
           if-no-files-found: error
+          retention-days: 7
 
   install-without-toolchain:
     needs: build-windows-binary
@@ -61,5 +63,27 @@ jobs:
           & (Join-Path $rBin "R.exe") CMD INSTALL "--library=$lib" $zip.FullName
           if ($LASTEXITCODE -ne 0) { throw "Binary installation failed with exit code $LASTEXITCODE." }
           $env:R_LIBS_USER = $lib
-          & (Join-Path $rBin "Rscript.exe") -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
-          if ($LASTEXITCODE -ne 0) { throw "Installed binary smoke test failed with exit code $LASTEXITCODE." }
+
+          # Keep R code out of a nested PowerShell -e string. This avoids
+          # PowerShell parsing R's escaped quotes before Rscript can see them.
+          $smokeScript = Join-Path $env:TEMP "rust-binary-smoke.R"
+          $smokeCode = @'
+          library(corrplotngrustspike)
+          x <- build_scene_json_rust(
+            c("a", "b"),
+            matrix(c(1, 0.2, 0.2, 1), 2),
+            "binary smoke"
+          )
+          stopifnot(
+            is.character(x),
+            length(x) == 1L,
+            grepl('"schema_version":1', x, fixed = TRUE)
+          )
+          '@
+          [System.IO.File]::WriteAllText(
+            $smokeScript,
+            $smokeCode,
+            [System.Text.UTF8Encoding]::new($false)
+          )
+          & (Join-Path $rBin "Rscript.exe") $smokeScript
+          if ($LASTEXITCODE -ne 0) { throw "Installed Rust binary smoke test failed with exit code $LASTEXITCODE." }

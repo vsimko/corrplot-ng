@@ -14,10 +14,19 @@
     {
       "id": "two-variable-basic",
       "description": "A complete two-variable correlation matrix.",
-      "labels": ["alpha", "beta"],
+      "labels": [
+        "alpha",
+        "beta"
+      ],
       "matrix": [
-        [1.0, 0.5],
-        [0.5, 1.0]
+        [
+          1,
+          0.5
+        ],
+        [
+          0.5,
+          1
+        ]
       ],
       "expected_properties": [
         "square",
@@ -33,11 +42,27 @@
     {
       "id": "three-variable-mixed-signs",
       "description": "A complete matrix with positive, negative, and zero correlations.",
-      "labels": ["alpha", "beta", "gamma"],
+      "labels": [
+        "alpha",
+        "beta",
+        "gamma"
+      ],
       "matrix": [
-        [1.0, 0.2, -0.4],
-        [0.2, 1.0, 0.0],
-        [-0.4, 0.0, 1.0]
+        [
+          1,
+          0.2,
+          -0.4
+        ],
+        [
+          0.2,
+          1,
+          0
+        ],
+        [
+          -0.4,
+          0,
+          1
+        ]
       ],
       "expected_properties": [
         "square",
@@ -53,11 +78,63 @@
     {
       "id": "missing-value-pattern",
       "description": "A matrix with a symmetric pattern of missing values.",
-      "labels": ["alpha", "beta", "gamma"],
+      "labels": [
+        "alpha",
+        "beta",
+        "gamma"
+      ],
       "matrix": [
-        [1.0, null, 0.3],
-        [null, 1.0, null],
-        [0.3, null, 1.0]
+        [
+          1,
+          null,
+          0.3
+        ],
+        [
+          null,
+          1,
+          null
+        ],
+        [
+          0.3,
+          null,
+          1
+        ]
+      ],
+      "expected_properties": [
+        "square",
+        "symmetric",
+        "unit_diagonal",
+        "values_in_range"
+      ],
+      "reference": {
+        "kind": "synthetic",
+        "status": "not-a-legacy-reference"
+      }
+    },
+    {
+      "id": "three-variable-reordered",
+      "description": "The same three-variable correlations with variables in a different order.",
+      "labels": [
+        "gamma",
+        "alpha",
+        "beta"
+      ],
+      "matrix": [
+        [
+          1,
+          -0.4,
+          0
+        ],
+        [
+          -0.4,
+          1,
+          0.2
+        ],
+        [
+          0,
+          0.2,
+          1
+        ]
       ],
       "expected_properties": [
         "square",
