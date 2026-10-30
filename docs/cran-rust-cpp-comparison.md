@@ -68,7 +68,7 @@ CRAN's Rust guidance and the current rextendr CRAN-compliance documentation requ
 7. Report the Rust compiler version in installation output, especially on failures.
 8. Include accurate authorship and copyright information for bundled crates and their source licenses.
 
-The CRAN Rust guidance recommends testing with older Cargo versions because CRAN's Linux check machines may use distribution-provided toolchains that lag upstream. It also warns that a vendored source archive can materially increase package size. The rextendr documentation says a package tarball larger than a few megabytes should explain the vendored archive in `cran-comments.md`; it says CRAN may reject a built package larger than 5 MB. Treat this as a submission risk requiring an explicit explanation and, if necessary, prior maintainer discussion—not as a guaranteed automatic size cutoff.
+The CRAN Rust guidance recommends testing with older Cargo versions because CRAN's Linux check machines may use distribution-provided toolchains that lag upstream. It also warns that a vendored source archive can materially increase package size. The general CRAN policy says source tarballs should, if possible, not exceed 10 MB; it explicitly prefers bundling third-party source over downloading it at installation and allows a modestly increased limit to be requested at submission. Separately, rextendr 0.5.0 warns that a built package larger than 5 MB may be rejected and recommends explaining the vendored archive in `cran-comments.md`. These are distinct thresholds/guidance: 10 MB is the general source-tarball guideline, while 5 MB is the rextendr-specific warning about the built package. Measure both the source tarball and built package for the actual prototype and seek CRAN guidance if either threshold is exceeded.
 
 ### Build tools and artifacts
 
@@ -129,7 +129,7 @@ Before the parent issue #12 makes a production decision, the maintainers should 
 - Whether the intended shared core is compiled into the R package at all, or whether the R package will call a separately installed CLI/process. The latter has different CRAN and portability implications and is not evaluated as an equivalent in-process Rcpp/rextendr binding here.
 - The exact rextendr version/template and generated file layout to pin if Rust remains under consideration.
 - The minimum supported R, Cargo, and rustc versions and how those intersect with CRAN's Linux check machines and Windows/macOS toolchains.
-- The size of the actual vendored Rust source archive and whether CRAN wants prior clarification for that package.
+- The measured source-tarball size and built-package size for the actual vendored Rust prototype; explain the vendor archive in `cran-comments.md` and request CRAN guidance if the relevant size guidance is exceeded.
 - Whether all Rust crates and C++ dependencies have licenses compatible with CRAN distribution and the project's MIT licensing.
 - Whether any native dependencies can be built from bundled source and meet the Windows/macOS static-library requirement.
 - Whether the project can maintain the Rust toolchain and vendoring process over the package's long support lifetime.
@@ -153,4 +153,4 @@ This issue does not select the production implementation language. The compariso
 
 ---
 
-*Review date: 2026-10-31. CRAN policy and toolchain requirements can change; re-check the linked canonical guidance immediately before the first submission.*
+*Review date: 2026-10-31. CRAN policy and toolchain requirements can change; re-check the linked canonical guidance immediately before the first submission. The current rextendr 0.5.0 scaffold details above are based on its published package-development article and may change in later releases.*
