@@ -80,7 +80,7 @@ class PublicationSvgTests(unittest.TestCase):
         second = self.render()
         ET.fromstring(first)
         self.assertEqual(first, second)
-        self.assertTrue(first.endswith("</svg>\\n"))
+        self.assertTrue(first.endswith("</svg>\n"))
 
     def test_annotation_and_missing_values_are_preserved(self):
         svg = self.render()
