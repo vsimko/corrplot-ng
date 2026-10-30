@@ -11,10 +11,12 @@ SPEC.loader.exec_module(benchmark)
 class BenchmarkSuiteTests(unittest.TestCase):
     def test_workloads_cover_initial_milestone(self):
         cases = benchmark.make_cases()
-        self.assertEqual(set(cases), {"B01", "B02", "B05", "B07"})
+        self.assertEqual(set(cases), {"B01", "B02", "B05", "B06", "B07"})
         self.assertEqual(len(cases["B01"]["labels"]), 20)
         self.assertEqual(len(cases["B02"]["labels"]), 100)
         self.assertEqual(cases["B05"]["matrix"][0][0], 1.0)
+        self.assertTrue(cases["B06"]["annotation"].startswith("Label-heavy"))
+        self.assertGreater(len(cases["B06"]["labels"][0]), 60)
         self.assertEqual(cases["B07"]["labels"][0], "v099")
 
     def test_generated_cases_are_deterministic(self):
@@ -30,7 +32,7 @@ class BenchmarkSuiteTests(unittest.TestCase):
         result = benchmark.run(20)
         self.assertEqual(
             [item["workload"] for item in result["results"]],
-            ["B01", "B02", "B05", "B07", "B08"],
+            ["B01", "B02", "B05", "B06", "B07", "B08"],
         )
         self.assertTrue(all(item["status"] == "passed" for item in result["results"]))
         self.assertTrue(all(len(item["samples_ms"]) == 20 for item in result["results"]))
