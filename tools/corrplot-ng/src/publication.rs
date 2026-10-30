@@ -150,6 +150,172 @@ fn scene_bool(value: &Json) -> bool {
     matches!(value, Json::Bool(true))
 }
 
+
+fn aoe_order(values: &[Vec<Option<f64>>]) -> Result<Vec<usize>, String> {
+    let n = values.len();
+    if n < 2 { return Err("plot.ordering 'aoe' requires at least two variables".into()); }
+    let mut matrix = vec![vec![0.0; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            matrix[i][j] = values[i][j].ok_or_else(|| {
+                format!("plot.ordering 'aoe' requires complete correlations; missing value at ({}, {})", i + 1, j + 1)
+            })?;
+        }
+    }
+    let mut vectors = vec![vec![0.0; n]; n];
+    for i in 0..n { vectors[i][i] = 1.0; }
+    let tolerance = 1e-12;
+    let mut converged = false;
+    for _ in 0..(100 * n * n) {
+        let mut p = 0;
+        let mut q = 1;
+        let mut largest = 0.0_f64;
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let candidate = matrix[i][j].abs();
+                if candidate > largest { largest = candidate; p = i; q = j; }
+            }
+        }
+        if largest <= tolerance { converged = true; break; }
+        let app = matrix[p][p];
+        let aqq = matrix[q][q];
+        let apq = matrix[p][q];
+        let tau = (aqq - app) / (2.0 * apq);
+        let sign = if tau >= 0.0 { 1.0 } else { -1.0 };
+        let t = if tau == 0.0 { 1.0 } else { sign / (tau.abs() + (1.0 + tau * tau).sqrt()) };
+        let c = 1.0 / (1.0 + t * t).sqrt();
+        let s = t * c;
+        for k in 0..n {
+            if k != p && k != q {
+                let akp = matrix[k][p];
+                let akq = matrix[k][q];
+                matrix[k][p] = c * akp - s * akq;
+                matrix[p][k] = matrix[k][p];
+                matrix[k][q] = s * akp + c * akq;
+                matrix[q][k] = matrix[k][q];
+            }
+            let vkp = vectors[k][p];
+            let vkq = vectors[k][q];
+            vectors[k][p] = c * vkp - s * vkq;
+            vectors[k][q] = s * vkp + c * vkq;
+        }
+        matrix[p][p] = app - t * apq;
+        matrix[q][q] = aqq + t * apq;
+        matrix[p][q] = 0.0;
+        matrix[q][p] = 0.0;
+    }
+    if !converged { return Err("plot.ordering 'aoe' eigen decomposition did not converge".into()); }
+    let mut eigen_order: Vec<usize> = (0..n).collect();
+    eigen_order.sort_by(|a, b| matrix[*b][*b].total_cmp(&matrix[*a][*a]).then(a.cmp(b)));
+    let first = eigen_order[0];
+    let second = eigen_order[1];
+    let scale = matrix[first][first].abs().max(matrix[second][second].abs()).max(1.0);
+    if (matrix[first][first] - matrix[second][second]).abs() <= 1e-10 * scale {
+        return Err("plot.ordering 'aoe' is undefined when the two largest eigenvalues are tied".into());
+    }
+    for column in [first, second] {
+        let mut pivot = 0;
+        for row in 1..n {
+            if vectors[row][column].abs() > vectors[pivot][column].abs() { pivot = row; }
+        }
+        if vectors[pivot][column] < 0.0 {
+            for row in 0..n { vectors[row][column] = -vectors[row][column]; }
+        }
+    }
+    let mut indices: Vec<usize> = (0..n).collect();
+    indices.sort_by(|a, b| {
+        let angle_a = vectors[*a][second].atan2(vectors[*a][first]);
+        let angle_b = vectors[*b][second].atan2(vectors[*b][first]);
+        angle_a.total_cmp(&angle_b).then(a.cmp(b))
+    });
+    Ok(indices)
+}
+
+fn hclust_order(values: &[Vec<Option<f64>>]) -> Result<Vec<usize>, String> {
+    let n = values.len();
+    if n < 2 { return Err("plot.ordering 'hclust' requires at least two variables".into()); }
+    let mut distances = vec![vec![None; n]; n];
+    for i in 0..n {
+        let mut observed = 0;
+        for j in 0..n {
+            if i == j { continue; }
+            if let Some(correlation) = values[i][j] {
+                distances[i][j] = Some(1.0 - correlation);
+                observed += 1;
+            }
+        }
+        if observed == 0 {
+            return Err(format!("plot.ordering 'hclust' cannot cluster '{}' because it has no observed off-diagonal correlation", i + 1));
+        }
+    }
+    let mut clusters: Vec<Vec<usize>> = (0..n).map(|i| vec![i]).collect();
+    while clusters.len() > 1 {
+        let mut best: Option<(f64, usize, usize, usize, usize)> = None;
+        for i in 0..clusters.len() {
+            for j in (i + 1)..clusters.len() {
+                let mut sum = 0.0;
+                let mut count = 0usize;
+                for &a in &clusters[i] {
+                    for &b in &clusters[j] {
+                        if let Some(distance) = distances[a][b] { sum += distance; count += 1; }
+                    }
+                }
+                if count == 0 { continue; }
+                let distance = sum / count as f64;
+                let key_i = *clusters[i].iter().min().unwrap();
+                let key_j = *clusters[j].iter().min().unwrap();
+                let (low, high) = if key_i < key_j { (key_i, key_j) } else { (key_j, key_i) };
+                let replace = match best {
+                    None => true,
+                    Some(current) => distance.total_cmp(&current.0)
+                        .then(low.cmp(&current.1))
+                        .then(high.cmp(&current.2)).is_lt(),
+                };
+                if replace { best = Some((distance, low, high, i, j)); }
+            }
+        }
+        let (_, _, _, i, j) = best.ok_or(
+            "plot.ordering 'hclust' cannot merge remaining clusters: no observed cross-cluster correlations"
+        )?;
+        let right = clusters.remove(j);
+        let left = clusters.remove(i);
+        let (mut merged, other) = if left.iter().min() < right.iter().min() {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        merged.extend(other);
+        clusters.push(merged);
+    }
+    Ok(clusters.pop().unwrap())
+}
+
+fn variable_order(
+    ordering: &str,
+    kind: &str,
+    labels: &[String],
+    values: &[Vec<Option<f64>>],
+) -> Result<Vec<usize>, String> {
+    match ordering {
+        "original" => Ok((0..labels.len()).collect()),
+        "alphabetical" => {
+            let mut indices: Vec<usize> = (0..labels.len()).collect();
+            indices.sort_by(|a, b| labels[*a].to_lowercase().cmp(&labels[*b].to_lowercase())
+                .then(labels[*a].cmp(&labels[*b])).then(a.cmp(b)));
+            Ok(indices)
+        }
+        "aoe" => {
+            if kind != "correlation" { return Err("plot.ordering 'aoe' is supported only for correlation matrices".into()); }
+            aoe_order(values)
+        }
+        "hclust" => {
+            if kind != "correlation" { return Err("plot.ordering 'hclust' is supported only for correlation matrices".into()); }
+            hclust_order(values)
+        }
+        _ => Err(format!("plot.ordering '{ordering}' is not supported by the native CLI")),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Publication {
     pub labels: Vec<String>, pub values: Vec<Vec<Option<f64>>>,
@@ -245,7 +411,9 @@ impl Publication {
         let display = string(required(plot,"display","plot")?,"plot.display")?.to_string();
         if !["full","upper","lower"].contains(&display.as_str()) { return Err(format!("plot.display '{display}' is not yet supported by the native CLI")); }
         let ordering = string(required(plot,"ordering","plot")?,"plot.ordering")?.to_string();
-        if ordering != "original" && ordering != "alphabetical" { return Err(format!("plot.ordering '{ordering}' is not yet supported by the native CLI")); }
+        if !["original", "alphabetical", "aoe", "hclust"].contains(&ordering.as_str()) {
+            return Err(format!("plot.ordering '{ordering}' is not supported"));
+        }
         let show_values = boolean(required(plot,"show_values","plot")?,"plot.show_values")?;
         let sig = object(required(plot,"significance","plot")?,"plot.significance")?;
         keys(sig,&["enabled","p_values","thresholds"],"plot.significance")?;
@@ -283,14 +451,14 @@ impl Publication {
         if output_path.trim().is_empty() { return Err("output.path must not be empty".into()); }
 
         let original_labels = labels.clone();
-        let mut order_indices: Vec<usize> = (0..n).collect();
-        if ordering == "alphabetical" {
-            let mut indices: Vec<usize>=(0..n).collect();
-            indices.sort_by(|a,b| labels[*a].to_lowercase().cmp(&labels[*b].to_lowercase()).then(labels[*a].cmp(&labels[*b])).then(a.cmp(b)));
-            let old_labels=labels.clone(); let old_values=values.clone();
-            labels=indices.iter().map(|i|old_labels[*i].clone()).collect();
-            values=indices.iter().map(|i|indices.iter().map(|j|old_values[*i][*j]).collect()).collect();
-            order_indices = indices;
+        let order_indices = variable_order(&ordering, &kind, &labels, &values)?;
+        if ordering != "original" {
+            let old_labels = labels.clone();
+            let old_values = values.clone();
+            labels = order_indices.iter().map(|i| old_labels[*i].clone()).collect();
+            values = order_indices.iter()
+                .map(|i| order_indices.iter().map(|j| old_values[*i][*j]).collect())
+                .collect();
         }
         Ok(Self { labels, values, original_labels, order_indices, kind, method, display, ordering, show_values, negative, neutral, positive,
             missing: missing_color, width, height, unit, family, base_size, output: output_path })
@@ -629,6 +797,56 @@ mod tests {
         assert!((normalized_at(0, 0) - 0.0).abs() < 1e-12);
         assert!((normalized_at(0, 2) - 1.0).abs() < 1e-12);
         std::fs::remove_file(path).ok();
+    }
+
+    #[test]
+    fn aoe_order_is_deterministic_and_uses_original_index_mapping() {
+        let values = vec![
+            vec![Some(1.0), Some(-0.2), Some(0.0)],
+            vec![Some(-0.2), Some(1.0), Some(0.9)],
+            vec![Some(0.0), Some(0.9), Some(1.0)],
+        ];
+        let expected = vec![1, 2, 0];
+        assert_eq!(aoe_order(&values).unwrap(), expected);
+        assert_eq!(aoe_order(&values).unwrap(), expected);
+    }
+
+    #[test]
+    fn aoe_rejects_missing_and_degenerate_correlations() {
+        let missing = vec![vec![Some(1.0), None], vec![None, Some(1.0)]];
+        assert!(aoe_order(&missing).unwrap_err().contains("requires complete correlations"));
+        let degenerate = vec![
+            vec![Some(1.0), Some(0.0), Some(0.0)],
+            vec![Some(0.0), Some(1.0), Some(0.0)],
+            vec![Some(0.0), Some(0.0), Some(1.0)],
+        ];
+        assert!(aoe_order(&degenerate).unwrap_err().contains("eigenvalues are tied"));
+    }
+
+    #[test]
+    fn hclust_uses_average_linkage_and_original_index_ties() {
+        let values = vec![
+            vec![Some(1.0), Some(-0.2), Some(0.95)],
+            vec![Some(-0.2), Some(1.0), Some(0.0)],
+            vec![Some(0.95), Some(0.0), Some(1.0)],
+        ];
+        assert_eq!(hclust_order(&values).unwrap(), vec![0, 2, 1]);
+    }
+
+    #[test]
+    fn hclust_omits_missing_pairs_but_rejects_isolated_variables() {
+        let connected = vec![
+            vec![Some(1.0), Some(0.4), None],
+            vec![Some(0.4), Some(1.0), Some(0.5)],
+            vec![None, Some(0.5), Some(1.0)],
+        ];
+        assert_eq!(hclust_order(&connected).unwrap(), vec![0, 1, 2]);
+        let isolated = vec![
+            vec![Some(1.0), None, None],
+            vec![None, Some(1.0), Some(0.2)],
+            vec![None, Some(0.2), Some(1.0)],
+        ];
+        assert!(hclust_order(&isolated).unwrap_err().contains("no observed off-diagonal correlation"));
     }
 
 }
