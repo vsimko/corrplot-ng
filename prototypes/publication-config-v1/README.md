@@ -6,8 +6,10 @@ This directory defines the first declarative configuration format for reproducib
 
 - `config_version` identifies this format. Incompatible changes require a new major configuration version.
 - `input` is either an inline labelled matrix or a path to a CSV matrix. CSV paths are resolved relative to the configuration file's directory by consumers.
-- `matrix.kind` identifies the semantic matrix type. Version 1 supports correlation matrices; `method` records the correlation method used to produce the matrix.
-- Correlation values are in [-1, 1]; JSON null represents a missing correlation and is never interpreted as zero.
+- `matrix.kind` explicitly selects `correlation` or `general_numeric`; semantics are never inferred from dimensions or values. `method` records the correlation method when applicable.
+- Correlation values are in [-1, 1]. General numeric matrices accept finite values outside that range. JSON null represents a missing value and is never interpreted as zero.
+- General numeric matrices derive automatic limits from observed values or accept an explicit increasing `matrix.col_limits` pair that must cover all observations. All-missing matrices are rejected; constant ranges are padded deterministically.
+- General numeric values are normalized only for visual mapping: mixed-sign domains use a diverging mapping and one-sided domains use a sequential mapping. Original values remain unchanged in the prepared scene.
 - `plot` contains semantic display choices: glyph method, displayed triangle, ordering, coefficient labels, and optional significance metadata. The p-value matrix is required when significance is enabled.
 - `colors` contains the legacy negative, neutral, positive, and missing colors. Optional `colors.scale` defines an explicit continuous or discrete signed-correlation scale; see [COLOR-SCALES.md](COLOR-SCALES.md).
 - `dimensions` are physical output dimensions, not logical scene units. Consumers convert mm or inches to the renderer's output coordinate system.
