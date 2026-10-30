@@ -55,6 +55,11 @@ def make_cases(include_stress: bool = False) -> dict[str, dict[str, Any]]:
         "B01": {"labels": labels20, "matrix": matrix20},
         "B02": {"labels": labels100, "matrix": matrix100},
         "B05": {"labels": labels100, "matrix": missing},
+        "B06": {
+            "labels": [f"variable_{i:03d}_" + ("long descriptive label " * 3) for i in range(100)],
+            "matrix": matrix100,
+            "annotation": "Label-heavy workload with long variable names and an explanatory annotation",
+        },
         "B07": {
             "labels": [labels100[i] for i in permutation],
             "matrix": reordered,
