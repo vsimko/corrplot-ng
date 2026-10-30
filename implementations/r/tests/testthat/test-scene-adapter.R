@@ -173,7 +173,7 @@ test_that("legacy plotmath prefixes parse to native R expressions", {
   expect_identical(corrplot_ng_parse_label("alpha"), "alpha")
   for (label in c(":alpha + beta", "=alpha + beta", "$alpha + beta")) {
     parsed <- corrplot_ng_parse_label(label)
-    expect_s3_class(parsed, "expression")
+    expect_type(parsed, "expression")
     expect_identical(paste(deparse(parsed[[1]]), collapse = ""), "alpha + beta")
   }
   expect_error(corrplot_ng_parse_label(":alpha +"), "invalid plotmath label")
