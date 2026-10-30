@@ -51,3 +51,30 @@ fn invalid_matrix_returns_nonzero() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("not symmetric"));
     fs::remove_file(path).ok();
 }
+
+
+#[test]
+fn publication_config_v1_validates_and_renders_svg() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/basic.json");
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+    let validated = Command::new(binary).args(["validate", "--config"]).arg(&root).output().unwrap();
+    assert!(validated.status.success(), "{}", String::from_utf8_lossy(&validated.stderr));
+    assert!(String::from_utf8_lossy(&validated.stdout).contains("publication-config v1"));
+
+    let output_path = std::env::temp_dir().join(format!("corrplot-ng-config-{}.svg", std::process::id()));
+    let rendered = Command::new(binary).args(["render", "--config"]).arg(&root)
+        .args(["--output"]).arg(&output_path).output().unwrap();
+    assert!(rendered.status.success(), "{}", String::from_utf8_lossy(&rendered.stderr));
+    let svg = fs::read_to_string(&output_path).unwrap();
+    assert!(svg.contains("width=\"160mm\""));
+    assert!(svg.contains("#b2182b"));
+    fs::remove_file(output_path).ok();
+}
+
+#[test]
+fn publication_config_rejects_unsupported_semantics() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/significance.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng")).args(["validate", "--config"]).arg(&root).output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("significance is not yet supported"));
+}

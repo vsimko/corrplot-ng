@@ -44,3 +44,16 @@ Supported render methods are currently `circle` and `number`. The scene-json out
 ## Dependency policy
 
 Do not add a third-party crate without documenting why the standard library is insufficient, the crate's license/provenance, build-time dependency impact, and whether it adds runtime dependencies. Keep Cargo.lock committed even while the dependency graph is empty.
+
+
+## Publication configuration v1 (native CLI)
+
+The native CLI accepts a publication configuration with the following commands:
+
+    corrplot-ng validate --config figure.json
+    corrplot-ng render --config figure.json
+    corrplot-ng render --config figure.json --output figure.svg
+
+The configuration loader validates strict object fields, inline or CSV-backed matrices, matrix semantics, missing-value policy, supported plot settings, colors, physical dimensions, typography, and output format. CSV paths are resolved relative to the configuration file. The renderer currently supports correlation/general numeric matrices, circle/number glyphs, full/upper/lower display, and original/alphabetical ordering.
+
+Unsupported v1 semantics are rejected explicitly rather than ignored. This initial native slice does not yet implement color scales, significance overlays, col_limits, AOE/hierarchical ordering, or the complete renderer-neutral scene-v1 adaptation; these remain follow-up work.

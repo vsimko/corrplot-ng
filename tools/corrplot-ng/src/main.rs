@@ -12,7 +12,7 @@ const LEFT: f64 = 104.0;
 const TOP: f64 = 76.0;
 
 #[derive(Debug, Clone)]
-struct Matrix {
+pub(crate) struct Matrix {
     pub(crate) labels: Vec<String>,
     pub(crate) values: Vec<Vec<Option<f64>>>,
 }
