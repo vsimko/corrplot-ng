@@ -50,13 +50,16 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(description, str):
         raise ValueError("description must be a string")
 
+    matrix_mode = config.get("matrix_mode", "correlation")
+    if matrix_mode not in ("correlation", "general_numeric"):
+        raise ValueError("matrix_mode must be correlation or general_numeric")
     for row in matrix:
         for value in row:
             if value is None:
                 continue
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
-                raise ValueError("correlation values must be numbers or null")
-            if not -1 <= value <= 1:
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value):
+                raise ValueError("matrix values must be finite numbers or null")
+            if matrix_mode == "correlation" and not -1 <= value <= 1:
                 raise ValueError("correlation values must be null or between -1 and 1")
 
     font_size = _number(layout.get("label_font_size", LABEL_FONT_SIZE), "label_font_size", 6, 48)
@@ -252,7 +255,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         })
 
     scene = {
-        "schema_version": 1, "kind": "correlation_plot",
+        "schema_version": 1,
+        "kind": "correlation_plot" if matrix_mode == "correlation" else "general_matrix_plot",
         "width": width, "height": height, "labels": label_items, "cells": cells,
         "annotation": annotation,
         "glyph_method": method, "text_annotations": text_annotations,
@@ -263,6 +267,25 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             "grid_color": "#e0e0e0",
         },
     }
+    if config.get("matrix_semantics") is not None:
+        semantics = config["matrix_semantics"]
+        if not isinstance(semantics, dict) or semantics.get("mode") != matrix_mode:
+            raise ValueError("matrix_semantics.mode must match matrix_mode")
+        limits = semantics.get("color_limits")
+        normalization = semantics.get("normalization")
+        if (not isinstance(limits, list) or len(limits) != 2
+            or any(isinstance(v, bool) or not isinstance(v, (int, float)) or not isfinite(v) for v in limits)
+            or limits[0] >= limits[1]
+            or semantics.get("color_mapping") not in ("sequential", "diverging")
+            or not isinstance(normalization, dict)
+            or isinstance(normalization.get("intercept"), bool)
+            or not isinstance(normalization.get("intercept"), (int, float))
+            or isinstance(normalization.get("zoom"), bool)
+            or not isinstance(normalization.get("zoom"), (int, float))
+            or not isfinite(normalization["intercept"]) or not isfinite(normalization["zoom"])
+            or normalization["zoom"] <= 0):
+            raise ValueError("matrix_semantics must contain valid limits, mapping, and normalization")
+        scene["matrix_semantics"] = semantics
     if has_region_layout:
         scene["display_type"] = display_type
         scene["show_diagonal"] = show_diagonal
