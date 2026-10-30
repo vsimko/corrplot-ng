@@ -54,8 +54,10 @@ colorlegend <- function(colbar, labels, at = NULL, xlim = c(0, 1),
     graphics::rect(rep(xlim[1], len), yy[seq_len(len)],
       rep(xlim[1] + xgap * ratio.colbar, len), yy[-1L], col = colbar, border = colbar)
     graphics::rect(xlim[1], ylim[1], xlim[1] + xgap * ratio.colbar, ylim[2], border = "black")
-    graphics::segments(xlim[1] + xgap * lim.segment[1], at,
-      xlim[1] + xgap * lim.segment[2], at)
+    if (length(at)) {
+      graphics::segments(xlim[1] + xgap * lim.segment[1], at,
+        xlim[1] + xgap * lim.segment[2], at)
+    }
     if (addlabels) {
       xp <- rep(xlim[1] + xgap * max(lim.segment, ratio.colbar), length(at))
       if (align == "l") {
@@ -72,8 +74,10 @@ colorlegend <- function(colbar, labels, at = NULL, xlim = c(0, 1),
     graphics::rect(xx[seq_len(len)], rep(ylim[2] - ratio.colbar * ygap, len),
       xx[-1L], rep(ylim[2], len), col = colbar, border = colbar)
     graphics::rect(xlim[1], ylim[2] - ratio.colbar * ygap, xlim[2], ylim[2], border = "black")
-    graphics::segments(at, ylim[2] - ygap * lim.segment[1],
-      at, ylim[2] - ygap * lim.segment[2])
+    if (length(at)) {
+      graphics::segments(at, ylim[2] - ygap * lim.segment[1],
+        at, ylim[2] - ygap * lim.segment[2])
+    }
     if (addlabels) {
       yp <- rep(ylim[2] - ygap * max(lim.segment, ratio.colbar), length(at))
       graphics::text(x = at, y = yp, labels = labels, pos = 1, ...)
