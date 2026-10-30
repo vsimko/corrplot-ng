@@ -115,5 +115,66 @@ class PlotSceneTests(unittest.TestCase):
             build_scene({"labels": ["alpha"], "matrix": [[1.0]], "annotation": 123})
 
 
+    def test_layout_can_set_physical_dimensions_and_cell_size(self):
+        scene = build_scene({
+            "labels": ["a", "b"],
+            "matrix": [[1.0, 0.2], [0.2, 1.0]],
+            "layout": {"width": 520, "height": 420, "cell_size": 72},
+        })
+        self.assertEqual(scene["width"], 520)
+        self.assertEqual(scene["height"], 420)
+        self.assertEqual(scene["cells"][0]["size"], 72)
+        self.assertEqual(scene["cells"][1]["x"] - scene["cells"][0]["x"], 72)
+
+    def test_dense_matrix_respects_minimum_readable_cell_size(self):
+        scene = build_scene({
+            "labels": [f"v{i}" for i in range(12)],
+            "matrix": [[1.0 if i == j else 0.1 for j in range(12)] for i in range(12)],
+            "layout": {"width": 360, "height": 360, "min_cell_size": 12},
+        })
+        self.assertGreaterEqual(scene["cells"][0]["size"], 12)
+        self.assertEqual(len(scene["cells"]), 144)
+
+    def test_custom_label_typography_is_serialized(self):
+        config = {
+            "labels": ["long variable", "another variable"],
+            "matrix": [[1.0, 0.3], [0.3, 1.0]],
+            "layout": {
+                "label_font_family": "serif",
+                "label_font_size": 16,
+                "label_font_weight": "bold",
+                "column_label_orientation": "horizontal",
+            },
+        }
+        svg = render_svg(config)
+        self.assertIn('font-family="serif"', svg)
+        self.assertIn('font-size="16"', svg)
+        self.assertIn('font-weight="bold"', svg)
+        self.assertNotIn('rotate(-90', svg)
+
+    def test_label_collision_policies_are_applied(self):
+        config = {
+            "labels": ["long variable name", "second long variable name"],
+            "matrix": [[1.0, 0.3], [0.3, 1.0]],
+            "layout": {"label_collision": "truncate"},
+        }
+        svg = render_svg(config)
+        self.assertIn("…</text>", svg)
+        omitted = render_svg({**config, "layout": {"label_collision": "omit"}})
+        self.assertNotIn(">long variable name</text>", omitted)
+
+    def test_invalid_layout_options_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "label_font_size"):
+            build_scene({
+                "labels": ["a"], "matrix": [[1.0]],
+                "layout": {"label_font_size": 100},
+            })
+        with self.assertRaisesRegex(ValueError, "column_label_orientation"):
+            build_scene({
+                "labels": ["a"], "matrix": [[1.0]],
+                "layout": {"column_label_orientation": "diagonal"},
+            })
+
+
 if __name__ == "__main__":
     unittest.main()
