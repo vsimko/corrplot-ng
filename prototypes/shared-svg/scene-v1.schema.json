@@ -166,7 +166,12 @@
           "method": {
             "enum": [
               "circle",
-              "number"
+              "square",
+              "ellipse",
+              "number",
+              "shade",
+              "color",
+              "pie"
             ]
           },
           "region": {
@@ -300,7 +305,12 @@
     "glyph_method": {
       "enum": [
         "circle",
-        "number"
+        "square",
+        "ellipse",
+        "number",
+        "shade",
+        "color",
+        "pie"
       ]
     },
     "text_annotations": {

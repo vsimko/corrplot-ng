@@ -375,5 +375,95 @@ class PlotSceneTests(unittest.TestCase):
         self.assertEqual(svg.count(">beta</text>"), 1)
 
 
+
+    def test_all_seven_methods_have_distinct_deterministic_svg_encodings(self):
+        examples = {
+            "circle": "<circle cx=",
+            "square": 'stroke="none"/>',
+            "ellipse": "<ellipse cx=",
+            "number": ">0.65</text>",
+            "shade": "<line x1=",
+            "color": 'fill="#',
+            "pie": "<path d=",
+        }
+        outputs = {}
+        for method, marker in examples.items():
+            with self.subTest(method=method):
+                config = {
+                    "labels": ["A", "B"],
+                    "matrix": [[1.0, 0.65], [0.65, 1.0]],
+                    "method": method,
+                }
+                scene = build_scene(config)
+                first = render_scene_svg(scene)
+                self.assertEqual(first, render_scene_svg(build_scene(config)))
+                ET.fromstring(first)
+                self.assertIn(marker, first)
+                outputs[method] = first
+        self.assertEqual(len(set(outputs.values())), len(outputs))
+
+    def test_signed_encodings_preserve_sign_and_magnitude(self):
+        positive = render_svg({
+            "labels": ["A", "B"], "matrix": [[1.0, 0.75], [0.75, 1.0]],
+            "method": "ellipse",
+        })
+        negative = render_svg({
+            "labels": ["A", "B"], "matrix": [[1.0, -0.75], [-0.75, 1.0]],
+            "method": "ellipse",
+        })
+        self.assertIn('rotate(45 ', positive)
+        self.assertIn('rotate(-45 ', negative)
+
+        positive_pie = render_svg({
+            "labels": ["A", "B"], "matrix": [[1.0, 0.25], [0.25, 1.0]],
+            "method": "pie",
+        })
+        negative_pie = render_svg({
+            "labels": ["A", "B"], "matrix": [[1.0, -0.25], [-0.25, 1.0]],
+            "method": "pie",
+        })
+        self.assertIn("0 0 1", positive_pie)
+        self.assertIn("0 0 0", negative_pie)
+
+    def test_color_method_interpolates_magnitude_from_neutral(self):
+        low = render_svg({
+            "labels": ["A", "B"], "matrix": [[1.0, 0.2], [0.2, 1.0]],
+            "method": "color",
+        })
+        high = render_svg({
+            "labels": ["A", "B"], "matrix": [[1.0, 0.8], [0.8, 1.0]],
+            "method": "color",
+        })
+        self.assertNotEqual(low, high)
+        self.assertIn('fill="#', low)
+        self.assertIn('fill="#', high)
+
+    def test_mixed_triangle_methods_are_applied_per_cell(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.5], [0.5, 1.0]],
+            "upper_method": "square",
+            "lower_method": "pie",
+            "diagonal_method": "number",
+        })
+        self.assertEqual([cell["method"] for cell in scene["cells"]],
+                         ["number", "square", "pie", "number"])
+        svg = render_scene_svg(scene)
+        self.assertIn('stroke="none"/>', svg)
+        self.assertIn("<path d=", svg)
+        self.assertIn(">1.00</text>", svg)
+
+    def test_missing_values_remain_explicit_for_every_method(self):
+        for method in ("circle", "square", "ellipse", "number", "shade", "color", "pie"):
+            with self.subTest(method=method):
+                svg = render_svg({
+                    "labels": ["A", "B"],
+                    "matrix": [[1.0, None], [None, 1.0]],
+                    "method": method,
+                })
+                self.assertEqual(svg.count(">NA</text>"), 2)
+
+
+
 if __name__ == "__main__":
     unittest.main()

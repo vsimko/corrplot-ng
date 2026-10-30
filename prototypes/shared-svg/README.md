@@ -48,6 +48,22 @@ so output should be visually reviewed with the target font when labels contain
 unusually wide glyphs. If requested dimensions cannot fit the matrix at the
 minimum cell size, the minimum remains authoritative and the canvas expands.
 
+## Cell encodings
+
+The scene and SVG backend support all seven publication methods:
+
+| Method | Visual mapping | Example |
+| --- | --- | --- |
+| `circle` | Circle radius grows linearly with absolute value; sign selects positive/negative color | `{"method":"circle"}` |
+| `square` | Centered square side grows linearly with absolute value | `{"method":"square"}` |
+| `ellipse` | Eccentricity grows with magnitude; diagonal orientation distinguishes sign | `{"method":"ellipse"}` |
+| `number` | Prints the formatted numeric value instead of a shape | `{"method":"number"}` |
+| `shade` | Magnitude controls tint/line strength; diagonal direction distinguishes sign | `{"method":"shade"}` |
+| `color` | Fills the whole cell, interpolating neutral toward the signed color by magnitude | `{"method":"color"}` |
+| `pie` | Sector sweep is proportional to absolute value; sweep direction and color distinguish sign | `{"method":"pie"}` |
+
+For every method, `null` remains an explicit missing-value cell labelled `NA`; it is never treated as zero. A supplied per-cell mapped color takes precedence over fallback semantic colors. The same method can be selected globally or independently for upper, lower, and diagonal regions (`upper_method`, `lower_method`, and `diagonal_method`).
+
 ## What this validates
 
 - A small input model can be rendered without language-specific API objects.
