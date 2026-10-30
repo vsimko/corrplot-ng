@@ -412,7 +412,7 @@ fn main() {
         let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported method") ||
-            message.contains("missing value for") || message.contains("requires an interactive terminal");
+            message.contains("missing value for") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
         fail(message, if usage_error { 2 } else { 1 });
     }
 }
