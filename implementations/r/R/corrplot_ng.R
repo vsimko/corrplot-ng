@@ -11,6 +11,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     supported <- c("annotation", "method", "type", "diag", "addCoef.col",
       "addCoefasPercent", "number.digits", "number.cex", "number.font")
     unsupported <- setdiff(arg_names, supported)
+    if ("method" %in% arg_names && !args$method %in% c("circle", "number")) unsupported <- unique(c(unsupported, "method"))
     if (length(unsupported) > 0L) stop("The scene engine does not support: ", paste(unsupported, collapse = ", "), ". Use engine = 'legacy' for these options.", call. = FALSE)
   }
   defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
