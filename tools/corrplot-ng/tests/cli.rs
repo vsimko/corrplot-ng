@@ -334,6 +334,7 @@ fn scene_v1_json_can_be_read_from_stdin_with_explicit_format() {
         .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
         .spawn().unwrap();
     child.stdin.as_mut().unwrap().write_all(&contents).unwrap();
+    drop(child.stdin.take());
     let output = child.wait_with_output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     assert!(String::from_utf8_lossy(&output.stdout).contains("3 x 3 matrix"));
