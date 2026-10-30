@@ -5,7 +5,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from config import canonical_json, to_scene_config, validate_config
+from config import canonical_json, to_scene_config, validate_config\nfrom ordering import resolve_ordering
 
 
 HERE = Path(__file__).parent
@@ -105,6 +105,56 @@ class PublicationConfigTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "zero"):
             validate_config(config)
+
+
+    def test_original_and_alphabetical_order_preserve_original_indices(self):
+        labels = ["beta", "Alpha", "alpha", "gamma"]
+        matrix = [[1.0 if i == j else 0.0 for j in range(4)] for i in range(4)]
+        self.assertEqual(resolve_ordering(labels, matrix, "original"), [0, 1, 2, 3])
+        self.assertEqual(resolve_ordering(labels, matrix, "alphabetical"), [1, 2, 0, 3])
+
+    def test_hclust_has_deterministic_expected_permutation(self):
+        labels = ["a", "b", "c", "d"]
+        matrix = [
+            [1.0, 0.9, -0.8, -0.7],
+            [0.9, 1.0, -0.75, -0.65],
+            [-0.8, -0.75, 1.0, 0.92],
+            [-0.7, -0.65, 0.92, 1.0],
+        ]
+        self.assertEqual(resolve_ordering(labels, matrix, "hclust"), [0, 1, 2, 3])
+
+    def test_hclust_uses_pairwise_observed_correlations_and_stable_ties(self):
+        labels = ["a", "b", "c"]
+        matrix = [
+            [1.0, 0.5, None],
+            [0.5, 1.0, 0.5],
+            [None, 0.5, 1.0],
+        ]
+        self.assertEqual(resolve_ordering(labels, matrix, "hclust"), [0, 1, 2])
+
+    def test_hclust_rejects_constant_or_unconnected_variables(self):
+        labels = ["observed", "constant", "other"]
+        matrix = [
+            [1.0, None, 0.2],
+            [None, 1.0, None],
+            [0.2, None, 1.0],
+        ]
+        with self.assertRaisesRegex(ValueError, "without observed off-diagonal"):
+            resolve_ordering(labels, matrix, "hclust")
+
+    def test_aoe_is_rejected_with_actionable_diagnostic(self):
+        with self.assertRaisesRegex(ValueError, "aoe.*not supported"):
+            resolve_ordering(["a"], [[1.0]], "aoe")
+
+    def test_scene_adapter_reorders_matrix_and_significance_metadata(self):
+        config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["plot"]["ordering"] = "alphabetical"
+        scene = to_scene_config(config)
+        permutation = scene["variable_order"]["indices"]
+        original = config["input"]["values"]
+        p_values = config["plot"]["significance"]["p_values"]
+        self.assertEqual(scene["matrix"], [[original[i][j] for j in permutation] for i in permutation])
+        self.assertEqual(scene["p_values"], [[p_values[i][j] for j in permutation] for i in permutation])
 
     def test_canonical_json_is_deterministic(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))

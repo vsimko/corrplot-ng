@@ -8,7 +8,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from color_scale import build_color_scale
+from color_scale import build_color_scale\nfrom ordering import resolve_ordering
 
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
@@ -94,6 +94,11 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
     if source["kind"] != "inline_matrix":
         raise ValueError("$.input: scene adaptation currently requires inline_matrix")
 
+    ordering = normalized["plot"]["ordering"]
+    permutation = resolve_ordering(source["labels"], source["values"], ordering)
+    ordered_labels = [source["labels"][index] for index in permutation]
+    values = [[source["values"][row][column] for column in permutation] for row in permutation]
+
     colors = normalized["colors"]
     scale_spec = colors.get("scale") or {
         "type": "continuous",
@@ -105,7 +110,6 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
         ],
     }
     scale = build_color_scale(scale_spec, colors["missing"])
-    values = source["values"]
     cell_colors = [scale.map_value(value) for row in values for value in row]
 
     def value_label(value: float) -> str:
@@ -122,12 +126,25 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
             label = "Missing"
         legend.append({"kind": entry["kind"], "label": label, "color": entry["color"]})
 
-    return {
-        "labels": source["labels"],
+    result = {
+        "labels": ordered_labels,
         "matrix": values,
         "cell_colors": cell_colors,
         "legend": legend,
+        "variable_order": {
+            "strategy": ordering,
+            "indices": permutation,
+            "labels": list(source["labels"]),
+        },
     }
+    significance = normalized["plot"]["significance"]
+    if significance["enabled"]:
+        p_values = significance["p_values"]
+        result["p_values"] = [
+            [p_values[row][column] for column in permutation]
+            for row in permutation
+        ]
+    return result
 
 
 def canonical_json(config: dict[str, Any]) -> str:

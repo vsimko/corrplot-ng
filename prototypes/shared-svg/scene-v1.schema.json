@@ -113,6 +113,11 @@
           },
           "color": {
             "$ref": "#/$defs/color"
+          },
+          "p_value": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
           }
         }
       }
@@ -214,6 +219,23 @@
           "color": {
             "$ref": "#/$defs/color"
           }
+        }
+      }
+    },
+    "variable_order": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "indices", "labels"],
+      "properties": {
+        "strategy": {"type": "string"},
+        "indices": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0},
+          "uniqueItems": true
+        },
+        "labels": {
+          "type": "array",
+          "items": {"type": "string"}
         }
       }
     },
