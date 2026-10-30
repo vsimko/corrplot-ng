@@ -161,11 +161,11 @@ class PublicationConfigTests(unittest.TestCase):
     def test_general_numeric_validation_and_scene_mapping(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
-        config["input"]["values"] = [[10.0, 12.0, 11.0], [8.0, 9.0, 12.0], [11.0, 12.0, 10.0]]
+        config["input"]["values"] = [[10.0, 12.0, 11.0], [8.0, 9.0, 12.0], [11.0, 12.0, -8.0]]
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_mode"], "general_numeric")
         self.assertEqual(scene["matrix_semantics"]["color_mapping"], "diverging")
-        self.assertEqual(scene["matrix_semantics"]["color_limits"], [8.0, 12.0])
+        self.assertEqual(scene["matrix_semantics"]["color_limits"], [-8.0, 12.0])
         self.assertEqual(scene["matrix"][0][0], 10.0)
         self.assertEqual(len(scene["cell_colors"]), 9)
 
