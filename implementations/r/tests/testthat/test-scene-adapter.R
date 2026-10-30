@@ -311,6 +311,8 @@ test_that("general-matrix limits handle negative, constant, and hidden-diagonal 
   scene <- corrplot_ng(diagonal_dominant, engine = "scene",
     is.corr = FALSE, diag = FALSE)
   expect_equal(scene$matrix_semantics$color_limits, c(2.5, 3.5))
+  expect_identical(vapply(scene$cells, function(cell) cell$visible, logical(1)),
+    c(FALSE, TRUE, TRUE, FALSE))
 
   negative_off_diagonal <- matrix(c(100, -3, -3, 200), 2, byrow = TRUE)
   scene <- corrplot_ng(negative_off_diagonal, engine = "scene",
