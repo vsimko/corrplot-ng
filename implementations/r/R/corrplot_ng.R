@@ -48,7 +48,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (is.null(digits)) digits <- if (options$addCoefasPercent) 0L else 2L
   if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || !is.finite(digits) || digits < 0 || digits %% 1 != 0) stop("number.digits must be a non-negative integer", call. = FALSE)
   cex <- options$number.cex
-  if (!is.numeric(cex) || length(cex) != 1L || is.na(cex) || !is.finite(cex) || cex <= 0 || cex > 10) stop("number.cex must be greater than 0 and at most 10", call. = FALSE)
+  if (!is.numeric(cex) || length(cex) != 1L || is.na(cex) || !is.finite(cex) || cex <= 0) stop("number.cex must be greater than 0", call. = FALSE)
   font <- options$number.font
   if (!is.numeric(font) || length(font) != 1L || is.na(font) || !(font %in% 1:4)) stop("number.font must be one of 1, 2, 3, or 4", call. = FALSE)
 
