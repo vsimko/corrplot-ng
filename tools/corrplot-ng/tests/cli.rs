@@ -1,5 +1,6 @@
 use std::fs;
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 fn fixture(name: &str, contents: &str) -> std::path::PathBuf {
     let path = std::env::temp_dir().join(format!("corrplot-ng-{}-{name}.csv", std::process::id()));
@@ -305,4 +306,75 @@ fn init_help_is_available_without_a_tty() {
         .unwrap();
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("publication-config v1"));
+}
+
+
+#[test]
+fn scene_v1_json_file_is_auto_detected_and_rendered() {
+    let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/shared-svg/scene-v1.example.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&scene)
+        .args(["--format", "scene-json"])
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let rendered = String::from_utf8(output.stdout).unwrap();
+    assert!(rendered.contains("\\"schema_version\\":1"));
+    assert!(rendered.contains("alpha"));
+    assert!(rendered.contains("0.65"));
+}
+
+#[test]
+fn scene_v1_json_can_be_read_from_stdin_with_explicit_format() {
+    let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/shared-svg/scene-v1.example.json");
+    let contents = fs::read(scene).unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input", "-", "--input-format", "scene-json"])
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
+        .spawn().unwrap();
+    child.stdin.as_mut().unwrap().write_all(&contents).unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("3 x 3 matrix"));
+}
+
+#[test]
+fn explicit_tsv_input_format_uses_tab_delimiters() {
+    let path = std::env::temp_dir().join(format!("corrplot-ng-input-{}.tsv", std::process::id()));
+    fs::write(&path, "\\talpha\\tbeta\\nalpha\\t1\\t0.5\\nbeta\\t0.5\\t1\\n").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&path)
+        .args(["--input-format", "tsv"])
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    fs::remove_file(path).ok();
+}
+
+#[test]
+fn invalid_scene_json_fails_before_creating_output() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-invalid-scene-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("invalid.json");
+    let output_path = directory.join("must-not-exist.svg");
+    fs::write(&input, r#"{ "schema_version": 1, "kind": "correlation_plot", "labels": [], "cells": [] }"#).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&input)
+        .args(["--input-format", "scene-json", "--output"]).arg(&output_path)
+        .output().unwrap();
+    assert!(!output.status.success());
+    assert!(!output_path.exists());
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn non_utf8_input_has_an_actionable_diagnostic() {
+    let path = std::env::temp_dir().join(format!("corrplot-ng-invalid-encoding-{}.csv", std::process::id()));
+    fs::write(&path, [0xff, 0xfe, 0xfd]).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&path)
+        .output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("UTF-8 text"));
+    fs::remove_file(path).ok();
 }
