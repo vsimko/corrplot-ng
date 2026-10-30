@@ -38,6 +38,8 @@ See [top-level requirements](requirements.md) for priorities and checks. These a
 - [Future vision](future-vision.md): project goals, possible development steps, and open questions.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 - [Testing strategy](testing-strategy.md): test layers, compatibility evidence, shared fixtures, and CI plan.
+- [Shared-core benchmark plan](shared-core-benchmark-plan.md): benchmark scope, correctness gates, measurement protocol, and decision criteria.
+- [Benchmark operations](../benchmarks/README.md): how to run the shared-core, cross-language, stress, and package-smoke workflows.
 
 Implementations live in their own directories under [`implementations/`](../implementations/README.md). The R package scaffold in [`implementations/r/`](../implementations/r/README.md) currently delegates to the original `corrplot` package. It is a test adapter, not a new plotting implementation. See [the test guide](../tests/README.md).
 

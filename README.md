@@ -4,7 +4,7 @@
 
 `corrplot-ng` aims to evolve the functionality of the original R [`corrplot`](https://github.com/taiyun/corrplot) package into a reusable, extensible visualization toolkit with a modern API and language-specific wrappers.
 
-> **Status:** Design and planning. The architecture, API, and roadmap are subject to validation through prototyping. Features described below are goals, not claims about an existing implementation.
+> **Status:** Early prototype. The repository contains a shared scene contract, an R compatibility adapter, a Python prototype, and experimental C++/Rcpp and Rust/rextendr implementations. It is not a production-ready replacement. The architecture, API, and roadmap remain subject to validation.
 
 ## Goals
 
@@ -60,12 +60,12 @@ Compatibility will be validated with regression tests against the original packa
 
 ## Local development
 
-The repository currently contains an R compatibility-test package and a small Python prototype. These are development scaffolding, not a complete implementation.
+The repository contains an R compatibility-test package and language-neutral scene prototypes. These are development scaffolding, not a complete implementation.
 
 ### Prerequisites
 
 - Git
-- Python 3 (the shared prototype and fixture tests use only the Python standard library)
+- Python 3.10 or later
 - R (version 4.x recommended)
 
 On Debian or Ubuntu, install the system tools with:
@@ -100,6 +100,14 @@ Run the R package tests:
 ```sh
 R -q -e 'testthat::test_local("implementations/r")'
 ```
+
+Run the benchmark timing-harness unit tests (these do not execute performance benchmarks):
+
+```sh
+python3 -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
+```
+
+To run performance benchmarks locally or in GitHub Actions, follow [the benchmark guide](benchmarks/README.md). Performance benchmarks are manual and do not run on ordinary pull requests.
 
 To run the SVG prototype manually and write its output to standard output:
 

@@ -88,6 +88,10 @@ A candidate that fails correctness is reported as **not comparable** for that wo
 - Run candidates serially to reduce resource contention. Keep raw machine-readable results as CI artifacts.
 - Do not fail CI on small timing fluctuations. Initially publish results; establish regression thresholds only after stable baselines exist.
 
+## CI execution policy
+
+Performance benchmarks are intentionally not triggered by pull requests. Routine PR workflows run correctness and compatibility checks only. Start the dedicated **Performance benchmarks** GitHub Actions workflow manually with `workflow_dispatch` when a new measurement is needed. The regular shared-core and cross-language suites run by default. B03/B04 stress measurements and the Ubuntu/macOS/Windows native package smoke matrix are separate opt-in inputs. This keeps long-running measurements deliberate and prevents unrelated PRs from consuming benchmark capacity.
+
 ## Metrics
 
 Report at least:
