@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  license-policy:
+  license-policy:\n    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
