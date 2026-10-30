@@ -36,6 +36,17 @@ writeLines("# Temporary package generated in CI.", file.path(pkg_dir, "R", "plac
 setwd(pkg_dir)
 rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
+# Keep the generated package aligned with the audited and vendored extendr
+# 0.8.2 license notice. rextendr may otherwise scaffold the latest 0.9.x API.
+cargo_manifest <- file.path(pkg_dir, "src", "rust", "Cargo.toml")
+cargo_lines <- readLines(cargo_manifest, warn = FALSE)
+extendr_dependency <- grep("^extendr-api[[:space:]]*=", cargo_lines)
+if (length(extendr_dependency) != 1L) {
+  stop("Could not identify generated extendr-api dependency in ", cargo_manifest)
+}
+cargo_lines[extendr_dependency] <- 'extendr-api = "=0.8.2"'
+writeLines(cargo_lines, cargo_manifest)
+
 # Keep Cargo output outside the generated package and preserve it across
 # package clean steps, matching the existing offline-validation experiment.
 target_dir <- normalizePath(file.path(root, ".ci-rust-target"),
@@ -45,6 +56,7 @@ makevars_file <- file.path(pkg_dir, "src",
 makevars <- readLines(makevars_file, warn = FALSE)
 target_idx <- grep("^TARGET_DIR[[:space:]]*=[[:space:]]*\\./rust/target[[:space:]]*$", makevars)
 if (length(target_idx) != 1L) stop("Could not identify generated TARGET_DIR in ", makevars_file)
+
 makevars[target_idx] <- paste0("TARGET_DIR = ", target_dir)
 
 rust_clean_idx <- grep("^rust_clean:", makevars)
