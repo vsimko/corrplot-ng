@@ -511,4 +511,63 @@ mod tests {
         assert!(parse_json(r#"{"x":"λ","y":[1,null,true]}"#).is_ok());
         assert!(parse_json("{} trailing").is_err());
     }
+    #[test]
+    fn publication_scene_matches_scene_v1_structure_for_both_matrix_kinds() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        let source = std::fs::read_to_string(&fixture).unwrap();
+        for (kind, expected_scene_kind) in [
+            ("correlation", "correlation_plot"),
+            ("general_numeric", "general_matrix_plot"),
+        ] {
+            let config = source.replace(
+                "\"kind\": \"correlation\", \"method\": \"pearson\"",
+                &format!("\"kind\": \"{kind}\""),
+            );
+            let path = std::env::temp_dir().join(format!(
+                "corrplot-ng-scene-contract-{}-{kind}.json",
+                std::process::id()
+            ));
+            std::fs::write(&path, config).unwrap();
+            let publication = Publication::load(path.to_str().unwrap()).unwrap();
+            let scene = parse_json(&publication.scene_json("contract test")).unwrap();
+            let root = object(&scene, "scene").unwrap();
+
+            assert_eq!(number(required(root, "schema_version", "scene").unwrap(), "schema_version").unwrap(), 1.0);
+            assert_eq!(string(required(root, "kind", "scene").unwrap(), "kind").unwrap(), expected_scene_kind);
+            let labels = array(required(root, "labels", "scene").unwrap(), "labels").unwrap();
+            let cells = array(required(root, "cells", "scene").unwrap(), "cells").unwrap();
+            assert_eq!(labels.len(), publication.labels.len());
+            assert_eq!(cells.len(), publication.labels.len() * publication.labels.len());
+
+            for label in labels {
+                let label = object(label, "label").unwrap();
+                for key in ["text", "row_x", "row_y", "column_x", "column_y"] {
+                    assert!(label.contains_key(key), "scene label missing {key}");
+                }
+            }
+            for cell in cells {
+                let cell = object(cell, "cell").unwrap();
+                for key in ["row", "column", "value", "x", "y", "center_x", "center_y", "size"] {
+                    assert!(cell.contains_key(key), "scene cell missing {key}");
+                }
+                assert!(matches!(cell.get("value"), Some(Json::Number(_)) | Some(Json::Null)));
+            }
+            let style = object(required(root, "style", "scene").unwrap(), "style").unwrap();
+            for key in ["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"] {
+                assert!(style.contains_key(key), "scene style missing {key}");
+            }
+            assert!(root.contains_key("typography"));
+            assert!(root.contains_key("legend"));
+            assert!(root.contains_key("variable_order"));
+            if kind == "general_numeric" {
+                let semantics = object(required(root, "matrix_semantics", "scene").unwrap(), "matrix_semantics").unwrap();
+                assert_eq!(string(required(semantics, "mode", "matrix_semantics").unwrap(), "mode").unwrap(), "general_numeric");
+            } else {
+                assert!(!root.contains_key("matrix_semantics"));
+            }
+            std::fs::remove_file(path).ok();
+        }
+    }
+
 }
