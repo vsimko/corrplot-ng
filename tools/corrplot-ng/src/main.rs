@@ -396,7 +396,7 @@ fn run() -> Result<(), String> {
                 match args[1].as_str() {
                     "validate" => println!("valid: publication-config v1; {} x {} {} matrix; ordering={}; display={}",
                         publication.labels.len(), publication.labels.len(), publication.kind, publication.ordering, publication.display),
-                    "inspect" => println!("kind: {}\nrows: {}\ncolumns: {}\nordering: {}\ndisplay: {}",
+                    "inspect" => println!("input format: publication-config v1\nkind: {}\nrows: {}\ncolumns: {}\nordering: {}\ndisplay: {}",
                         publication.kind, publication.labels.len(), publication.labels.len(), publication.ordering, publication.display),
                     "render" => {
                         let content = match opts.format {
@@ -422,13 +422,20 @@ fn run() -> Result<(), String> {
                 InputFormat::SceneJson => publication::parse_scene_matrix(&source)?,
                 InputFormat::Auto => unreachable!("auto input format is resolved before parsing"),
             };
+            let input_format_label = match input_format {
+                InputFormat::Csv => "csv",
+                InputFormat::Tsv => "tsv",
+                InputFormat::SceneJson => "scene-v1 JSON",
+                InputFormat::Auto => unreachable!("auto input format is resolved before reporting"),
+            };
             match args[1].as_str() {
                 "validate" => println!("valid: {} x {} matrix ({} missing values)", matrix.labels.len(), matrix.labels.len(), matrix.values.iter().flatten().filter(|v| v.is_none()).count()),
                 "inspect" => {
                     let all: Vec<f64> = matrix.values.iter().flatten().filter_map(|v| *v).collect();
                     let min = all.iter().copied().fold(f64::INFINITY, f64::min);
                     let max = all.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-                    println!("kind: {}\nrows: {}\ncolumns: {}\nmissing: {}\nminimum: {}\nmaximum: {}",
+                    println!("input format: {}\nkind: {}\nrows: {}\ncolumns: {}\nmissing: {}\nminimum: {}\nmaximum: {}",
+                        input_format_label,
                         if kind == Kind::Correlation { "correlation" } else { "general" },
                         matrix.labels.len(), matrix.labels.len(),
                         matrix.values.iter().flatten().filter(|v| v.is_none()).count(), num(min), num(max));

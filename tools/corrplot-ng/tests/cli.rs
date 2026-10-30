@@ -379,3 +379,59 @@ fn non_utf8_input_has_an_actionable_diagnostic() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("UTF-8 text"));
     fs::remove_file(path).ok();
 }
+
+
+#[test]
+fn inspect_reports_detected_input_format_and_matrix_metadata() {
+    let csv = fixture("inspect", ",alpha,beta\nalpha,1,NA\nbeta,NA,1\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["inspect", "--input"]).arg(&csv)
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let report = String::from_utf8(output.stdout).unwrap();
+    assert!(report.contains("input format: csv"));
+    assert!(report.contains("kind: correlation"));
+    assert!(report.contains("rows: 2"));
+    assert!(report.contains("missing: 2"));
+    fs::remove_file(csv).ok();
+
+    let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/shared-svg/scene-v1.example.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["inspect", "--input"]).arg(scene)
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("input format: scene-v1 JSON"));
+}
+
+#[test]
+fn missing_input_file_returns_actionable_nonzero_error() {
+    let path = std::env::temp_dir().join(format!("corrplot-ng-missing-{}.csv", std::process::id()));
+    let _ = fs::remove_file(&path);
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&path)
+        .output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("cannot read"));
+    assert!(output.stdout.is_empty());
+}
+
+#[test]
+fn malformed_arguments_use_usage_exit_code() {
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--unsupported", "value"])
+        .output().unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("unknown option"));
+}
+
+#[test]
+fn help_documents_all_commands_and_input_format_options() {
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .arg("--help").output().unwrap();
+    assert!(output.status.success());
+    let help = String::from_utf8(output.stdout).unwrap();
+    for option in ["render", "validate", "inspect", "presets", "version", "--input-format", "--format"] {
+        assert!(help.contains(option), "help output is missing {option}");
+    }
+}
