@@ -26,7 +26,7 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             f'<text x="{label["row_x"]}" y="{label["row_y"]:.1f}" text-anchor="end" dominant-baseline="middle" font-family="sans-serif" font-size="13">{html.escape(label["text"])}</text>'
         )
         parts.append(
-            f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]}" transform="rotate(-90 {label["column_x"]:.1f} {label["column_y"]})" text-anchor="end" font-family="sans-serif" font-size="13">{html.escape(label["text"])}</text>'
+            f'<text x="{label["column_x"]:.1f}" y="{label["column_y"]}" transform="rotate(-90 {label["column_x"]:.1f} {label["column_y"]})" text-anchor="start" font-family="sans-serif" font-size="13">{html.escape(label["text"])}</text>'
         )
 
     for cell in scene["cells"]:
