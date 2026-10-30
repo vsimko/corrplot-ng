@@ -361,9 +361,14 @@ fn run() -> Result<(), String> {
                     "inspect" => println!("kind: {}\nrows: {}\ncolumns: {}\nordering: {}\ndisplay: {}",
                         publication.kind, publication.labels.len(), publication.labels.len(), publication.ordering, publication.display),
                     "render" => {
-                        if opts.format != Format::Svg { return Err("publication-config v1 currently renders SVG only".into()); }
-                        let content = publication.svg(&opts.title);
-                        let destination = opts.output.as_deref().or(Some(publication.output.as_str()));
+                        let content = match opts.format {
+                            Format::Svg => publication.svg(&opts.title),
+                            Format::SceneJson => publication.scene_json(&opts.title),
+                        };
+                        let destination = match opts.format {
+                            Format::Svg => opts.output.as_deref().or(Some(publication.output.as_str())),
+                            Format::SceneJson => opts.output.as_deref(),
+                        };
                         write_output(destination, &content)?;
                     }
                     _ => unreachable!(),

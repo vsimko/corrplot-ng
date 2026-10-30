@@ -78,3 +78,21 @@ fn publication_config_rejects_unsupported_semantics() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("not yet supported"));
 }
+
+
+#[test]
+fn publication_config_can_emit_renderer_neutral_scene_v1() {
+    let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/basic.json");
+    let output_path = std::env::temp_dir().join(format!("corrplot-ng-scene-{}.json", std::process::id()));
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config)
+        .args(["--format", "scene-json", "--output"]).arg(&output_path)
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let scene = fs::read_to_string(&output_path).unwrap();
+    assert!(scene.contains("\"schema_version\":1"));
+    assert!(scene.contains("\"kind\":\"correlation_plot\""));
+    assert!(scene.contains("\"variable_order\""));
+    assert!(scene.contains("\"typography\""));
+    fs::remove_file(output_path).ok();
+}

@@ -137,6 +137,7 @@ fn color(v: &Json, name: &str) -> Result<String, String> {
 #[derive(Debug, Clone)]
 pub struct Publication {
     pub labels: Vec<String>, pub values: Vec<Vec<Option<f64>>>,
+    pub original_labels: Vec<String>, pub order_indices: Vec<usize>,
     pub kind: String, pub method: String, pub display: String, pub ordering: String,
     pub show_values: bool, pub negative: String, pub neutral: String, pub positive: String,
     pub missing: String, pub width: f64, pub height: f64, pub unit: String,
@@ -265,14 +266,17 @@ impl Publication {
         let output_path=string(required(output,"path","output")?,"output.path")?.to_string();
         if output_path.trim().is_empty() { return Err("output.path must not be empty".into()); }
 
+        let original_labels = labels.clone();
+        let mut order_indices: Vec<usize> = (0..n).collect();
         if ordering == "alphabetical" {
             let mut indices: Vec<usize>=(0..n).collect();
             indices.sort_by(|a,b| labels[*a].to_lowercase().cmp(&labels[*b].to_lowercase()).then(labels[*a].cmp(&labels[*b])).then(a.cmp(b)));
             let old_labels=labels.clone(); let old_values=values.clone();
             labels=indices.iter().map(|i|old_labels[*i].clone()).collect();
             values=indices.iter().map(|i|indices.iter().map(|j|old_values[*i][*j]).collect()).collect();
+            order_indices = indices;
         }
-        Ok(Self { labels, values, kind, method, display, ordering, show_values, negative, neutral, positive,
+        Ok(Self { labels, values, original_labels, order_indices, kind, method, display, ordering, show_values, negative, neutral, positive,
             missing: missing_color, width, height, unit, family, base_size, output: output_path })
     }
 
@@ -372,9 +376,9 @@ impl Publication {
             ",\"variable_order\":{{\"strategy\":\"{}\",\"indices\":[",
             self.ordering
         ));
-        for i in 0..n { if i > 0 { out.push(','); } out.push_str(&i.to_string()); }
+        for (i, index) in self.order_indices.iter().enumerate() { if i > 0 { out.push(','); } out.push_str(&index.to_string()); }
         out.push_str("],\"labels\":[");
-        for (i, label) in self.labels.iter().enumerate() { if i > 0 { out.push(','); } out.push('"'); out.push_str(&esc(label)); out.push('"'); }
+        for (i, label) in self.original_labels.iter().enumerate() { if i > 0 { out.push(','); } out.push('"'); out.push_str(&esc(label)); out.push('"'); }
         out.push_str("]}");
         if self.kind == "general_numeric" {
             out.push_str(&format!(
