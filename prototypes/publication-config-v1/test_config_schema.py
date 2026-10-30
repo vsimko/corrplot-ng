@@ -207,6 +207,16 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(negative["cell_colors"][0], "#ffffe5")
         self.assertEqual(negative["cell_colors"][-1], "#662506")
 
+    def test_palette_family_uses_observed_signs_not_explicit_domain(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["matrix"]["col_limits"] = [-2.0, 10.0]
+        config["input"]["values"] = [[2.0, 4.0, 3.0], [4.0, 2.0, 5.0], [3.0, 5.0, 2.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
+        self.assertEqual(scene["matrix_semantics"]["palette"], "YlOrBr")
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 2.0)
+
     def test_general_numeric_negative_only_and_constant_domains(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
