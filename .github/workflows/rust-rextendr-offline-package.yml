@@ -55,7 +55,7 @@ jobs:
           mkdir -p .cargo
           {
             cat vendor-config.toml
-            printf '\\n[net]\\noffline = true\\n'
+            printf '\n[net]\noffline = true\n'
           } > .cargo/config.toml
           cargo build --locked --offline --release
       - name: Install generated R package without network access
