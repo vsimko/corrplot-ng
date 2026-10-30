@@ -58,9 +58,9 @@ $Archive = "corrplot-ng-$Version-$Target.zip"
 $Base = "https://github.com/vsimko/corrplot-ng/releases/download/corrplot-ng-v$Version"
 Invoke-WebRequest "$Base/$Archive" -OutFile $Archive
 Expand-Archive $Archive -DestinationPath .
-New-Item -ItemType Directory -Force "$HOME\\bin" | Out-Null
-Copy-Item "corrplot-ng-$Target\\corrplot-ng.exe" "$HOME\\bin\\corrplot-ng.exe"
-& "$HOME\\bin\\corrplot-ng.exe" version
+New-Item -ItemType Directory -Force "$HOME\bin" | Out-Null
+Copy-Item "corrplot-ng-$Target\corrplot-ng.exe" "$HOME\bin\corrplot-ng.exe"
+& "$HOME\bin\corrplot-ng.exe" version
 ```
 
 The Linux artifacts use static musl targets. macOS and Windows artifacts are
@@ -75,10 +75,10 @@ For a reproducible release build, use Rust 1.99.1 and the committed lockfile:
 rustup toolchain install 1.99.1
 rustup target add x86_64-unknown-linux-musl
 # Install musl-tools on Linux, then:
-CORRPLOT_GIT_SHA="$(git rev-parse HEAD)" \\
-CORRPLOT_RUSTC_VERSION="$(rustc +1.99.1 --version)" \\
-CORRPLOT_BUILD_TARGET=x86_64-unknown-linux-musl \\
-cargo +1.99.1 build --locked --release --target x86_64-unknown-linux-musl \\
+CORRPLOT_GIT_SHA="$(git rev-parse HEAD)" \
+CORRPLOT_RUSTC_VERSION="$(rustc +1.99.1 --version)" \
+CORRPLOT_BUILD_TARGET=x86_64-unknown-linux-musl \
+cargo +1.99.1 build --locked --release --target x86_64-unknown-linux-musl \
   --manifest-path tools/corrplot-ng/Cargo.toml
 ```
 
