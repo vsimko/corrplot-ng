@@ -1003,10 +1003,7 @@ mod scene_input_tests {
     fn rejects_incomplete_and_duplicate_scene_cells() {
         let missing = SCENE.replace("\"column\": 2,", "\"column\": 9,");
         assert!(parse_scene_matrix(&missing).unwrap_err().contains("out-of-range"));
-        let duplicate = SCENE.replace(
-            "\"row\": 1,\n      \"column\": 0",
-            "\"row\": 0,\n      \"column\": 0",
-        );
+        let duplicate = SCENE.replace("\"row\": 1,", "\"row\": 0,");
         assert!(parse_scene_matrix(&duplicate).unwrap_err().contains("duplicate cell"));
     }
 
