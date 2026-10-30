@@ -155,3 +155,37 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
     println!("Next: corrplot-ng validate --config {}", destination.display());
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_configuration_uses_selected_glyph_and_validates() {
+        let directory = std::env::temp_dir().join(format!("corrplot-ng-wizard-{}", std::process::id()));
+        std::fs::create_dir_all(&directory).unwrap();
+        let matrix = directory.join("matrix.csv");
+        let config = directory.join("figure.json");
+        std::fs::write(&matrix, ",alpha,beta\nalpha,1,0.4\nbeta,0.4,1\n").unwrap();
+        let contents = build_config(
+            "matrix.csv", ",", "correlation", "spearman", "number",
+            "preserve", "upper", "alphabetical", true, "figure.svg",
+        );
+        std::fs::write(&config, &contents).unwrap();
+        let parsed = crate::publication::Publication::load(config.to_str().unwrap()).unwrap();
+        assert_eq!(parsed.method, "number");
+        assert_eq!(parsed.ordering, "alphabetical");
+        assert!(parsed.show_values);
+        std::fs::remove_dir_all(directory).ok();
+    }
+
+    #[test]
+    fn tab_delimiter_is_encoded_as_a_json_tab_escape() {
+        let config = build_config(
+            "matrix.tsv", "\t", "correlation", "pearson", "circle",
+            "preserve", "full", "original", false, "figure.svg",
+        );
+        assert!(config.contains(r#""delimiter": "\\t""#));
+    }
+}
