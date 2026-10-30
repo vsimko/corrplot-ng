@@ -74,7 +74,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       stop("col.lim for correlation matrices must be within [-1, 1]", call. = FALSE)
     }
     return(list(limits = as.numeric(limits), mapping = "diverging", palette_name = "RdBu",
-      palette = COL2("RdBu", 200), normalization = list(intercept = 0, zoom = 1)))
+      palette = tolower(COL2("RdBu", 200)), normalization = list(intercept = 0, zoom = 1)))
   }
 
   scale_values <- corr
@@ -102,11 +102,11 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   mixed_sign <- min(scale_values) < 0 && max(scale_values) > 0
   if (mixed_sign) {
     list(limits = as.numeric(limits), mapping = "diverging", palette_name = "RdBu",
-      palette = COL2("RdBu", 200),
+      palette = tolower(COL2("RdBu", 200)),
       normalization = list(intercept = 0, zoom = 1 / max(abs(limits))))
   } else {
     list(limits = as.numeric(limits), mapping = "sequential", palette_name = "YlOrBr",
-      palette = COL1("YlOrBr", 200),
+      palette = tolower(COL1("YlOrBr", 200)),
       normalization = list(intercept = -limits[1], zoom = 1 / diff(limits)))
   }
 }
