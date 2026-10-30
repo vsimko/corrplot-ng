@@ -24,12 +24,16 @@ pub(crate) enum Kind { Correlation, General }
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Format { Svg, SceneJson }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum InputFormat { Auto, Csv, Tsv, SceneJson }
+
 #[derive(Debug)]
 struct Options {
     input: String,
     config: Option<String>,
     output: Option<String>,
     format: Format,
+    input_format: InputFormat,
     kind: Kind,
     method: String,
     title: String,
@@ -43,17 +47,18 @@ USAGE:
 
 COMMANDS:
   init       Interactively create a publication-config v1 file
-  render     Render a labelled CSV/TSV matrix to SVG or scene-v1 JSON
-  validate   Validate a labelled CSV/TSV matrix without rendering
+  render     Render a labelled matrix to SVG or scene-v1 JSON
+  validate   Validate a labelled matrix without rendering
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
   version    Print version and build information
   help       Show this help
 
 RENDER OPTIONS:
-  -i, --input PATH       Input CSV/TSV file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
+  -i, --input PATH       Input CSV/TSV or scene-v1 JSON file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
   -o, --output PATH      Output file; default is stdout
-      --format FORMAT    svg (default) or scene-json
+      --format FORMAT    svg (default) or scene-json (output format)
+      --input-format FMT  auto (default), csv, tsv, or scene-json
       --kind KIND        correlation (default) or general
       --method METHOD    circle (default) or number
       --title TEXT       Figure title
@@ -61,7 +66,9 @@ RENDER OPTIONS:
 INPUT FORMAT:
   A square labelled matrix. The first row contains an empty corner cell
   followed by column labels; each following row starts with its row label.
-  Empty cells, NA, and null represent missing values.
+  Empty cells, NA, NaN, and null represent missing values.
+  JSON input uses renderer-neutral scene-v1 documents (schema_version: 1).
+  Auto detection uses the file extension, then content; use --input-format to override.
 
 EXIT STATUS:
   0 success; 2 usage error; 1 input, validation, or rendering error.
@@ -79,6 +86,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     let mut config = None;
     let mut output = None;
     let mut format = Format::Svg;
+    let mut input_format = InputFormat::Auto;
     let mut kind = Kind::Correlation;
     let mut method = "circle".to_string();
     let mut title = "corrplot-ng".to_string();
@@ -96,6 +104,13 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
                 "svg" => Format::Svg,
                 "scene-json" => Format::SceneJson,
                 _ => return Err(format!("unsupported format '{value}' (expected svg or scene-json)")),
+            },
+            "--input-format" => input_format = match value.as_str() {
+                "auto" => InputFormat::Auto,
+                "csv" => InputFormat::Csv,
+                "tsv" => InputFormat::Tsv,
+                "scene-json" => InputFormat::SceneJson,
+                _ => return Err(format!("unsupported input format '{value}' (expected auto, csv, tsv, or scene-json)")),
             },
             "--kind" => kind = match value.as_str() {
                 "correlation" => Kind::Correlation,
@@ -115,7 +130,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     }
     Ok(Options {
         input: input.unwrap_or_default(), config,
-        output, format, kind, method, title,
+        output, format, input_format, kind, method, title,
     })
 }
 
@@ -324,6 +339,16 @@ fn svg(matrix: &Matrix, title: &str, method: &str, kind: Kind) -> String {
     out
 }
 
+fn detect_input_format(path: &str, source: &str, requested: InputFormat) -> InputFormat {
+    if requested != InputFormat::Auto { return requested; }
+    let lower = path.to_ascii_lowercase();
+    if lower.ends_with(".json") || source.trim_start().starts_with('{') { return InputFormat::SceneJson; }
+    if lower.ends_with(".tsv") { return InputFormat::Tsv; }
+    if lower.ends_with(".csv") { return InputFormat::Csv; }
+    let first = source.lines().find(|line| !line.trim().is_empty()).unwrap_or("");
+    if first.matches('\t').count() > first.matches(',').count() { InputFormat::Tsv } else { InputFormat::Csv }
+}
+
 fn read_input(path: &str) -> Result<String, String> {
     if path == "-" {
         let mut s = String::new();
@@ -380,7 +405,12 @@ fn run() -> Result<(), String> {
             }
             if opts.input.is_empty() { return Err(format!("{} requires --input PATH or --config PATH", args[1])); }
             let source = read_input(&opts.input)?;
-            let matrix = parse_matrix(&source, opts.kind)?;
+            let input_format = detect_input_format(&opts.input, &source, opts.input_format);
+            let (matrix, kind) = match input_format {
+                InputFormat::Csv | InputFormat::Tsv => (parse_matrix(&source, opts.kind)?, opts.kind),
+                InputFormat::SceneJson => publication::parse_scene_matrix(&source)?,
+                InputFormat::Auto => unreachable!("auto input format is resolved before parsing"),
+            };
             match args[1].as_str() {
                 "validate" => println!("valid: {} x {} matrix ({} missing values)", matrix.labels.len(), matrix.labels.len(), matrix.values.iter().flatten().filter(|v| v.is_none()).count()),
                 "inspect" => {
@@ -388,14 +418,14 @@ fn run() -> Result<(), String> {
                     let min = all.iter().copied().fold(f64::INFINITY, f64::min);
                     let max = all.iter().copied().fold(f64::NEG_INFINITY, f64::max);
                     println!("kind: {}\nrows: {}\ncolumns: {}\nmissing: {}\nminimum: {}\nmaximum: {}",
-                        if opts.kind == Kind::Correlation { "correlation" } else { "general" },
+                        if kind == Kind::Correlation { "correlation" } else { "general" },
                         matrix.labels.len(), matrix.labels.len(),
                         matrix.values.iter().flatten().filter(|v| v.is_none()).count(), num(min), num(max));
                 }
                 "render" => {
                     let output = match opts.format {
-                        Format::Svg => svg(&matrix, &opts.title, &opts.method, opts.kind),
-                        Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, opts.kind),
+                        Format::Svg => svg(&matrix, &opts.title, &opts.method, kind),
+                        Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, kind),
                     };
                     write_output(opts.output.as_deref(), &output)?;
                 }
@@ -411,7 +441,7 @@ fn main() {
     if let Err(message) = run() {
         let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
-            message.contains("unsupported matrix kind") || message.contains("unsupported method") ||
+            message.contains("unsupported matrix kind") || message.contains("unsupported input format") || message.contains("unsupported method") ||
             message.contains("missing value for") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
         fail(message, if usage_error { 2 } else { 1 });
     }
