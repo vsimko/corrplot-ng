@@ -22,7 +22,10 @@
       "const": 1
     },
     "kind": {
-      "const": "correlation_plot"
+      "enum": [
+        "correlation_plot",
+        "general_matrix_plot"
+      ]
     },
     "width": {
       "type": "number",
@@ -136,9 +139,7 @@
             "type": [
               "number",
               "null"
-            ],
-            "minimum": -1,
-            "maximum": 1
+            ]
           },
           "x": {
             "type": "number"
@@ -389,6 +390,55 @@
           }
         }
       }
+    },
+    "matrix_semantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "color_limits",
+        "color_mapping",
+        "normalization"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "correlation",
+            "general_numeric"
+          ]
+        },
+        "color_limits": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        "color_mapping": {
+          "enum": [
+            "sequential",
+            "diverging"
+          ]
+        },
+        "normalization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "intercept",
+            "zoom"
+          ],
+          "properties": {
+            "intercept": {
+              "type": "number"
+            },
+            "zoom": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -396,5 +446,63 @@
       "type": "string",
       "pattern": "^#[0-9A-Fa-f]{6}$"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "correlation_plot"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "cells": {
+            "items": {
+              "properties": {
+                "value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": -1,
+                  "maximum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "general_matrix_plot"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "matrix_semantics"
+        ],
+        "properties": {
+          "matrix_semantics": {
+            "properties": {
+              "mode": {
+                "const": "general_numeric"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
