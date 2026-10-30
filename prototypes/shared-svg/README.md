@@ -41,9 +41,9 @@ Example:
 }
 ```
 
-Supported collision policies are `preserve`, `truncate`, and `omit`.
-Horizontal labels can be truncated to the available cell width; vertical
-labels avoid neighboring columns by construction. Font metrics are estimates,
+Supported collision policies are `preserve`, `wrap`, `truncate`, and `omit`.
+Horizontal labels can wrap or truncate to the available cell width; vertical
+labels avoid neighboring columns by construction and can also be truncated. Font metrics are estimates,
 so output should be visually reviewed with the target font when labels contain
 unusually wide glyphs. If requested dimensions cannot fit the matrix at the
 minimum cell size, the minimum remains authoritative and the canvas expands.
