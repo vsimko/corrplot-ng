@@ -121,7 +121,7 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
     let input = prompt("Input labelled CSV/TSV path", None)?;
     if input == "-" { return Err("init requires a file path; stdin is not supported for reusable configurations".into()); }
     let delimiter = choose("Delimiter", &[",", "tab"], ",")?;
-    let delimiter = if delimiter == "tab" { "\\t" } else { "," };
+    let delimiter = if delimiter == "tab" { "\t" } else { "," };
     let kind = choose("Matrix semantics", &["correlation", "general_numeric"], "correlation")?;
     let method = if kind == "correlation" {
         choose("Correlation method", &["pearson", "spearman", "kendall"], "pearson")?
