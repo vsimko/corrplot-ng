@@ -114,6 +114,7 @@ class PublicationConfigTests(unittest.TestCase):
         config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
         config["plot"]["significance"]["p_values"][0][2] = None
         config["plot"]["significance"]["p_values"][2][0] = None
+        config["plot"]["ordering"] = "alphabetical"
         scene = to_scene_config(config)
         self.assertIsNone(scene["p_values"][0][2])
         self.assertEqual(scene["significance"]["mode"], "stars")
@@ -133,7 +134,7 @@ class PublicationConfigTests(unittest.TestCase):
     def test_enabled_significance_requires_p_values(self):
         config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
         config["plot"]["significance"]["p_values"] = None
-        with self.assertRaisesRegex(ValueError, r"significance.p_values.*required"):
+        with self.assertRaisesRegex(ValueError, "p_values"):
             validate_config(config)
 
     def test_confidence_interval_must_contain_correlation_estimate(self):

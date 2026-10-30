@@ -53,13 +53,13 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
     build_color_scale(scale_spec, normalized["colors"]["missing"])
 
     significance = normalized["plot"]["significance"]
-    significance.setdefault("mode", "pch")
-    significance.setdefault("symbol", "×")
-    significance.setdefault("thresholds", [0.001, 0.01, 0.05])
-    thresholds = significance["thresholds"]
-    if any(left >= right for left, right in zip(thresholds, thresholds[1:])):
-        raise ValueError("$.plot.significance.thresholds: values must be strictly increasing")
     if significance["enabled"]:
+        significance.setdefault("mode", "pch")
+        significance.setdefault("symbol", "×")
+        significance.setdefault("thresholds", [0.001, 0.01, 0.05])
+        thresholds = significance["thresholds"]
+        if any(left >= right for left, right in zip(thresholds, thresholds[1:])):
+            raise ValueError("$.plot.significance.thresholds: values must be strictly increasing")
         p_values = significance["p_values"]
         if p_values is None:
             raise ValueError("$.plot.significance.p_values: required when significance is enabled")
