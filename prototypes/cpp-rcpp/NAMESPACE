@@ -1,0 +1,2 @@
+useDynLib(corrplotngcppspike, .registration = TRUE)
+export(build_scene_json_cpp)
