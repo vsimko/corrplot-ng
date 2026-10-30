@@ -14,6 +14,12 @@ corrplot_ng() exposes an explicit engine selector:
 
 The scene selector is intentionally explicit. It avoids guessing whether a call can be translated and makes the returned value's type predictable.
 
+## Standalone color legend helper
+
+The R package exports `colorlegend()` as an independently callable base-graphics helper, matching the formal arguments and defaults from corrplot 0.95. It draws on the active graphics device and supports vertical and horizontal bars, normalized tick positions, automatic or explicit tick spans, optional labels, and vertical label alignment. Additional graphical arguments are forwarded to `graphics::text()`.
+
+This helper owns R device drawing only. It does not create or redefine the renderer-neutral scale and legend model specified by issue #64, and it does not add SVG serialization.
+
 ## Initial argument mapping
 
 | Legacy concept / input | Scene-v1 mapping | Initial status |
