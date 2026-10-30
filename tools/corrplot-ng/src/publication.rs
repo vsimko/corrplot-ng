@@ -406,35 +406,78 @@ impl Publication {
     }
 
     pub fn svg(&self, title: &str) -> String {
-        let n=self.labels.len(); let cell=64.0; let left=120.0; let top=76.0;
-        let vw=left+n as f64*cell+24.0; let vh=top+n as f64*cell+32.0;
-        let esc=|s:&str|s.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;").replace('\'',"&apos;");
-        let mut out=format!("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\">\n<title>{}</title>\n",self.width,self.unit,self.height,self.unit,vw,vh,esc(title));
-        out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n<text x=\"{}\" y=\"28\" font-family=\"{}\" font-size=\"{}\" font-weight=\"bold\">{}</text>\n",left,esc(&self.family),self.base_size*1.5,esc(title)));
-        for (i,label) in self.labels.iter().enumerate() {
-            let cy=top+i as f64*cell+cell/2.0; let cx=left+i as f64*cell+cell/2.0;
-            out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"end\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\">{}</text>\n",left-12.0,cy,esc(&self.family),self.base_size,esc(label)));
-            out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" font-family=\"{}\" font-size=\"{}\">{}</text>\n",cx,top-12.0,esc(&self.family),self.base_size,esc(label)));
-        }
-        let max_abs=self.values.iter().flatten().filter_map(|v|*v).map(f64::abs).fold(0.0_f64,f64::max).max(1.0);
-        for r in 0..n { for c in 0..n {
-            if (self.display=="upper" && r>c)||(self.display=="lower" && r<c) { continue; }
-            let x=left+c as f64*cell; let y=top+r as f64*cell; let cx=x+cell/2.0; let cy=y+cell/2.0;
-            let value=self.values[r][c];
-            let fill=match value { None=>&self.missing,Some(v) if v>0.0=>&self.positive,Some(v) if v<0.0=>&self.negative,_=>&self.neutral };
-            out.push_str(&format!("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\" stroke=\"#e0e0e0\"/>\n",x,y,cell,cell,fill));
-            match value {
-                None=>{},
-                Some(v) if self.method=="number" || self.show_values => {
-                    out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"white\">{}</text>\n",cx,cy,esc(&self.family),self.base_size,format!("{v:.2}")));
-                }
-                Some(v)=>{
-                    let radius=if self.kind=="correlation" { v.abs()*25.0+2.0 } else { (v.abs()/max_abs)*27.0+2.0 };
-                    out.push_str(&format!("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n",cx,cy,radius,fill));
-                }
+        // SVG is deliberately a renderer of the canonical renderer-neutral scene.
+        // Keep matrix semantics and ordering in scene construction, not here.
+        let scene = parse_json(&self.scene_json(title)).expect("scene builder must emit valid JSON");
+        let root = match scene { Json::Object(ref o) => o, _ => unreachable!() };
+        let get = |o: &BTreeMap<String, Json>, k: &str| o.get(k).expect("required scene property");
+        let num = |v: &Json| match v { Json::Number(n) => *n, _ => 0.0 };
+        let strv = |v: &Json| match v { Json::String(s) => s.as_str(), _ => "" };
+        let boolv = |v: &Json| matches!(v, Json::Bool(true));
+        let esc = |v: &str| v.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;").replace('\'',"&apos;");
+        let width = num(get(root,"width"));
+        let height = num(get(root,"height"));
+        let title_text = strv(get(root,"title"));
+        let labels = match get(root,"labels") { Json::Array(a) => a, _ => unreachable!() };
+        let cells = match get(root,"cells") { Json::Array(a) => a, _ => unreachable!() };
+        let style = match get(root,"style") { Json::Object(o) => o, _ => unreachable!() };
+        let typography = match get(root,"typography") { Json::Object(o) => o, _ => unreachable!() };
+        let family = strv(get(typography,"label_font_family"));
+        let font_size = num(get(typography,"label_font_size"));
+        let mut out = format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\">\n<title>{}</title>\n",
+            self.width,self.unit,self.height,self.unit,width,height,esc(title_text)
+        );
+        out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n");
+        out.push_str(&format!(
+            "<text x=\"120\" y=\"28\" font-family=\"{}\" font-size=\"{}\" font-weight=\"bold\">{}</text>\n",
+            esc(family),font_size*1.5,esc(title_text)
+        ));
+        for label in labels {
+            let o = match label { Json::Object(o) => o, _ => unreachable!() };
+            let text = esc(strv(get(o,"text")));
+            if boolv(get(o,"row_visible")) {
+                out.push_str(&format!(
+                    "<text x=\"{}\" y=\"{}\" text-anchor=\"end\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\">{}</text>\n",
+                    num(get(o,"row_x")),num(get(o,"row_y")),esc(family),font_size,text
+                ));
             }
-        }}
-        out.push_str("</svg>\n"); out
+            if boolv(get(o,"column_visible")) {
+                out.push_str(&format!(
+                    "<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" font-family=\"{}\" font-size=\"{}\">{}</text>\n",
+                    num(get(o,"column_x")),num(get(o,"column_y")),esc(family),font_size,text
+                ));
+            }
+        }
+        for cell in cells {
+            let o = match cell { Json::Object(o) => o, _ => unreachable!() };
+            if !boolv(get(o,"visible")) { continue; }
+            let x=num(get(o,"x")); let y=num(get(o,"y")); let size=num(get(o,"size"));
+            let cx=num(get(o,"center_x")); let cy=num(get(o,"center_y"));
+            let color=strv(get(o,"color"));
+            out.push_str(&format!(
+                "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\" stroke=\"{}\"/>\n",
+                x,y,size,size,esc(color),esc(strv(get(style,"grid_color")))
+            ));
+            if matches!(get(o,"value"),Json::Null) { continue; }
+            let value=num(get(o,"value"));
+            let method=strv(get(o,"method"));
+            if method=="number" {
+                out.push_str(&format!(
+                    "<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"#ffffff\">{:.2}</text>\n",
+                    cx,cy,esc(family),font_size,value
+                ));
+            } else {
+                let normalized = o.get("normalized_value").map(num).unwrap_or_else(|| value.abs());
+                let radius=normalized.abs().min(1.0)*27.0+2.0;
+                out.push_str(&format!(
+                    "<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n",
+                    cx,cy,radius,esc(color)
+                ));
+            }
+        }
+        out.push_str("</svg>\n");
+        out
     }
 }
 
