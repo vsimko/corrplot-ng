@@ -19,6 +19,37 @@ class PublicationConfigTests(unittest.TestCase):
     def setUpClass(cls):
         Draft202012Validator.check_schema(SCHEMA)
 
+    def test_general_matrix_reference_fixtures_match_resolved_semantics(self):
+        fixture_path = HERE.parents[1] / "tests" / "fixtures" / "general-matrix-cases.json"
+        fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))
+        for case in fixtures["cases"]:
+            if case["id"] == "hidden-diagonal-negative-constant":
+                continue  # The publication config has no diag visibility switch.
+            with self.subTest(case=case["id"]):
+                config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+                config["matrix"]["kind"] = "general_numeric"
+                config["input"]["labels"] = ["A", "B"]
+                config["input"]["values"] = case["matrix"]
+                if case["id"] == "mixed-sign-custom-limits":
+                    config["matrix"]["col_limits"] = case["col_limits"]
+                scene = to_scene_config(config)
+                semantics = scene["matrix_semantics"]
+                self.assertEqual(semantics["color_limits"], case["col_limits"])
+                self.assertEqual(semantics["color_mapping"], case["mapping"])
+                self.assertEqual(semantics["palette"], case["palette"])
+                self.assertAlmostEqual(semantics["normalization"]["intercept"], case["normalization"]["intercept"])
+                self.assertAlmostEqual(semantics["normalization"]["zoom"], case["normalization"]["zoom"])
+        for case in fixtures["invalid_cases"]:
+            with self.subTest(case=case["id"]):
+                config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+                config["matrix"]["kind"] = "general_numeric"
+                config["input"]["labels"] = ["A", "B"]
+                config["input"]["values"] = case["matrix"]
+                if "col_limits" in case:
+                    config["matrix"]["col_limits"] = case["col_limits"]
+                with self.assertRaisesRegex(ValueError, case["error"]):
+                    validate_config(config)
+
     def test_all_examples_are_valid_and_normalizable(self):
         self.assertEqual(len(EXAMPLES), 5)
         for path in EXAMPLES:
