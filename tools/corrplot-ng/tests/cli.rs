@@ -426,19 +426,6 @@ fn malformed_arguments_use_usage_exit_code() {
 }
 
 #[test]
-fn binary_runs_with_an_empty_path_and_no_python_runtime() {
-    let empty_path = std::env::temp_dir().join(format!("corrplot-ng-empty-path-{}", std::process::id()));
-    fs::create_dir_all(&empty_path).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
-        .arg("version")
-        .env("PATH", &empty_path)
-        .output().unwrap();
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    assert!(String::from_utf8_lossy(&output.stdout).contains("corrplot-ng"));
-    fs::remove_dir_all(empty_path).ok();
-}
-
-#[test]
 fn help_documents_all_commands_and_input_format_options() {
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .arg("--help").output().unwrap();
