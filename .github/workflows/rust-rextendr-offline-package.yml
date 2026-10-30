@@ -1,0 +1,122 @@
+name: Rust rextendr offline package install
+
+on:
+  push:
+    branches:
+      - experiment/rust-rextendr-offline-package
+    paths:
+      - ".github/workflows/rust-rextendr-offline-package.yml"
+      - "prototypes/rust-rextendr/**"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/rust-rextendr-offline-package.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-package-install:
+    name: Offline generated R package install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Install R integration-test dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::rextendr
+            any::devtools
+            any::usethis
+      - name: Generate temporary R package with rextendr
+        run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+      - name: Verify third-party license notice is included
+        shell: bash
+        run: |
+          set -euxo pipefail
+          license_dir=prototypes/rust-rextendr/.ci-r-package/inst/licenses
+          test -s "$license_dir/extendr-MIT.txt"
+          grep -q "Copyright (c) 2021 The Extendr contributors" "$license_dir/extendr-MIT.txt"
+          grep -q "extendr-api-v0.8.2" "$license_dir/README.md"
+      - name: Resolve, audit, and vendor dependencies of the generated package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd prototypes/rust-rextendr/.ci-r-package/src/rust
+          cp ../../../deny.toml deny.toml
+          cargo generate-lockfile
+          cargo deny check licenses
+          cargo vendor --locked vendor > vendor-config.toml
+          mkdir -p .cargo
+          {
+            cat vendor-config.toml
+            printf '\n[net]\noffline = true\n'
+          } > .cargo/config.toml
+          cargo build --lib --locked --offline --release
+          # rextendr sets CARGO_HOME to src/.cargo during R CMD INSTALL.
+          # Its config file is therefore src/.cargo/config.toml, not
+          # src/rust/.cargo/config.toml. Cargo config paths are relative to
+          # the parent of the .cargo directory, so rust/vendor is correct.
+          sed 's/directory = "vendor"/directory = "rust\/vendor"/' vendor-config.toml > install-vendor-config.toml
+          mv install-vendor-config.toml vendor-config.toml
+          mkdir -p ../.cargo
+          cp vendor-config.toml ../.cargo/config.toml
+          # R CMD build runs the generated clean target, which removes the
+          # expanded vendor directory. Preserve it as an archive whose paths
+          # restore rust/vendor when rextendr extracts it from src/.
+          tar -cJf vendor.tar.xz -C .. rust/vendor
+      - name: Install generated R package without network access
+        shell: bash
+        env:
+          CARGO_NET_OFFLINE: "true"
+        run: |
+          set -euxo pipefail
+          R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+      - name: Test Rust function from R
+        run: Rscript -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
+      - name: Build and inspect the actual R source tarball
+        shell: bash
+        run: |
+          set -euxo pipefail
+          R CMD build --no-build-vignettes --no-manual prototypes/rust-rextendr/.ci-r-package
+          tarball=corrplotngrustspike_0.0.0.9000.tar.gz
+          test -s "$tarball"
+          # R CMD build runs rextendr's clean target, which removes the expanded
+          # vendor tree. Restore it into the source archive so R CMD check can
+          # compile the package offline from the actual tarball.
+          unpack_dir="$(mktemp -d)"
+          tar -xzf "$tarball" -C "$unpack_dir"
+          tar -xJf "$unpack_dir/corrplotngrustspike/src/rust/vendor.tar.xz" -C "$unpack_dir/corrplotngrustspike/src"
+          rm "$tarball"
+          tar -czf "$tarball" -C "$unpack_dir" corrplotngrustspike
+          tar -tzf "$tarball" > source-tarball-files.txt
+          grep -qx 'corrplotngrustspike/inst/licenses/extendr-MIT.txt' source-tarball-files.txt
+          grep -qx 'corrplotngrustspike/inst/licenses/README.md' source-tarball-files.txt
+          grep -qx 'corrplotngrustspike/src/rust/Cargo.lock' source-tarball-files.txt
+          grep -qx 'corrplotngrustspike/src/rust/vendor.tar.xz' source-tarball-files.txt
+          # Cargo vendor uses the package name as the directory; verify the
+          # extendr-api manifest exists in the expanded source archive.
+          test -s "$unpack_dir/corrplotngrustspike/src/rust/vendor/extendr-api/Cargo.toml"
+          echo "R source tarball contains extendr license notices, Cargo.lock, and expanded vendored Rust sources."
+      - name: Check the built R source package
+        shell: bash
+        env:
+          # Keep the CRAN-style checks deterministic in CI; remote incoming
+          # checks depend on CRAN availability and are tested separately.
+          _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
+        run: |
+          set -euxo pipefail
+          R CMD check --as-cran --no-manual corrplotngrustspike_0.0.0.9000.tar.gz
