@@ -239,6 +239,8 @@ test_that("general-matrix mode preserves values and resolves legacy color domain
     list(intercept = -2, zoom = 1 / 6))
   expect_equal(vapply(scene$cells, function(cell) cell$value, numeric(1)),
     as.numeric(positive))
+  expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
+    c(0, 1 / 3, 1 / 3, 1))
 
   mixed <- matrix(c(-2, 4, 4, 3), 2, byrow = TRUE)
   scene <- corrplot_ng(mixed, engine = "scene", is.corr = FALSE,
@@ -247,6 +249,8 @@ test_that("general-matrix mode preserves values and resolves legacy color domain
   expect_identical(scene$matrix_semantics$color_mapping, "diverging")
   expect_equal(scene$matrix_semantics$normalization,
     list(intercept = 0, zoom = 0.2))
+  expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
+    c(-0.4, 0.8, 0.8, 0.6))
 })
 
 test_that("general-matrix limits handle negative, constant, and hidden-diagonal data", {
@@ -254,6 +258,8 @@ test_that("general-matrix limits handle negative, constant, and hidden-diagonal 
   scene <- corrplot_ng(negative, engine = "scene", is.corr = FALSE)
   expect_equal(scene$matrix_semantics$color_limits, c(-8, -2))
   expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+  expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
+    c(0, 2 / 3, 2 / 3, 1))
 
   constant <- matrix(7, 2, 2)
   scene <- corrplot_ng(constant, engine = "scene", is.corr = FALSE)
