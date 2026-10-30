@@ -1,0 +1,8 @@
+# SPDX license policy for the isolated Rust prototype.
+# These licenses cover the current extendr dependency graph.
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Unicode-3.0",
+]
