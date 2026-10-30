@@ -181,6 +181,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
 
+    matrix_values = matrix
     p_values = config.get("p_values")
     if p_values is not None:
         if not isinstance(p_values, list) or len(p_values) != len(labels) or any(
@@ -189,8 +190,75 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("p_values must be square and match labels")
         for row in p_values:
             for value in row:
-                if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 1:
-                    raise ValueError("p_values must contain numbers between 0 and 1")
+                if value is not None and (
+                    isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not isfinite(value) or not 0 <= value <= 1
+                ):
+                    raise ValueError("p_values must contain numbers between 0 and 1 or null")
+        for row_index in range(len(labels)):
+            for column_index in range(row_index + 1, len(labels)):
+                p_left, p_right = p_values[row_index][column_index], p_values[column_index][row_index]
+                if (p_left is None) != (p_right is None) or (
+                    p_left is not None and abs(p_left - p_right) > 1e-8
+                ):
+                    raise ValueError("p_values must be symmetric, including matching missing entries")
+
+    significance = config.get("significance")
+    if significance is not None:
+        if not isinstance(significance, dict) or set(significance) != {"mode", "thresholds", "symbol"}:
+            raise ValueError("significance must contain mode, thresholds, and symbol")
+        thresholds = significance["thresholds"]
+        if (significance["mode"] not in ("pch", "p-value", "blank", "stars")
+            or not isinstance(thresholds, list) or not thresholds
+            or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                   or not isfinite(value) or not 0 < value <= 1 for value in thresholds)
+            or any(left >= right for left, right in zip(thresholds, thresholds[1:]))
+            or not isinstance(significance["symbol"], str) or not significance["symbol"].strip()
+            or len(significance["symbol"]) > 8):
+            raise ValueError("significance mode, thresholds, or symbol are invalid")
+        if p_values is None:
+            raise ValueError("significance settings require p_values")
+
+    confidence_intervals = config.get("confidence_intervals")
+    if confidence_intervals is not None:
+        if matrix_mode != "correlation":
+            raise ValueError("confidence_intervals currently require a correlation matrix")
+        if not isinstance(confidence_intervals, dict) or set(confidence_intervals) != {"lower", "upper"}:
+            raise ValueError("confidence_intervals must contain lower and upper matrices")
+        for key in ("lower", "upper"):
+            matrix = confidence_intervals[key]
+            if not isinstance(matrix, list) or len(matrix) != len(labels) or any(
+                not isinstance(row, list) or len(row) != len(labels) for row in matrix
+            ):
+                raise ValueError(f"confidence_intervals.{key} must be square and match labels")
+            for row in matrix:
+                for value in row:
+                    if value is not None and (
+                        isinstance(value, bool) or not isinstance(value, (int, float))
+                        or not isfinite(value) or not -1 <= value <= 1
+                    ):
+                        raise ValueError("confidence interval bounds must be between -1 and 1 or null")
+            for row_index in range(len(labels)):
+                for column_index in range(row_index + 1, len(labels)):
+                    left, right = matrix[row_index][column_index], matrix[column_index][row_index]
+                    if (left is None) != (right is None) or (
+                        left is not None and abs(left - right) > 1e-8
+                    ):
+                        raise ValueError(f"confidence_intervals.{key} must be symmetric")
+        lower, upper = confidence_intervals["lower"], confidence_intervals["upper"]
+        for row_index in range(len(labels)):
+            for column_index in range(len(labels)):
+                low, high = lower[row_index][column_index], upper[row_index][column_index]
+                if (low is None) != (high is None):
+                    raise ValueError("confidence interval lower and upper must both be null or numeric")
+                if low is not None:
+                    if low > high:
+                        raise ValueError("confidence interval lower bound must not exceed upper bound")
+                    estimate = matrix_values[row_index][column_index]
+                    if estimate is None:
+                        raise ValueError("confidence intervals must be null when the correlation is missing")
+                    if low > estimate or estimate > high:
+                        raise ValueError("confidence interval must contain the correlation estimate")
     variable_order = config.get("variable_order")
     if variable_order is not None:
         if not isinstance(variable_order, dict) or set(variable_order) != {"strategy", "indices", "labels"}:
@@ -380,6 +448,60 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             cell["encoding"] = _cell_encoding(
                 cell, cell.get("method", method), scene["style"]
             )
+    if significance is not None:
+        scene["significance"] = {
+            "mode": significance["mode"],
+            "thresholds": list(significance["thresholds"]),
+            "symbol": significance["symbol"],
+        }
+        cutoff = significance["thresholds"][-1]
+        for cell_item in cells:
+            p_value = cell_item.get("p_value")
+            if p_value is None:
+                status, annotation, blank = "unknown", None, False
+            else:
+                is_significant = p_value <= cutoff
+                status, annotation, blank = (
+                    ("significant", None, False) if is_significant
+                    else ("not_significant", None, False)
+                )
+                mode = significance["mode"]
+                if mode == "stars" and is_significant:
+                    star_count = next(
+                        (len(significance["thresholds"]) - index
+                         for index, threshold in enumerate(significance["thresholds"])
+                         if p_value <= threshold),
+                        0,
+                    )
+                    annotation = "*" * star_count if star_count else None
+                elif mode == "pch" and not is_significant:
+                    annotation = significance["symbol"]
+                elif mode == "p-value" and not is_significant:
+                    annotation = f"p={p_value:.3g}"
+                elif mode == "blank" and not is_significant:
+                    blank = True
+            cell_item["significance"] = {
+                "p_value": p_value, "status": status,
+                "annotation": annotation, "blank": blank,
+            }
+
+    if confidence_intervals is not None:
+        for cell_item in cells:
+            row_index, column_index = cell_item["row"], cell_item["column"]
+            lower = confidence_intervals["lower"][row_index][column_index]
+            upper = confidence_intervals["upper"][row_index][column_index]
+            if lower is None:
+                continue
+            cell_item["confidence_interval"] = {
+                "lower": lower, "upper": upper,
+                "x1": cell_item["x"] + (lower + 1.0) * 0.5 * cell_item["size"],
+                "x2": cell_item["x"] + (upper + 1.0) * 0.5 * cell_item["size"],
+                "y": cell_item["center_y"],
+                "cap_height": cell_item["size"] * 0.14,
+                "stroke_width": max(1.0, cell_item["size"] * 0.035),
+                "color": "#333333",
+            }
+
     if has_region_layout:
         scene["display_type"] = display_type
         scene["show_diagonal"] = show_diagonal

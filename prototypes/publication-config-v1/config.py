@@ -54,11 +54,29 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
 
     significance = normalized["plot"]["significance"]
     if significance["enabled"]:
+        significance.setdefault("mode", "pch")
+        significance.setdefault("symbol", "×")
+        significance.setdefault("thresholds", [0.001, 0.01, 0.05])
+        thresholds = significance["thresholds"]
+        if any(left >= right for left, right in zip(thresholds, thresholds[1:])):
+            raise ValueError("$.plot.significance.thresholds: values must be strictly increasing")
         p_values = significance["p_values"]
+        if p_values is None:
+            raise ValueError("$.plot.significance.p_values: required when significance is enabled")
         size = len(source["labels"]) if source["kind"] == "inline_matrix" else None
         if size is not None:
             _validate_square(p_values, size, "$.plot.significance.p_values")
-            _validate_symmetric(p_values, "$.plot.significance.p_values", allow_null=False)
+            _validate_symmetric(p_values, "$.plot.significance.p_values", allow_null=True)
+
+    confidence_intervals = normalized["plot"].get("confidence_intervals")
+    if confidence_intervals is not None:
+        if normalized["matrix"]["kind"] != "correlation":
+            raise ValueError("$.plot.confidence_intervals: confidence intervals currently require a correlation matrix")
+        if source["kind"] != "inline_matrix":
+            raise ValueError("$.plot.confidence_intervals: confidence intervals currently require inline_matrix input")
+        _validate_confidence_intervals(
+            confidence_intervals, len(source["labels"]), source["values"]
+        )
 
     return normalized
 
@@ -126,6 +144,39 @@ def _resolve_color_scale(config: dict[str, Any], semantics: dict[str, Any]) -> d
         {"value": 0, "color": colors["neutral"]},
         {"value": 1, "color": colors["positive"]},
     ]}
+
+
+
+
+
+def _validate_confidence_intervals(
+    intervals: dict[str, Any], size: int, values: list[list[Any]]
+) -> None:
+    lower = intervals["lower"]
+    upper = intervals["upper"]
+    _validate_square(lower, size, "$.plot.confidence_intervals.lower")
+    _validate_square(upper, size, "$.plot.confidence_intervals.upper")
+    _validate_symmetric(lower, "$.plot.confidence_intervals.lower", allow_null=True)
+    _validate_symmetric(upper, "$.plot.confidence_intervals.upper", allow_null=True)
+    for row in range(size):
+        for column in range(size):
+            low, high = lower[row][column], upper[row][column]
+            if (low is None) != (high is None):
+                raise ValueError(f"$.plot.confidence_intervals[{row}][{column}]: lower and upper must both be null or numeric")
+            if low is not None:
+                if not (-1 <= low <= 1 and -1 <= high <= 1):
+                    raise ValueError(f"$.plot.confidence_intervals[{row}][{column}]: correlation bounds must be between -1 and 1")
+                if low > high:
+                    raise ValueError(f"$.plot.confidence_intervals[{row}][{column}]: lower bound exceeds upper bound")
+                estimate = values[row][column]
+                if estimate is None:
+                    raise ValueError(
+                        f"$.plot.confidence_intervals[{row}][{column}]: interval must be null when the correlation is missing"
+                    )
+                if low > estimate or estimate > high:
+                    raise ValueError(
+                        f"$.plot.confidence_intervals[{row}][{column}]: interval must contain the correlation estimate"
+                    )
 
 
 def _validate_square(matrix: list[list[Any]], size: int, path: str) -> None:
@@ -216,6 +267,18 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
             [p_values[row][column] for column in permutation]
             for row in permutation
         ]
+        result["significance"] = {
+            "mode": significance["mode"],
+            "thresholds": list(significance["thresholds"]),
+            "symbol": significance["symbol"],
+        }
+    confidence_intervals = normalized["plot"].get("confidence_intervals")
+    if confidence_intervals is not None:
+        result["confidence_intervals"] = {
+            key: [[confidence_intervals[key][row][column] for column in permutation]
+                  for row in permutation]
+            for key in ("lower", "upper")
+        }
     return result
 
 

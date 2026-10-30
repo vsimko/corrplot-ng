@@ -506,5 +506,107 @@ class PlotSceneTests(unittest.TestCase):
 
 
 
+
+    def test_significance_modes_prepare_deterministic_annotations(self):
+        base = {
+            "labels": ["A", "B", "C"],
+            "matrix": [[1.0, 0.6, 0.2], [0.6, 1.0, 0.3], [0.2, 0.3, 1.0]],
+            "p_values": [[0.0, 0.001, None], [0.001, 0.0, 0.2], [None, 0.2, 0.0]],
+            "significance": {"mode": "stars", "thresholds": [0.001, 0.01, 0.05], "symbol": "×"},
+        }
+        stars = build_scene(base)
+        self.assertEqual(stars["cells"][1]["significance"]["annotation"], "***")
+        self.assertEqual(stars["cells"][2]["significance"]["status"], "unknown")
+        self.assertIsNone(stars["cells"][2]["significance"]["annotation"])
+
+        pch = build_scene({**base, "significance": {**base["significance"], "mode": "pch"}})
+        self.assertEqual(pch["cells"][5]["significance"]["annotation"], "×")
+        p_value = build_scene({**base, "significance": {**base["significance"], "mode": "p-value"}})
+        self.assertEqual(p_value["cells"][5]["significance"]["annotation"], "p=0.2")
+        blank = build_scene({**base, "significance": {**base["significance"], "mode": "blank"}})
+        self.assertTrue(blank["cells"][5]["significance"]["blank"])
+        self.assertFalse(blank["cells"][2]["significance"]["blank"])
+
+    def test_confidence_intervals_prepare_whisker_geometry_and_render(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.6], [0.6, 1.0]],
+            "confidence_intervals": {
+                "lower": [[1.0, 0.2], [0.2, 1.0]],
+                "upper": [[1.0, 0.8], [0.8, 1.0]],
+            },
+        })
+        interval = scene["cells"][1]["confidence_interval"]
+        self.assertEqual(interval["lower"], 0.2)
+        self.assertEqual(interval["upper"], 0.8)
+        self.assertAlmostEqual(interval["x1"], scene["cells"][1]["x"] + scene["cells"][1]["size"] * 0.6)
+        self.assertAlmostEqual(interval["x2"], scene["cells"][1]["x"] + scene["cells"][1]["size"] * 0.9)
+        svg = render_scene_svg(scene)
+        ET.fromstring(svg)
+        self.assertIn('stroke="#333333"', svg)
+        self.assertEqual(svg, render_scene_svg(scene))
+
+
+    def test_significance_threshold_boundaries_are_inclusive_and_ordered(self):
+        p_values = [
+            [0.0, 0.001, 0.001001, 0.01],
+            [0.001, 0.0, 0.01, 0.05],
+            [0.001001, 0.01, 0.0, 0.050001],
+            [0.01, 0.05, 0.050001, 0.0],
+        ]
+        scene = build_scene({
+            "labels": ["A", "B", "C", "D"],
+            "matrix": [[1.0 if i == j else 0.2 for j in range(4)] for i in range(4)],
+            "p_values": p_values,
+            "significance": {"mode": "stars", "thresholds": [0.001, 0.01, 0.05], "symbol": "×"},
+        })
+        cells = {(cell["row"], cell["column"]): cell for cell in scene["cells"]}
+        self.assertEqual(cells[(0, 1)]["significance"]["annotation"], "***")
+        self.assertEqual(cells[(0, 2)]["significance"]["annotation"], "**")
+        self.assertEqual(cells[(0, 3)]["significance"]["annotation"], "**")
+        self.assertEqual(cells[(1, 2)]["significance"]["annotation"], "**")
+        self.assertEqual(cells[(1, 3)]["significance"]["annotation"], "*")
+        self.assertIsNone(cells[(2, 3)]["significance"]["annotation"])
+
+    def test_confidence_interval_must_contain_correlation_estimate(self):
+        with self.assertRaisesRegex(ValueError, "must contain the correlation estimate"):
+            build_scene({
+                "labels": ["A", "B"],
+                "matrix": [[1.0, 0.6], [0.6, 1.0]],
+                "confidence_intervals": {
+                    "lower": [[1.0, 0.7], [0.7, 1.0]],
+                    "upper": [[1.0, 0.8], [0.8, 1.0]],
+                },
+            })
+
+
+
+    def test_missing_p_values_remain_unknown_and_do_not_blank_cells(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.4], [0.4, 1.0]],
+            "p_values": [[0.0, None], [None, 0.0]],
+            "significance": {"mode": "blank", "thresholds": [0.05], "symbol": "×"},
+        })
+        cell = scene["cells"][1]
+        self.assertEqual(cell["significance"]["status"], "unknown")
+        self.assertFalse(cell["significance"]["blank"])
+        svg = render_scene_svg(scene)
+        self.assertIn("<circle", svg)
+
+    def test_blank_significance_mode_hides_glyphs_and_value_annotations(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.4], [0.4, 1.0]],
+            "p_values": [[0.0, 0.2], [0.2, 0.0]],
+            "significance": {"mode": "blank", "thresholds": [0.05], "symbol": "×"},
+            "method": "number",
+        })
+        svg = render_scene_svg(scene)
+        self.assertNotIn(">0.40</text>", svg)
+        self.assertIn(">1.00</text>", svg)
+
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -152,13 +152,21 @@
         "show_values": {
           "type": "boolean"
         },
+        "confidence_intervals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lower", "upper"],
+          "properties": {
+            "lower": {"$ref": "#/$defs/intervalMatrix"},
+            "upper": {"$ref": "#/$defs/intervalMatrix"}
+          }
+        },
         "significance": {
           "type": "object",
           "additionalProperties": false,
           "required": [
             "enabled",
-            "p_values",
-            "thresholds"
+            "p_values"
           ],
           "properties": {
             "enabled": {
@@ -183,6 +191,14 @@
               },
               "uniqueItems": true,
               "minItems": 1
+            },
+            "mode": {
+              "enum": ["pch", "p-value", "blank", "stars"]
+            },
+            "symbol": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8
             }
           },
           "allOf": [
@@ -435,10 +451,19 @@
         "type": "array",
         "minItems": 1,
         "items": {
-          "type": "number",
+          "type": ["number", "null"],
           "minimum": 0,
           "maximum": 1
         }
+      }
+    },
+    "intervalMatrix": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": {"type": ["number", "null"]}
       }
     },
     "color": {
