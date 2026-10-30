@@ -149,6 +149,7 @@ class PublicationConfigTests(unittest.TestCase):
 
     def test_scene_adapter_reorders_matrix_and_significance_metadata(self):
         config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
+        config["input"]["labels"] = ["C", "A", "B"]
         config["plot"]["ordering"] = "alphabetical"
         scene = to_scene_config(config)
         permutation = scene["variable_order"]["indices"]
