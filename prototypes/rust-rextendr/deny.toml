@@ -1,6 +1,6 @@
-# SPDX license policy for the isolated Rust prototype.
-# These licenses cover the current extendr dependency graph.
 [licenses]
+version = 2
+confidence-threshold = 0.8
 private = { ignore = true }
 allow = [
     "MIT",
