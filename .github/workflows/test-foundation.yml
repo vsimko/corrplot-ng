@@ -30,7 +30,9 @@ jobs:
           filters: |
             foundation:
               - 'tests/**'
+              - 'benchmarks/**'
               - 'prototypes/shared-svg/**'
+              - 'benchmarks/**'
               - 'schemas/**'
               - '**/*.schema.json'
               - '.github/workflows/test-foundation.yml'
@@ -97,3 +99,32 @@ jobs:
 
       - name: Verify legacy-to-scene bridge
         run: python prototypes/shared-svg/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json
+
+
+  shared-core-benchmarks:
+    name: Run initial shared-core benchmarks
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.foundation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run benchmark correctness tests
+        run: python -m unittest tests.test_benchmark_suite -v
+
+      - name: Run benchmark suite
+        run: python benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
+
+      - name: Upload machine-readable benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-core-benchmark-results
+          path: benchmark-results/results.json
+          if-no-files-found: error
+          retention-days: 90
