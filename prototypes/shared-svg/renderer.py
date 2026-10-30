@@ -103,7 +103,7 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
                 raise ValueError(f"scene cell is missing prepared encoding for {method!r}")
             radius = abs(value) * size * 0.43
             if radius > 0:
-                color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
+                color = cell.get("color") or (style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"])
                 parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
             continue
 
@@ -131,9 +131,9 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
             pass
         elif kind == "shade":
             parts.append(
-                    f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
-                    f'fill="{color}" fill-opacity="{encoding["fill_opacity"]:.3f}" stroke="none"/>'
-                )
+                f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
+                f'fill="{color}" fill-opacity="{encoding["fill_opacity"]:.3f}" stroke="none"/>'
+            )
             line = encoding.get("line")
             if line is not None:
                 parts.append(
