@@ -179,6 +179,17 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [1.0, 5.0])
         self.assertEqual(scene["matrix"][0][0], 2.0)
 
+    def test_general_numeric_negative_only_and_constant_domains(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[-4.0, -3.0, -2.0], [-3.0, -4.0, -2.0], [-2.0, -2.0, -4.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 2.0)
+        config["input"]["values"] = [[5.0, 5.0, 5.0], [5.0, 5.0, 5.0], [5.0, 5.0, 5.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_limits"], [4.5, 5.5])
+
     def test_general_numeric_rejects_all_missing_and_uncovered_limits(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
@@ -189,6 +200,14 @@ class PublicationConfigTests(unittest.TestCase):
         config["matrix"]["col_limits"] = [0.0, 3.0]
         with self.assertRaisesRegex(ValueError, "cover every observed"):
             validate_config(config)
+
+    def test_schema_keeps_correlation_range_but_allows_general_values(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["input"]["values"][0][1] = 1.2
+        config["input"]["values"][1][0] = 1.2
+        self.assertTrue(list(Draft202012Validator(SCHEMA).iter_errors(config)))
+        config["matrix"]["kind"] = "general_numeric"
+        self.assertFalse(list(Draft202012Validator(SCHEMA).iter_errors(config)))
 
     def test_canonical_json_is_deterministic(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
