@@ -39,8 +39,9 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         if len(set(labels)) != size:
             raise ValueError("$.input.labels: labels must be unique")
         _validate_square(values, size, "$.input.values")
-        _validate_symmetric(values, "$.input.values", allow_null=True)
-        _validate_diagonal(values, "$.input.values")
+        if normalized["matrix"]["kind"] == "correlation":
+            _validate_symmetric(values, "$.input.values", allow_null=True)
+            _validate_diagonal(values, "$.input.values")
 
     scale_spec = normalized["colors"].get("scale") or {
         "type": "continuous",
@@ -52,6 +53,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         ],
     }
     build_color_scale(scale_spec, normalized["colors"]["missing"])
+    _resolve_matrix_scale(normalized)
 
     significance = normalized["plot"]["significance"]
     if significance["enabled"]:
@@ -62,6 +64,43 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             _validate_symmetric(p_values, "$.plot.significance.p_values", allow_null=False)
 
     return normalized
+
+
+def _resolve_matrix_scale(config: dict[str, Any]) -> dict[str, Any]:
+    """Resolve the visual domain while preserving original matrix values."""
+    if config["matrix"]["kind"] == "correlation":
+        return {"mode": "correlation", "color_limits": [-1.0, 1.0],
+                "color_mapping": "diverging",
+                "normalization": {"intercept": 0.0, "zoom": 1.0}}
+    if config["input"]["kind"] != "inline_matrix":
+        raise ValueError("$.matrix.kind: general_numeric currently requires inline_matrix input")
+    import math
+    observed = [float(value) for row in config["input"]["values"] for value in row if value is not None]
+    if not observed:
+        raise ValueError("$.input.values: cannot resolve automatic color limits from an all-missing matrix")
+    if any(not math.isfinite(value) for value in observed):
+        raise ValueError("$.input.values: values must be finite or null")
+    explicit = config["matrix"].get("col_limits")
+    if explicit is not None:
+        if (not all(math.isfinite(float(value)) for value in explicit) or explicit[0] >= explicit[1]):
+            raise ValueError("$.matrix.col_limits: expected two finite, strictly increasing values")
+        lower, upper = map(float, explicit)
+        if min(observed) < lower or max(observed) > upper:
+            raise ValueError("$.matrix.col_limits: limits must cover every observed matrix value")
+    else:
+        lower, upper = min(observed), max(observed)
+        if lower == upper:
+            padding = max(0.5, abs(lower) * 0.05)
+            lower, upper = lower - padding, upper + padding
+    if lower < 0 < upper:
+        zoom, intercept, family = 1.0 / max(abs(lower), abs(upper)), 0.0, "diverging"
+    elif upper <= 0:
+        zoom, intercept, family = 1.0 / (upper - lower), -upper, "sequential"
+    else:
+        zoom, intercept, family = 1.0 / (upper - lower), -lower, "sequential"
+    return {"mode": "general_numeric", "color_limits": [lower, upper],
+            "color_mapping": family,
+            "normalization": {"intercept": intercept, "zoom": zoom}}
 
 
 def _validate_square(matrix: list[list[Any]], size: int, path: str) -> None:
@@ -96,6 +135,8 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("$.input: scene adaptation currently requires inline_matrix")
 
     ordering = normalized["plot"]["ordering"]
+    if normalized["matrix"]["kind"] == "general_numeric" and ordering not in ("original", "alphabetical"):
+        raise ValueError("$.plot.ordering: general_numeric supports only original or alphabetical ordering")
     permutation = resolve_ordering(source["labels"], source["values"], ordering)
     ordered_labels = [source["labels"][index] for index in permutation]
     values = [[source["values"][row][column] for column in permutation] for row in permutation]
@@ -111,7 +152,11 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
         ],
     }
     scale = build_color_scale(scale_spec, colors["missing"])
-    cell_colors = [scale.map_value(value) for row in values for value in row]
+    semantics = _resolve_matrix_scale(normalized)
+    transform = semantics["normalization"]
+    cell_colors = [scale.map_value(None if value is None else
+                    (value + transform["intercept"]) * transform["zoom"])
+                   for row in values for value in row]
 
     def value_label(value: float) -> str:
         return "0" if value == 0 else f"{value:+g}"
@@ -119,10 +164,17 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
     legend = []
     for entry in scale.legend_entries():
         if entry["kind"] == "stop":
-            label = value_label(entry["value"])
+            label_value = entry["value"]
+            if semantics["mode"] == "general_numeric":
+                label_value = label_value / transform["zoom"] - transform["intercept"]
+            label = value_label(label_value)
         elif entry["kind"] == "interval":
             closing = "]" if entry["include_upper"] else ")"
-            label = f"[{value_label(entry['lower'])}, {value_label(entry['upper'])}{closing}"
+            lower_label, upper_label = entry["lower"], entry["upper"]
+            if semantics["mode"] == "general_numeric":
+                lower_label = lower_label / transform["zoom"] - transform["intercept"]
+                upper_label = upper_label / transform["zoom"] - transform["intercept"]
+            label = f"[{value_label(lower_label)}, {value_label(upper_label)}{closing}"
         else:
             label = "Missing"
         legend.append({"kind": entry["kind"], "label": label, "color": entry["color"]})
@@ -132,6 +184,7 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
         "matrix": values,
         "cell_colors": cell_colors,
         "legend": legend,
+        "matrix_semantics": semantics,
         "variable_order": {
             "strategy": ordering,
             "indices": permutation,
