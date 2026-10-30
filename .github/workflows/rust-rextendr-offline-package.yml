@@ -23,9 +23,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
+      CARGO_BUILD_JOBS: 2
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
@@ -41,6 +42,7 @@ jobs:
             any::rextendr
             any::devtools
             any::usethis
+            any::testthat
       - name: Generate temporary R package with rextendr
         run: Rscript prototypes/rust-rextendr/prepare-r-package.R
       - name: Verify third-party license notice is included
@@ -57,7 +59,7 @@ jobs:
           set -euxo pipefail
           cd prototypes/rust-rextendr/.ci-r-package/src/rust
           cp ../../../deny.toml deny.toml
-          cargo generate-lockfile
+          cargo metadata --format-version 1 > /dev/null
           cargo deny check licenses
           cargo vendor --locked vendor > vendor-config.toml
           mkdir -p .cargo
@@ -77,7 +79,38 @@ jobs:
           # R CMD build runs the generated clean target, which removes the
           # expanded vendor directory. Preserve it as an archive whose paths
           # restore rust/vendor when rextendr extracts it from src/.
+          # Omit repository-only .github content to avoid hidden-file notes
+          # in R CMD check. Keep Cargo's checksum metadata consistent with
+          # the pruned vendor tree so offline Cargo builds remain verifiable.
+          if command -v python3 >/dev/null 2>&1; then PYTHON=python3; else PYTHON=python; fi
+          "$PYTHON" - <<'PY'
+          import json
+          import os
+
+          for root, dirs, files in os.walk("vendor"):
+              if ".cargo-checksum.json" not in files:
+                  continue
+              checksum_path = os.path.join(root, ".cargo-checksum.json")
+              with open(checksum_path, encoding="utf-8") as stream:
+                  checksum = json.load(stream)
+              entries = checksum.get("files", {})
+              checksum["files"] = {
+                  path: digest
+                  for path, digest in entries.items()
+                  if not path.startswith(".github/")
+              }
+              with open(checksum_path, "w", encoding="utf-8") as stream:
+                  json.dump(checksum, stream, separators=(",", ":"))
+                  stream.write(chr(10))
+
+          for root, dirs, _ in os.walk("vendor"):
+              if ".github" in dirs:
+                  dirs.remove(".github")
+                  import shutil
+                  shutil.rmtree(os.path.join(root, ".github"))
+          PY
           tar -cJf vendor.tar.xz -C .. rust/vendor
+          rm -rf .cargo
       - name: Install generated R package without network access
         shell: bash
         env:
@@ -92,7 +125,7 @@ jobs:
         run: |
           set -euxo pipefail
           R CMD build --no-build-vignettes --no-manual prototypes/rust-rextendr/.ci-r-package
-          tarball=corrplotngrustspike_0.0.0.9000.tar.gz
+          tarball=corrplotngrustspike_0.1.0.tar.gz
           test -s "$tarball"
           # R CMD build runs rextendr's clean target, which removes the expanded
           # vendor tree. Restore it into the source archive so R CMD check can
@@ -103,6 +136,7 @@ jobs:
           rm "$tarball"
           tar -czf "$tarball" -C "$unpack_dir" corrplotngrustspike
           tar -tzf "$tarball" > source-tarball-files.txt
+          echo "R source tarball size: $(wc -c < "$tarball") bytes"
           grep -qx 'corrplotngrustspike/inst/licenses/extendr-MIT.txt' source-tarball-files.txt
           grep -qx 'corrplotngrustspike/inst/licenses/README.md' source-tarball-files.txt
           grep -qx 'corrplotngrustspike/src/rust/Cargo.lock' source-tarball-files.txt
@@ -116,7 +150,8 @@ jobs:
         env:
           # Keep the CRAN-style checks deterministic in CI; remote incoming
           # checks depend on CRAN availability and are tested separately.
+          _R_CHECK_CRAN_INCOMING_: "false"
           _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
         run: |
           set -euxo pipefail
-          R CMD check --as-cran --no-manual corrplotngrustspike_0.0.0.9000.tar.gz
+          R CMD check --as-cran --no-manual corrplotngrustspike_0.1.0.tar.gz
