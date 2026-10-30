@@ -908,7 +908,7 @@ mod tests {
 
 fn csv_field(value: &str) -> String {
     if value.chars().any(|ch| matches!(ch, ',' | '"' | '\n' | '\r' | '\t')) {
-        format!("\\"{}\\"", value.replace('"', "\\"\\""))
+        format!("\"{}\"", value.replace('"', "\"\""))
     } else {
         value.to_owned()
     }
@@ -973,7 +973,7 @@ pub(crate) fn parse_scene_matrix(source: &str) -> Result<(crate::Matrix, crate::
     csv.push(',');
     csv.push_str(&labels.iter().map(|label| csv_field(label)).collect::<Vec<_>>().join(","));
     for (row, label) in labels.iter().enumerate() {
-        csv.push('\\n');
+        csv.push('\n');
         csv.push_str(&csv_field(label));
         for value in &values[row] {
             csv.push(',');
@@ -1001,18 +1001,18 @@ mod scene_input_tests {
 
     #[test]
     fn rejects_incomplete_and_duplicate_scene_cells() {
-        let missing = SCENE.replace("\\"column\\": 2,", "\\"column\\": 9,");
+        let missing = SCENE.replace("\"column\": 2,", "\"column\": 9,");
         assert!(parse_scene_matrix(&missing).unwrap_err().contains("out-of-range"));
         let duplicate = SCENE.replace(
-            "\\"row\\": 1,\\n      \\"column\\": 0",
-            "\\"row\\": 0,\\n      \\"column\\": 0",
+            "\"row\": 1,\n      \"column\": 0",
+            "\"row\": 0,\n      \"column\": 0",
         );
         assert!(parse_scene_matrix(&duplicate).unwrap_err().contains("duplicate cell"));
     }
 
     #[test]
     fn rejects_unknown_scene_versions_and_kinds() {
-        let version = SCENE.replace("\\"schema_version\\": 1", "\\"schema_version\\": 2");
+        let version = SCENE.replace("\"schema_version\": 1", "\"schema_version\": 2");
         assert!(parse_scene_matrix(&version).unwrap_err().contains("schema_version"));
         let kind = SCENE.replace("correlation_plot", "unknown_plot");
         assert!(parse_scene_matrix(&kind).unwrap_err().contains("unsupported scene.kind"));
