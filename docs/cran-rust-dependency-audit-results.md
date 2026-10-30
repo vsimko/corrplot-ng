@@ -40,20 +40,19 @@ The audit workflow uses three execution modes:
 
 The full audit is intentionally not part of every ordinary CI run. Vendoring and offline compilation are more expensive than checking SPDX metadata and provide little additional value when dependency inputs have not changed.
 
-The workflow currently regenerates `Cargo.lock` during each run. Committing a reviewed lockfile is still a follow-up requirement so that scheduled audits and release builds use a fixed dependency graph rather than resolving the latest compatible versions.
+The dependency graph is now pinned by the committed `prototypes/rust-rextendr/Cargo.lock`. The PR workflow validates that the lockfile is present and current using `cargo metadata --locked`; the full audit uses locked Cargo operations for metadata, dependency-tree inspection, vendoring, and offline compilation. CI no longer regenerates the lockfile during an audit.
 
 ## Interpretation
 
 The dependency graph is small, and the source archive is compact enough to investigate inclusion in an R source package. The first audit also exposed a packaging task: license notices cannot simply be assumed to be present in every Cargo vendor directory.
 
-The workflow currently generates the lockfile and vendor archive as a short-lived CI artifact. Neither is committed as the package's offline build input yet. The generated R package is still disposable CI scaffolding, so this does not establish that a CRAN source tarball can build offline.
+A successful locked dependency audit and a successful offline install of a disposable generated rextendr package are useful intermediate results. They do not yet establish that the eventual production R source tarball can be built offline or will pass CRAN checks.
 
 ## Next validation steps
 
 1. Include the required third-party license notices in a reproducible package-generation step.
-2. Pin the resolved dependency graph with a committed `Cargo.lock`.
-3. Test a clean source build using only the vendored sources and Cargo offline mode.
-4. Build an actual R source tarball and run `R CMD check --as-cran` on supported platforms.
-5. Reassess CRAN policy and package metadata before any submission.
+2. Test a clean source build using only the vendored sources and Cargo offline mode as part of the actual package-generation path.
+3. Build an actual R source tarball and run `R CMD check --as-cran` on supported platforms.
+4. Reassess CRAN policy and package metadata before any submission.
 
 No production R package files are changed by this audit.
