@@ -213,6 +213,9 @@ test_that("plotmath metadata, offset, and rotation survive scene preparation", {
   expect_identical(scene$labels[[2]]$plotmath, list(prefix = "$", source = "beta"))
   expect_equal(scene$labels[[1]]$offset, 0.7)
   expect_equal(scene$labels[[1]]$column_rotation, 35)
+  default_scene <- corrplot_ng(corr, engine = "scene")
+  expect_lt(scene$labels[[1]]$row_x, default_scene$labels[[1]]$row_x)
+  expect_lt(scene$labels[[1]]$column_y, default_scene$labels[[1]]$column_y)
 })
 
 test_that("label placement modes reject incompatible layouts and invalid offsets", {
