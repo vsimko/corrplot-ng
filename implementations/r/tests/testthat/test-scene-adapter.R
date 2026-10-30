@@ -110,3 +110,60 @@ test_that("the default engine remains the legacy corrplot implementation", {
       unlink(path)
     })
 })
+
+
+test_that("coefficient annotation fixtures match pinned corrplot 0.95 semantics", {
+  fixture_path <- test_path("fixtures", "coefficient-annotation-cases.json")
+  fixture <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
+  expect_identical(fixture$reference$version, as.character(utils::packageVersion("corrplot")))
+  expect_identical(fixture$reference$commit,
+    "62532f700e6c9d04b93ffbf0bf56e264b0e0368e")
+
+  for (case in fixture$cases) {
+    corr <- matrix(
+      unlist(case$matrix, use.names = FALSE),
+      nrow = length(case$labels), byrow = TRUE,
+      dimnames = list(unlist(case$labels), unlist(case$labels))
+    )
+    options <- case$options
+    args <- list(engine = "scene")
+    if (!is.null(options$addCoef_col)) args$addCoef.col <- options$addCoef_col
+    if (!is.null(options$add_coef_as_percent)) args$addCoefasPercent <- options$add_coef_as_percent
+    if (!is.null(options$type)) args$type <- options$type
+    if (!is.null(options$diag)) args$diag <- options$diag
+    if (!is.null(options$method)) args$method <- options$method
+    if (!is.null(options$number_digits)) args$number.digits <- options$number_digits
+    if (!is.null(options$number_cex)) args$number.cex <- options$number_cex
+    if (!is.null(options$number_font)) args$number.font <- options$number_font
+
+    scene <- do.call(corrplot_ng, c(list(corr = corr), args))
+    actual <- lapply(scene$text_annotations, function(item) {
+      list(row = item$row, column = item$column, role = item$role, text = item$text,
+        color = item$color, font_size = item$font_size,
+        font_weight = item$font_weight, font_style = item$font_style)
+    })
+    expect_equal(actual, case$expected, info = case$id)
+  }
+})
+
+
+test_that("coefficient labels are opt-in and missing values stay unformatted", {
+  corr <- matrix(c(1, NA_real_, -0.25, 0), 2, byrow = TRUE)
+  scene <- corrplot_ng(corr, engine = "scene")
+  expect_length(scene$text_annotations, 0L)
+
+  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black")
+  expect_identical(
+    vapply(scene$text_annotations, `[[`, character(1), "text"),
+    c("1.00", "-0.25", "0.00")
+  )
+  expect_false(any(vapply(scene$text_annotations, function(item) {
+    item$row == 0L && item$column == 1L
+  }, logical(1))))
+})
+
+
+test_that("coefficient overlay colors must be valid R colors", {
+  expect_error(corrplot_ng(diag(2), engine = "scene", addCoef.col = ""), "addCoef.col")
+  expect_error(corrplot_ng(diag(2), engine = "scene", addCoef.col = "not-a-color"), "valid R color")
+})

@@ -44,6 +44,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (!is.logical(options$diag) || length(options$diag) != 1L || is.na(options$diag)) stop("diag must be one non-missing logical value", call. = FALSE)
   if (!is.logical(options$addCoefasPercent) || length(options$addCoefasPercent) != 1L || is.na(options$addCoefasPercent)) stop("addCoefasPercent must be one non-missing logical value", call. = FALSE)
   if (!is.null(options$addCoef.col) && (!is.character(options$addCoef.col) || length(options$addCoef.col) != 1L || is.na(options$addCoef.col) || !nzchar(options$addCoef.col))) stop("addCoef.col must be one non-empty color string or NULL", call. = FALSE)
+  if (!is.null(options$addCoef.col)) tryCatch(grDevices::col2rgb(options$addCoef.col), error = function(e) stop("addCoef.col must be a valid R color", call. = FALSE))
   digits <- options$number.digits
   if (is.null(digits)) digits <- if (options$addCoefasPercent) 0L else 2L
   if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || !is.finite(digits) || digits < 0 || digits %% 1 != 0) stop("number.digits must be a non-negative integer", call. = FALSE)
