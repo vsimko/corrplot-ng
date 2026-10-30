@@ -151,8 +151,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         return f"{round(scaled, digits):.{digits}f}"
 
     text_annotations = []
-    for cell in cells:
-        row_index, column_index, value = cell["row"], cell["column"], cell["value"]
+    for cell_item in cells:
+        row_index, column_index, value = cell_item["row"], cell_item["column"], cell_item["value"]
         if value is None or (not show_diagonal and row_index == column_index):
             continue
         if display_type == "upper" and row_index > column_index:
@@ -162,7 +162,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         if method == "number":
             role = "value"
             color = (
-                cell.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
+                cell_item.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
             )
         elif add_coef_color is not None:
             role = "coefficient"
