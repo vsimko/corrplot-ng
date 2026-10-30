@@ -476,7 +476,7 @@ impl Publication {
                 if num(get(a,"row")) as usize == num(get(o,"row")) as usize
                     && num(get(a,"column")) as usize == num(get(o,"column")) as usize {
                     out.push_str(&format!(
-                        "<text x=\\"{}\\" y=\\"{}\\" text-anchor=\\"middle\\" dominant-baseline=\\"middle\\" font-family=\\"{}\\" font-size=\\"{}\\" fill=\\"{}\\">{}</text>\\n",
+                        "<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\">{}</text>\n",
                         cx,cy,esc(family),num(get(a,"font_size")),esc(strv(get(a,"color"))),esc(strv(get(a,"text")))
                     ));
                 }
