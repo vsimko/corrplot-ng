@@ -112,7 +112,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
         i += 2;
     }
     Ok(Options {
-        input: input.ok_or_else(|| "render requires --input PATH".to_string())?,
+        input: input.unwrap_or_default(), config,
         output, format, kind, method, title,
     })
 }
@@ -353,6 +353,24 @@ fn run() -> Result<(), String> {
         "presets" => println!("default\tCircle glyphs with sign-based colors\nnumber\tNumeric values in cells"),
         "render" | "validate" | "inspect" => {
             let opts = parse_args(&args)?;
+            if let Some(config_path) = opts.config.as_deref() {
+                let publication = publication::Publication::load(config_path)?;
+                match args[1].as_str() {
+                    "validate" => println!("valid: publication-config v1; {} x {} {} matrix; ordering={}; display={}",
+                        publication.labels.len(), publication.labels.len(), publication.kind, publication.ordering, publication.display),
+                    "inspect" => println!("kind: {}\nrows: {}\ncolumns: {}\nordering: {}\ndisplay: {}",
+                        publication.kind, publication.labels.len(), publication.labels.len(), publication.ordering, publication.display),
+                    "render" => {
+                        if opts.format != Format::Svg { return Err("publication-config v1 currently renders SVG only".into()); }
+                        let content = publication.svg(&opts.title);
+                        let destination = opts.output.as_deref().or(Some(publication.output.as_str()));
+                        write_output(destination, &content)?;
+                    }
+                    _ => unreachable!(),
+                }
+                return Ok(());
+            }
+            if opts.input.is_empty() { return Err(format!("{} requires --input PATH or --config PATH", args[1])); }
             let source = read_input(&opts.input)?;
             let matrix = parse_matrix(&source, opts.kind)?;
             match args[1].as_str() {
