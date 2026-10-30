@@ -58,9 +58,13 @@ colorlegend <- function(colbar, labels, at = NULL, xlim = c(0, 1),
       xlim[1] + xgap * lim.segment[2], at)
     if (addlabels) {
       xp <- rep(xlim[1] + xgap * max(lim.segment, ratio.colbar), length(at))
-      if (align == "l") graphics::text(xp, y = at, labels = labels, pos = 4, ...)
-      else if (align == "r") graphics::text(xlim[2], y = at, labels = labels, pos = 2, ...)
-      else graphics::text((xp + xlim[2]) / 2, y = at, labels = labels, ...)
+      if (align == "l") {
+        graphics::text(xp, y = at, labels = labels, pos = 4, ...)
+      } else if (align == "r") {
+        graphics::text(xlim[2], y = at, labels = labels, pos = 2, ...)
+      } else {
+        graphics::text((xp + xlim[2]) / 2, y = at, labels = labels, ...)
+      }
     }
   } else {
     at <- at * xgap + xlim[1]
