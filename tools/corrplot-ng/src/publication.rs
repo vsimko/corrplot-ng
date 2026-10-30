@@ -907,7 +907,7 @@ mod tests {
 
 
 fn csv_field(value: &str) -> String {
-    if value.chars().any(|ch| matches!(ch, ',' | '"' | '\\n' | '\\r' | '\\t')) {
+    if value.chars().any(|ch| matches!(ch, ',' | '"' | '\n' | '\r' | '\t')) {
         format!("\\"{}\\"", value.replace('"', "\\"\\""))
     } else {
         value.to_owned()
