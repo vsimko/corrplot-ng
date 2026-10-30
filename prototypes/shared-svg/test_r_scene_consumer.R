@@ -16,7 +16,7 @@ expected_indices <- expand.grid(column = 0:2, row = 0:2)[, c("row", "column")]
 actual_indices <- do.call(rbind, lapply(scene$cells, function(cell) {
   c(row = cell$row, column = cell$column)
 }))
-stopifnot(identical(unname(actual_indices), unname(as.matrix(expected_indices))))
+stopifnot(all(actual_indices == as.matrix(expected_indices)))
 
 stopifnot(is.numeric(scene$cells[[1]]$value), scene$cells[[1]]$value == 1)
 stopifnot(identical(scene$cells[[6]]$value, NULL))
