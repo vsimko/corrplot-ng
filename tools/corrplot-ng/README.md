@@ -13,6 +13,56 @@ cargo build --release --manifest-path tools/corrplot-ng/Cargo.toml
 
 The executable is self-contained with respect to the application: no Python, R, or external CLI runtime is needed. Platform C runtime requirements depend on the Rust target and linker configuration.
 
+## Release binaries
+
+Pushing a tag named \`cli-vX.Y.Z\` that matches the version in
+\`Cargo.toml\` triggers the native release workflow. For example:
+
+\`\`\`sh
+git tag cli-v0.1.0
+git push origin cli-v0.1.0
+\`\`\`
+
+Each GitHub release contains one archive per supported platform, a
+\`SHA256SUMS\` file, and a \`BUILD-INFO.txt\` inside each archive.
+
+| Asset | Target | Runtime requirements |
+| --- | --- | --- |
+| \`corrplot-ng-linux-x86_64-musl.tar.gz\` | Linux x86_64, statically linked musl | No external C runtime; tested in a minimal Alpine container without Python |
+| \`corrplot-ng-macos-universal.tar.gz\` | macOS universal binary (Intel x86_64 + Apple Silicon arm64) | macOS 11 or later; system libraries only |
+| \`corrplot-ng-windows-x86_64.zip\` | Windows x86_64, MSVC with static CRT | Windows system libraries; no Python or R runtime |
+
+Download the archive for your platform and verify it against the published
+checksums before installation. On Linux or macOS:
+
+\`\`\`sh
+sha256sum -c SHA256SUMS
+tar -xzf corrplot-ng-linux-x86_64-musl.tar.gz
+install -m 0755 corrplot-ng ~/.local/bin/corrplot-ng
+corrplot-ng --help
+corrplot-ng version
+\`\`\`
+
+For macOS, substitute \`corrplot-ng-macos-universal.tar.gz\`. On Windows,
+extract \`corrplot-ng-windows-x86_64.zip\`, place \`corrplot-ng.exe\` in a
+directory on \`PATH\`, and verify the archive with:
+
+\`\`\`powershell
+(Get-FileHash .\\corrplot-ng-windows-x86_64.zip -Algorithm SHA256).Hash
+\`\`\`
+
+Compare that value with the corresponding line in \`SHA256SUMS\`. The
+\`BUILD-INFO.txt\` file records the release ref, commit, target triple,
+Rust/Cargo versions, license, and runtime assumptions. The release workflow
+also runs the compiled executable's help/version smoke tests; the Linux static
+binary is additionally executed inside a minimal container without Python.
+
+A manual run of **Release native CLI** in GitHub Actions builds and stores
+workflow artifacts but does not publish a GitHub release. Publishing is
+triggered only by a matching \`cli-vX.Y.Z\` tag. DEB/RPM and distribution
+repository packaging remain deferred to issue #99.
+
+
 ## Input format
 
 The first version accepts a square labelled CSV or TSV matrix. The first cell is empty (or `label`), followed by column labels. Each subsequent row begins with the corresponding row label. Empty cells, `NA`, `NaN`, and `null` mean missing values.
