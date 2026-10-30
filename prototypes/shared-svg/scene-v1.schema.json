@@ -444,6 +444,11 @@
               "exclusiveMinimum": 0
             }
           }
+        },
+        "palette": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Selected legacy-compatible palette name, such as YlOrBr or RdBu."
         }
       }
     }
