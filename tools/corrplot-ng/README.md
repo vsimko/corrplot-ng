@@ -89,3 +89,28 @@ dependencies. It is called only after the `init` command is selected.
 or initialize terminal UI. When stdin or stdout is not a TTY, `init` exits
 with an actionable error before displaying prompts, so scripts and CI cannot
 hang.
+
+
+## Wizard performance check
+
+The wizard is deliberately excluded from ordinary command execution. To verify
+that separation, compare the same release profile built from the base revision
+and the wizard branch on the same machine:
+
+```sh
+git worktree add /tmp/corrplot-ng-base origin/main
+cargo build --release --manifest-path /tmp/corrplot-ng-base/tools/corrplot-ng/Cargo.toml
+cargo build --release --manifest-path tools/corrplot-ng/Cargo.toml
+python benchmarks/cli_startup.py \
+  --baseline /tmp/corrplot-ng-base/tools/corrplot-ng/target/release/corrplot-ng \
+  --candidate tools/corrplot-ng/target/release/corrplot-ng \
+  --output cli-performance.json
+```
+
+The harness measures fresh-process `version` startup, `validate --config`,
+and end-to-end SVG rendering of a deterministic 40x40 matrix. It reports
+median, p95, minimum, and maximum wall-clock time. Run both binaries on the
+same host with the same Rust toolchain; repeat on each supported OS when
+making cross-platform claims. These are measurements, not brittle CI timing
+assertions. Record the baseline and candidate JSON artifacts with the PR
+before claiming that the performance acceptance criterion has passed.
