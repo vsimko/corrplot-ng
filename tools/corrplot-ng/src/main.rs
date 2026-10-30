@@ -205,13 +205,13 @@ fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
     if kind == Kind::Correlation {
         for r in 0..n {
             for c in 0..n {
-                if values[r][c] != values[c][r] {
+                if match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true } {
                     return Err(format!("correlation matrix is not symmetric at ('{}', '{}')", labels[r], labels[c]));
                 }
             }
         }
         for i in 0..n {
-            if values[i][i] != Some(1.0) {
+            if values[i][i].map_or(true, |v| (v - 1.0).abs() > 1e-8) {
                 return Err(format!("correlation diagonal for '{}' must equal 1", labels[i]));
             }
         }
@@ -233,11 +233,9 @@ fn json_escape(s: &str) -> String {
     out
 }
 
-fn num(v: f64) -> String {
-    if v == 0.0 { "0".into() } else { format!("{v:.6}") }
-}
+fn num(v: f64) -> String { if v == 0.0 { "0".into() } else { format!("{v}") } }
 
-fn scene_json(matrix: &Matrix, title: &str) -> String {
+fn scene_json(matrix: &Matrix, title: &str, method: &str, kind: Kind) -> String {
     let n = matrix.labels.len();
     let width = LEFT + n as f64 * CELL + 24.0;
     let height = TOP + n as f64 * CELL + 64.0;
@@ -307,7 +305,8 @@ fn svg(matrix: &Matrix, title: &str, method: &str, kind: Kind) -> String {
                     out.push_str(&format!("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"white\">{}</text>\n", num(cx), num(cy), shown));
                 }
                 Some(v) => {
-                    let radius = if kind == Kind::Correlation { v.abs() * 34.0 + 2.0 } else { (v.abs() / matrix.values.iter().flatten().filter_map(|x| *x).fold(0.0_f64, f64::max).max(1.0)) * 36.0 + 2.0 };
+                    let max_abs = matrix.values.iter().flatten().filter_map(|x| *x).map(f64::abs).fold(0.0_f64, f64::max).max(1.0);
+                    let radius = if kind == Kind::Correlation { v.abs() * 34.0 + 2.0 } else { (v.abs() / max_abs) * 36.0 + 2.0 };
                     out.push_str(&format!("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n", num(cx), num(cy), num(radius), fill));
                 }
             }
@@ -364,7 +363,7 @@ fn run() -> Result<(), String> {
                 "render" => {
                     let output = match opts.format {
                         Format::Svg => svg(&matrix, &opts.title, &opts.method, opts.kind),
-                        Format::SceneJson => scene_json(&matrix, &opts.title),
+                        Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, opts.kind),
                     };
                     write_output(opts.output.as_deref(), &output)?;
                 }
