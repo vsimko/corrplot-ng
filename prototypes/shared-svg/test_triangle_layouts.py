@@ -82,10 +82,6 @@ class TriangleLayoutTests(unittest.TestCase):
             build_scene({**self.config, "upper_method": "ellipse"})
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_ordered_mixed_layout_keeps_annotation_cell_identity(self):
         # Original variable order is gamma, alpha, beta. The prepared scene
         # uses the alphabetic permutation alpha, beta, gamma.
@@ -130,3 +126,7 @@ if __name__ == "__main__":
         self.assertEqual(cells[(0, 1)]["method"], "number")
         self.assertEqual(cells[(1, 0)]["method"], "circle")
         self.assertEqual(cells[(2, 2)]["region"], "diagonal")
+
+
+if __name__ == "__main__":
+    unittest.main()
