@@ -49,9 +49,12 @@ class TriangleLayoutTests(unittest.TestCase):
         })
         self.assertEqual(
             [(a["row"], a["column"]) for a in scene["text_annotations"]],
-            [(0, 1), (0, 2), (1, 2)],
+            [(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)],
         )
-        self.assertTrue(all(a["role"] == "value" for a in scene["text_annotations"]))
+        roles = {(a["row"], a["column"]): a["role"] for a in scene["text_annotations"]}
+        self.assertEqual(roles[(0, 1)], "value")
+        self.assertEqual(roles[(1, 2)], "value")
+        self.assertEqual(roles[(0, 0)], "coefficient")
 
     def test_renderer_skips_hidden_cells_and_keeps_missing_visible_cells(self):
         scene = build_scene({**self.config, "display_type": "upper"})
@@ -62,6 +65,17 @@ class TriangleLayoutTests(unittest.TestCase):
     def test_diagonal_visibility_rejects_conflicting_diagonal_only_request(self):
         with self.assertRaisesRegex(ValueError, "requires show_diagonal"):
             build_scene({**self.config, "display_type": "diagonal", "show_diagonal": False})
+
+    def test_diagonal_only_layout_at_small_and_larger_sizes(self):
+        for size in (1, 2, 5):
+            labels = [f"v{i}" for i in range(size)]
+            matrix = [[1.0 if row == column else 0.25 for column in range(size)]
+                      for row in range(size)]
+            scene = build_scene({"labels": labels, "matrix": matrix, "display_type": "diagonal"})
+            self.assertEqual(
+                [(cell["row"], cell["column"]) for cell in scene["cells"] if cell["visible"]],
+                [(index, index) for index in range(size)],
+            )
 
     def test_invalid_region_method_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "upper_method"):
