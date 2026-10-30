@@ -186,6 +186,6 @@ mod tests {
             "matrix.tsv", "\t", "correlation", "pearson", "circle",
             "preserve", "full", "original", false, "figure.svg",
         );
-        assert!(config.contains(r#""delimiter": "\\t""#));
+        assert!(config.contains(r#""delimiter": "\t""#));
     }
 }
