@@ -295,6 +295,23 @@ class PlotSceneTests(unittest.TestCase):
             [(0, 1), (0, 2), (1, 2)],
         )
 
+
+    def test_legacy_default_digits_and_rounding_boundaries(self):
+        decimal = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[0.125, -0.125], [-0.125, 0.0]],
+            "add_coef_color": "black",
+        })
+        self.assertEqual(
+            [item["text"] for item in decimal["text_annotations"]],
+            ["0.12", "-0.12", "-0.12", "0.00"],
+        )
+        percent = build_scene({
+            "labels": ["A"], "matrix": [[0.125]],
+            "add_coef_color": "black", "add_coef_as_percent": True,
+        })
+        self.assertEqual(percent["text_annotations"][0]["text"], "12")
+
     def test_invalid_coefficient_formatting_options_are_rejected(self):
         base = {"labels": ["A"], "matrix": [[1.0]]}
         for key, value in (("number_digits", -1), ("number_digits", 1.5),
