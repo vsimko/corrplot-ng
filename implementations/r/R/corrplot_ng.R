@@ -36,8 +36,9 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (length(args) > 0L) {
     arg_names <- names(args)
     if (is.null(arg_names) || anyNA(arg_names) || any(!nzchar(arg_names)) || anyDuplicated(arg_names)) stop("The scene engine requires uniquely named arguments", call. = FALSE)
-    supported <- c("annotation", "method", "type", "diag", "addCoef.col",
-      "addCoefasPercent", "number.digits", "number.cex", "number.font", "tl.pos", "tl.offset", "tl.srt")
+    supported <- c("annotation", "method", "type", "diag", "is.corr", "col.lim",
+      "addCoef.col", "addCoefasPercent", "number.digits", "number.cex",
+      "number.font", "tl.pos", "tl.offset", "tl.srt")
     unsupported <- setdiff(arg_names, supported)
     if ("method" %in% arg_names) {
       requested_method <- args$method
@@ -52,6 +53,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (length(unsupported) > 0L) stop("The scene engine does not support: ", paste(unsupported, collapse = ", "), ". Use engine = 'legacy' for these options.", call. = FALSE)
   }
   defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
+    is.corr = TRUE, col.lim = NULL,
     addCoef.col = NULL, addCoefasPercent = FALSE, number.digits = NULL,
     number.cex = 1, number.font = 2,
     tl.pos = NULL, tl.offset = 0.4, tl.srt = 90)
@@ -59,12 +61,67 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   .corrplot_ng_build_scene_v1(corr, options)
 }
 
+.corrplot_ng_resolve_matrix_scale <- function(corr, is_corr, col_lim, show_diagonal) {
+  observed <- !is.na(corr)
+  values <- as.numeric(corr[observed])
+  if (is_corr) {
+    limits <- if (is.null(col_lim)) c(-1, 1) else col_lim
+    if (!is.numeric(limits) || length(limits) != 2L || anyNA(limits) ||
+        any(!is.finite(limits)) || limits[1] >= limits[2]) {
+      stop("col.lim must contain two finite, strictly increasing values", call. = FALSE)
+    }
+    if (limits[1] < -1 || limits[2] > 1) {
+      stop("col.lim for correlation matrices must be within [-1, 1]", call. = FALSE)
+    }
+    return(list(limits = as.numeric(limits), mapping = "diverging",
+      normalization = list(intercept = 0, zoom = 1)))
+  }
+
+  scale_values <- corr
+  if (!show_diagonal) diag(scale_values) <- NA_real_
+  scale_values <- as.numeric(scale_values[!is.na(scale_values)])
+  if (!length(scale_values)) {
+    stop("general matrix has no observed values from which to resolve color limits", call. = FALSE)
+  }
+  if (is.null(col_lim)) {
+    limits <- range(scale_values)
+    if (limits[1] == limits[2]) {
+      padding <- max(0.5, abs(limits[1]) * 0.05)
+      limits <- limits + c(-padding, padding)
+    }
+  } else {
+    limits <- col.lim <- col_lim
+    if (!is.numeric(limits) || length(limits) != 2L || anyNA(limits) ||
+        any(!is.finite(limits)) || limits[1] >= limits[2]) {
+      stop("col.lim must contain two finite, strictly increasing values", call. = FALSE)
+    }
+    if (limits[1] > min(values) || limits[2] < max(values)) {
+      stop("col.lim must cover every observed matrix value", call. = FALSE)
+    }
+  }
+  mixed_sign <- min(scale_values) < 0 && max(scale_values) > 0
+  if (mixed_sign) {
+    list(limits = as.numeric(limits), mapping = "diverging",
+      normalization = list(intercept = 0, zoom = 1 / max(abs(limits))))
+  } else {
+    list(limits = as.numeric(limits), mapping = "sequential",
+      normalization = list(intercept = -limits[1], zoom = 1 / diff(limits)))
+  }
+}
+
 .corrplot_ng_build_scene_v1 <- function(corr, options = list()) {
   if (!is.matrix(corr) || !is.numeric(corr)) stop("corr must be a numeric matrix for engine = 'scene'", call. = FALSE)
   n <- nrow(corr)
   if (n < 1L || ncol(corr) != n) stop("the scene engine requires a non-empty square matrix", call. = FALSE)
   observed <- !is.na(corr)
-  if (any(!is.finite(corr[observed])) || any(corr[observed] < -1 | corr[observed] > 1)) stop("the scene engine requires finite observed values in [-1, 1]", call. = FALSE)
+  if (any(!is.finite(corr[observed]))) stop("the scene engine requires finite observed values", call. = FALSE)
+  if (!is.logical(options$is.corr) || length(options$is.corr) != 1L || is.na(options$is.corr)) {
+    stop("is.corr must be one non-missing logical value", call. = FALSE)
+  }
+  if (options$is.corr && any(corr[observed] < -1 | corr[observed] > 1)) {
+    stop("the scene engine requires correlation values in [-1, 1]", call. = FALSE)
+  }
+  scale <- .corrplot_ng_resolve_matrix_scale(corr, options$is.corr, options$col.lim, options$diag)
 
   annotation <- options$annotation
   if (!is.character(annotation) || length(annotation) != 1L || is.na(annotation)) stop("annotation must be one non-missing character string", call. = FALSE)
@@ -180,7 +237,11 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (!is.null(source)) item$plotmath <- list(prefix = prefix, source = source)
     item
   })
-  scene <- list(schema_version = 1L, kind = "correlation_plot",
+  scene <- list(schema_version = 1L,
+    kind = if (options$is.corr) "correlation_plot" else "general_matrix_plot",
+    matrix_semantics = list(mode = if (options$is.corr) "correlation" else "general_numeric",
+      color_limits = scale$limits, color_mapping = scale$mapping,
+      normalization = scale$normalization),
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,
     glyph_method = method, text_annotations = text_annotations,

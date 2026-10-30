@@ -14,13 +14,13 @@ The Python test suite compares the generated scene with this canonical output. T
 ## Semantics
 
 - `schema_version` is `1`; incompatible structural changes require a new version.
-- `kind` is `correlation_plot`.
+- `kind` is `correlation_plot` or `general_matrix_plot`. Correlation scenes retain the [-1, 1] cell-value constraint; general-matrix scenes preserve arbitrary finite numeric values.
 - `width`, `height`, positions, and sizes use logical canvas units. They are not pixels, points, or CSS units.
 - `labels` contains one item per matrix variable, in prepared matrix order. Optional `variable_order` records the ordering strategy, the ordered-to-original zero-based index permutation, and original labels. `text` is always the original plain string, preserving variable identity. Optional `row_visible` and `column_visible` independently control the two label sides; `row_position` and `column_position` identify left/top/diagonal placement. `column_rotation` is the rotation in degrees, and `offset` is the legacy label offset multiplier. Optional `plotmath` preserves a prefixed R expression as a safe `prefix` plus unevaluated `source` string. It is metadata, not HTML or SVG markup.
 - `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the prepared matrix/labels order. When `variable_order` is present, map a prepared index back to the source matrix with `variable_order.indices`. Triangle filtering never removes or renumbers prepared cells.
 - When display options are supplied, each cell carries `visible`, `region` (`upper`, `lower`, or `diagonal`), and its resolved `method`. `display_type` selects `full`, `upper`, `lower`, or `diagonal`; `show_diagonal` independently controls diagonal visibility. Upper means `row < column`, lower means `row > column`, and the diagonal is selected separately. Upper/lower methods default to the global `method`.
 - Renderers must skip cells with `visible: false` while retaining their identity and geometry in the scene. This keeps cell metadata aligned for other consumers and avoids treating a display mask as data removal.
-- `value` is a correlation coefficient in [-1, 1], or JSON `null` for a missing value. Missing must not be silently converted to zero.
+- `value` is the original numeric matrix value, or JSON `null` for a missing value. Correlation scenes constrain observed values to [-1, 1]; general-matrix scenes do not. Missing must not be silently converted to zero.
 - Optional cell `color` is the mapped six-digit sRGB color for that value. Optional `p_value` carries the significance value permuted to the same row/column identity. It is absent in legacy scenes that use semantic style colors.
 - Optional `legend` is an ordered array of renderer-neutral `kind`, `label`, and `color` entries. It describes the exact mapping used by cells and may include a distinct missing-value entry.
 - `x`, `y`, and `size` describe the cell's top-left position and square extent. `center_x` and `center_y` are its center.
@@ -30,6 +30,7 @@ The Python test suite compares the generated scene with this canonical output. T
 - Coefficient labels are emitted only when a coefficient color is supplied. Missing cells are never formatted as zero. Visibility is applied before labels are created; a per-cell `number` method takes precedence over coefficient labels.
 - The number method takes precedence over the coefficient overlay, matching corrplot 0.95: it emits value labels using the number typography and does not emit a second coefficient label.
 - `number_digits` defaults to 2 for decimal output and 0 for percentage output. Percent formatting multiplies the original coefficient by 100 before rounding. `number_cex` scales the default logical text size; `number_font` maps R font values 1–4 to plain, bold, italic, and bold-italic.
+- Optional `matrix_semantics` records the explicit semantic mode, resolved two-value color domain, sequential/diverging mapping family, and positive zoom/intercept normalization. `general_matrix_plot` requires `mode: general_numeric`. Normalization affects visual mapping only; it never replaces the original cell values.
 - `style` contains six-digit sRGB fallback colors. It defines semantic colors only; it does not prescribe a particular shape or renderer.
 
 The SVG prototype does not evaluate or typeset R plotmath expressions. It raises an explicit error when a scene contains `plotmath` metadata rather than silently rendering the source as ordinary text. R adapters can recover a native expression with `corrplot_ng_parse_label()`; other renderers must implement an explicit plotmath capability or reject the feature.
