@@ -5,7 +5,7 @@ This module owns validation and deterministic layout, not SVG serialization.
 from __future__ import annotations
 
 from typing import Any
-from math import ceil
+from math import ceil, isfinite
 
 LABEL_FONT_SIZE = 13
 LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6  # Backwards-compatible estimate used by the legacy bridge.
@@ -138,7 +138,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("number_digits must be a non-negative integer")
     digits = int(digits)
     number_cex = config.get("number_cex", 1)
-    if isinstance(number_cex, bool) or not isinstance(number_cex, (int, float)) or not number_cex > 0:
+    if isinstance(number_cex, bool) or not isinstance(number_cex, (int, float)) or not isfinite(number_cex) or not number_cex > 0:
         raise ValueError("number_cex must be greater than 0")
     number_font = config.get("number_font", 2)
     if isinstance(number_font, bool) or not isinstance(number_font, (int, float)) or number_font not in (1, 2, 3, 4):
