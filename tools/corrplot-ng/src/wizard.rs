@@ -63,7 +63,7 @@ fn build_config(
     } else {
         format!("{{ \"kind\": \"general_numeric\", \"missing\": {} }}", json_string(missing))
     };
-    format!(r#"{{
+    format!(r##"{{
   "config_version": 1,
   "input": {{
     "kind": "matrix_csv",
@@ -85,7 +85,7 @@ fn build_config(
   "typography": {{ "family": "sans-serif", "base_size": 9 }},
   "output": {{ "format": "svg", "path": {} }}
 }}
-"#,
+"##,
         json_string(input), json_string(delimiter), matrix, json_string(glyph),
         json_string(display), json_string(ordering), show_values, json_string(output))
 }
