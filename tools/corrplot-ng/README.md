@@ -20,22 +20,22 @@ Release archives are published for these native targets:
 
 | Platform | Rust target | Archive |
 | --- | --- | --- |
-| Linux x86-64 (static musl) | \`x86_64-unknown-linux-musl\` | \`.tar.gz\` |
-| Linux ARM64 (static musl) | \`aarch64-unknown-linux-musl\` | \`.tar.gz\` |
-| macOS Apple Silicon | \`aarch64-apple-darwin\` | \`.tar.gz\` |
-| macOS Intel | \`x86_64-apple-darwin\` | \`.tar.gz\` |
-| Windows x86-64 | \`x86_64-pc-windows-msvc\` | \`.zip\` |
-| Windows ARM64 | \`aarch64-pc-windows-msvc\` | \`.zip\` |
+| Linux x86-64 (static musl) | `x86_64-unknown-linux-musl` | `.tar.gz` |
+| Linux ARM64 (static musl) | `aarch64-unknown-linux-musl` | `.tar.gz` |
+| macOS Apple Silicon | `aarch64-apple-darwin` | `.tar.gz` |
+| macOS Intel | `x86_64-apple-darwin` | `.tar.gz` |
+| Windows x86-64 | `x86_64-pc-windows-msvc` | `.zip` |
+| Windows ARM64 | `aarch64-pc-windows-msvc` | `.zip` |
 
 Choose the matching target and download the archive from the
 [GitHub Releases page](https://github.com/vsimko/corrplot-ng/releases). Each
 archive contains the executable, this README, a smoke-test matrix,
-\`build-info.txt\`, and \`runtime-dependencies.txt\`. Releases include a
-\`SHA256SUMS.txt\` file and GitHub build-provenance attestations.
+`build-info.txt`, and `runtime-dependencies.txt`. Releases include a
+`SHA256SUMS.txt` file and GitHub build-provenance attestations.
 
 Example for Linux x86-64 (replace the version with the release you want):
 
-\`\`\`sh
+```sh
 VERSION=0.1.0
 TARGET=x86_64-unknown-linux-musl
 ARCHIVE="corrplot-ng-${VERSION}-${TARGET}.tar.gz"
@@ -47,11 +47,11 @@ grep " ${ARCHIVE}$" SHA256SUMS.txt | sha256sum -c -
 tar -xzf "${ARCHIVE}"
 install -Dm755 "corrplot-ng-${TARGET}/corrplot-ng" "$HOME/.local/bin/corrplot-ng"
 corrplot-ng version
-\`\`\`
+```
 
 Example for Windows x86-64 in PowerShell:
 
-\`\`\`powershell
+```powershell
 $Version = "0.1.0"
 $Target = "x86_64-pc-windows-msvc"
 $Archive = "corrplot-ng-$Version-$Target.zip"
@@ -61,7 +61,7 @@ Expand-Archive $Archive -DestinationPath .
 New-Item -ItemType Directory -Force "$HOME\\bin" | Out-Null
 Copy-Item "corrplot-ng-$Target\\corrplot-ng.exe" "$HOME\\bin\\corrplot-ng.exe"
 & "$HOME\\bin\\corrplot-ng.exe" version
-\`\`\`
+```
 
 The Linux artifacts use static musl targets. macOS and Windows artifacts are
 native executables and may use operating-system libraries; consult the
@@ -71,7 +71,7 @@ DEB/RPM and distribution-repository packaging are intentionally deferred to
 
 For a reproducible release build, use Rust 1.99.1 and the committed lockfile:
 
-\`\`\`sh
+```sh
 rustup toolchain install 1.99.1
 rustup target add x86_64-unknown-linux-musl
 # Install musl-tools on Linux, then:
@@ -80,7 +80,7 @@ CORRPLOT_RUSTC_VERSION="$(rustc +1.99.1 --version)" \\
 CORRPLOT_BUILD_TARGET=x86_64-unknown-linux-musl \\
 cargo +1.99.1 build --locked --release --target x86_64-unknown-linux-musl \\
   --manifest-path tools/corrplot-ng/Cargo.toml
-\`\`\`
+```
 
 The release workflow records the source commit, Rust/Cargo versions, target,
 binary size, and runtime dependency inspection in each archive. It smoke-tests
