@@ -134,7 +134,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     })
 }
 
-fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
+fn parse_csv_records(source: &str, delimiter: char) -> Result<Vec<Vec<String>>, String> {
     let mut records = Vec::new();
     let mut row = Vec::new();
     let mut field = String::new();
@@ -152,7 +152,7 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
             }
         } else if after_quote {
             match ch {
-                ',' | '\t' => { row.push(std::mem::take(&mut field)); after_quote = false; }
+                c if c == delimiter => { row.push(std::mem::take(&mut field)); after_quote = false; }
                 '\r' => { if chars.peek() == Some(&'\n') { chars.next(); } row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); after_quote = false; }
                 '\n' => { row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); after_quote = false; }
                 ' ' => {}
@@ -161,7 +161,7 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
         } else {
             match ch {
                 '"' if field.is_empty() => quoted = true,
-                ',' | '\t' => row.push(std::mem::take(&mut field)),
+                c if c == delimiter => row.push(std::mem::take(&mut field)),
                 '\r' => { if chars.peek() == Some(&'\n') { chars.next(); } row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); }
                 '\n' => { row.push(std::mem::take(&mut field)); records.push(std::mem::take(&mut row)); }
                 _ => field.push(ch),
@@ -178,8 +178,18 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
     Ok(records)
 }
 
+fn infer_delimiter(source: &str) -> char {
+    let first = source.lines().find(|line| !line.trim().is_empty()).unwrap_or("");
+    if first.matches('\t').count() > first.matches(',').count() { '\t' } else { ',' }
+}
+
 pub(crate) fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
-    let records = parse_csv_records(source)?;
+    parse_matrix_with_delimiter(source, kind, infer_delimiter(source))
+}
+
+pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: char) -> Result<Matrix, String> {
+    if delimiter != ',' && delimiter != '\t' { return Err("matrix delimiter must be comma or tab".into()); }
+    let records = parse_csv_records(source, delimiter)?;
     if records.len() < 2 { return Err("expected a header and at least one matrix row".into()); }
     let header = &records[0];
     if header.len() < 2 { return Err("header must contain an empty corner cell and column labels".into()); }
@@ -407,7 +417,8 @@ fn run() -> Result<(), String> {
             let source = read_input(&opts.input)?;
             let input_format = detect_input_format(&opts.input, &source, opts.input_format);
             let (matrix, kind) = match input_format {
-                InputFormat::Csv | InputFormat::Tsv => (parse_matrix(&source, opts.kind)?, opts.kind),
+                InputFormat::Csv => (parse_matrix_with_delimiter(&source, opts.kind, ',')?, opts.kind),
+                InputFormat::Tsv => (parse_matrix_with_delimiter(&source, opts.kind, '\t')?, opts.kind),
                 InputFormat::SceneJson => publication::parse_scene_matrix(&source)?,
                 InputFormat::Auto => unreachable!("auto input format is resolved before parsing"),
             };
