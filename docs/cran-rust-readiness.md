@@ -1,22 +1,23 @@
 # CRAN readiness: Rust integration
 
-**Status:** preliminary audit of the isolated `prototypes/rust-rextendr` spike. This is not a CRAN submission approval.
+**Status:** preliminary audit of the isolated `prototypes/rust-rextendr` scene-v1 benchmark spike. This is not a CRAN submission approval.
 
 ## Scope and current evidence
 
-- The Rust spike is isolated from `implementations/r/`; the production R package does not currently import or link to Rust.
-- The Windows binary-install workflow passed on commit `c2e0f1317e5072faafdc0cfa063ec13e75db3173`, including installation and smoke testing on a runner whose PATH was restricted to R and Windows system directories.
-- That test proves a built Windows binary can be installed without a Rust toolchain. It does **not** prove that a source package can be built on CRAN infrastructure or that CRAN will accept the dependency packaging model.
+- Rust remains isolated under `prototypes/rust-rextendr/`; the production R package does not import or link to Rust.
+- The current prototype implements the renderer-neutral scene-v1 JSON builder used for cross-language comparison. It is no longer the earlier cell-count-only smoke test.
+- `.github/workflows/test-rust-windows-binary.yml` builds a Windows binary package, then installs and smoke-tests it with a restricted PATH that excludes the Rust toolchain. This is useful evidence about binary installation, not proof of CRAN source-package readiness.
+- `.github/workflows/cross-language-benchmarks.yml` includes an optional package-smoke matrix for Ubuntu, macOS, and Windows, as well as the cross-language benchmark workflow.
 
 ## CRAN requirements relevant to a production Rust package
 
-1. **Ship source, not prebuilt executable code.** CRAN source packages may not contain binary executable code. The package must contain the Rust sources, including third-party crate sources, or fetch an exact version from a secure and reliable location and verify it with a checksum. CRAN's Rust guidance strongly prefers vendoring.
-2. **Declare toolchain requirements.** A Rust package should declare `SystemRequirements: Cargo (Rust's package manager), rustc`. Any minimum versions must be conservative and justified by the dependency graph. Configure scripts should locate both PATH and common per-user Rust installations and report versions.
-3. **Keep builds resource-bounded.** Cargo's default parallelism can exceed CRAN's limit. Invoke Cargo with `-j 1` or `-j 2`.
-4. **Avoid network-dependent installation.** CRAN advises avoiding downloads where possible; GitHub is not considered a sufficiently reliable long-term source for crate downloads. Prefer `cargo vendor` and include the vendored sources in the source tarball, compressed with xz.
-5. **Account for all copyrights and licenses.** The R `DESCRIPTION` must identify authorship and copyright for Rust code and bundled Rust dependencies. Every crate's license and copyright notices must be preserved and compatible with the package's distribution rights.
-6. **Use portable, static linking where required.** CRAN policy requires static libraries on Windows and macOS. The actual source package must build and pass checks on at least two major R platforms.
-7. **Pass release checks.** Before submission, build a source tarball and run `R CMD check --as-cran` with current R-devel; warnings and significant notes need to be resolved or explained.
+1. **Ship source, not prebuilt executable code.** CRAN source packages may not contain binary executable code. Include the Rust sources and third-party crate sources, or fetch exact versions from a secure and reliable location and verify them with checksums. CRAN's Rust guidance strongly prefers vendoring.
+2. **Declare toolchain requirements.** If Rust enters the production package, declare `SystemRequirements: Cargo (Rust's package manager), rustc`. Keep minimum versions conservative and justified by the dependency graph. Configure scripts should locate common Rust installations and report tool versions.
+3. **Keep builds resource-bounded.** Cargo's default parallelism can exceed CRAN's limits. Constrain builds to at most two jobs, and preferably one where required by the build environment.
+4. **Avoid network-dependent installation.** Prefer `cargo vendor` and configure Cargo to use only the vendored directory during package compilation. Include the vendored sources in the source tarball.
+5. **Account for all copyrights and licenses.** Inventory every direct and transitive crate, preserve license and copyright notices, and manually review unknown, custom, or incompatible licenses.
+6. **Use portable linking.** Verify static-linking requirements on Windows and macOS and build the actual source package on supported R platforms.
+7. **Pass release checks.** Build a source tarball and run `R CMD check --as-cran` with current R-devel. Resolve warnings and significant notes or document why they are acceptable.
 
 References:
 - CRAN Repository Policy: https://stat.ethz.ch/CRAN/web/packages/policies.html
@@ -27,26 +28,27 @@ References:
 
 | Area | Finding | Assessment |
 |---|---|---|
-| Production isolation | Rust remains under `prototypes/rust-rextendr/`; `implementations/r/DESCRIPTION` has no Rust dependency | Good boundary |
-| Windows user install | Restricted-PATH binary install and smoke test pass | Proven for this prototype |
-| Source package | Current CI generates a disposable package at build time; this is not yet a CRAN-ready source package | Not proven |
-| Dependency lock | No committed `Cargo.lock` is present in the repository snapshot | Dependency set is not yet pinned for reproducible audit |
-| Vendoring | No committed `cargo vendor` output or vendor archive is present | CRAN distribution requirement not yet addressed |
-| System requirements | The production R package does not yet declare Cargo/rustc; the temporary generated package is only a CI fixture | Must be added if Rust enters production |
-| Build parallelism | Current prototype build does not establish a CRAN-safe explicit Cargo job limit | Must be checked and constrained |
-| License inventory | No lockfile/vendor tree exists to enumerate transitive crates and their licenses | Cannot complete yet |
-| Maintainer metadata | The current production DESCRIPTION contains a placeholder maintainer address | Must be replaced before any real CRAN submission |
+| Production isolation | Rust remains under `prototypes/rust-rextendr/`; the production R package has no Rust dependency | Good boundary |
+| Prototype scope | Rust implements the scene-v1 JSON builder used by the Python and C++/Rcpp candidates | Useful experiment; not production code |
+| Windows binary install | A restricted-PATH binary-install and smoke-test workflow is present | Workflow coverage exists; source-package readiness is not established |
+| Cross-platform builds | The cross-language workflow has an optional Ubuntu, macOS, and Windows package-smoke matrix | Coverage is defined; release-grade CRAN checks remain outstanding |
+| Dependency lock | No committed `Cargo.lock` is present in the repository snapshot | Dependency set is not yet pinned for a reproducible audit |
+| Vendoring | No committed `cargo vendor` output or vendor archive is present | CRAN distribution approach not yet addressed |
+| System requirements | The production R package does not yet declare Cargo/rustc | Must be addressed only if Rust enters production |
+| Build parallelism | The prototype does not yet establish a CRAN-safe explicit Cargo job limit | Must be checked and constrained |
+| License inventory | No lockfile/vendor tree is available to enumerate transitive crates | Audit cannot be completed yet |
+| Maintainer metadata | The production R package still has placeholder maintainer metadata | Must be replaced before any real CRAN submission |
 
 ## Required next experiment
 
-Do not add Rust to the production package yet. First make a self-contained source-build experiment on a separate branch:
+Do not add Rust to the production package yet. First make the isolated source-build experiment self-contained:
 
-1. Commit a lockfile generated from the actual Rust package.
+1. Commit a lockfile generated from the current Rust prototype.
 2. Generate a complete crate/license inventory from that lockfile; flag unknown, custom, or incompatible licenses for manual review.
 3. Vendor the locked crates with `cargo vendor`, and configure Cargo to use only the vendored directory during package compilation.
-4. Add a source-package CI job that builds from a clean checkout with network access disabled after dependencies are prepared.
-5. Set Cargo parallelism to at most two jobs and capture the rustc/Cargo versions in the installation log.
-6. Run Linux and Windows source builds, then `R CMD check`; add macOS when the initial source-build path is stable.
+4. Add a source-package CI job that builds from a clean checkout without network access after dependencies are prepared.
+5. Set Cargo parallelism to at most two jobs and capture the rustc/Cargo versions in the build log.
+6. Run Linux and Windows source builds, then `R CMD check`; keep macOS in the validation matrix.
 7. Measure the compressed source tarball size and confirm all license notices are included.
 
-**Decision gate:** Rust can be reconsidered for production only after the vendored source package builds reproducibly on the supported R platforms, the dependency license audit is clean, and the CRAN check results are acceptable. The successful Windows binary-install test remains a separate, positive distribution result.
+**Decision gate:** reconsider Rust for production only after the vendored source package builds reproducibly on supported R platforms, the dependency license audit is clean, and CRAN checks are acceptable. The Windows binary-install test remains a separate distribution check.
