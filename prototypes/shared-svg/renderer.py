@@ -84,8 +84,21 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
         radius = abs(value) * (size * 0.43)
         parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
-        if radius > 0:
+        if scene.get("glyph_method", "circle") != "number" and radius > 0:
             parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{radius:.2f}" fill="{color}"/>')
+
+    for label in scene.get("text_annotations", []):
+        cell = next(
+            item for item in scene["cells"]
+            if item["row"] == label["row"] and item["column"] == label["column"]
+        )
+        parts.append(
+            f'<text x="{cell["center_x"]:.1f}" y="{cell["center_y"]:.1f}" '
+            f'text-anchor="middle" dominant-baseline="middle" '
+            f'font-family="{family}" font-size="{label["font_size"]:g}" '
+            f'font-weight="{label["font_weight"]}" font-style="{label["font_style"]}" '
+            f'fill="{html.escape(label["color"], quote=True)}">{html.escape(label["text"])}</text>'
+        )
 
     if scene["annotation"]:
         parts.append(f'<text x="{scene["cells"][0]["x"]:g}" y="{height - 22:g}" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#333333">{html.escape(scene["annotation"])}</text>')
