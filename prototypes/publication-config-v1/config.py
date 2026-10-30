@@ -8,6 +8,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from color_scale import build_color_scale
+
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
 SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -38,6 +40,17 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         _validate_square(values, size, "$.input.values")
         _validate_symmetric(values, "$.input.values", allow_null=True)
         _validate_diagonal(values, "$.input.values")
+
+    scale_spec = normalized["colors"].get("scale") or {
+        "type": "continuous",
+        "interpolation": "rgb",
+        "stops": [
+            {"value": -1, "color": normalized["colors"]["negative"]},
+            {"value": 0, "color": normalized["colors"]["neutral"]},
+            {"value": 1, "color": normalized["colors"]["positive"]},
+        ],
+    }
+    build_color_scale(scale_spec, normalized["colors"]["missing"])
 
     significance = normalized["plot"]["significance"]
     if significance["enabled"]:
@@ -72,6 +85,49 @@ def _validate_symmetric(matrix: list[list[Any]], path: str, allow_null: bool) ->
                 raise ValueError(f"{path}[{row}][{column}]: matrix must be symmetric")
             if abs(left - right) > 1e-8:
                 raise ValueError(f"{path}[{row}][{column}]: matrix must be symmetric")
+
+
+def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Adapt an inline publication config to the renderer-neutral scene input."""
+    normalized = validate_config(config)
+    source = normalized["input"]
+    if source["kind"] != "inline_matrix":
+        raise ValueError("$.input: scene adaptation currently requires inline_matrix")
+
+    colors = normalized["colors"]
+    scale_spec = colors.get("scale") or {
+        "type": "continuous",
+        "interpolation": "rgb",
+        "stops": [
+            {"value": -1, "color": colors["negative"]},
+            {"value": 0, "color": colors["neutral"]},
+            {"value": 1, "color": colors["positive"]},
+        ],
+    }
+    scale = build_color_scale(scale_spec, colors["missing"])
+    values = source["values"]
+    cell_colors = [scale.map_value(value) for row in values for value in row]
+
+    def value_label(value: float) -> str:
+        return "0" if value == 0 else f"{value:+g}"
+
+    legend = []
+    for entry in scale.legend_entries():
+        if entry["kind"] == "stop":
+            label = value_label(entry["value"])
+        elif entry["kind"] == "interval":
+            closing = "]" if entry["include_upper"] else ")"
+            label = f"[{value_label(entry['lower'])}, {value_label(entry['upper'])}{closing}"
+        else:
+            label = "Missing"
+        legend.append({"kind": entry["kind"], "label": label, "color": entry["color"]})
+
+    return {
+        "labels": source["labels"],
+        "matrix": values,
+        "cell_colors": cell_colors,
+        "legend": legend,
+    }
 
 
 def canonical_json(config: dict[str, Any]) -> str:

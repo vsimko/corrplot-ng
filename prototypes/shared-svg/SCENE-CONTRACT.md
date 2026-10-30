@@ -18,14 +18,16 @@ The Python test suite compares the generated scene with this canonical output. T
 - `width`, `height`, positions, and sizes use logical canvas units. They are not pixels, points, or CSS units.
 - `labels` contains one item per matrix variable, in matrix order. `text` is always a string. Row and column label positions are independent.
 - `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the original matrix/labels order.
-- `value` is a correlation coefficient in `[-1, 1]`, or JSON `null` for a missing value. Missing must not be silently converted to zero.
+- `value` is a correlation coefficient in [-1, 1], or JSON `null` for a missing value. Missing must not be silently converted to zero.
+- Optional cell `color` is the mapped six-digit sRGB color for that value. It is absent in legacy scenes that use semantic style colors.
+- Optional `legend` is an ordered array of renderer-neutral `kind`, `label`, and `color` entries. It describes the exact mapping used by cells and may include a distinct missing-value entry.
 - `x`, `y`, and `size` describe the cell's top-left position and square extent. `center_x` and `center_y` are its center.
 - `annotation` is plain text. This version supports one annotation string, not arbitrary positioned/layered elements.
-- `style` contains six-digit sRGB hex colors. It defines semantic colors only; it does not prescribe a particular shape or renderer.
+- `style` contains six-digit sRGB fallback colors. It defines semantic colors only; it does not prescribe a particular shape or renderer.
 
 ## Deliberate limits
 
-Version 1 is only enough for the current synthetic example. It does not yet define ordering algorithms, significance markers, confidence intervals, legends, arbitrary annotations, typography, accessibility metadata, or native R graphics-device behavior. Do not treat these omissions as a promise that the eventual public API will be limited to this subset.
+Version 1 is only enough for the current synthetic example. It does not yet define ordering algorithms, significance markers, confidence intervals, arbitrary annotations, typography, accessibility metadata, or native R graphics-device behavior. The optional legend is a semantic scene capability; individual renderers remain responsible for layout and clipping.
 
 ## Compatibility and evolution
 

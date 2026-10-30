@@ -90,14 +90,35 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
 
     cells = []
+    cell_colors = config.get("cell_colors")
+    if cell_colors is not None:
+        if not isinstance(cell_colors, list) or len(cell_colors) != len(labels) ** 2:
+            raise ValueError("cell_colors must contain one color per matrix cell")
+        if any(not isinstance(color, str) or len(color) != 7 or color[0] != "#" for color in cell_colors):
+            raise ValueError("cell_colors must contain six-digit hex colors")
+
     for row_index, row in enumerate(matrix):
         for column_index, value in enumerate(row):
             x, y = left + column_index * cell, top + row_index * cell
-            cells.append({
+            item = {
                 "row": row_index, "column": column_index, "value": value,
                 "x": x, "y": y, "center_x": x + cell / 2,
                 "center_y": y + cell / 2, "size": cell,
-            })
+            }
+            if cell_colors is not None:
+                item["color"] = cell_colors[row_index * len(labels) + column_index]
+            cells.append(item)
+
+    legend = config.get("legend")
+    if legend is not None:
+        if not isinstance(legend, list) or any(
+            not isinstance(entry, dict)
+            or not isinstance(entry.get("label"), str)
+            or not isinstance(entry.get("color"), str)
+            or len(entry["color"]) != 7 or entry["color"][0] != "#"
+            for entry in legend
+        ):
+            raise ValueError("legend must contain label and six-digit color entries")
 
     label_items = []
     for index, label in enumerate(label_texts):
@@ -126,4 +147,6 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             "column_label_orientation": orientation,
             "label_collision": collision,
         }
+    if legend is not None:
+        scene["legend"] = legend
     return scene

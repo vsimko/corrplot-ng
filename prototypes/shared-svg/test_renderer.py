@@ -94,6 +94,32 @@ class PlotSceneTests(unittest.TestCase):
         svg = render_svg(self.config)
         self.assertEqual(svg.count(">NA</text>"), 2)
 
+    def test_scene_preserves_optional_mapped_colors_and_legend(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.0], [0.0, None]],
+            "cell_colors": ["#ff0000", "#ffffff", "#ffffff", "#d9d9d9"],
+            "legend": [
+                {"kind": "stop", "label": "-1", "color": "#0000ff"},
+                {"kind": "stop", "label": "0", "color": "#ffffff"},
+                {"kind": "stop", "label": "+1", "color": "#ff0000"},
+                {"kind": "missing", "label": "Missing", "color": "#d9d9d9"},
+            ],
+        })
+        self.assertEqual(
+            [cell["color"] for cell in scene["cells"]],
+            ["#ff0000", "#ffffff", "#ffffff", "#d9d9d9"],
+        )
+        self.assertEqual(scene["legend"][-1]["label"], "Missing")
+
+    def test_rejects_mismatched_cell_color_count(self):
+        with self.assertRaisesRegex(ValueError, "one color per matrix cell"):
+            build_scene({
+                "labels": ["A", "B"],
+                "matrix": [[1.0, 0.0], [0.0, 1.0]],
+                "cell_colors": ["#ff0000"],
+            })
+
     def test_rejects_empty_labels(self):
         with self.assertRaisesRegex(ValueError, "labels"):
             build_scene({"labels": [], "matrix": []})

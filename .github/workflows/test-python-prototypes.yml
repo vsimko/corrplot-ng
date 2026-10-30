@@ -1,0 +1,32 @@
+name: Python prototype checks
+
+on:
+  pull_request:
+    paths:
+      - "prototypes/publication-config-v1/**"
+      - "prototypes/shared-svg/**"
+      - "prototypes/publication-svg-v1/**"
+      - ".github/workflows/test-python-prototypes.yml"
+  push:
+    branches: [main]
+    paths:
+      - "prototypes/publication-config-v1/**"
+      - "prototypes/shared-svg/**"
+      - "prototypes/publication-svg-v1/**"
+
+jobs:
+  python-prototypes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install jsonschema
+      - name: Test publication configuration and color scales
+        run: python -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
+      - name: Test renderer-neutral scene
+        run: python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+      - name: Test publication SVG
+        run: python -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v

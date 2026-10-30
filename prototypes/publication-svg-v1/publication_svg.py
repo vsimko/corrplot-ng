@@ -70,9 +70,15 @@ def render_publication_svg(
         annotation_x = scene["cells"][0]["x"] + shift_x
         annotation_right = annotation_x + len(annotation) * char_width + 12.0
 
-    view_width = max(float(scene["width"]) + shift_x, annotation_right)
+    legend = scene.get("legend", [])
+    legend_width = max((28.0 + len(entry["label"]) * char_width for entry in legend), default=0.0)
+    legend_x = float(scene["cells"][0]["x"]) + shift_x
+    view_width = max(float(scene["width"]) + shift_x, annotation_right,
+                     legend_x + legend_width + 12.0)
     annotation_extra = max(0.0, font_px + 8.0 - 22.0)
-    view_height = float(scene["height"]) + shift_y + annotation_extra
+    legend_top = float(scene["height"]) + shift_y + annotation_extra + (12.0 if annotation else 0.0)
+    legend_extra = (len(legend) * 20.0 + 12.0) if legend else 0.0
+    view_height = float(scene["height"]) + shift_y + annotation_extra + legend_extra
 
     family = html.escape(font_family.strip(), quote=True)
     style = scene["style"]
@@ -105,14 +111,16 @@ def render_publication_svg(
         value = cell["value"]
         if value is None:
             parts.append(
-                f'<rect x="{_number(x)}" y="{_number(y)}" width="{_number(size)}" height="{_number(size)}" fill="{style["missing_fill"]}" stroke="#ffffff"/>'
+                f'<rect x="{_number(x)}" y="{_number(y)}" width="{_number(size)}" height="{_number(size)}" fill="{cell.get("color", style["missing_fill"])}" stroke="#ffffff"/>'
             )
             parts.append(
                 f'<text x="{_number(cx)}" y="{_number(cy)}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{_number(font_size_pt)}pt" fill="#666666">NA</text>'
             )
             continue
-        color = style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"]
+        color = cell.get("color", style["positive_color"] if value > 0 else style["negative_color"] if value < 0 else style["zero_color"])
         radius = abs(value) * (size * 0.43)
+        if value == 0 and "color" in cell:
+            radius = 2.5
         parts.append(
             f'<rect x="{_number(x)}" y="{_number(y)}" width="{_number(size)}" height="{_number(size)}" fill="#ffffff" stroke="{style["grid_color"]}"/>'
         )
@@ -126,6 +134,14 @@ def render_publication_svg(
         annotation_y = float(scene["height"]) - 22.0 + shift_y
         parts.append(
             f'<text x="{_number(annotation_x)}" y="{_number(annotation_y)}" font-family="{family}" font-size="{_number(font_size_pt)}pt" fill="#333333">{html.escape(annotation)}</text>'
+        )
+    for index, entry in enumerate(legend):
+        legend_y = legend_top + index * 20.0 + 10.0
+        parts.append(
+            f'<rect x="{_number(legend_x)}" y="{_number(legend_y - 10.0)}" width="12" height="12" fill="{entry["color"]}" stroke="#666666" stroke-width="0.5"/>'
+        )
+        parts.append(
+            f'<text x="{_number(legend_x + 19.0)}" y="{_number(legend_y)}" dominant-baseline="middle" font-family="{family}" font-size="{_number(font_size_pt)}pt">{html.escape(entry["label"])}</text>'
         )
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
