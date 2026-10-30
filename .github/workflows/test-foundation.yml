@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - benchmarks/stress-dispatch-20261030
   workflow_dispatch:
     inputs:
       include_stress:
@@ -136,7 +137,7 @@ jobs:
 
   shared-core-stress-benchmarks:
     name: Run large-matrix stress benchmarks
-    if: github.event_name == 'workflow_dispatch' && inputs.include_stress
+    if: (github.event_name == 'workflow_dispatch' && inputs.include_stress) || github.ref == 'refs/heads/benchmarks/stress-dispatch-20261030'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
