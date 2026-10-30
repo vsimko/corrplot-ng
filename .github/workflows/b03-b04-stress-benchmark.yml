@@ -1,0 +1,29 @@
+name: B03/B04 stress benchmark
+
+on:
+  push:
+    branches:
+      - benchmarks/run-stress-b03-b04
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    name: Run B03 and B04 large-matrix stress benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run B03 and B04 stress benchmarks
+        run: python benchmarks/run_shared_core.py --iterations 20 --include-stress --output benchmark-results/stress-results.json
+      - name: Upload stress benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-core-stress-benchmark-results
+          path: benchmark-results/stress-results.json
+          if-no-files-found: error
+          retention-days: 90
