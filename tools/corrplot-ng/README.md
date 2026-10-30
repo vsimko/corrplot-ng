@@ -131,6 +131,43 @@ corrplot-ng version
 
 Supported render methods are currently `circle` and `number`. The scene-json output follows the current experimental scene-v1 shape. This first CLI slice deliberately does not claim support for the full publication-config v1 document, ordering algorithms, all seven legacy glyphs, incremental rebuilds, or batch rendering; those remain follow-up work against the existing contracts.
 
+
+## Shell, Make, LaTeX, and CI examples
+
+Shell pipeline:
+
+```sh
+cat data/correlation.csv | corrplot-ng render --input - --output - > figures/correlation.svg
+corrplot-ng validate --input data/correlation.csv
+```
+
+Makefile target:
+
+```make
+.PHONY: figure
+figure: figures/correlation.svg
+
+figures/correlation.svg: data/correlation.csv
+	mkdir -p figures
+	corrplot-ng render --input "$<" --output "$@"
+```
+
+LaTeX with the `svg` package (requires Inkscape for conversion):
+
+```tex
+\usepackage{svg}
+...
+\includesvg[width=\linewidth]{figures/correlation}
+```
+
+CI can download the matching release archive, verify `SHA256SUMS.txt`,
+then render the same fixture used by the release smoke test:
+
+```yaml
+- name: Render figure
+  run: corrplot-ng render --input data/correlation.csv --output artifacts/correlation.svg
+```
+
 ## Dependency policy
 
 Do not add a third-party crate without documenting why the standard library is insufficient, the crate's license/provenance, build-time dependency impact, and whether it adds runtime dependencies. Keep Cargo.lock committed even while the dependency graph is empty.
