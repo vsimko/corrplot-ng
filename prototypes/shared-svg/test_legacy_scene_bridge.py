@@ -1,8 +1,8 @@
-"""Verify real legacy corrplot outputs can feed the scene-v1 builder.
+"""Verify legacy corrplot outputs of different dimensions feed scene-v1.
 
-The R oracle exports original-order and alphabetically reordered matrices.
-This test exercises the serialization boundary and checks ordered labels,
-row-major values, and preservation of missing cells for both cases.
+The R oracle exports 2x2, 3x3 (two label orders), and 4x4 matrices.
+This exercises the serialization boundary and checks ordered labels,
+row-major values, and preservation of missing cells.
 """
 from __future__ import annotations
 
@@ -19,6 +19,8 @@ def verify_case(name: str, config: dict) -> None:
     matrix = config["matrix"]
     size = len(labels)
 
+    assert size in (2, 3, 4), (name, size)
+    assert len(matrix) == size
     assert [item["text"] for item in scene["labels"]] == labels
     assert [(cell["row"], cell["column"]) for cell in scene["cells"]] == [
         (row, column) for row in range(size) for column in range(size)
@@ -31,6 +33,8 @@ def verify_case(name: str, config: dict) -> None:
     assert missing == sum(
         value is None for row in matrix for value in row
     )
+    assert scene["width"] == 104 + size * 84 + 24
+    assert scene["height"] == 76 + size * 84 + 64
 
     print(
         f"{name}: {size} labels, {len(scene['cells'])} cells, "
@@ -45,12 +49,18 @@ def main() -> None:
     source = Path(sys.argv[1])
     payload = json.loads(source.read_text(encoding="utf-8"))
     cases = payload["cases"]
-    assert set(cases) == {"original_order", "alphabetic_order"}
+    expected_cases = {
+        "three_original_order",
+        "three_alphabetic_order",
+        "two_variables",
+        "four_variables_with_missing",
+    }
+    assert set(cases) == expected_cases
 
     for name, config in cases.items():
         verify_case(name, config)
 
-    print(f"Legacy-to-scene bridge passed for {len(cases)} legacy orderings")
+    print(f"Legacy-to-scene bridge passed for {len(cases)} matrix cases")
 
 
 if __name__ == "__main__":
