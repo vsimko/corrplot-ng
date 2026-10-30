@@ -181,6 +181,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
 
+    matrix_values = matrix
     p_values = config.get("p_values")
     if p_values is not None:
         if not isinstance(p_values, list) or len(p_values) != len(labels) or any(
@@ -196,9 +197,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                     raise ValueError("p_values must contain numbers between 0 and 1 or null")
         for row_index in range(len(labels)):
             for column_index in range(row_index + 1, len(labels)):
-                left, right = p_values[row_index][column_index], p_values[column_index][row_index]
-                if (left is None) != (right is None) or (
-                    left is not None and abs(left - right) > 1e-8
+                p_left, p_right = p_values[row_index][column_index], p_values[column_index][row_index]
+                if (p_left is None) != (p_right is None) or (
+                    p_left is not None and abs(p_left - p_right) > 1e-8
                 ):
                     raise ValueError("p_values must be symmetric, including matching missing entries")
 
@@ -253,7 +254,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 if low is not None:
                     if low > high:
                         raise ValueError("confidence interval lower bound must not exceed upper bound")
-                    estimate = matrix[row_index][column_index]
+                    estimate = matrix_values[row_index][column_index]
                     if estimate is None:
                         raise ValueError("confidence intervals must be null when the correlation is missing")
                     if low > estimate or estimate > high:

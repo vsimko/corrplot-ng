@@ -44,7 +44,7 @@ class SceneSchemaTests(unittest.TestCase):
                 "upper": [[1.0, 0.8], [0.8, 1.0]],
             },
         })
-        Draft202012Validator(SCHEMA).validate(scene)
+        Draft202012Validator(self.schema).validate(scene)
 
     def test_variable_order_and_cell_p_values_are_part_of_scene_contract(self):
         config = dict(self.config)
