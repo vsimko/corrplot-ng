@@ -109,6 +109,43 @@ large <- matrix(
 large_result <- plot_legacy(large)
 verify_legacy_result(large, large_result)
 
+# Perfect positive/negative correlations and a constant-like variable.
+# The third variable has no defined off-diagonal correlations (NA), while
+# its diagonal remains 1 as in a conventional correlation matrix.
+extremes <- matrix(
+  c(1, 1, -1, NA,
+    1, 1, -1, NA,
+    -1, -1, 1, NA,
+    NA, NA, NA, 1),
+  nrow = 4,
+  byrow = TRUE,
+  dimnames = list(c("positive_a", "positive_b", "negative", "constant"),
+                  c("positive_a", "positive_b", "negative", "constant"))
+)
+extremes_result <- plot_legacy(extremes)
+verify_legacy_result(extremes, extremes_result)
+stopifnot(extremes_result$corrPos$corr[extremes_result$corrPos$xName == "positive_b" &
+                                         extremes_result$corrPos$yName == "positive_a"] == 1)
+stopifnot(extremes_result$corrPos$corr[extremes_result$corrPos$xName == "negative" &
+                                         extremes_result$corrPos$yName == "positive_a"] == -1)
+stopifnot(!("constant" %in% extremes_result$corrPos$xName[
+  extremes_result$corrPos$yName != "constant"
+]))
+
+# An entirely missing variable, including its diagonal, probes the legacy
+# behavior for a fully undefined row/column rather than assuming it is valid.
+all_missing <- matrix(
+  c(1, 0.3, NA,
+    0.3, 1, NA,
+    NA, NA, NA),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(c("observed_a", "observed_b", "all_missing"),
+                  c("observed_a", "observed_b", "all_missing"))
+)
+all_missing_result <- plot_legacy(all_missing)
+verify_legacy_result(all_missing, all_missing_result)
+
 # Export legacy results as language-neutral scene inputs.
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
   stop("jsonlite is required to export the legacy scene inputs")
@@ -145,6 +182,14 @@ legacy_scene_inputs <- list(
     four_variables_with_missing = make_scene_input(
       large_result$corr,
       "Legacy 4x4 correlation matrix with missing values"
+    ),
+    perfect_correlations_and_constant = make_scene_input(
+      extremes_result$corr,
+      "Perfect positive/negative correlations and constant-like variable"
+    ),
+    fully_missing_variable = make_scene_input(
+      all_missing_result$corr,
+      "Legacy matrix with an entirely missing variable"
     )
   )
 )
