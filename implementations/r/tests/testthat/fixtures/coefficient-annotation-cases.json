@@ -32,25 +32,41 @@
           "row": 0,
           "column": 0,
           "role": "coefficient",
-          "text": "1.00"
+          "text": "1.00",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 0,
           "column": 1,
           "role": "coefficient",
-          "text": "0.12"
+          "text": "0.12",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 0,
           "role": "coefficient",
-          "text": "-0.12"
+          "text": "-0.12",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 1,
           "role": "coefficient",
-          "text": "0.00"
+          "text": "0.00",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         }
       ]
     },
@@ -79,25 +95,41 @@
           "row": 0,
           "column": 0,
           "role": "coefficient",
-          "text": "12"
+          "text": "12",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 0,
           "column": 1,
           "role": "coefficient",
-          "text": "-46"
+          "text": "-46",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 0,
           "role": "coefficient",
-          "text": "100"
+          "text": "100",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 1,
           "role": "coefficient",
-          "text": "0"
+          "text": "0",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         }
       ]
     },
@@ -135,19 +167,31 @@
           "row": 0,
           "column": 1,
           "role": "coefficient",
-          "text": "0.20"
+          "text": "0.20",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 0,
           "column": 2,
           "role": "coefficient",
-          "text": "-0.30"
+          "text": "-0.30",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 2,
           "role": "coefficient",
-          "text": "0.40"
+          "text": "0.40",
+          "color": "black",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         }
       ]
     },
@@ -177,25 +221,69 @@
           "row": 0,
           "column": 0,
           "role": "value",
-          "text": "1.0"
+          "text": "1.0",
+          "color": "#2166ac",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 0,
           "column": 1,
           "role": "value",
-          "text": "-0.5"
+          "text": "-0.5",
+          "color": "#b2182b",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 0,
           "role": "value",
-          "text": "-0.5"
+          "text": "-0.5",
+          "color": "#b2182b",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
         },
         {
           "row": 1,
           "column": 1,
           "role": "value",
-          "text": "1.0"
+          "text": "1.0",
+          "color": "#2166ac",
+          "font_size": 13,
+          "font_weight": "bold",
+          "font_style": "normal"
+        }
+      ]
+    },
+    {
+      "id": "typography-bold-italic-and-size",
+      "labels": [
+        "A"
+      ],
+      "matrix": [
+        [
+          0.456
+        ]
+      ],
+      "options": {
+        "addCoef_col": "navy",
+        "number_cex": 1.5,
+        "number_font": 4
+      },
+      "expected": [
+        {
+          "row": 0,
+          "column": 0,
+          "role": "coefficient",
+          "text": "0.46",
+          "color": "navy",
+          "font_size": 19.5,
+          "font_weight": "bold",
+          "font_style": "italic"
         }
       ]
     }
