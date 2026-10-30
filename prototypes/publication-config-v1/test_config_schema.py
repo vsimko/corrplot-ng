@@ -5,7 +5,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from config import canonical_json, validate_config
+from config import canonical_json, to_scene_config, validate_config
 
 
 HERE = Path(__file__).parent
@@ -19,7 +19,7 @@ class PublicationConfigTests(unittest.TestCase):
         Draft202012Validator.check_schema(SCHEMA)
 
     def test_all_examples_are_valid_and_normalizable(self):
-        self.assertEqual(len(EXAMPLES), 3)
+        self.assertEqual(len(EXAMPLES), 5)
         for path in EXAMPLES:
             with self.subTest(example=path.name):
                 config = json.loads(path.read_text(encoding="utf-8"))
@@ -61,6 +61,49 @@ class PublicationConfigTests(unittest.TestCase):
         config = json.loads((HERE / "examples" / "significance.json").read_text(encoding="utf-8"))
         config["plot"]["significance"]["p_values"].pop()
         with self.assertRaisesRegex(ValueError, "p_values.*square"):
+            validate_config(config)
+
+    def test_continuous_scale_is_validated_and_adapted_to_scene(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["colors"]["scale"] = {
+            "type": "continuous",
+            "interpolation": "rgb",
+            "stops": [
+                {"value": -1, "color": "#0000ff"},
+                {"value": 0, "color": "#ffffff"},
+                {"value": 1, "color": "#ff0000"},
+            ],
+        }
+        scene_config = to_scene_config(config)
+        self.assertEqual(len(scene_config["cell_colors"]), 9)
+        self.assertEqual(scene_config["legend"][1]["label"], "0")
+        self.assertEqual(scene_config["cell_colors"][0], "#ff0000")
+        self.assertEqual(scene_config["legend"][-1]["label"], "Missing")
+
+    def test_discrete_scale_has_explicit_boundary_labels(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["colors"]["scale"] = {
+            "type": "discrete",
+            "breaks": [-1, -0.25, 0, 0.25, 1],
+            "colors": ["#0000ff", "#6666ff", "#ff6666", "#ff0000"],
+        }
+        scene_config = to_scene_config(config)
+        self.assertEqual(
+            [entry["label"] for entry in scene_config["legend"]],
+            ["[-1, -0.25)", "[-0.25, 0)", "[0, +0.25)", "[+0.25, +1]", "Missing"],
+        )
+
+    def test_invalid_scale_definitions_fail_validation(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["colors"]["scale"] = {
+            "type": "continuous",
+            "stops": [
+                {"value": -1, "color": "#0000ff"},
+                {"value": 0.5, "color": "#ffffff"},
+                {"value": 1, "color": "#ff0000"},
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "zero"):
             validate_config(config)
 
     def test_canonical_json_is_deterministic(self):

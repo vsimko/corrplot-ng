@@ -96,6 +96,31 @@ class PublicationSvgTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.render(**{field: value})
 
+    def test_explicit_cell_colors_and_legend_are_rendered_without_clipping(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.0], [0.0, None]],
+            "cell_colors": ["#ff0000", "#ffffff", "#ffffff", "#d9d9d9"],
+            "legend": [
+                {"kind": "stop", "label": "-1", "color": "#0000ff"},
+                {"kind": "stop", "label": "0", "color": "#ffffff"},
+                {"kind": "stop", "label": "+1", "color": "#ff0000"},
+                {"kind": "missing", "label": "Missing", "color": "#d9d9d9"},
+            ],
+        })
+        svg = render_publication_svg(
+            scene, width_mm=178, height_mm=132, font_size_pt=9,
+        )
+        root = ET.fromstring(svg)
+        circles = root.findall(f".//{SVG_NS}circle")
+        self.assertTrue(any(circle.attrib["fill"] == "#ffffff" for circle in circles))
+        rect_fills = [node.attrib.get("fill") for node in root.findall(f".//{SVG_NS}rect")]
+        self.assertIn("#d9d9d9", rect_fills)
+        texts = [node.text for node in root.findall(f".//{SVG_NS}text")]
+        self.assertIn("Missing", texts)
+        _, _, _, view_height = map(float, root.attrib["viewBox"].split())
+        self.assertGreater(view_height, scene["height"])
+
     def test_rejects_unsupported_scene_versions(self):
         scene = dict(self.scene, schema_version=2)
         with self.assertRaisesRegex(ValueError, "version 1"):

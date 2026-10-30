@@ -108,6 +108,9 @@
           "size": {
             "type": "number",
             "exclusiveMinimum": 0
+          },
+          "color": {
+            "$ref": "#/$defs/color"
           }
         }
       }
@@ -182,6 +185,33 @@
             "truncate",
             "omit"
           ]
+        }
+      }
+    },
+    "legend": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "label",
+          "color"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "stop",
+              "interval",
+              "missing"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "color": {
+            "$ref": "#/$defs/color"
+          }
         }
       }
     }
