@@ -114,3 +114,25 @@ same host with the same Rust toolchain; repeat on each supported OS when
 making cross-platform claims. These are measurements, not brittle CI timing
 assertions. Record the baseline and candidate JSON artifacts with the PR
 before claiming that the performance acceptance criterion has passed.
+
+
+### Initial before/after measurement
+
+The first comparison ran on the Ubuntu GitHub Actions runner with Rust 1.99.1,
+a deterministic 40x40 matrix, 30 fresh-process startup/validation samples, and
+10 render samples. Baseline: PR base `027b2166f8ba`; candidate: wizard
+implementation `16fe9a0eef72`.
+
+| Operation | Baseline median | Candidate median | Change |
+| --- | ---: | ---: | ---: |
+| `version` startup | 0.5102 ms | 0.4955 ms | -2.87% |
+| `validate --config` | 0.7450 ms | 0.7499 ms | +0.66% |
+| `render --config` (40x40 SVG) | 7.9698 ms | 7.9182 ms | -0.65% |
+
+All three measurements were within the baseline-relative budget. The budget is
+`max(5% of baseline median, 0.5 ms)` for startup/validation and
+`max(5% of baseline median, 2 ms)` for rendering. This is one runner's
+measurement, not a cross-platform performance guarantee. The CI workflow
+uploads a fresh comparison artifact for each pull-request revision.
+
+Measurement run: https://github.com/vsimko/corrplot-ng/actions/runs/41145752180
