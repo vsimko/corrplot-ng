@@ -229,6 +229,38 @@ test_that("label placement modes reject incompatible layouts and invalid offsets
   expect_error(corrplot_ng(corr, engine = "scene", tl.srt = NA_real_), "tl.srt")
 })
 
+test_that("general-matrix adapter matches the shared corrplot 0.95 reference fixtures", {
+  skip_if_not_installed("jsonlite")
+  fixture_path <- testthat::test_path("..", "..", "..", "..", "tests", "fixtures",
+    "general-matrix-cases.json")
+  fixtures <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
+  for (case in fixtures$cases) {
+    values <- do.call(rbind, lapply(case$matrix, function(row) as.numeric(unlist(row))))
+    args <- list(corr = values, engine = "scene", is.corr = FALSE,
+      diag = isTRUE(case$diag))
+    if (case$id != "hidden-diagonal-negative-constant") {
+      args$col.lim <- as.numeric(unlist(case$col_limits))
+    }
+    scene <- do.call(corrplot_ng, args)
+    expect_equal(scene$matrix_semantics$color_limits, as.numeric(unlist(case$col_limits)),
+      info = case$id)
+    expect_identical(scene$matrix_semantics$color_mapping, case$mapping, info = case$id)
+    expect_identical(scene$matrix_semantics$palette, case$palette, info = case$id)
+    expect_equal(scene$matrix_semantics$normalization$intercept,
+      case$normalization$intercept, info = case$id)
+    expect_equal(scene$matrix_semantics$normalization$zoom,
+      case$normalization$zoom, info = case$id)
+  }
+  for (case in fixtures$invalid_cases) {
+    values <- do.call(rbind, lapply(case$matrix, function(row) {
+      as.numeric(unlist(row, use.names = FALSE))
+    }))
+    args <- list(corr = values, engine = "scene", is.corr = FALSE)
+    if (!is.null(case$col_limits)) args$col.lim <- as.numeric(unlist(case$col_limits))
+    expect_error(do.call(corrplot_ng, args), case$error, info = case$id)
+  }
+})
+
 test_that("general-matrix palettes match corrplot 0.95 palette vectors", {
   expect_identical(COL1("YlOrBr", 200), corrplot::COL1("YlOrBr", 200))
   expect_identical(COL2("RdBu", 200), corrplot::COL2("RdBu", 200))
