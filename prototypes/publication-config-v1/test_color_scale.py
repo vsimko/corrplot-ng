@@ -98,6 +98,35 @@ class ColorScaleTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     scale.map_value(value)
 
+    def test_legacy_palette_vectors_adapt_without_changing_color_assignment(self):
+        from color_scale import legacy_palette_scale
+
+        for count in (1, 2, 3, 11, 200):
+            with self.subTest(count=count):
+                colors = [
+                    f"#{index:02x}{(255 - index):02x}7f"
+                    for index in range(count)
+                ]
+                spec = legacy_palette_scale(colors)
+                scale = build_color_scale(spec)
+                self.assertEqual(spec["type"], "discrete")
+                self.assertEqual(spec["breaks"][0], -1.0)
+                self.assertEqual(spec["breaks"][-1], 1.0)
+                self.assertIn(0.0, spec["breaks"])
+                self.assertEqual(len(spec["colors"]), len(spec["breaks"]) - 1)
+                for index, color in enumerate(colors):
+                    lower = -1.0 + 2.0 * index / count
+                    upper = -1.0 + 2.0 * (index + 1) / count
+                    self.assertEqual(scale.map_value((lower + upper) / 2), color)
+
+    def test_legacy_palette_adapter_validates_colors(self):
+        from color_scale import legacy_palette_scale
+
+        for value in ([], "red", ["red"], ["#123456", None]):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    legacy_palette_scale(value)
+
 
 if __name__ == "__main__":
     unittest.main()

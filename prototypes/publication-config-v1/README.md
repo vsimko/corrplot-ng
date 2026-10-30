@@ -52,5 +52,6 @@ A change is backward-compatible only when existing version-1 documents retain th
 - `examples/publication-size.json`: CSV-backed, publication-sized figure with explicit typography and physical dimensions.
 - `examples/diverging-scale.json`: continuous diverging scale with a neutral midpoint.
 - `examples/discrete-scale.json`: explicit symmetric value breaks and interval colors.
+- `legacy_palette_scale(colors)` adapts a legacy corrplot color vector to the existing discrete scale contract without changing its interval-to-color mapping.
 
 The format is intentionally a small starting point. It does not promise complete coverage of legacy R arguments or define renderer geometry.
