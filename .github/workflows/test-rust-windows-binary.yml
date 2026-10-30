@@ -63,6 +63,27 @@ jobs:
           & (Join-Path $rBin "R.exe") CMD INSTALL "--library=$lib" $zip.FullName
           if ($LASTEXITCODE -ne 0) { throw "Binary installation failed with exit code $LASTEXITCODE." }
           $env:R_LIBS_USER = $lib
-          $expr = "library(corrplotngrustspike); x <- build_scene_json_rust(c('a','b'), matrix(c(1,0.2,0.2,1), 2), 'binary smoke'); stopifnot(is.character(x), length(x) == 1L, grepl('\"schema_version\":1', x, fixed=TRUE))"
-          & (Join-Path $rBin "Rscript.exe") -e $expr
+
+          # Keep R code out of a nested PowerShell -e string. This avoids
+          # PowerShell parsing R's escaped quotes before Rscript can see them.
+          $smokeScript = Join-Path $env:TEMP "rust-binary-smoke.R"
+          $smokeCode = @'
+          library(corrplotngrustspike)
+          x <- build_scene_json_rust(
+            c("a", "b"),
+            matrix(c(1, 0.2, 0.2, 1), 2),
+            "binary smoke"
+          )
+          stopifnot(
+            is.character(x),
+            length(x) == 1L,
+            grepl('"schema_version":1', x, fixed = TRUE)
+          )
+          '@
+          [System.IO.File]::WriteAllText(
+            $smokeScript,
+            $smokeCode,
+            [System.Text.UTF8Encoding]::new($false)
+          )
+          & (Join-Path $rBin "Rscript.exe") $smokeScript
           if ($LASTEXITCODE -ne 0) { throw "Installed Rust binary smoke test failed with exit code $LASTEXITCODE." }
