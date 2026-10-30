@@ -84,3 +84,49 @@ class TriangleLayoutTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_ordered_mixed_layout_keeps_annotation_cell_identity(self):
+        # Original variable order is gamma, alpha, beta. The prepared scene
+        # uses the alphabetic permutation alpha, beta, gamma.
+        scene = build_scene({
+            "labels": ["alpha", "beta", "gamma"],
+            "matrix": [
+                [1.0, 0.3, 0.1],
+                [0.3, 1.0, 0.2],
+                [0.1, 0.2, 1.0],
+            ],
+            "variable_order": {
+                "strategy": "alphabet",
+                "indices": [1, 2, 0],
+                "labels": ["gamma", "alpha", "beta"],
+            },
+            "upper_method": "number",
+            "lower_method": "circle",
+            "diagonal_method": "number",
+            "add_coef_color": "black",
+        })
+        annotations = {
+            (item["row"], item["column"]): (item["role"], item["text"])
+            for item in scene["text_annotations"]
+        }
+        self.assertEqual(annotations, {
+            (0, 0): ("value", "1.00"),
+            (0, 1): ("value", "0.30"),
+            (0, 2): ("value", "0.10"),
+            (1, 0): ("coefficient", "0.30"),
+            (1, 1): ("value", "1.00"),
+            (1, 2): ("value", "0.20"),
+            (2, 0): ("coefficient", "0.10"),
+            (2, 1): ("coefficient", "0.20"),
+            (2, 2): ("value", "1.00"),
+        })
+        self.assertEqual(scene["variable_order"]["indices"], [1, 2, 0])
+        self.assertEqual(
+            [label["text"] for label in scene["labels"]],
+            ["alpha", "beta", "gamma"],
+        )
+        cells = {(cell["row"], cell["column"]): cell for cell in scene["cells"]}
+        self.assertEqual(cells[(0, 1)]["method"], "number")
+        self.assertEqual(cells[(1, 0)]["method"], "circle")
+        self.assertEqual(cells[(2, 2)]["region"], "diagonal")
