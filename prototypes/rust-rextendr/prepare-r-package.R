@@ -57,7 +57,7 @@ cleanup_idx <- which(vapply(
 if (length(cleanup_idx) != 1L) {
   stop("Could not identify the generated rextendr rust_clean command in ", makevars_file)
 }
-makevars[cleanup_idx] <- '\\trm -Rf "$(CARGOTMP)" "$(VENDOR_DIR)"'
+makevars[cleanup_idx] <- '\trm -Rf "$(CARGOTMP)" "$(VENDOR_DIR)"'
 writeLines(makevars, makevars_file)
 
 rust_src <- readLines(file.path(root, "src", "lib.rs"), warn = FALSE)
