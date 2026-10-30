@@ -16,10 +16,12 @@ from scene import build_scene
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--stress-only", action="store_true", help="export only B03/B04 stress fixtures")
     args = parser.parse_args()
-    cases = make_cases(include_stress=False)
+    cases = make_cases(include_stress=args.stress_only)
     workloads = []
-    for case_id in ("B01", "B02", "B05", "B06", "B07"):
+    case_ids = ("B03", "B04") if args.stress_only else ("B01", "B02", "B05", "B06", "B07")
+    for case_id in case_ids:
         config = cases[case_id]
         scene = build_scene(config)
         workloads.append({

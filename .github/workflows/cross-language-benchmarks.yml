@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   compare:
-    name: Compare Python, pure R, C++/Rcpp and Rust/rextendr
+    name: Compare Python, C++/Rcpp and Rust/rextendr on B03/B04
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -42,10 +42,10 @@ jobs:
       - name: Test benchmark timing harness
         run: python -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
 
-      - name: Export deterministic shared fixtures
+      - name: Export regular shared fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
 
-      - name: Benchmark Python reference
+      - name: Benchmark Python reference on regular fixtures
         run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
 
       - name: Generate Rcpp wrappers
@@ -63,8 +63,17 @@ jobs:
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
 
-      - name: Benchmark pure R and native candidates
+      - name: Benchmark pure R, C++/Rcpp and Rust/rextendr on regular fixtures
         run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
+
+      - name: Export B03/B04 stress fixtures
+        run: python benchmarks/export_native_fixtures.py --stress-only --output benchmark-results/stress-fixtures.json
+
+      - name: Benchmark Python reference on B03/B04
+        run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/stress-fixtures.json --output benchmark-results/python-stress-scene-v1.json
+
+      - name: Benchmark C++/Rcpp and Rust/rextendr on B03/B04
+        run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/stress-fixtures.json benchmark-results/native-stress-scene-v1.json --stress-mode
 
       - name: Upload comparison inputs and results
         uses: actions/upload-artifact@v4

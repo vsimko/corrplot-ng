@@ -19,15 +19,17 @@ SAMPLES = 30
 WARMUPS = 5
 
 
-def measure(operation: Callable[[], object]) -> dict[str, object]:
+def measure(operation: Callable[[], object], stress: bool = False) -> dict[str, object]:
+    sample_count = 5 if stress else SAMPLES
+    warmups = 1 if stress else WARMUPS
     first_started = time.perf_counter_ns()
     operation()
     first_ms = (time.perf_counter_ns() - first_started) / 1e6
-    for _ in range(WARMUPS):
+    for _ in range(warmups):
         operation()
 
     batch = 1
-    while True:
+    while not stress:
         started = time.perf_counter_ns()
         for _ in range(batch):
             operation()
@@ -37,7 +39,7 @@ def measure(operation: Callable[[], object]) -> dict[str, object]:
         batch *= 2
 
     samples = []
-    for _ in range(SAMPLES):
+    for _ in range(sample_count):
         started = time.perf_counter_ns()
         for _ in range(batch):
             operation()
@@ -48,8 +50,8 @@ def measure(operation: Callable[[], object]) -> dict[str, object]:
         "first_call_ms": first_ms, "median_ms": statistics.median(samples),
         "iqr_ms": q3 - q1, "min_ms": min(samples), "max_ms": max(samples),
         "samples_ms": samples, "batch_size": batch,
-        "sample_target_ms": TARGET_SAMPLE_MS, "sample_count": SAMPLES,
-        "warmup_iterations": WARMUPS,
+        "sample_target_ms": TARGET_SAMPLE_MS, "sample_count": sample_count,
+        "warmup_iterations": warmups, "stress_mode": stress,
     }
 
 
@@ -86,11 +88,11 @@ def main() -> None:
                 "status": "passed", "measurement": measurement,
                 "scene_cells": len(expected["cells"]),
                 "scene_json_bytes": len(encoded.encode("utf-8")),
-                **measure(operation),
+                **measure(operation, stress=case["id"] in ("B03", "B04")),
             })
 
     payload = {
-        "schema_version": 2, "suite": "corrplot-ng-cross-language-scene-v1",
+        "schema_version": 3, "suite": "corrplot-ng-cross-language-scene-v1",
         "candidate": "Python",
         "environment": {
             "python": sys.version, "platform": platform.platform(),
@@ -99,7 +101,8 @@ def main() -> None:
         "timing_method": {
             "clock": "time.perf_counter_ns", "target_sample_ms": TARGET_SAMPLE_MS,
             "samples": SAMPLES, "warmups": WARMUPS,
-            "batching": "calibrate batch size until one sample reaches target duration",
+            "stress_samples": 5, "stress_warmups": 1, "stress_batch_size": 1,
+            "batching": "calibrate batch size for regular workloads; fixed batch size 1 for B03/B04",
         },
         "results": results,
     }
