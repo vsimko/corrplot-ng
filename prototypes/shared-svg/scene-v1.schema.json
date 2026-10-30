@@ -180,6 +180,13 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1
+          },
+          "normalized_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Optional visual-only normalized value used for glyph magnitude; value remains the original matrix entry."
           }
         }
       }

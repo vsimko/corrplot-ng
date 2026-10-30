@@ -6,17 +6,19 @@ This directory defines the first declarative configuration format for reproducib
 
 - `config_version` identifies this format. Incompatible changes require a new major configuration version.
 - `input` is either an inline labelled matrix or a path to a CSV matrix. CSV paths are resolved relative to the configuration file's directory by consumers.
-- `matrix.kind` identifies the semantic matrix type. Version 1 supports correlation matrices; `method` records the correlation method used to produce the matrix.
-- Correlation values are in [-1, 1]; JSON null represents a missing correlation and is never interpreted as zero.
+- `matrix.kind` explicitly selects `correlation` or `general_numeric`; semantics are never inferred from dimensions or values. `method` records the correlation method when applicable.
+- Correlation values are in [-1, 1]. General numeric matrices accept finite values outside that range. JSON null represents a missing value and is never interpreted as zero.
+- General numeric matrices derive automatic limits from observed values or accept an explicit increasing `matrix.col_limits` pair that must cover all observations. All-missing matrices are rejected; constant ranges are padded deterministically.
+- General numeric values are normalized only for visual mapping: mixed-sign domains use a diverging mapping and one-sided domains use a sequential mapping. Original values remain unchanged in the prepared scene.
 - `plot` contains semantic display choices: glyph method, displayed triangle, ordering, coefficient labels, and optional significance metadata. The p-value matrix is required when significance is enabled.
-- `colors` contains the legacy negative, neutral, positive, and missing colors. Optional `colors.scale` defines an explicit continuous or discrete signed-correlation scale; see [COLOR-SCALES.md](COLOR-SCALES.md).
+- `colors` contains the legacy negative, neutral, positive, and missing colors. Optional `colors.scale` defines a continuous or discrete scale over the normalized visual domain [-1, 1]; for general numeric matrices the adapter transforms values before lookup and keeps original values in the scene. See [COLOR-SCALES.md](COLOR-SCALES.md).
 - `dimensions` are physical output dimensions, not logical scene units. Consumers convert mm or inches to the renderer's output coordinate system.
 - `typography` records the requested font family and base size in points.
 - `output` selects SVG and a destination path. PDF/PNG and renderer-specific options are deliberately deferred.
 
 ## Validation and normalization
 
-The JSON Schema rejects unknown fields and validates local field constraints. The Python validator additionally checks square dimensions, unique labels, matrix symmetry, diagonal values, and color-scale coverage, ordering, zero handling, and signed-domain symmetry. CSV parsing and validation are performed by the eventual data-loading consumer.
+The JSON Schema rejects unknown fields and validates local field constraints. The Python validator additionally checks square dimensions, unique labels, finite values, correlation-only symmetry and unit diagonal, and color-scale coverage, ordering, zero handling, and signed-domain symmetry. General numeric matrices do not require symmetry or a unit diagonal. CSV parsing and validation are performed by the eventual data-loading consumer.
 
 Normalized configurations preserve supplied values and source matrix/label order. Scene adaptation applies the requested display permutation without mutating the source config. Canonical JSON uses lexicographically sorted object keys, compact separators, UTF-8 text, and no numeric rounding. This provides stable semantic comparisons without changing numeric precision. A JSON Schema validator does not mutate input documents.
 

@@ -158,6 +158,70 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(scene["matrix"], [[original[i][j] for j in permutation] for i in permutation])
         self.assertEqual(scene["p_values"], [[p_values[i][j] for j in permutation] for i in permutation])
 
+    def test_general_numeric_validation_and_scene_mapping(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[10.0, 12.0, 11.0], [8.0, 9.0, 12.0], [11.0, 12.0, -8.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_mode"], "general_numeric")
+        self.assertEqual(scene["matrix_semantics"]["color_mapping"], "diverging")
+        self.assertEqual(scene["matrix_semantics"]["color_limits"], [-8.0, 12.0])
+        self.assertEqual(scene["matrix"][0][0], 10.0)
+        self.assertEqual(len(scene["cell_colors"]), 9)
+
+    def test_general_numeric_one_sided_and_explicit_limits(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[2.0, 3.0, 4.0], [3.0, 2.0, 4.0], [4.0, 4.0, 2.0]]
+        config["matrix"]["col_limits"] = [1.0, 5.0]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
+        self.assertEqual(scene["matrix_semantics"]["color_limits"], [1.0, 5.0])
+        self.assertEqual(scene["matrix"][0][0], 2.0)
+
+    def test_general_numeric_csv_requires_explicit_limits(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"] = {
+            "kind": "matrix_csv", "path": "values.csv", "delimiter": ",",
+            "header": True, "row_labels": True,
+        }
+        config["matrix"]["col_limits"] = [-10.0, 10.0]
+        validate_config(config)
+        config["matrix"].pop("col_limits")
+        with self.assertRaisesRegex(ValueError, "CSV-backed general_numeric requires explicit limits"):
+            validate_config(config)
+
+    def test_general_numeric_negative_only_and_constant_domains(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[-4.0, -3.0, -2.0], [-3.0, -4.0, -2.0], [-2.0, -2.0, -4.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 2.0)
+        config["input"]["values"] = [[5.0, 5.0, 5.0], [5.0, 5.0, 5.0], [5.0, 5.0, 5.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_limits"], [4.5, 5.5])
+
+    def test_general_numeric_rejects_all_missing_and_uncovered_limits(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[None, None, None], [None, None, None], [None, None, None]]
+        with self.assertRaisesRegex(ValueError, "all-missing"):
+            validate_config(config)
+        config["input"]["values"] = [[2.0, 3.0, 4.0], [3.0, 2.0, 4.0], [4.0, 4.0, 2.0]]
+        config["matrix"]["col_limits"] = [0.0, 3.0]
+        with self.assertRaisesRegex(ValueError, "cover every observed"):
+            validate_config(config)
+
+    def test_schema_keeps_correlation_range_but_allows_general_values(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["input"]["values"][0][1] = 1.2
+        config["input"]["values"][1][0] = 1.2
+        self.assertTrue(list(Draft202012Validator(SCHEMA).iter_errors(config)))
+        config["matrix"]["kind"] = "general_numeric"
+        self.assertFalse(list(Draft202012Validator(SCHEMA).iter_errors(config)))
+
     def test_canonical_json_is_deterministic(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         self.assertEqual(canonical_json(config), canonical_json(config))
