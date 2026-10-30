@@ -271,3 +271,27 @@ fn invalid_publication_matrix_fails_before_creating_output() {
     assert!(!output_path.exists(), "invalid matrix must not leave a partial output file");
     fs::remove_dir_all(directory).ok();
 }
+
+
+#[test]
+fn init_requires_a_tty_and_never_prompts_in_pipes() {
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .arg("init")
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires an interactive terminal"));
+    assert!(output.stdout.is_empty(), "non-interactive init must fail before printing prompts");
+}
+
+#[test]
+fn ordinary_commands_remain_non_interactive() {
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--config"])
+        .arg(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json"))
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("publication-config v1"));
+}
