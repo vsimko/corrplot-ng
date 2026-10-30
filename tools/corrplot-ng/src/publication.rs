@@ -342,12 +342,30 @@ pub(crate) fn parse_json_matrix(
             "general_matrix_plot" => crate::Kind::General,
             other => return Err(format!("unsupported scene.kind '{other}'")),
         };
+        for field in ["width", "height"] {
+            if number(required(root, field, "scene")?, &format!("scene.{field}"))? <= 0.0 {
+                return Err(format!("scene.{field} must be greater than zero"));
+            }
+        }
+        for field in ["title", "description", "annotation"] {
+            string(required(root, field, "scene")?, &format!("scene.{field}"))?;
+        }
+        let style = object(required(root, "style", "scene")?, "scene.style")?;
+        keys(style, &["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"], "scene.style")?;
+        for field in ["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"] {
+            color(required(style, field, "scene.style")?, &format!("scene.style.{field}"))?;
+        }
         let label_items = array(required(root, "labels", "scene")?, "scene.labels")?;
         let mut labels = Vec::with_capacity(label_items.len());
         for (index, item) in label_items.iter().enumerate() {
-            let label = object(item, &format!("scene.labels[{index}]"))?;
-            labels.push(string(required(label, "text", &format!("scene.labels[{index}]"))?,
-                &format!("scene.labels[{index}].text"))?.to_string());
+            let parent = format!("scene.labels[{index}]");
+            let label = object(item, &parent)?;
+            keys(label, &["text", "row_x", "row_y", "column_x", "column_y", "row_visible",
+                "column_visible", "row_position", "column_position", "column_rotation", "offset", "plotmath"], &parent)?;
+            labels.push(string(required(label, "text", &parent)?, &format!("{parent}.text"))?.to_string());
+            for field in ["row_x", "row_y", "column_x", "column_y"] {
+                number(required(label, field, &parent)?, &format!("{parent}.{field}"))?;
+            }
         }
         if labels.is_empty() { return Err("scene.labels must not be empty".into()); }
         let n = labels.len();
@@ -358,11 +376,19 @@ pub(crate) fn parse_json_matrix(
         let mut values = vec![vec![None; n]; n];
         let mut seen = vec![vec![false; n]; n];
         for (index, item) in cell_items.iter().enumerate() {
-            let cell = object(item, &format!("scene.cells[{index}]"))?;
-            let row_value = number(required(cell, "row", &format!("scene.cells[{index}]"))?,
-                &format!("scene.cells[{index}].row"))?;
-            let column_value = number(required(cell, "column", &format!("scene.cells[{index}]"))?,
-                &format!("scene.cells[{index}].column"))?;
+            let parent = format!("scene.cells[{index}]");
+            let cell = object(item, &parent)?;
+            keys(cell, &["row", "column", "value", "x", "y", "center_x", "center_y", "size",
+                "color", "visible", "encoding", "method", "region", "p_value", "significance",
+                "confidence_interval", "normalized_value"], &parent)?;
+            for field in ["x", "y", "center_x", "center_y"] {
+                number(required(cell, field, &parent)?, &format!("{parent}.{field}"))?;
+            }
+            if number(required(cell, "size", &parent)?, &format!("{parent}.size"))? <= 0.0 {
+                return Err(format!("{parent}.size must be greater than zero"));
+            }
+            let row_value = number(required(cell, "row", &parent)?, &format!("{parent}.row"))?;
+            let column_value = number(required(cell, "column", &parent)?, &format!("{parent}.column"))?;
             if row_value.fract() != 0.0 || column_value.fract() != 0.0
                 || row_value < 0.0 || column_value < 0.0
                 || row_value >= n as f64 || column_value >= n as f64 {
