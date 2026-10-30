@@ -77,6 +77,24 @@ class ColorScale:
                           for i, (value, stop) in enumerate(zip(values, stops))]
             self.breaks = []
             self.colors = []
+        elif self.kind == "sequential":
+            if spec.get("interpolation", "rgb") != "rgb":
+                raise ValueError("color_scale.interpolation: only 'rgb' is supported")
+            stops = spec.get("stops")
+            if not isinstance(stops, list) or len(stops) < 2:
+                raise ValueError("color_scale.stops: sequential scales require at least two stops")
+            values = [_finite_number(stop.get("value"), f"color_scale.stops[{i}].value")
+                      for i, stop in enumerate(stops) if isinstance(stop, dict)]
+            if len(values) != len(stops):
+                raise ValueError("color_scale.stops: each stop must be an object")
+            if values[0] != 0.0 or values[-1] != 1.0:
+                raise ValueError("color_scale.stops: sequential scales must cover [0, 1]")
+            if any(left >= right for left, right in zip(values, values[1:])):
+                raise ValueError("color_scale.stops: values must be strictly increasing")
+            self.stops = [(value, _color(stop.get("color"), f"color_scale.stops[{i}].color")
+                           ) for i, (value, stop) in enumerate(zip(values, stops))]
+            self.breaks = []
+            self.colors = []
         elif self.kind == "discrete":
             raw_breaks = spec.get("breaks")
             raw_colors = spec.get("colors")
@@ -102,8 +120,10 @@ class ColorScale:
         if value is None:
             return self.missing_color
         number = _finite_number(value, "value")
-        if not -1.0 <= number <= 1.0:
-            raise ValueError("value: correlation must be within [-1, 1]")
+        lower, upper = (0.0, 1.0) if self.kind == "sequential" else (-1.0, 1.0)
+        if not lower <= number <= upper:
+            domain = "[0, 1]" if self.kind == "sequential" else "[-1, 1]"
+            raise ValueError(f"value: scale value must be within {domain}")
 
         if self.kind == "discrete":
             for index, (lower, upper) in enumerate(zip(self.breaks, self.breaks[1:])):
