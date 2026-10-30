@@ -96,3 +96,80 @@ fn publication_config_can_emit_renderer_neutral_scene_v1() {
     assert!(scene.contains("\"typography\""));
     fs::remove_file(output_path).ok();
 }
+
+
+#[test]
+fn publication_config_resolves_csv_paths_relative_to_config_file() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-relative-csv-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let config_path = directory.join("figure.json");
+    let csv_path = directory.join("matrix.csv");
+    let output_path = directory.join("rendered.svg");
+    fs::write(&csv_path, ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n").unwrap();
+    let config = r##"{
+      "config_version": 1,
+      "input": {"kind":"matrix_csv","path":"matrix.csv","delimiter":",","header":true,"row_labels":true},
+      "matrix": {"kind":"correlation","method":"pearson","missing":"preserve"},
+      "plot": {"method":"circle","display":"full","ordering":"original","show_values":false,
+        "significance":{"enabled":false,"p_values":null,"thresholds":[0.05]}},
+      "colors":{"negative":"#b2182b","neutral":"#f7f7f7","positive":"#2166ac","missing":"#d9d9d9"},
+      "dimensions":{"width":120,"height":100,"unit":"mm"},
+      "typography":{"family":"sans-serif","base_size":9},
+      "output":{"format":"svg","path":"ignored.svg"}
+    }"##;
+    fs::write(&config_path, config).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let svg = fs::read_to_string(&output_path).unwrap();
+    assert!(svg.contains(">alpha</text>"));
+    assert!(svg.contains(">beta</text>"));
+
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn publication_svg_is_byte_for_byte_deterministic() {
+    let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-deterministic-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let first_path = directory.join("first.svg");
+    let second_path = directory.join("second.svg");
+
+    for output_path in [&first_path, &second_path] {
+        let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+            .args(["render", "--config"]).arg(&config)
+            .args(["--output"]).arg(output_path)
+            .output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    }
+    assert_eq!(fs::read(&first_path).unwrap(), fs::read(&second_path).unwrap());
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn invalid_publication_config_fails_before_creating_output() {
+    let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(fixture).unwrap();
+    let invalid = source.replace("\"method\": \"circle\"", "\"method\": \"square\"");
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-invalid-config-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let config_path = directory.join("invalid.json");
+    let output_path = directory.join("must-not-exist.svg");
+    fs::write(&config_path, invalid).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .output().unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("not yet supported"));
+    assert!(!output_path.exists(), "invalid config must not leave a partial output file");
+
+    fs::remove_dir_all(directory).ok();
+}
