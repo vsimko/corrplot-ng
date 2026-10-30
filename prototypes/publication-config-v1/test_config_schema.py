@@ -165,6 +165,7 @@ class PublicationConfigTests(unittest.TestCase):
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_mode"], "general_numeric")
         self.assertEqual(scene["matrix_semantics"]["color_mapping"], "diverging")
+        self.assertEqual(scene["matrix_semantics"]["palette"], "RdBu")
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [-8.0, 12.0])
         self.assertEqual(scene["matrix"][0][0], 10.0)
         self.assertEqual(len(scene["cell_colors"]), 9)
@@ -192,6 +193,20 @@ class PublicationConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CSV-backed general_numeric requires explicit limits"):
             validate_config(config)
 
+    def test_general_numeric_selects_legacy_sequential_palette_for_positive_and_negative(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[1.0, 2.0, 2.0], [2.0, 1.0, 3.0], [2.0, 3.0, 3.0]]
+        positive = to_scene_config(config)
+        self.assertEqual(positive["matrix_semantics"]["palette"], "YlOrBr")
+        self.assertEqual(positive["cell_colors"][0], "#ffffe5")
+        self.assertEqual(positive["cell_colors"][-1], "#662506")
+        config["input"]["values"] = [[-3.0, -2.0, -2.0], [-2.0, -3.0, -1.0], [-2.0, -1.0, -1.0]]
+        negative = to_scene_config(config)
+        self.assertEqual(negative["matrix_semantics"]["palette"], "YlOrBr")
+        self.assertEqual(negative["cell_colors"][0], "#ffffe5")
+        self.assertEqual(negative["cell_colors"][-1], "#662506")
+
     def test_general_numeric_negative_only_and_constant_domains(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
@@ -200,6 +215,7 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
         self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 4.0)
         self.assertEqual(scene["matrix_semantics"]["normalization"]["zoom"], 0.5)
+        self.assertEqual(scene["matrix_semantics"]["palette"], "YlOrBr")
         config["input"]["values"] = [[5.0, 5.0, 5.0], [5.0, 5.0, 5.0], [5.0, 5.0, 5.0]]
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [4.5, 5.5])
