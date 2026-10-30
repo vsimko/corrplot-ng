@@ -19,6 +19,12 @@ Rscript prototypes/shared-svg/test_r_scene_consumer.R
 - The same input produces byte-for-byte stable SVG in this prototype.
 - Missing values and a user annotation can be represented in the output.
 - Basic input constraints can be checked before rendering.
+- The legacy-output oracle exercises exact -1/+1 correlations, a constant-like
+  variable with undefined off-diagonal correlations, and a fully missing
+  row/column (including its diagonal). The bridge checks that JSON nulls remain
+  missing rather than becoming zero.
+- These are targeted semantic edge cases, not a claim that every malformed or
+  statistically degenerate matrix is accepted by the legacy plotting API.
 
 ## What this does not validate
 
