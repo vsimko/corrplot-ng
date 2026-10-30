@@ -5,6 +5,7 @@ use std::io::{self, Read, Write};
 use std::process;
 
 mod publication;
+mod wizard;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const CELL: f64 = 84.0;
@@ -41,6 +42,7 @@ USAGE:
   corrplot-ng <COMMAND> [OPTIONS]
 
 COMMANDS:
+  init       Interactively create a publication-config v1 file
   render     Render a labelled CSV/TSV matrix to SVG or scene-v1 JSON
   validate   Validate a labelled CSV/TSV matrix without rendering
   inspect    Print detected matrix metadata
@@ -349,6 +351,7 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
     match args[1].as_str() {
+        "init" => wizard::run(&args[2..])?,
         "version" => println!("corrplot-ng {VERSION} (Rust {})", env!("CARGO_PKG_VERSION")),
         "presets" => println!("default\tCircle glyphs with sign-based colors\nnumber\tNumeric values in cells"),
         "render" | "validate" | "inspect" => {
@@ -409,7 +412,7 @@ fn main() {
         let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported method") ||
-            message.contains("missing value for");
+            message.contains("missing value for") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
         fail(message, if usage_error { 2 } else { 1 });
     }
 }
