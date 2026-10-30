@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "description": "General numeric matrix reference cases aligned with corrplot 0.95 is.corr=FALSE limits, transforms and default palette families.",
+  "reference": {
+    "package": "corrplot",
+    "version": "0.95",
+    "source": "R/corrplot.R"
+  },
+  "cases": [
+    {
+      "id": "positive-only",
+      "matrix": [
+        [
+          2,
+          4
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "diag": true,
+      "col_limits": [
+        2,
+        8
+      ],
+      "mapping": "sequential",
+      "palette": "YlOrBr",
+      "normalization": {
+        "intercept": -2,
+        "zoom": 0.16666666666666666
+      }
+    },
+    {
+      "id": "negative-only",
+      "matrix": [
+        [
+          -8,
+          -4
+        ],
+        [
+          -4,
+          -2
+        ]
+      ],
+      "diag": true,
+      "col_limits": [
+        -8,
+        -2
+      ],
+      "mapping": "sequential",
+      "palette": "YlOrBr",
+      "normalization": {
+        "intercept": 8,
+        "zoom": 0.16666666666666666
+      }
+    },
+    {
+      "id": "mixed-sign",
+      "matrix": [
+        [
+          -2,
+          4
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "diag": true,
+      "col_limits": [
+        -2,
+        4
+      ],
+      "mapping": "diverging",
+      "palette": "RdBu",
+      "normalization": {
+        "intercept": 0,
+        "zoom": 0.25
+      }
+    },
+    {
+      "id": "mixed-sign-custom-limits",
+      "matrix": [
+        [
+          -2,
+          4
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "diag": true,
+      "col_limits": [
+        -5,
+        5
+      ],
+      "mapping": "diverging",
+      "palette": "RdBu",
+      "normalization": {
+        "intercept": 0,
+        "zoom": 0.2
+      }
+    },
+    {
+      "id": "constant-positive",
+      "matrix": [
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ],
+      "diag": true,
+      "col_limits": [
+        6.5,
+        7.5
+      ],
+      "mapping": "sequential",
+      "palette": "YlOrBr",
+      "normalization": {
+        "intercept": -6.5,
+        "zoom": 1
+      }
+    },
+    {
+      "id": "hidden-diagonal-negative-constant",
+      "matrix": [
+        [
+          100,
+          -3
+        ],
+        [
+          -3,
+          200
+        ]
+      ],
+      "diag": false,
+      "col_limits": [
+        -3.5,
+        -2.5
+      ],
+      "mapping": "sequential",
+      "palette": "YlOrBr",
+      "normalization": {
+        "intercept": 3.5,
+        "zoom": 1
+      }
+    }
+  ],
+  "invalid_cases": [
+    {
+      "id": "all-missing",
+      "matrix": [
+        [
+          null,
+          null
+        ],
+        [
+          null,
+          null
+        ]
+      ],
+      "error": "no observed values"
+    },
+    {
+      "id": "outside-explicit-limits",
+      "matrix": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "col_limits": [
+        1.5,
+        2.5
+      ],
+      "error": "cover every observed"
+    }
+  ]
+}
