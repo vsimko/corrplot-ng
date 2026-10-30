@@ -4,19 +4,21 @@ use std::fs;
 use std::io::{self, Read, Write};
 use std::process;
 
+mod publication;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const CELL: f64 = 84.0;
 const LEFT: f64 = 104.0;
 const TOP: f64 = 76.0;
 
 #[derive(Debug, Clone)]
-struct Matrix {
-    labels: Vec<String>,
-    values: Vec<Vec<Option<f64>>>,
+pub(crate) struct Matrix {
+    pub(crate) labels: Vec<String>,
+    pub(crate) values: Vec<Vec<Option<f64>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Kind { Correlation, General }
+pub(crate) enum Kind { Correlation, General }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Format { Svg, SceneJson }
@@ -24,6 +26,7 @@ enum Format { Svg, SceneJson }
 #[derive(Debug)]
 struct Options {
     input: String,
+    config: Option<String>,
     output: Option<String>,
     format: Format,
     kind: Kind,
@@ -46,7 +49,7 @@ COMMANDS:
   help       Show this help
 
 RENDER OPTIONS:
-  -i, --input PATH       Input CSV/TSV file; use - for stdin (required)
+  -i, --input PATH       Input CSV/TSV file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
   -o, --output PATH      Output file; default is stdout
       --format FORMAT    svg (default) or scene-json
       --kind KIND        correlation (default) or general
@@ -71,6 +74,7 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
 fn parse_args(args: &[String]) -> Result<Options, String> {
     if args.len() < 2 { return Err(usage().to_string()); }
     let mut input = None;
+    let mut config = None;
     let mut output = None;
     let mut format = Format::Svg;
     let mut kind = Kind::Correlation;
@@ -84,6 +88,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
         let value = args[i + 1].clone();
         match arg {
             "-i" | "--input" => input = Some(value),
+            "--config" => config = Some(value),
             "-o" | "--output" => output = Some(value),
             "--format" => format = match value.as_str() {
                 "svg" => Format::Svg,
@@ -107,7 +112,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
         i += 2;
     }
     Ok(Options {
-        input: input.ok_or_else(|| "render requires --input PATH".to_string())?,
+        input: input.unwrap_or_default(), config,
         output, format, kind, method, title,
     })
 }
@@ -156,7 +161,7 @@ fn parse_csv_records(source: &str) -> Result<Vec<Vec<String>>, String> {
     Ok(records)
 }
 
-fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
+pub(crate) fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
     let records = parse_csv_records(source)?;
     if records.len() < 2 { return Err("expected a header and at least one matrix row".into()); }
     let header = &records[0];
@@ -205,7 +210,7 @@ fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
     if kind == Kind::Correlation {
         for r in 0..n {
             for c in 0..n {
-                if (match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true }) {
+                if match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true } {
                     return Err(format!("correlation matrix is not symmetric at ('{}', '{}')", labels[r], labels[c]));
                 }
             }
@@ -348,6 +353,29 @@ fn run() -> Result<(), String> {
         "presets" => println!("default\tCircle glyphs with sign-based colors\nnumber\tNumeric values in cells"),
         "render" | "validate" | "inspect" => {
             let opts = parse_args(&args)?;
+            if let Some(config_path) = opts.config.as_deref() {
+                let publication = publication::Publication::load(config_path)?;
+                match args[1].as_str() {
+                    "validate" => println!("valid: publication-config v1; {} x {} {} matrix; ordering={}; display={}",
+                        publication.labels.len(), publication.labels.len(), publication.kind, publication.ordering, publication.display),
+                    "inspect" => println!("kind: {}\nrows: {}\ncolumns: {}\nordering: {}\ndisplay: {}",
+                        publication.kind, publication.labels.len(), publication.labels.len(), publication.ordering, publication.display),
+                    "render" => {
+                        let content = match opts.format {
+                            Format::Svg => publication.svg(&opts.title),
+                            Format::SceneJson => publication.scene_json(&opts.title),
+                        };
+                        let destination = match opts.format {
+                            Format::Svg => opts.output.as_deref().or(Some(publication.output.as_str())),
+                            Format::SceneJson => opts.output.as_deref(),
+                        };
+                        write_output(destination, &content)?;
+                    }
+                    _ => unreachable!(),
+                }
+                return Ok(());
+            }
+            if opts.input.is_empty() { return Err(format!("{} requires --input PATH or --config PATH", args[1])); }
             let source = read_input(&opts.input)?;
             let matrix = parse_matrix(&source, opts.kind)?;
             match args[1].as_str() {
@@ -378,7 +406,7 @@ fn run() -> Result<(), String> {
 
 fn main() {
     if let Err(message) = run() {
-        let usage_error = message.contains("requires --input") || message.contains("unknown option") ||
+        let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported method") ||
             message.contains("missing value for");
