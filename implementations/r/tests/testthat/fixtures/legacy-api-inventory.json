@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "reference": {
+    "package": "corrplot",
+    "version": "0.95",
+    "repository": "https://github.com/taiyun/corrplot",
+    "ref": "62532f700e6c9d04b93ffbf0bf56e264b0e0368e",
+    "date": "2024-10-14",
+    "namespace_path": "NAMESPACE",
+    "scope": "All functions exported by the pinned upstream NAMESPACE"
+  },
+  "functions": [
+    {
+      "name": "corrplot",
+      "role": "Primary plotting API",
+      "formals": ["corr","method","type","col","col.lim","is.corr","bg","title","add","diag","outline","mar","addgrid.col","addCoef.col","addCoefasPercent","order","hclust.method","addrect","rect.col","rect.lwd","tl.pos","tl.cex","tl.col","tl.offset","tl.srt","cl.pos","cl.length","cl.cex","cl.ratio","cl.align.text","cl.offset","number.cex","number.font","number.digits","addshade","shade.lwd","shade.col","transKeepSign","p.mat","sig.level","insig","pch","pch.col","pch.cex","plotCI","lowCI.mat","uppCI.mat","na.label","na.label.col","win.asp","..."],
+      "defaults": {
+        "method": ["circle","square","ellipse","number","shade","color","pie"],
+        "type": ["full","lower","upper"],
+        "col": null,
+        "col.lim": null,
+        "is.corr": true,
+        "bg": "white",
+        "title": "",
+        "add": false,
+        "diag": true,
+        "outline": false,
+        "mar": [0,0,0,0],
+        "addgrid.col": null,
+        "addCoef.col": null,
+        "addCoefasPercent": false,
+        "order": ["original","AOE","FPC","hclust","alphabet"],
+        "hclust.method": ["complete","ward","ward.D","ward.D2","single","average","mcquitty","median","centroid"],
+        "addrect": null,
+        "rect.col": "black",
+        "rect.lwd": 2,
+        "tl.pos": null,
+        "tl.cex": 1,
+        "tl.col": "red",
+        "tl.offset": 0.4,
+        "tl.srt": 90,
+        "cl.pos": null,
+        "cl.length": null,
+        "cl.cex": 0.8,
+        "cl.ratio": 0.15,
+        "cl.align.text": "c",
+        "cl.offset": 0.5,
+        "number.cex": 1,
+        "number.font": 2,
+        "number.digits": null,
+        "addshade": ["negative","positive","all"],
+        "shade.lwd": 1,
+        "shade.col": "white",
+        "transKeepSign": true,
+        "p.mat": null,
+        "sig.level": 0.05,
+        "insig": ["pch","p-value","blank","n","label_sig"],
+        "pch": 4,
+        "pch.col": "black",
+        "pch.cex": 3,
+        "plotCI": ["n","square","circle","rect"],
+        "lowCI.mat": null,
+        "uppCI.mat": null,
+        "na.label": "?",
+        "na.label.col": "black",
+        "win.asp": 1
+      },
+      "accepted_values": {
+        "method": ["circle","square","ellipse","number","shade","color","pie"],
+        "type": ["full","lower","upper"],
+        "order": ["original","AOE","FPC","hclust","alphabet"],
+        "hclust.method": ["complete","ward","ward.D","ward.D2","single","average","mcquitty","median","centroid"],
+        "addshade": ["negative","positive","all"],
+        "insig": ["pch","p-value","blank","n","label_sig"],
+        "plotCI": ["n","square","circle","rect"],
+        "tl.pos": ["lt","ld","td","d","l","n"],
+        "cl.pos": ["r","b","n"]
+      }
+    },
+    {
+      "name": "corrplot.mixed",
+      "role": "Convenience wrapper for upper/lower methods",
+      "formals": ["corr","lower","upper","tl.pos","diag","bg","addgrid.col","lower.col","upper.col","plotCI","mar","..."],
+      "defaults": {
+        "lower": "number",
+        "upper": "circle",
+        "tl.pos": ["d","lt","n"],
+        "diag": ["n","l","u"],
+        "bg": "white",
+        "addgrid.col": "grey",
+        "lower.col": null,
+        "upper.col": null,
+        "plotCI": ["n","square","circle","rect"],
+        "mar": [0,0,0,0]
+      },
+      "accepted_values": {
+        "lower": ["circle","square","ellipse","number","shade","color","pie"],
+        "upper": ["circle","square","ellipse","number","shade","color","pie"],
+        "tl.pos": ["d","lt","n"],
+        "diag": ["n","l","u"],
+        "plotCI": ["n","square","circle","rect"]
+      }
+    },
+    {
+      "name": "corrMatOrder",
+      "role": "Matrix variable ordering",
+      "formals": ["corr","order","hclust.method"],
+      "defaults": {
+        "order": ["AOE","FPC","hclust","alphabet"],
+        "hclust.method": ["complete","ward","ward.D","ward.D2","single","average","mcquitty","median","centroid"]
+      },
+      "accepted_values": {
+        "order": ["AOE","FPC","hclust","alphabet"],
+        "hclust.method": ["complete","ward","ward.D","ward.D2","single","average","mcquitty","median","centroid"]
+      }
+    },
+    {
+      "name": "cor.mtest",
+      "role": "Pairwise significance tests and confidence intervals",
+      "formals": ["mat","..."],
+      "defaults": {},
+      "accepted_values": {},
+      "returns": ["p","lowCI","uppCI"]
+    },
+    {
+      "name": "colorlegend",
+      "role": "Standalone color legend drawing helper",
+      "formals": ["colbar","labels","at","xlim","ylim","vertical","ratio.colbar","lim.segment","align","addlabels","..."],
+      "defaults": {
+        "at": null,
+        "xlim": [0,1],
+        "ylim": [0,1],
+        "vertical": true,
+        "ratio.colbar": 0.4,
+        "lim.segment": "auto",
+        "align": ["c","l","r"],
+        "addlabels": true
+      },
+      "accepted_values": {"align":["c","l","r"]}
+    },
+    {
+      "name": "COL1",
+      "role": "Sequential palette generator",
+      "formals": ["sequential","n"],
+      "defaults": {
+        "sequential": ["Oranges","Purples","Reds","Blues","Greens","Greys","OrRd","YlOrRd","YlOrBr","YlGn"],
+        "n": 200
+      },
+      "accepted_values": {"sequential":["Oranges","Purples","Reds","Blues","Greens","Greys","OrRd","YlOrRd","YlOrBr","YlGn"]}
+    },
+    {
+      "name": "COL2",
+      "role": "Diverging palette generator",
+      "formals": ["diverging","n"],
+      "defaults": {
+        "diverging": ["RdBu","BrBG","PiYG","PRGn","PuOr","RdYlBu"],
+        "n": 200
+      },
+      "accepted_values": {"diverging":["RdBu","BrBG","PiYG","PRGn","PuOr","RdYlBu"]}
+    },
+    {
+      "name": "corrRect",
+      "role": "Add named/indexed rectangles to a previously drawn plot",
+      "formals": ["corrRes","index","name","namesMat","col","lwd","..."],
+      "defaults": {
+        "corrRes": null,
+        "index": null,
+        "name": null,
+        "namesMat": null,
+        "col": "black",
+        "lwd": 2
+      },
+      "accepted_values": {}
+    },
+    {
+      "name": "corrRect.hclust",
+      "role": "Add rectangles for hierarchical clusters",
+      "formals": ["corr","k","col","lwd","method"],
+      "defaults": {
+        "k": 2,
+        "col": "black",
+        "lwd": 2,
+        "method": ["complete","ward","ward.D","ward.D2","single","average","mcquitty","median","centroid"]
+      },
+      "accepted_values": {
+        "method": ["complete","ward","ward.D","ward.D2","single","average","mcquitty","median","centroid"]
+      }
+    }
+  ],
+  "plot_semantics": {
+    "matrix_shapes": ["square","rectangular"],
+    "triangles": ["full","upper","lower"],
+    "methods": ["circle","square","ellipse","number","shade","color","pie"],
+    "ordering": ["original","AOE","FPC","hclust","alphabet"],
+    "labels": ["row/column dimnames","plotmath prefixes ':', '=' and '$'","independent label placement and typography"],
+    "annotations": ["coefficient text","significance marks/p-values","missing-value labels","confidence intervals","cluster rectangles"],
+    "non_correlation_mode": "is.corr=FALSE supports general numeric matrices and col.lim-based transforms",
+    "missing_values": "NA cells remain missing and may be labeled; do not coerce to zero",
+    "graphics_device": "Base R graphics side effects are part of the practical API: drawing on the active device, add=TRUE overlays, par() settings, and follow-up drawing helpers"
+  },
+  "compatibility_notes": {
+    "public_contract": ["exported function names and formal arguments","documented defaults and accepted choices","matrix ordering and triangle selection","label and annotation semantics","returned values used by helper functions","active graphics-device behavior"],
+    "implementation_details": ["private draw_* helpers","internal coordinate/data-frame construction not returned as documented output","palette interpolation implementation where only resulting colors are observable"],
+    "scene_v1_status_values": ["supported","contract-extension","r-adapter","deferred"],
+    "source_of_truth": "The pinned upstream package and this inventory; do not infer support solely from similarly named scene fields."
+  }
+}
