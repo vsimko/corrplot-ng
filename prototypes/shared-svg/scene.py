@@ -53,6 +53,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     matrix_mode = config.get("matrix_mode", "correlation")
     if matrix_mode not in ("correlation", "general_numeric"):
         raise ValueError("matrix_mode must be correlation or general_numeric")
+    if matrix_mode == "general_numeric" and not isinstance(config.get("matrix_semantics"), dict):
+        raise ValueError("general_numeric scenes require explicit matrix_semantics")
     for row in matrix:
         for value in row:
             if value is None:
