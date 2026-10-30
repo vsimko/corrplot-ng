@@ -134,14 +134,16 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     digits = config.get("number_digits")
     if digits is None:
         digits = 0 if add_coef_as_percent else 2
-    if isinstance(digits, bool) or not isinstance(digits, int) or digits < 0:
-        raise ValueError("number_digits must be a non-negative integer ")
+    if isinstance(digits, bool) or not isinstance(digits, (int, float)) or not float(digits).is_integer() or digits < 0:
+        raise ValueError("number_digits must be a non-negative integer")
+    digits = int(digits)
     number_cex = config.get("number_cex", 1)
     if isinstance(number_cex, bool) or not isinstance(number_cex, (int, float)) or not 0 < number_cex <= 10:
         raise ValueError("number_cex must be greater than 0 and at most 10")
     number_font = config.get("number_font", 2)
-    if isinstance(number_font, bool) or not isinstance(number_font, int) or number_font not in (1, 2, 3, 4):
+    if isinstance(number_font, bool) or not isinstance(number_font, (int, float)) or number_font not in (1, 2, 3, 4):
         raise ValueError("number_font must be one of 1, 2, 3, or 4")
+    number_font = int(number_font)
 
     def format_number(value: float) -> str:
         # Python's round and the legacy R round both use ties-to-even semantics.
@@ -160,7 +162,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         if method == "number":
             role = "value"
             color = (
-                "#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd"
+                cell.get("color") or ("#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd")
             )
         elif add_coef_color is not None:
             role = "coefficient"
