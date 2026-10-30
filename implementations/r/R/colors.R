@@ -73,7 +73,7 @@ COL2 <- function(diverging = c("RdBu", "BrBG", "PiYG", "PRGn", "PuOr", "RdYlBu")
 
 .corrplot_ng_validate_palette_length <- function(n) {
   if (!is.numeric(n) || length(n) != 1L || is.na(n) || !is.finite(n) ||
-      n < 1 || n != as.integer(n)) {
+      n < 1 || n != floor(n)) {
     stop("n must be a positive integer", call. = FALSE)
   }
   invisible(as.integer(n))
