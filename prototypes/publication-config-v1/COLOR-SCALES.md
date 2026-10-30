@@ -1,9 +1,10 @@
-# Correlation color-scale semantics
+# Correlation and general-matrix color-scale semantics
 
-Publication config v1 supports explicit, renderer-neutral mappings for signed
-correlation values in [-1, 1]. A scale is configured as optional
-`colors.scale`; when omitted, the legacy negative/neutral/positive colors
-are converted to a three-stop continuous scale. The existing
+Publication config v1 supports renderer-neutral color mappings for both
+correlation values in [-1, 1] and arbitrary finite general numeric matrices.
+A scale is configured as optional `colors.scale`; when omitted, correlation
+and mixed-sign matrices use the signed diverging scale, while one-sided
+general matrices use the legacy `YlOrBr` sequential palette. The existing
 `colors.missing` remains the missing-value color.
 
 ## Continuous diverging scales
@@ -51,14 +52,35 @@ Intervals are left-closed and right-open; only the final interval includes
 its upper endpoint. Thus a value exactly on a break belongs to the interval
 starting at that break. Legend labels use the same convention.
 
-## Sequential palettes
+## Sequential scales for general numeric matrices
 
-A one-direction sequential palette is generally inappropriate for signed
-correlations because negative and positive values have different directions
-and zero is a meaningful neutral point. This contract therefore requires a
-symmetric domain and an explicit zero stop/break rather than accepting a
-misleading sequential mapping. Sequential palettes belong to non-signed
-quantities and are outside this correlation-scale contract.
+A sequential scale uses ordered stops covering the normalized visual domain
+[0, 1]. General numeric matrices whose observed values are all non-negative
+or all non-positive use the legacy `YlOrBr` palette by default. Values are
+normalized monotonically from the observed minimum to maximum, so negative-only
+matrices retain their numeric ordering while their original signed values
+remain unchanged in the scene. A constant range is padded deterministically
+before normalization. An explicit sequential scale can replace the default
+palette:
+
+```json
+{
+  "scale": {
+    "type": "sequential",
+    "interpolation": "rgb",
+    "stops": [
+      {"value": 0, "color": "#ffffe5"},
+      {"value": 0.5, "color": "#fec44f"},
+      {"value": 1, "color": "#662506"}
+    ]
+  }
+}
+```
+
+Mixed-sign general matrices use the legacy `RdBu` diverging palette by default.
+The palette family is selected from observed values, not from an expanded
+explicit color domain. Explicit limits must cover all observed values; values
+outside them are rejected rather than silently clipped.
 
 ## Missing values and legends
 

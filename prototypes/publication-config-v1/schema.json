@@ -232,7 +232,7 @@
           "$ref": "#/$defs/color"
         },
         "scale": {
-          "description": "Optional explicit diverging scale for correlation values. Missing values always use colors.missing.",
+          "description": "Optional explicit color scale. Continuous/discrete signed scales cover correlation values; sequential scales cover normalized general-matrix values in [0, 1]. Missing values always use colors.missing.",
           "oneOf": [
             {
               "type": "object",
@@ -298,6 +298,44 @@
                   "minItems": 2,
                   "items": {
                     "$ref": "#/$defs/color"
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "stops"
+              ],
+              "properties": {
+                "type": {
+                  "const": "sequential"
+                },
+                "interpolation": {
+                  "const": "rgb"
+                },
+                "stops": {
+                  "type": "array",
+                  "minItems": 2,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "value",
+                      "color"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "color": {
+                        "$ref": "#/$defs/color"
+                      }
+                    }
                   }
                 }
               }

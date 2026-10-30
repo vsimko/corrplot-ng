@@ -14,6 +14,7 @@ test_that("the scene engine builds a renderer-neutral scene-v1 object", {
   }, numeric(1)), c(1, 0.6, NA_real_, 1))
   expect_identical(scene$annotation, "Example")
   expect_identical(scene$style$positive_color, "#2166ac")
+  expect_null(scene$cells[[2]]$color)
 })
 
 test_that("the scene engine derives labels when dimnames are absent or partial", {
@@ -228,6 +229,44 @@ test_that("label placement modes reject incompatible layouts and invalid offsets
   expect_error(corrplot_ng(corr, engine = "scene", tl.srt = NA_real_), "tl.srt")
 })
 
+test_that("general-matrix adapter matches the shared corrplot 0.95 reference fixtures", {
+  skip_if_not_installed("jsonlite")
+  fixture_path <- system.file("extdata", "general-matrix-cases.json",
+    package = "corrplotng")
+  expect_true(nzchar(fixture_path), info = "shared general-matrix fixtures must be installed")
+  fixtures <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
+  for (case in fixtures$cases) {
+    values <- do.call(rbind, lapply(case$matrix, function(row) vapply(row, function(value) if (is.null(value)) NA_real_ else as.numeric(value), numeric(1))))
+    args <- list(corr = values, engine = "scene", is.corr = FALSE,
+      diag = isTRUE(case$diag))
+    if (case$id == "mixed-sign-custom-limits") {
+      args$col.lim <- as.numeric(unlist(case$col_limits))
+    }
+    scene <- do.call(corrplot_ng, args)
+    expect_equal(scene$matrix_semantics$color_limits, as.numeric(unlist(case$col_limits)),
+      info = case$id)
+    expect_identical(scene$matrix_semantics$color_mapping, case$mapping, info = case$id)
+    expect_identical(scene$matrix_semantics$palette, case$palette, info = case$id)
+    expect_equal(scene$matrix_semantics$normalization$intercept,
+      case$normalization$intercept, info = case$id)
+    expect_equal(scene$matrix_semantics$normalization$zoom,
+      case$normalization$zoom, info = case$id)
+  }
+  for (case in fixtures$invalid_cases) {
+    values <- do.call(rbind, lapply(case$matrix, function(row) {
+      vapply(row, function(value) if (is.null(value)) NA_real_ else as.numeric(value), numeric(1))
+    }))
+    args <- list(corr = values, engine = "scene", is.corr = FALSE)
+    if (!is.null(case$col_limits)) args$col.lim <- as.numeric(unlist(case$col_limits))
+    expect_error(do.call(corrplot_ng, args), case$error, info = case$id)
+  }
+})
+
+test_that("general-matrix palettes match corrplot 0.95 palette vectors", {
+  expect_identical(COL1("YlOrBr", 200), corrplot::COL1("YlOrBr", 200))
+  expect_identical(COL2("RdBu", 200), corrplot::COL2("RdBu", 200))
+})
+
 test_that("general-matrix mode preserves values and resolves legacy color domains", {
   positive <- matrix(c(2, 4, 4, 8), 2, byrow = TRUE)
   scene <- corrplot_ng(positive, engine = "scene", is.corr = FALSE)
@@ -235,18 +274,26 @@ test_that("general-matrix mode preserves values and resolves legacy color domain
   expect_identical(scene$matrix_semantics$mode, "general_numeric")
   expect_equal(scene$matrix_semantics$color_limits, c(2, 8))
   expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+  expect_identical(scene$matrix_semantics$palette, "YlOrBr")
+  expect_identical(scene$cells[[1]]$color, "#ffffe5")
+  expect_identical(scene$cells[[4]]$color, "#662506")
   expect_equal(scene$matrix_semantics$normalization,
     list(intercept = -2, zoom = 1 / 6))
   expect_equal(vapply(scene$cells, function(cell) cell$value, numeric(1)),
     as.numeric(positive))
+  expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
+    c(0, 1 / 3, 1 / 3, 1))
 
   mixed <- matrix(c(-2, 4, 4, 3), 2, byrow = TRUE)
   scene <- corrplot_ng(mixed, engine = "scene", is.corr = FALSE,
     col.lim = c(-5, 5))
   expect_equal(scene$matrix_semantics$color_limits, c(-5, 5))
   expect_identical(scene$matrix_semantics$color_mapping, "diverging")
+  expect_identical(scene$matrix_semantics$palette, "RdBu")
   expect_equal(scene$matrix_semantics$normalization,
     list(intercept = 0, zoom = 0.2))
+  expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
+    c(-0.4, 0.8, 0.8, 0.6))
 })
 
 test_that("general-matrix limits handle negative, constant, and hidden-diagonal data", {
@@ -254,6 +301,8 @@ test_that("general-matrix limits handle negative, constant, and hidden-diagonal 
   scene <- corrplot_ng(negative, engine = "scene", is.corr = FALSE)
   expect_equal(scene$matrix_semantics$color_limits, c(-8, -2))
   expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+  expect_equal(vapply(scene$cells, function(cell) cell$normalized_value, numeric(1)),
+    c(0, 2 / 3, 2 / 3, 1))
 
   constant <- matrix(7, 2, 2)
   scene <- corrplot_ng(constant, engine = "scene", is.corr = FALSE)
@@ -263,6 +312,8 @@ test_that("general-matrix limits handle negative, constant, and hidden-diagonal 
   scene <- corrplot_ng(diagonal_dominant, engine = "scene",
     is.corr = FALSE, diag = FALSE)
   expect_equal(scene$matrix_semantics$color_limits, c(2.5, 3.5))
+  expect_identical(vapply(scene$cells, function(cell) cell$visible, logical(1)),
+    c(FALSE, TRUE, TRUE, FALSE))
 
   negative_off_diagonal <- matrix(c(100, -3, -3, 200), 2, byrow = TRUE)
   scene <- corrplot_ng(negative_off_diagonal, engine = "scene",

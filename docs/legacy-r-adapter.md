@@ -29,18 +29,18 @@ This helper owns R device drawing only. It does not create or redefine the rende
 | Missing matrix values | Cell value: null; never coerced to zero | Supported |
 | annotation (corrplot-ng adapter option) | Scene-level plain-text annotation | Supported |
 | method | No glyph/method field in scene-v1 | Rejected in scene mode |
-| type, diag | Triangle and diagonal visibility are not represented in scene-v1 | Rejected in scene mode |
+| type, diag | Per-cell `visible` and `region` metadata; hidden cells retain identity and geometry | Supported |
 | order, hclust.method | No permutation/order semantics in scene-v1 | Rejected in scene mode |
 | is.corr | Explicit semantic mode; defaults to correlation and is never inferred from values | Supported |
-| col.lim | Resolved color domain; correlation limits remain within [-1, 1], general-matrix limits must cover all observed values | Supported (metadata only; no color renderer yet) |
+| col.lim | Resolved color domain; correlation limits remain within [-1, 1], general-matrix limits must cover all observed values | Supported (per-cell colors and visual normalization are included in the scene) |
 | col | Explicit palette assignment | Rejected in scene mode |
 | Labels (tl.*) | Text styling, plotmath parsing, placement and rotation are not represented | Rejected in scene mode |
 | Coefficients and number typography | `addCoef.col`, `addCoefasPercent`, `number.digits`, `number.cex`, and `number.font` map to renderer-neutral cell text annotations; `method = "number"` takes precedence over `addCoef.col` | Supported for circle coefficient overlays and number text; significance/CI remain rejected |
 | add, mar, device state and helper drawing | R graphics-device behavior remains legacy-only | Legacy-only |
 
-General-matrix mode is selected explicitly with `is.corr = FALSE`. It preserves original cell values and records `matrix_semantics` with the selected mode, resolved color limits, sequential/diverging mapping, and normalization parameters. Automatic general-matrix limits use observed values and exclude the diagonal when `diag = FALSE`; a constant-valued matrix receives a finite symmetric padding of max(0.5, 5% of the absolute constant). An all-missing matrix is rejected because no automatic domain can be resolved. Explicit `col.lim` must be finite, strictly increasing, and cover every observed value. Correlation mode retains its [-1, 1] validation and defaults to [-1, 1].
+General-matrix mode is selected explicitly with `is.corr = FALSE`. It preserves original cell values and records `matrix_semantics` with the selected mode, resolved color limits, palette family/name, and normalization parameters. One-sided matrices use the legacy `YlOrBr` sequential palette; mixed-sign matrices use `RdBu`. Each observed cell carries its mapped color and visual-only normalized value, leaving `value` unchanged. Automatic general-matrix limits use observed values and exclude the diagonal when `diag = FALSE`; a constant-valued matrix receives finite padding of max(0.5, 5% of the absolute constant). An all-missing matrix is rejected because no automatic domain can be resolved. Explicit `col.lim` must be finite, strictly increasing, and cover every observed value. Correlation mode retains its [-1, 1] validation and defaults to [-1, 1].
 
-The scene mode accepts the adapter-specific annotation option, coefficient/value text options, explicit matrix semantic mode and color limits, and the `method`, `type`, and `diag` subset described above. Color mapping metadata is not yet consumed by a glyph renderer. Other arguments are rejected rather than ignored.
+The scene mode accepts the adapter-specific annotation option, coefficient/value text options, explicit matrix semantic mode and color limits, and the `method`, `type`, and `diag` subset described above. The adapter returns renderer-neutral mapped cell metadata but does not itself invoke an SVG or graphics-device renderer. Other arguments are rejected rather than ignored.
 
 ## Migration sequence
 

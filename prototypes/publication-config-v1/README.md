@@ -9,9 +9,9 @@ This directory defines the first declarative configuration format for reproducib
 - `matrix.kind` explicitly selects `correlation` or `general_numeric`; semantics are never inferred from dimensions or values. `method` records the correlation method when applicable.
 - Correlation values are in [-1, 1]. General numeric matrices accept finite values outside that range. JSON null represents a missing value and is never interpreted as zero.
 - General numeric matrices derive automatic limits from observed values or accept an explicit increasing `matrix.col_limits` pair that must cover all observations. All-missing matrices are rejected; constant ranges are padded deterministically.
-- General numeric values are normalized only for visual mapping: mixed-sign domains use a diverging mapping and one-sided domains use a sequential mapping. Original values remain unchanged in the prepared scene.
+- General numeric values are normalized only for visual mapping: mixed-sign observed values use the legacy `RdBu` diverging palette; one-sided values use the legacy `YlOrBr` sequential palette. Explicit custom scales override the default palette. Original values remain unchanged in the prepared scene.
 - `plot` contains semantic display choices: glyph method, displayed triangle, ordering, coefficient labels, and optional significance metadata. The p-value matrix is required when significance is enabled.
-- `colors` contains the legacy negative, neutral, positive, and missing colors. Optional `colors.scale` defines a continuous or discrete scale over the normalized visual domain [-1, 1]; for general numeric matrices the adapter transforms values before lookup and keeps original values in the scene. See [COLOR-SCALES.md](COLOR-SCALES.md).
+- `colors` contains the legacy negative, neutral, positive, and missing colors. Optional `colors.scale` defines a continuous or discrete signed scale, or a sequential scale over [0, 1] for general numeric matrices. See [COLOR-SCALES.md](COLOR-SCALES.md).
 - `dimensions` are physical output dimensions, not logical scene units. Consumers convert mm or inches to the renderer's output coordinate system.
 - `typography` records the requested font family and base size in points.
 - `output` selects SVG and a destination path. PDF/PNG and renderer-specific options are deliberately deferred.
@@ -31,7 +31,7 @@ Normalized configurations preserve supplied values and source matrix/label order
 1. Each inline matrix has exactly N rows and each row exactly N values, where N is the number of labels.
 2. Inline correlation matrices are symmetric within an absolute tolerance of 1e-8. A missing value must have a matching missing value in its symmetric position.
 3. If significance is enabled, `p_values` is an N by N symmetric matrix with values in [0, 1].
-4. Continuous scale stops or discrete breaks cover [-1, 1], are strictly increasing, symmetric around zero, and include zero.
+4. Continuous scale stops or discrete breaks cover [-1, 1], are strictly increasing, symmetric around zero, and include zero. Sequential scale stops cover [0, 1] and are strictly increasing.
 5. Discrete intervals are left-closed/right-open, except for the final interval, which includes its upper endpoint.
 6. CSV input resolves to a square numeric matrix with unique, non-empty labels.
 7. Ordering changes display order only; it must not rewrite source data or labels.
@@ -54,6 +54,7 @@ A change is backward-compatible only when existing version-1 documents retain th
 - `examples/publication-size.json`: CSV-backed, publication-sized figure with explicit typography and physical dimensions.
 - `examples/diverging-scale.json`: continuous diverging scale with a neutral midpoint.
 - `examples/discrete-scale.json`: explicit symmetric value breaks and interval colors.
-- `legacy_palette_scale(colors)` adapts a legacy corrplot color vector to the existing discrete scale contract without changing its interval-to-color mapping.
+- `legacy_palette_scale(colors)` adapts a legacy diverging corrplot color vector to the existing discrete scale contract without changing its interval-to-color mapping.
+- `tests/fixtures/general-matrix-cases.json` records reference limits, transforms, and palette families for positive-only, negative-only, mixed-sign, custom-limit, constant, hidden-diagonal, and invalid matrices.
 
 The format is intentionally a small starting point. It does not promise complete coverage of legacy R arguments or define renderer geometry.

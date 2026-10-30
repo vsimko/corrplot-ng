@@ -19,6 +19,38 @@ class PublicationConfigTests(unittest.TestCase):
     def setUpClass(cls):
         Draft202012Validator.check_schema(SCHEMA)
 
+    def test_general_matrix_reference_fixtures_match_resolved_semantics(self):
+        fixture_path = HERE.parents[1] / "tests" / "fixtures" / "general-matrix-cases.json"
+        fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))
+        for case in fixtures["cases"]:
+            if case["id"] == "hidden-diagonal-negative-constant":
+                continue  # The publication config has no diag visibility switch.
+            with self.subTest(case=case["id"]):
+                config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+                config["matrix"]["kind"] = "general_numeric"
+                config["input"]["labels"] = ["A", "B"]
+                config["input"]["values"] = case["matrix"]
+                if case["id"] == "mixed-sign-custom-limits":
+                    config["matrix"]["col_limits"] = case["col_limits"]
+                scene = to_scene_config(config)
+                semantics = scene["matrix_semantics"]
+                self.assertEqual(semantics["color_limits"], case["col_limits"])
+                self.assertEqual(semantics["color_mapping"], case["mapping"])
+                self.assertEqual(semantics["palette"], case["palette"])
+                self.assertAlmostEqual(semantics["normalization"]["intercept"], case["normalization"]["intercept"])
+                self.assertAlmostEqual(semantics["normalization"]["zoom"], case["normalization"]["zoom"])
+        for case in fixtures["invalid_cases"]:
+            with self.subTest(case=case["id"]):
+                config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+                config["matrix"]["kind"] = "general_numeric"
+                config["input"]["labels"] = ["A", "B"]
+                config["input"]["values"] = case["matrix"]
+                if "col_limits" in case:
+                    config["matrix"]["col_limits"] = case["col_limits"]
+                expected_error = "all-missing" if case["id"] == "all-missing" else case["error"]
+                with self.assertRaisesRegex(ValueError, expected_error):
+                    validate_config(config)
+
     def test_all_examples_are_valid_and_normalizable(self):
         self.assertEqual(len(EXAMPLES), 5)
         for path in EXAMPLES:
@@ -165,6 +197,7 @@ class PublicationConfigTests(unittest.TestCase):
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_mode"], "general_numeric")
         self.assertEqual(scene["matrix_semantics"]["color_mapping"], "diverging")
+        self.assertEqual(scene["matrix_semantics"]["palette"], "RdBu")
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [-8.0, 12.0])
         self.assertEqual(scene["matrix"][0][0], 10.0)
         self.assertEqual(len(scene["cell_colors"]), 9)
@@ -179,6 +212,21 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [1.0, 5.0])
         self.assertEqual(scene["matrix"][0][0], 2.0)
 
+    def test_sequential_custom_scale_is_restricted_to_one_sided_general_matrices(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["colors"]["scale"] = {
+            "type": "sequential", "stops": [
+                {"value": 0, "color": "#ffffe5"},
+                {"value": 1, "color": "#662506"},
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "one-sided general numeric"):
+            validate_config(config)
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[-2.0, 2.0, 1.0], [2.0, -2.0, 1.0], [1.0, 1.0, -2.0]]
+        with self.assertRaisesRegex(ValueError, "one-sided general numeric"):
+            validate_config(config)
+
     def test_general_numeric_csv_requires_explicit_limits(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
@@ -192,13 +240,39 @@ class PublicationConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CSV-backed general_numeric requires explicit limits"):
             validate_config(config)
 
+    def test_general_numeric_selects_legacy_sequential_palette_for_positive_and_negative(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[1.0, 2.0, 2.0], [2.0, 1.0, 3.0], [2.0, 3.0, 3.0]]
+        positive = to_scene_config(config)
+        self.assertEqual(positive["matrix_semantics"]["palette"], "YlOrBr")
+        self.assertEqual(positive["cell_colors"][0], "#ffffe5")
+        self.assertEqual(positive["cell_colors"][-1], "#662506")
+        config["input"]["values"] = [[-3.0, -2.0, -2.0], [-2.0, -3.0, -1.0], [-2.0, -1.0, -1.0]]
+        negative = to_scene_config(config)
+        self.assertEqual(negative["matrix_semantics"]["palette"], "YlOrBr")
+        self.assertEqual(negative["cell_colors"][0], "#ffffe5")
+        self.assertEqual(negative["cell_colors"][-1], "#662506")
+
+    def test_palette_family_uses_observed_signs_not_explicit_domain(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["matrix"]["kind"] = "general_numeric"
+        config["matrix"]["col_limits"] = [-2.0, 10.0]
+        config["input"]["values"] = [[2.0, 4.0, 3.0], [4.0, 2.0, 5.0], [3.0, 5.0, 2.0]]
+        scene = to_scene_config(config)
+        self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
+        self.assertEqual(scene["matrix_semantics"]["palette"], "YlOrBr")
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 2.0)
+
     def test_general_numeric_negative_only_and_constant_domains(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
         config["input"]["values"] = [[-4.0, -3.0, -2.0], [-3.0, -4.0, -2.0], [-2.0, -2.0, -4.0]]
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_semantics"]["color_mapping"], "sequential")
-        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 2.0)
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["intercept"], 4.0)
+        self.assertEqual(scene["matrix_semantics"]["normalization"]["zoom"], 0.5)
+        self.assertEqual(scene["matrix_semantics"]["palette"], "YlOrBr")
         config["input"]["values"] = [[5.0, 5.0, 5.0], [5.0, 5.0, 5.0], [5.0, 5.0, 5.0]]
         scene = to_scene_config(config)
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [4.5, 5.5])

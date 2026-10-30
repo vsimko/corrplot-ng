@@ -73,8 +73,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (limits[1] < -1 || limits[2] > 1) {
       stop("col.lim for correlation matrices must be within [-1, 1]", call. = FALSE)
     }
-    return(list(limits = as.numeric(limits), mapping = "diverging",
-      normalization = list(intercept = 0, zoom = 1)))
+    return(list(limits = as.numeric(limits), mapping = "diverging", palette_name = "RdBu",
+      palette = tolower(COL2("RdBu", 200)), normalization = list(intercept = 0, zoom = 1)))
   }
 
   scale_values <- corr
@@ -101,10 +101,12 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   }
   mixed_sign <- min(scale_values) < 0 && max(scale_values) > 0
   if (mixed_sign) {
-    list(limits = as.numeric(limits), mapping = "diverging",
+    list(limits = as.numeric(limits), mapping = "diverging", palette_name = "RdBu",
+      palette = tolower(COL2("RdBu", 200)),
       normalization = list(intercept = 0, zoom = 1 / max(abs(limits))))
   } else {
-    list(limits = as.numeric(limits), mapping = "sequential",
+    list(limits = as.numeric(limits), mapping = "sequential", palette_name = "YlOrBr",
+      palette = tolower(COL1("YlOrBr", 200)),
       normalization = list(intercept = -limits[1], zoom = 1 / diff(limits)))
   }
 }
@@ -121,13 +123,15 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   if (options$is.corr && any(corr[observed] < -1 | corr[observed] > 1)) {
     stop("the scene engine requires correlation values in [-1, 1]", call. = FALSE)
   }
+  if (!is.logical(options$diag) || length(options$diag) != 1L || is.na(options$diag)) {
+    stop("diag must be one non-missing logical value", call. = FALSE)
+  }
   scale <- .corrplot_ng_resolve_matrix_scale(corr, options$is.corr, options$col.lim, options$diag)
 
   annotation <- options$annotation
   if (!is.character(annotation) || length(annotation) != 1L || is.na(annotation)) stop("annotation must be one non-missing character string", call. = FALSE)
   method <- match.arg(options$method, c("circle", "number"))
   display_type <- match.arg(options$type, c("full", "upper", "lower"))
-  if (!is.logical(options$diag) || length(options$diag) != 1L || is.na(options$diag)) stop("diag must be one non-missing logical value", call. = FALSE)
   if (!is.logical(options$addCoefasPercent) || length(options$addCoefasPercent) != 1L || is.na(options$addCoefasPercent)) stop("addCoefasPercent must be one non-missing logical value", call. = FALSE)
   if (!is.null(options$addCoef.col) && (!is.character(options$addCoef.col) || length(options$addCoef.col) != 1L || is.na(options$addCoef.col) || !nzchar(options$addCoef.col))) stop("addCoef.col must be one non-empty color string or NULL", call. = FALSE)
   if (!is.null(options$addCoef.col)) tryCatch(grDevices::col2rgb(options$addCoef.col), error = function(e) stop("addCoef.col must be a valid R color", call. = FALSE))
@@ -163,13 +167,26 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   for (row in seq_len(n)) {
     for (column in seq_len(n)) {
       value <- corr[row, column]
-      cells[[index]] <- list(row = row - 1L, column = column - 1L,
+      cell <- list(row = row - 1L, column = column - 1L,
         value = if (is.na(value)) NULL else as.numeric(value),
+        normalized_value = if (is.na(value)) NULL else if (options$is.corr) as.numeric(value) else
+          (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom,
         x = left_margin + (column - 1L) * cell_size,
         y = top_margin + (row - 1L) * cell_size,
         center_x = left_margin + (column - 1L) * cell_size + cell_size / 2,
         center_y = top_margin + (row - 1L) * cell_size + cell_size / 2,
-        size = cell_size)
+        size = cell_size,
+        visible = (options$diag || row != column) &&
+          (display_type == "full" || (display_type == "upper" && row <= column) ||
+            (display_type == "lower" && row >= column)),
+        region = if (row == column) "diagonal" else if (row < column) "upper" else "lower")
+      if (!is.na(value) && !options$is.corr) {
+        normalized <- (as.numeric(value) + scale$normalization$intercept) * scale$normalization$zoom
+        position <- if (scale$mapping == "diverging") (normalized + 1) / 2 else normalized
+        palette_index <- max(1L, min(length(scale$palette), floor(position * length(scale$palette)) + 1L))
+        cell$color <- scale$palette[[palette_index]]
+      }
+      cells[[index]] <- cell
       visible <- !is.na(value) && (options$diag || row != column) &&
         (display_type == "full" || (display_type == "upper" && row <= column) ||
           (display_type == "lower" && row >= column))
@@ -241,7 +258,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     kind = if (options$is.corr) "correlation_plot" else "general_matrix_plot",
     matrix_semantics = list(mode = if (options$is.corr) "correlation" else "general_numeric",
       color_limits = scale$limits, color_mapping = scale$mapping,
-      normalization = scale$normalization),
+      palette = scale$palette_name, normalization = scale$normalization),
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,
     glyph_method = method, text_annotations = text_annotations,
