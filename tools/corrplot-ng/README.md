@@ -58,3 +58,34 @@ The native CLI accepts a publication configuration with the following commands:
 The configuration loader validates strict object fields, inline or CSV-backed matrices, matrix semantics, missing-value policy, supported plot settings, colors, physical dimensions, typography, and output format. CSV paths are resolved relative to the configuration file. The renderer currently supports correlation/general numeric matrices, circle/number glyphs, full/upper/lower display, and original/alphabetical ordering. Correlation matrices additionally support deterministic AOE and average-linkage hierarchical ordering. The scene-json format emits the renderer-neutral scene-v1 shape, including cell visibility, color, typography, legend, ordering metadata, and general-matrix normalization metadata.
 
 Unsupported v1 semantics are rejected explicitly rather than ignored. This initial native slice does not yet implement color scales, significance overlays, or col_limits; these remain follow-up work.
+
+
+## Interactive configuration wizard
+
+Run `corrplot-ng init` in an interactive terminal to create a reusable
+`publication-config v1` file. The wizard asks for the labelled CSV/TSV input,
+matrix semantics, supported correlation method, missing-value policy, cell
+encoding, displayed region, variable ordering, value annotations, and output
+paths. It prints a complete configuration preview, validates that exact
+configuration through the same `Publication::load` path used by
+`validate --config`, and asks before writing. Existing files are not
+overwritten without confirmation.
+
+```sh
+corrplot-ng init --output figures/correlation.json
+corrplot-ng validate --config figures/correlation.json
+corrplot-ng render --config figures/correlation.json
+```
+
+Relative input paths are resolved relative to the configuration file's
+directory. Use an absolute path when the configuration should be portable
+across different working directories. The initial wizard exposes only options
+supported by the native CLI; it does not enable significance overlays or
+unsupported color-scale features.
+
+The wizard is opt-in and lives in its own Rust module with no third-party
+dependencies. It is called only after the `init` command is selected.
+`render`, `validate`, `inspect`, `presets`, and `version` do not prompt
+or initialize terminal UI. When stdin or stdout is not a TTY, `init` exits
+with an actionable error before displaying prompts, so scripts and CI cannot
+hang.
