@@ -205,7 +205,7 @@ fn parse_matrix(source: &str, kind: Kind) -> Result<Matrix, String> {
     if kind == Kind::Correlation {
         for r in 0..n {
             for c in 0..n {
-                if match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true } {
+                if (match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true }) {
                     return Err(format!("correlation matrix is not symmetric at ('{}', '{}')", labels[r], labels[c]));
                 }
             }
