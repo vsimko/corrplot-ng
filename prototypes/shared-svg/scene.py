@@ -30,6 +30,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     labels = config.get("labels")
     matrix = config.get("matrix")
     annotation = config.get("annotation", "")
+    title = config.get("title", "Correlation matrix")
+    description = config.get("description", "")
     layout = config.get("layout", {})
     if not isinstance(layout, dict):
         raise ValueError("layout must be an object")
@@ -43,6 +45,10 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("matrix must be square and match labels")
     if not isinstance(annotation, str):
         raise ValueError("annotation must be a string")
+    if not isinstance(title, str):
+        raise ValueError("title must be a string")
+    if not isinstance(description, str):
+        raise ValueError("description must be a string")
 
     for row in matrix:
         for value in row:
@@ -133,6 +139,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         "schema_version": 1, "kind": "correlation_plot",
         "width": width, "height": height, "labels": label_items, "cells": cells,
         "annotation": annotation,
+        "title": title, "description": description,
         "style": {
             "positive_color": "#2166ac", "negative_color": "#b2182b",
             "zero_color": "#bdbdbd", "missing_fill": "#f2f2f2",

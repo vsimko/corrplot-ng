@@ -12,6 +12,8 @@
     "height",
     "labels",
     "cells",
+    "title",
+    "description",
     "annotation",
     "style"
   ],
@@ -214,6 +216,12 @@
           }
         }
       }
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
     }
   },
   "$defs": {

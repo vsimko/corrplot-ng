@@ -70,3 +70,7 @@ minimum cell size, the minimum remains authoritative and the canvas expands.
 - Drawing on the active R graphics device or follow-up calls such as `text()` and `segments()`.
 
 The R graphics integration question remains open and needs a separate R-based experiment. This spike should be used to inform the architecture, not treated as a compatibility implementation.
+
+## Accessible SVG metadata
+
+The input may provide a figure-level `title` and concise `description`. The scene always carries both fields; omitted values default to `Correlation matrix` and an empty description. The SVG backend emits a referenced `<title>` and, when a non-empty description is supplied, a referenced `<desc>`. The root SVG uses `role="img"`, `aria-labelledby`, and (when applicable) `aria-describedby`. Metadata is XML-escaped and does not change the visible plot. These labels improve figure identification but do not make a dense correlation matrix fully accessible; provide an accompanying data table when users need to inspect individual values.

@@ -125,5 +125,7 @@
     "zero_color": "#bdbdbd",
     "missing_fill": "#f2f2f2",
     "grid_color": "#e0e0e0"
-  }
+  },
+  "title": "Example correlation matrix",
+  "description": "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable."
 }
