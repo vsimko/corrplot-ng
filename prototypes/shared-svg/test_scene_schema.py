@@ -32,6 +32,20 @@ class SceneSchemaTests(unittest.TestCase):
             "\n".join(f"{list(error.path)}: {error.message}" for error in errors),
         )
 
+
+    def test_significance_and_confidence_interval_metadata_match_scene_schema(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.6], [0.6, 1.0]],
+            "p_values": [[0.0, None], [None, 0.0]],
+            "significance": {"mode": "pch", "thresholds": [0.05], "symbol": "×"},
+            "confidence_intervals": {
+                "lower": [[1.0, 0.2], [0.2, 1.0]],
+                "upper": [[1.0, 0.8], [0.8, 1.0]],
+            },
+        })
+        Draft202012Validator(SCHEMA).validate(scene)
+
     def test_variable_order_and_cell_p_values_are_part_of_scene_contract(self):
         config = dict(self.config)
         config["variable_order"] = {

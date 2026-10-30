@@ -16,6 +16,19 @@ This directory defines the first declarative configuration format for reproducib
 - `typography` records the requested font family and base size in points.
 - `output` selects SVG and a destination path. PDF/PNG and renderer-specific options are deliberately deferred.
 
+## Significance and confidence intervals
+
+When `plot.significance.enabled` is true, `p_values` must be a symmetric matrix. Missing p-values are represented as `null` and remain unknown rather than being treated as nonsignificant. The default thresholds are `[0.001, 0.01, 0.05]`, in strictly increasing order; the default mode is `pch` with the `×` marker.
+
+Supported significance modes:
+
+- `pch`: place the configured symbol on cells with p-values above the largest threshold.
+- `p-value`: print the p-value on nonsignificant cells.
+- `blank`: suppress nonsignificant cells while preserving cells with missing p-values.
+- `stars`: annotate significant cells with `***`, `**`, or `*` according to the configured thresholds.
+
+Optional `plot.confidence_intervals` contains symmetric `lower` and `upper` matrices. Both bounds must be present or both null, each lower bound must not exceed its upper bound, and correlation intervals must lie in [-1, 1]. The current publication adapter accepts confidence intervals for inline correlation matrices; the scene stores original bounds plus normalized whisker geometry for deterministic SVG rendering.
+
 ## Validation and normalization
 
 The JSON Schema rejects unknown fields and validates local field constraints. The Python validator additionally checks square dimensions, unique labels, finite values, correlation-only symmetry and unit diagonal, and color-scale coverage, ordering, zero handling, and signed-domain symmetry. General numeric matrices do not require symmetry or a unit diagonal. CSV parsing and validation are performed by the eventual data-loading consumer.
