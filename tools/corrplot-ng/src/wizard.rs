@@ -54,7 +54,7 @@ fn json_string(value: &str) -> String {
 }
 
 fn build_config(
-    input: &str, delimiter: &str, kind: &str, method: &str, missing: &str,
+    input: &str, delimiter: &str, kind: &str, method: &str, glyph: &str, missing: &str,
     display: &str, ordering: &str, show_values: bool, output: &str,
 ) -> String {
     let matrix = if kind == "correlation" {
@@ -86,7 +86,7 @@ fn build_config(
   "output": {{ "format": "svg", "path": {} }}
 }}
 "#,
-        json_string(input), json_string(delimiter), matrix, json_string(if kind == "correlation" { method } else { "circle" }),
+        json_string(input), json_string(delimiter), matrix, json_string(glyph),
         json_string(display), json_string(ordering), show_values, json_string(output))
 }
 
@@ -96,9 +96,6 @@ fn temporary_path(config_path: &Path) -> PathBuf {
 }
 
 pub(crate) fn run(args: &[String]) -> Result<(), String> {
-    if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
-        return Err("init requires an interactive terminal (TTY); it cannot run in scripts or CI".into());
-    }
     let mut output_config = "corrplot.json".to_owned();
     let mut i = 0;
     while i < args.len() {
@@ -116,6 +113,9 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
         i += 1;
     }
 
+    if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
+        return Err("init requires an interactive terminal (TTY); it cannot run in scripts or CI".into());
+    }
     println!("corrplot-ng configuration wizard");
     println!("Enter paths relative to the configuration file's directory when using relative paths.");
     let input = prompt("Input labelled CSV/TSV path", None)?;
@@ -133,7 +133,7 @@ pub(crate) fn run(args: &[String]) -> Result<(), String> {
     let show_values = yes_no("Show numeric values in cells?", false)?;
     let output = prompt("SVG output path", Some("corrplot.svg"))?;
 
-    let config = build_config(&input, delimiter, &kind, &method, &missing, &display, &ordering, show_values, &output);
+    let config = build_config(&input, delimiter, &kind, &method, &plot_method, &missing, &display, &ordering, show_values, &output);
     let destination = PathBuf::from(&output_config);
     let parent = destination.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or_else(|| Path::new("."));
     if !parent.is_dir() { return Err(format!("configuration directory '{}' does not exist", parent.display())); }
