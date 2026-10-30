@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - "prototypes/rust-rextendr/Cargo.toml"
+      - "prototypes/rust-rextendr/Cargo.lock"
+      - "prototypes/rust-rextendr/deny.toml"
       - "prototypes/rust-rextendr/src/**"
       - ".github/workflows/rust-cran-dependency-audit.yml"
 
@@ -17,6 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Enforce dependency license policy
+        working-directory: prototypes/rust-rextendr
+        run: cargo deny check licenses --locked
       - name: Resolve dependencies and create lockfile
         working-directory: prototypes/rust-rextendr
         run: cargo generate-lockfile
