@@ -391,7 +391,29 @@ fn write_output(path: Option<&str>, content: &str) -> Result<(), String> {
             let mut stdout = io::stdout().lock();
             stdout.write_all(content.as_bytes()).map_err(|e| format!("cannot write stdout: {e}"))
         }
-        Some(path) => fs::write(path, content).map_err(|e| format!("cannot write '{path}': {e}")),
+        Some(path) => {
+            let destination = std::path::Path::new(path);
+            let parent = destination.parent().filter(|p| !p.as_os_str().is_empty())
+                .unwrap_or_else(|| std::path::Path::new("."));
+            let name = destination.file_name().ok_or_else(|| format!("invalid output path '{path}'"))?
+                .to_string_lossy();
+            let temporary = parent.join(format!(".{name}.corrplot-ng-{}.tmp", process::id()));
+            let result = (|| {
+                let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&temporary)
+                    .map_err(|e| format!("cannot create temporary output '{}': {e}", temporary.display()))?;
+                file.write_all(content.as_bytes()).map_err(|e| format!("cannot write temporary output: {e}"))?;
+                file.sync_all().map_err(|e| format!("cannot flush temporary output: {e}"))?;
+                drop(file);
+                #[cfg(windows)]
+                if destination.exists() {
+                    fs::remove_file(destination).map_err(|e| format!("cannot replace '{path}': {e}"))?;
+                }
+                fs::rename(&temporary, destination).map_err(|e| format!("cannot write '{path}': {e}"))?;
+                Ok(())
+            })();
+            if result.is_err() { let _ = fs::remove_file(&temporary); }
+            result
+        }
     }
 }
 
@@ -445,7 +467,7 @@ fn run() -> Result<(), String> {
                     let min = all.iter().copied().fold(f64::INFINITY, f64::min);
                     let max = all.iter().copied().fold(f64::NEG_INFINITY, f64::max);
                     println!("kind: {}\nrows: {}\ncolumns: {}\nmissing: {}\nminimum: {}\nmaximum: {}",
-                        if opts.kind == Kind::Correlation { "correlation" } else { "general" },
+                        if kind == Kind::Correlation { "correlation" } else { "general" },
                         matrix.labels.len(), matrix.labels.len(),
                         matrix.values.iter().flatten().filter(|v| v.is_none()).count(), num(min), num(max));
                 }
