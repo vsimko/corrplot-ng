@@ -63,7 +63,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: prototypes/rust-rextendr/.ci-r-package/src/rust -> ../../../.ci-rust-target
-          prefix-key: v1-rust
+          prefix-key: v2-rust
       - name: Install generated R package
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
