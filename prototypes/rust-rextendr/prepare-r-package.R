@@ -8,6 +8,19 @@ pkg_dir <- file.path(root, ".ci-r-package")
 if (dir.exists(pkg_dir)) unlink(pkg_dir, recursive = TRUE, force = TRUE)
 dir.create(pkg_dir, recursive = TRUE)
 
+# Preserve the upstream extendr license notice in the generated R package.
+license_source <- file.path(root, "licenses", "extendr-MIT.txt")
+license_readme_source <- file.path(root, "licenses", "README.md")
+if (!file.exists(license_source) || !file.exists(license_readme_source)) {
+  stop("Pinned extendr license notice or provenance README is missing")
+}
+license_dir <- file.path(pkg_dir, "inst", "licenses")
+dir.create(license_dir, recursive = TRUE)
+if (!file.copy(license_source, file.path(license_dir, "extendr-MIT.txt"), overwrite = TRUE) ||
+    !file.copy(license_readme_source, file.path(license_dir, "README.md"), overwrite = TRUE)) {
+  stop("Could not copy extendr third-party license notices into generated package")
+}
+
 writeLines(c(
   "Package: corrplotngrustspike",
   "Title: Temporary Rust Scene-v1 Benchmark",
