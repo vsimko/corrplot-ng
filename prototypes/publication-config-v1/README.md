@@ -34,7 +34,14 @@ Normalized configurations preserve supplied values and source matrix/label order
 6. CSV input resolves to a square numeric matrix with unique, non-empty labels.
 7. Ordering changes display order only; it must not rewrite source data or labels.
 
-## Ordering semantics\n\n- `original` preserves input order.\n- `alphabetical` sorts labels by Unicode case-folded text, then original text, then original index.\n- `hclust` uses average linkage over `d(i,j) = 1 - r(i,j)`. Cluster-pair distance is the arithmetic mean of observed cross-cluster distances; missing correlations are omitted. If a variable has no observed off-diagonal correlation, or remaining clusters have no observed cross-pair, clustering fails with a diagnostic. Equal distances are broken by the smallest original index in each cluster, and child orientation uses that same key.\n- `aoe` remains in the schema for compatibility but is rejected during scene adaptation until its eigenvector sign, tie, and degenerate-matrix semantics are specified.\n\n## Evolution
+## Ordering semantics
+
+- `original` preserves input order.
+- `alphabetical` sorts labels by Unicode case-folded text, then original text, then original index.
+- `hclust` uses average linkage over `d(i,j) = 1 - r(i,j)`. Cluster-pair distance is the arithmetic mean of observed cross-cluster distances; missing correlations are omitted. If a variable has no observed off-diagonal correlation, or remaining clusters have no observed cross-pair, clustering fails with a diagnostic. Equal distances are broken by the smallest original index in each cluster, and child orientation uses that same key.
+- `aoe` remains in the schema for compatibility but is rejected during scene adaptation until its eigenvector sign, tie, and degenerate-matrix semantics are specified.
+
+## Evolution
 
 A change is backward-compatible only when existing version-1 documents retain the same meaning and remain valid. Changes to matrix interpretation, defaults, required fields, or value ranges require a new `config_version`. Additions to this strict schema require an explicit compatibility decision and schema revision.
 
