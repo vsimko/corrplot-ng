@@ -53,7 +53,8 @@ The native CLI accepts a publication configuration with the following commands:
     corrplot-ng validate --config figure.json
     corrplot-ng render --config figure.json
     corrplot-ng render --config figure.json --output figure.svg
+    corrplot-ng render --config figure.json --format scene-json --output scene.json
 
-The configuration loader validates strict object fields, inline or CSV-backed matrices, matrix semantics, missing-value policy, supported plot settings, colors, physical dimensions, typography, and output format. CSV paths are resolved relative to the configuration file. The renderer currently supports correlation/general numeric matrices, circle/number glyphs, full/upper/lower display, and original/alphabetical ordering.
+The configuration loader validates strict object fields, inline or CSV-backed matrices, matrix semantics, missing-value policy, supported plot settings, colors, physical dimensions, typography, and output format. CSV paths are resolved relative to the configuration file. The renderer currently supports correlation/general numeric matrices, circle/number glyphs, full/upper/lower display, and original/alphabetical ordering. The scene-json format emits the renderer-neutral scene-v1 shape, including cell visibility, color, typography, legend, ordering metadata, and general-matrix normalization metadata.
 
-Unsupported v1 semantics are rejected explicitly rather than ignored. This initial native slice does not yet implement color scales, significance overlays, col_limits, AOE/hierarchical ordering, or the complete renderer-neutral scene-v1 adaptation; these remain follow-up work.
+Unsupported v1 semantics are rejected explicitly rather than ignored. This initial native slice does not yet implement color scales, significance overlays, col_limits, AOE/hierarchical ordering, or the advanced scene semantics such as mapped continuous/discrete color scales and significance overlays; these remain follow-up work.
