@@ -30,7 +30,6 @@ class PlotSceneTests(unittest.TestCase):
         json.dumps(scene)
 
     def test_generated_scene_matches_versioned_golden_fixture(self):
-        # This fixture is the cross-language contract example consumed by R.
         self.assertEqual(build_scene(self.config), self.golden_scene)
 
     def test_cells_are_in_row_major_order(self):
@@ -39,7 +38,6 @@ class PlotSceneTests(unittest.TestCase):
             [(cell["row"], cell["column"]) for cell in cells],
             [(row, column) for row in range(3) for column in range(3)],
         )
-
 
     def test_all_shared_correlation_fixtures_build_ordered_scenes(self):
         for case in self.correlation_fixtures:
@@ -58,6 +56,27 @@ class PlotSceneTests(unittest.TestCase):
                     [cell["value"] for cell in scene["cells"]],
                     [value for row in case["matrix"] for value in row],
                 )
+
+    def test_long_labels_expand_row_and_column_label_margins(self):
+        labels = ["customer satisfaction score", "monthly recurring revenue"]
+        scene = build_scene({
+            "labels": labels,
+            "matrix": [[1.0, 0.4], [0.4, 1.0]],
+        })
+        self.assertGreater(scene["cells"][0]["x"], 104)
+        self.assertGreater(scene["cells"][0]["y"], 76)
+        self.assertGreaterEqual(
+            scene["labels"][0]["row_x"] - len(labels[0]) * 7.8,
+            0,
+        )
+        self.assertLess(scene["labels"][0]["column_y"], scene["cells"][0]["y"])
+
+    def test_long_column_labels_are_rotated_in_svg(self):
+        svg = render_svg({
+            "labels": ["customer satisfaction score", "monthly recurring revenue"],
+            "matrix": [[1.0, 0.4], [0.4, 1.0]],
+        })
+        self.assertIn('transform="rotate(-90 ', svg)
 
     def test_scene_and_svg_output_are_deterministic(self):
         scene = build_scene(self.config)
