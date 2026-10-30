@@ -8,7 +8,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from color_scale import build_color_scale\nfrom ordering import resolve_ordering
+from color_scale import build_color_scale
+from ordering import resolve_ordering
 
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")

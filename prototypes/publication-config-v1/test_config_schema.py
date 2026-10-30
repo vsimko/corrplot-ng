@@ -5,7 +5,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from config import canonical_json, to_scene_config, validate_config\nfrom ordering import resolve_ordering
+from config import canonical_json, to_scene_config, validate_config
+from ordering import resolve_ordering
 
 
 HERE = Path(__file__).parent
