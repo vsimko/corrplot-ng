@@ -89,24 +89,40 @@ stopifnot(identical(rownames(ordered$corr), c("alpha", "beta", "gamma")))
 stopifnot(identical(colnames(ordered$corr), c("alpha", "beta", "gamma")))
 stopifnot(isTRUE(all.equal(ordered$corr, expected_ordered)))
 
-# Export the actual legacy result as the minimal language-neutral scene input.
-# The Python bridge test consumes this file and validates the resulting scene.
+# Export both original and alphabetically reordered legacy results. This
+# exercises the language boundary for two distinct label/matrix orderings.
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
-  stop("jsonlite is required to export the legacy scene input")
+  stop("jsonlite is required to export the legacy scene inputs")
 }
-scene_matrix <- lapply(seq_len(nrow(ordered$corr)), function(row) {
-  lapply(seq_len(ncol(ordered$corr)), function(column) {
-    value <- ordered$corr[row, column]
-    if (is.na(value)) NULL else unname(as.numeric(value))
+
+make_scene_input <- function(correlation, annotation) {
+  scene_matrix <- lapply(seq_len(nrow(correlation)), function(row) {
+    lapply(seq_len(ncol(correlation)), function(column) {
+      value <- correlation[row, column]
+      if (is.na(value)) NULL else unname(as.numeric(value))
+    })
   })
-})
-legacy_scene_input <- list(
-  labels = as.list(rownames(ordered$corr)),
-  matrix = scene_matrix,
-  annotation = "Generated from pinned legacy corrplot output"
+  list(
+    labels = as.list(rownames(correlation)),
+    matrix = scene_matrix,
+    annotation = annotation
+  )
+}
+
+legacy_scene_inputs <- list(
+  cases = list(
+    original_order = make_scene_input(
+      res$corr,
+      "Generated from pinned legacy corrplot output (original order)"
+    ),
+    alphabetic_order = make_scene_input(
+      ordered$corr,
+      "Generated from pinned legacy corrplot output (alphabetic order)"
+    )
+  )
 )
 jsonlite::write_json(
-  legacy_scene_input,
+  legacy_scene_inputs,
   path = "/tmp/corrplot-legacy-scene-input.json",
   auto_unbox = TRUE,
   null = "null",
