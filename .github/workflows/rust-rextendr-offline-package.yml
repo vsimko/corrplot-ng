@@ -82,7 +82,6 @@ jobs:
           # Keep Cargo's checksum metadata, but omit repository-only content
           # that is irrelevant to compilation and creates avoidable R check notes.
           find vendor -type d -name .github -prune -exec rm -rf {} +
-          find vendor -type f -name .cargo_vcs_info.json -delete
           tar -cJf vendor.tar.xz -C .. rust/vendor
           rm -rf .cargo
       - name: Install generated R package without network access
