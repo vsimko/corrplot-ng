@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "reference": {
+    "repository": "https://github.com/taiyun/corrplot",
+    "version": "0.95",
+    "commit": "62532f700e6c9d04b93ffbf0bf56e264b0e0368e",
+    "function": "corrplot::corrplot",
+    "source": "R/corrplot.R"
+  },
+  "cases": [
+    {
+      "id": "decimal-rounding",
+      "labels": [
+        "A",
+        "B"
+      ],
+      "matrix": [
+        [
+          1,
+          0.125
+        ],
+        [
+          -0.125,
+          0
+        ]
+      ],
+      "options": {
+        "addCoef_col": "black"
+      },
+      "expected": [
+        {
+          "row": 0,
+          "column": 0,
+          "role": "coefficient",
+          "text": "1.00"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "role": "coefficient",
+          "text": "0.12"
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "role": "coefficient",
+          "text": "-0.12"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "role": "coefficient",
+          "text": "0.00"
+        }
+      ]
+    },
+    {
+      "id": "percentage-default-rounding",
+      "labels": [
+        "A",
+        "B"
+      ],
+      "matrix": [
+        [
+          0.125,
+          -0.456
+        ],
+        [
+          0.995,
+          0
+        ]
+      ],
+      "options": {
+        "addCoef_col": "black",
+        "add_coef_as_percent": true
+      },
+      "expected": [
+        {
+          "row": 0,
+          "column": 0,
+          "role": "coefficient",
+          "text": "12"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "role": "coefficient",
+          "text": "-46"
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "role": "coefficient",
+          "text": "100"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "role": "coefficient",
+          "text": "0"
+        }
+      ]
+    },
+    {
+      "id": "upper-without-diagonal",
+      "labels": [
+        "A",
+        "B",
+        "C"
+      ],
+      "matrix": [
+        [
+          1,
+          0.2,
+          -0.3
+        ],
+        [
+          0.2,
+          1,
+          0.4
+        ],
+        [
+          -0.3,
+          0.4,
+          1
+        ]
+      ],
+      "options": {
+        "addCoef_col": "black",
+        "type": "upper",
+        "diag": false
+      },
+      "expected": [
+        {
+          "row": 0,
+          "column": 1,
+          "role": "coefficient",
+          "text": "0.20"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "role": "coefficient",
+          "text": "-0.30"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "role": "coefficient",
+          "text": "0.40"
+        }
+      ]
+    },
+    {
+      "id": "number-method-precedence",
+      "labels": [
+        "A",
+        "B"
+      ],
+      "matrix": [
+        [
+          1,
+          -0.5
+        ],
+        [
+          -0.5,
+          1
+        ]
+      ],
+      "options": {
+        "method": "number",
+        "addCoef_col": "red",
+        "number_digits": 1
+      },
+      "expected": [
+        {
+          "row": 0,
+          "column": 0,
+          "role": "value",
+          "text": "1.0"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "role": "value",
+          "text": "-0.5"
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "role": "value",
+          "text": "-0.5"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "role": "value",
+          "text": "1.0"
+        }
+      ]
+    }
+  ]
+}
