@@ -41,6 +41,57 @@ test_that("the scene engine rejects invalid matrix semantics", {
   expect_error(corrplot_ng(diag(2), engine = "scene", annotation = NA_character_), "annotation")
 })
 
+
+test_that("coefficient labels preserve cell identity and legacy decimal formatting", {
+  corr <- matrix(c(1, -0.125, -0.125, NA_real_), 2, byrow = TRUE,
+    dimnames = list(c("A", "B"), c("A", "B")))
+  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black")
+  labels <- scene$text_annotations
+  expect_identical(vapply(labels, `[[`, character(1), "text"),
+    c("1.00", "-0.12", "-0.12"))
+  expect_true(all(vapply(labels, `[[`, character(1), "role") == "coefficient"))
+  expect_true(all(vapply(labels, `[[`, character(1), "color") == "black"))
+  expect_identical(lapply(labels, function(item) c(item$row, item$column)),
+    list(c(0L, 0L), c(0L, 1L), c(1L, 0L)))
+})
+
+test_that("percentage labels and number typography follow corrplot defaults", {
+  corr <- matrix(0.456, 1, dimnames = list("A", "A"))
+  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "navy",
+    addCoefasPercent = TRUE, number.digits = 1, number.cex = 1.5,
+    number.font = 4)
+  label <- scene$text_annotations[[1]]
+  expect_identical(label$text, "45.6")
+  expect_equal(label$font_size, 19.5)
+  expect_identical(label$font_weight, "bold")
+  expect_identical(label$font_style, "italic")
+})
+
+test_that("number method takes precedence over addCoef.col", {
+  scene <- corrplot_ng(diag(2), engine = "scene", method = "number",
+    addCoef.col = "red", number.digits = 1, number.font = 3)
+  expect_identical(scene$glyph_method, "number")
+  expect_true(all(vapply(scene$text_annotations, `[[`, character(1), "role") == "value"))
+  expect_false(any(vapply(scene$text_annotations, `[[`, character(1), "color") == "red"))
+  expect_true(all(vapply(scene$text_annotations, `[[`, character(1), "font_style") == "italic"))
+})
+
+test_that("coefficient labels respect triangle and diagonal visibility", {
+  corr <- matrix(c(1, .2, .3, .2, 1, .4, .3, .4, 1), 3, byrow = TRUE)
+  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black",
+    type = "upper", diag = FALSE)
+  expect_identical(lapply(scene$text_annotations, function(item) c(item$row, item$column)),
+    list(c(0L, 1L), c(0L, 2L), c(1L, 2L)))
+})
+
+test_that("coefficient formatting arguments are validated", {
+  expect_error(corrplot_ng(diag(1), engine = "scene", number.digits = -1), "number.digits")
+  expect_error(corrplot_ng(diag(1), engine = "scene", number.digits = 1.5), "number.digits")
+  expect_error(corrplot_ng(diag(1), engine = "scene", number.cex = 0), "number.cex")
+  expect_error(corrplot_ng(diag(1), engine = "scene", number.font = 5), "number.font")
+  expect_error(corrplot_ng(diag(1), engine = "scene", method = "ellipse"), "does not support: method")
+})
+
 test_that("the default engine remains the legacy corrplot implementation", {
   corr <- matrix(c(1, 0.6, 0.6, 1), nrow = 2,
     dimnames = list(c("A", "B"), c("A", "B")))
