@@ -15,11 +15,38 @@ Rscript prototypes/shared-svg/test_r_scene_consumer.R
 
 ## Label layout
 
-Row-label space expands to accommodate the longest label using a conservative
-sans-serif width estimate. Column labels are rotated vertically so neighboring
-columns cannot overlap; the top margin expands to fit them. The estimate is a
-layout heuristic rather than font measurement, so unusually wide glyphs may
-still need visual review with the target font.
+The scene builder uses deterministic, renderer-independent estimates rather
+than browser font measurement. Row-label margins expand to fit the longest
+label, and vertical column labels receive dedicated top space. Optional
+`layout` settings can control physical width/height, cell size bounds, label
+font family/size/weight, column-label orientation, and collision policy.
+
+Example:
+
+```json
+{
+  "labels": ["customer satisfaction", "monthly recurring revenue"],
+  "matrix": [[1.0, 0.42], [0.42, 1.0]],
+  "layout": {
+    "width": 720,
+    "height": 560,
+    "min_cell_size": 18,
+    "max_cell_size": 96,
+    "label_font_family": "serif",
+    "label_font_size": 14,
+    "label_font_weight": "bold",
+    "column_label_orientation": "horizontal",
+    "label_collision": "truncate"
+  }
+}
+```
+
+Supported collision policies are `preserve`, `wrap`, `truncate`, and `omit`.
+Horizontal labels can wrap or truncate to the available cell width; vertical
+labels avoid neighboring columns by construction and can also be truncated. Font metrics are estimates,
+so output should be visually reviewed with the target font when labels contain
+unusually wide glyphs. If requested dimensions cannot fit the matrix at the
+minimum cell size, the minimum remains authoritative and the canvas expands.
 
 ## What this validates
 
