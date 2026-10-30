@@ -211,6 +211,21 @@ class PublicationConfigTests(unittest.TestCase):
         self.assertEqual(scene["matrix_semantics"]["color_limits"], [1.0, 5.0])
         self.assertEqual(scene["matrix"][0][0], 2.0)
 
+    def test_sequential_custom_scale_is_restricted_to_one_sided_general_matrices(self):
+        config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
+        config["colors"]["scale"] = {
+            "type": "sequential", "stops": [
+                {"value": 0, "color": "#ffffe5"},
+                {"value": 1, "color": "#662506"},
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "one-sided general numeric"):
+            validate_config(config)
+        config["matrix"]["kind"] = "general_numeric"
+        config["input"]["values"] = [[-2.0, 2.0, 1.0], [2.0, -2.0, 1.0], [1.0, 1.0, -2.0]]
+        with self.assertRaisesRegex(ValueError, "one-sided general numeric"):
+            validate_config(config)
+
     def test_general_numeric_csv_requires_explicit_limits(self):
         config = json.loads(EXAMPLES[0].read_text(encoding="utf-8"))
         config["matrix"]["kind"] = "general_numeric"
