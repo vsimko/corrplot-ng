@@ -20,7 +20,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: bash
         run: |
-          tag_version="\${GITHUB_REF_NAME#cli-v}"
+          tag_version="${GITHUB_REF_NAME#cli-v}"
           package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' tools/corrplot-ng/Cargo.toml | head -n1)"
           test "$tag_version" = "$package_version"
       - name: Install musl toolchain
@@ -39,9 +39,9 @@ jobs:
           cp tools/corrplot-ng/target/x86_64-unknown-linux-musl/release/corrplot-ng dist/corrplot-ng
           cp tools/corrplot-ng/README.md tools/corrplot-ng/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
-          version: \${GITHUB_REF_NAME#cli-v}
-          ref: \${GITHUB_REF}
-          commit: \${GITHUB_SHA}
+          version: ${GITHUB_REF_NAME#cli-v}
+          ref: ${GITHUB_REF}
+          commit: ${GITHUB_SHA}
           target: x86_64-unknown-linux-musl
           rustc: $(rustc --version)
           cargo: $(cargo --version)
@@ -72,7 +72,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: bash
         run: |
-          tag_version="\${GITHUB_REF_NAME#cli-v}"
+          tag_version="${GITHUB_REF_NAME#cli-v}"
           package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' tools/corrplot-ng/Cargo.toml | head -n1)"
           test "$tag_version" = "$package_version"
       - name: Install Apple targets
@@ -92,11 +92,11 @@ jobs:
             -output dist/corrplot-ng
           cp tools/corrplot-ng/README.md tools/corrplot-ng/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
-          version: \${GITHUB_REF_NAME#cli-v}
-          ref: \${GITHUB_REF}
-          commit: \${GITHUB_SHA}
+          version: ${GITHUB_REF_NAME#cli-v}
+          ref: ${GITHUB_REF}
+          commit: ${GITHUB_SHA}
           targets: x86_64-apple-darwin, aarch64-apple-darwin
-          macOS minimum deployment target: \${MACOSX_DEPLOYMENT_TARGET}
+          macOS minimum deployment target: ${MACOSX_DEPLOYMENT_TARGET}
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
@@ -123,7 +123,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: pwsh
         run: |
-          $tagVersion = $env:GITHUB_REF_NAME.Substring(4)
+          $tagVersion = $env:GITHUB_REF_NAME.Substring(5)
           $packageVersion = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
           if ($tagVersion -ne $packageVersion) { throw "Tag version $tagVersion does not match package version $packageVersion" }
       - name: Test and build standalone executable
@@ -178,7 +178,7 @@ jobs:
           sha256sum corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng-macos-universal.tar.gz corrplot-ng-windows-x86_64.zip > SHA256SUMS
       - name: Publish versioned release
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
             dist/corrplot-ng-linux-x86_64-musl.tar.gz \
