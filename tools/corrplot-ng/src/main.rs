@@ -8,6 +8,18 @@ mod publication;
 mod wizard;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const BUILD_COMMIT: &str = match option_env!("CORRPLOT_GIT_SHA") {
+    Some(value) => value,
+    None => "unknown",
+};
+const BUILD_RUSTC: &str = match option_env!("CORRPLOT_RUSTC_VERSION") {
+    Some(value) => value,
+    None => "rustc version not embedded",
+};
+const BUILD_TARGET: &str = match option_env!("CORRPLOT_BUILD_TARGET") {
+    Some(value) => value,
+    None => "local build",
+};
 const CELL: f64 = 84.0;
 const LEFT: f64 = 104.0;
 const TOP: f64 = 76.0;
@@ -387,7 +399,9 @@ fn run() -> Result<(), String> {
     }
     match args[1].as_str() {
         "init" => wizard::run(&args[2..])?,
-        "version" => println!("corrplot-ng {VERSION} (Rust {})", env!("CARGO_PKG_VERSION")),
+        "version" => println!(
+            "corrplot-ng {VERSION} ({BUILD_TARGET}; {BUILD_RUSTC}; commit {BUILD_COMMIT})"
+        ),
         "presets" => println!("default\tCircle glyphs with sign-based colors\nnumber\tNumeric values in cells"),
         "render" | "validate" | "inspect" => {
             let opts = parse_args(&args)?;
