@@ -332,9 +332,9 @@ class PlotSceneTests(unittest.TestCase):
         scene["labels"][0].update({"row_visible": False, "column_visible": True, "column_rotation": 35})
         scene["labels"][1].update({"row_visible": True, "column_visible": False})
         svg = render_scene_svg(scene)
-        self.assertNotIn(">alpha</text>", svg)
+        self.assertEqual(svg.count(">alpha</text>"), 1)
         self.assertIn("rotate(-35", svg)
-        self.assertNotIn(">beta</text>", svg)
+        self.assertEqual(svg.count(">beta</text>"), 1)
 
 
 if __name__ == "__main__":
