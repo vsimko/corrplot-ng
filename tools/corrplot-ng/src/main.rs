@@ -398,9 +398,9 @@ fn write_output(path: Option<&str>, content: &str) -> Result<(), String> {
             let name = destination.file_name().ok_or_else(|| format!("invalid output path '{path}'"))?
                 .to_string_lossy();
             let temporary = parent.join(format!(".{name}.corrplot-ng-{}.tmp", process::id()));
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&temporary)
+                .map_err(|e| format!("cannot create temporary output '{}': {e}", temporary.display()))?;
             let result = (|| {
-                let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&temporary)
-                    .map_err(|e| format!("cannot create temporary output '{}': {e}", temporary.display()))?;
                 file.write_all(content.as_bytes()).map_err(|e| format!("cannot write temporary output: {e}"))?;
                 file.sync_all().map_err(|e| format!("cannot flush temporary output: {e}"))?;
                 drop(file);
@@ -491,7 +491,7 @@ fn main() {
         let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported method") ||
-            message.contains("missing value for") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
+            message.contains("missing value for") || message.contains("unsupported input format") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
         fail(message, if usage_error { 2 } else { 1 });
     }
 }
