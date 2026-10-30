@@ -1,14 +1,16 @@
 import json
-import re
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import sys
+
+HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE.parent / "shared-svg"))
 
 from publication_svg import render_publication_svg
 from scene import build_scene
 
 
-HERE = Path(__file__).parent
 SVG_NS = "{http://www.w3.org/2000/svg}"
 
 
