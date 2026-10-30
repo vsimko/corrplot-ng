@@ -318,6 +318,121 @@ fn variable_order(
     }
 }
 
+fn csv_field(value: &str) -> String {
+    format!("\"{}\"", value.replace('"', "\"\""))
+}
+
+pub(crate) fn parse_json_matrix(
+    source: &str,
+    fallback_kind: crate::Kind,
+) -> Result<(crate::Matrix, crate::Kind), String> {
+    let root_value = parse_json(source).map_err(|error| format!("invalid JSON input: {error}"))?;
+    let root = object(&root_value, "JSON input")?;
+    let (labels, values, kind) = if root.contains_key("schema_version") || root.contains_key("cells") {
+        keys(root, &[
+            "schema_version", "kind", "width", "height", "labels", "cells", "annotation",
+            "style", "typography", "legend", "title", "description", "significance",
+            "glyph_method", "text_annotations", "display_type", "show_diagonal",
+            "variable_order", "matrix_semantics",
+        ], "scene")?;
+        let version = number(required(root, "schema_version", "scene")?, "scene.schema_version")?;
+        if version != 1.0 { return Err("scene.schema_version must equal 1".into()); }
+        let kind = match string(required(root, "kind", "scene")?, "scene.kind")? {
+            "correlation_plot" => crate::Kind::Correlation,
+            "general_matrix_plot" => crate::Kind::General,
+            other => return Err(format!("unsupported scene.kind '{other}'")),
+        };
+        let label_items = array(required(root, "labels", "scene")?, "scene.labels")?;
+        let mut labels = Vec::with_capacity(label_items.len());
+        for (index, item) in label_items.iter().enumerate() {
+            let label = object(item, &format!("scene.labels[{index}]"))?;
+            labels.push(string(required(label, "text", &format!("scene.labels[{index}]"))?,
+                &format!("scene.labels[{index}].text"))?.to_string());
+        }
+        if labels.is_empty() { return Err("scene.labels must not be empty".into()); }
+        let n = labels.len();
+        let cell_items = array(required(root, "cells", "scene")?, "scene.cells")?;
+        if cell_items.len() != n * n {
+            return Err(format!("scene.cells must contain exactly {} cells for {} labels", n * n, n));
+        }
+        let mut values = vec![vec![None; n]; n];
+        let mut seen = vec![vec![false; n]; n];
+        for (index, item) in cell_items.iter().enumerate() {
+            let cell = object(item, &format!("scene.cells[{index}]"))?;
+            let row_value = number(required(cell, "row", &format!("scene.cells[{index}]"))?,
+                &format!("scene.cells[{index}].row"))?;
+            let column_value = number(required(cell, "column", &format!("scene.cells[{index}]"))?,
+                &format!("scene.cells[{index}].column"))?;
+            if row_value.fract() != 0.0 || column_value.fract() != 0.0
+                || row_value < 0.0 || column_value < 0.0
+                || row_value >= n as f64 || column_value >= n as f64 {
+                return Err(format!("scene.cells[{index}] row/column indices must be integers in 0..{n}"));
+            }
+            let row = row_value as usize;
+            let column = column_value as usize;
+            if seen[row][column] {
+                return Err(format!("scene.cells contains duplicate cell ({row}, {column})"));
+            }
+            seen[row][column] = true;
+            values[row][column] = match required(cell, "value", &format!("scene.cells[{index}]"))? {
+                Json::Null => None,
+                Json::Number(value) => Some(*value),
+                _ => return Err(format!("scene.cells[{index}].value must be a number or null")),
+            };
+        }
+        if seen.iter().flatten().any(|present| !present) {
+            return Err("scene.cells must contain every row/column coordinate exactly once".into());
+        }
+        (labels, values, kind)
+    } else {
+        keys(root, &["labels", "values", "kind"], "matrix")?;
+        let labels = array(required(root, "labels", "matrix")?, "matrix.labels")?
+            .iter().enumerate()
+            .map(|(index, value)| string(value, &format!("matrix.labels[{index}]")).map(str::to_string))
+            .collect::<Result<Vec<_>, _>>()?;
+        let values = array(required(root, "values", "matrix")?, "matrix.values")?
+            .iter().enumerate().map(|(row, value)| {
+                array(value, &format!("matrix.values[{row}]"))?.iter().enumerate().map(|(column, value)| {
+                    match value {
+                        Json::Null => Ok(None),
+                        Json::Number(number) => Ok(Some(*number)),
+                        _ => Err(format!("matrix.values[{row}][{column}] must be a number or null")),
+                    }
+                }).collect::<Result<Vec<_>, String>>()
+            }).collect::<Result<Vec<_>, _>>()?;
+        let kind = match root.get("kind") {
+            None => fallback_kind,
+            Some(Json::String(value)) if value == "correlation" => crate::Kind::Correlation,
+            Some(Json::String(value)) if value == "general" => crate::Kind::General,
+            Some(_) => return Err("matrix.kind must be 'correlation' or 'general'".into()),
+        };
+        (labels, values, kind)
+    };
+
+    if labels.is_empty() || values.len() != labels.len()
+        || values.iter().any(|row| row.len() != labels.len()) {
+        return Err("JSON matrix values must be square and match the labels length".into());
+    }
+    let mut csv = String::new();
+    csv.push(',');
+    for (index, label) in labels.iter().enumerate() {
+        if index > 0 { csv.push(','); }
+        csv.push_str(&csv_field(label));
+    }
+    csv.push('\n');
+    for (row, label) in labels.iter().enumerate() {
+        csv.push_str(&csv_field(label));
+        for value in &values[row] {
+            csv.push(',');
+            if let Some(value) = value { csv.push_str(&value.to_string()); }
+        }
+        csv.push('\n');
+    }
+    let matrix = crate::parse_matrix_with_delimiter(&csv, kind, ',')
+        .map_err(|error| format!("invalid JSON matrix: {error}"))?;
+    Ok((matrix, kind))
+}
+
 #[derive(Debug, Clone)]
 pub struct Publication {
     pub labels: Vec<String>, pub values: Vec<Vec<Option<f64>>>,
