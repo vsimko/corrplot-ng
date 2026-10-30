@@ -295,3 +295,14 @@ fn ordinary_commands_remain_non_interactive() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     assert!(String::from_utf8_lossy(&output.stdout).contains("publication-config v1"));
 }
+
+
+#[test]
+fn init_help_is_available_without_a_tty() {
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["init", "--help"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("publication-config v1"));
+}
