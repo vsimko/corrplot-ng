@@ -65,6 +65,12 @@ jobs:
           echo "rustc_version=$(rustc --version)" >> "$GITHUB_OUTPUT"
           echo "cargo_version=$(cargo --version)" >> "$GITHUB_OUTPUT"
 
+      - name: Verify dependency-free runtime graph
+        shell: bash
+        run: |
+          cargo tree --locked --manifest-path tools/corrplot-ng/Cargo.toml --edges normal
+          test "$(cargo tree --locked --manifest-path tools/corrplot-ng/Cargo.toml --edges normal | wc -l)" -eq 1
+
       - name: Check release tag matches Cargo version
         if: startsWith(github.ref, 'refs/tags/corrplot-ng-v')
         shell: bash
