@@ -980,7 +980,7 @@ pub(crate) fn parse_scene_matrix(source: &str) -> Result<(crate::Matrix, crate::
             if let Some(value) = value { csv.push_str(&value.to_string()); }
         }
     }
-    let matrix = crate::parse_matrix(&csv, kind)?;
+    let matrix = crate::parse_matrix_with_delimiter(&csv, kind, ',')?;
     Ok((matrix, kind))
 }
 
