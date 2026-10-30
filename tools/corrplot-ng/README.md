@@ -38,7 +38,7 @@ The CLI also accepts renderer-neutral scene-v1 JSON output as input. It reconstr
 
 Correlation mode (default for CSV/TSV and compact JSON without `kind`) requires finite values in [-1, 1], symmetry, and a unit diagonal. General-matrix mode accepts arbitrary finite values and does not impose correlation semantics.
 
-Input format detection is deterministic: `.csv`, `.tsv` / `.tab`, and `.json` extensions take precedence; otherwise JSON is detected from an object/array prefix and delimited text from its first non-empty row. If comma and tab detection is ambiguous, specify `--input-format`. Use `--input-format csv|tsv|json` to override detection. UTF-8 is required; a UTF-8 BOM is accepted.
+Input format detection is deterministic: `.csv`, `.tsv` / `.tab`, and `.json` extensions take precedence; otherwise JSON is detected from an object prefix and delimited text from its first non-empty row. If comma and tab detection is ambiguous, specify `--input-format`. Use `--input-format csv|tsv|json` to override detection. UTF-8 is required; a UTF-8 BOM is accepted.
 
 ## Commands
 
