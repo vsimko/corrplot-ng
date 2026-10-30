@@ -17,7 +17,7 @@ The Python test suite compares the generated scene with this canonical output. T
 - `kind` is `correlation_plot`.
 - `width`, `height`, positions, and sizes use logical canvas units. They are not pixels, points, or CSS units.
 - `labels` contains one item per matrix variable, in prepared matrix order. Optional `variable_order` records the ordering strategy, the ordered-to-original zero-based index permutation, and original labels. `text` is always a string. Row and column label positions are independent.
-- `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the original matrix/labels order.
+- `cells` is a flat array in row-major order. `row` and `column` are zero-based indices into the prepared matrix/labels order. When `variable_order` is present, map a prepared index back to the source matrix with `variable_order.indices`.
 - `value` is a correlation coefficient in [-1, 1], or JSON `null` for a missing value. Missing must not be silently converted to zero.
 - Optional cell `color` is the mapped six-digit sRGB color for that value. Optional `p_value` carries the significance value permuted to the same row/column identity. It is absent in legacy scenes that use semantic style colors.
 - Optional `legend` is an ordered array of renderer-neutral `kind`, `label`, and `color` entries. It describes the exact mapping used by cells and may include a distinct missing-value entry.
