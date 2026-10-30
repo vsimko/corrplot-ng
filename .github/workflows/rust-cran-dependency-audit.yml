@@ -28,6 +28,12 @@ jobs:
       - name: Vendor all resolved crate sources
         working-directory: prototypes/rust-rextendr
         run: cargo vendor --locked vendor > vendor-config.toml
+      - name: Verify offline Cargo build from vendored sources
+        working-directory: prototypes/rust-rextendr
+        run: |
+          mkdir -p .cargo
+          cp vendor-config.toml .cargo/config.toml
+          cargo build --locked --offline
       - name: Create dependency license inventory
         working-directory: prototypes/rust-rextendr
         run: |
