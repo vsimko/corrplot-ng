@@ -130,8 +130,7 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         elif kind == "number":
             pass
         elif kind == "shade":
-            if encoding["magnitude"] > 0:
-                parts.append(
+            parts.append(
                     f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" '
                     f'fill="{color}" fill-opacity="{encoding["fill_opacity"]:.3f}" stroke="none"/>'
                 )

@@ -66,7 +66,7 @@ def _cell_encoding(cell: dict[str, Any], method: str, style: dict[str, str]) -> 
     elif method == "number":
         pass
     elif method == "shade":
-        encoding["fill_opacity"] = 0.12 + 0.45 * magnitude if magnitude > 0 else 0.0
+        encoding["fill_opacity"] = 0.12 + 0.45 * magnitude
         if sign != 0:
             if sign > 0:
                 line = {"x1": x, "y1": y + size, "x2": x + size, "y2": y}

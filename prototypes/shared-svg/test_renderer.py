@@ -476,6 +476,24 @@ class PlotSceneTests(unittest.TestCase):
         self.assertIn("<path d=", svg)
         self.assertIn(">1.00</text>", svg)
 
+
+    def test_zero_is_visually_distinct_from_missing_for_shade_and_color(self):
+        for method in ("shade", "color"):
+            with self.subTest(method=method):
+                scene = build_scene({
+                    "labels": ["A", "B"],
+                    "matrix": [[1.0, 0.0], [0.0, None]],
+                    "method": method,
+                })
+                zero = scene["cells"][1]["encoding"]
+                self.assertEqual(zero["sign"], 0)
+                self.assertEqual(zero["magnitude"], 0)
+                svg = render_scene_svg(scene)
+                self.assertIn("#bdbdbd", svg)
+                self.assertIn(">NA</text>", svg)
+
+
+
     def test_missing_values_remain_explicit_for_every_method(self):
         for method in ("circle", "square", "ellipse", "number", "shade", "color", "pie"):
             with self.subTest(method=method):
