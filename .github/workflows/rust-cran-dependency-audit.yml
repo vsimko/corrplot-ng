@@ -28,7 +28,7 @@ jobs:
         run: cargo generate-lockfile
       - name: Enforce dependency license policy
         working-directory: prototypes/rust-rextendr
-        run: cargo deny check licenses --locked
+        run: cargo deny check licenses
       - name: Capture resolved dependency metadata
         working-directory: prototypes/rust-rextendr
         run: |
