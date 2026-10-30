@@ -115,7 +115,7 @@ class ColorScale:
                            for i, value in enumerate(raw_colors)]
             self.stops = []
         else:
-            raise ValueError("color_scale.type: expected 'continuous' or 'discrete'")
+            raise ValueError("color_scale.type: expected 'continuous', 'sequential', or 'discrete'")
 
     def map_value(self, value: Any) -> str:
         """Map a normalized scale value to a six-digit sRGB hex color."""
