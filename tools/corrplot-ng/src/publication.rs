@@ -449,6 +449,7 @@ impl Publication {
                 ));
             }
         }
+        let annotations = root.get("text_annotations").and_then(|v| match v { Json::Array(a) => Some(a.as_slice()), _ => None }).unwrap_or(&[]);
         for cell in cells {
             let o = match cell { Json::Object(o) => o, _ => unreachable!() };
             if !boolv(get(o,"visible")) { continue; }
@@ -474,6 +475,16 @@ impl Publication {
                     "<circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\"/>\n",
                     cx,cy,radius,esc(color)
                 ));
+            }
+            for annotation in annotations {
+                let a = match annotation { Json::Object(a) => a, _ => continue };
+                if num(get(a,"row")) as usize == num(get(o,"row")) as usize
+                    && num(get(a,"column")) as usize == num(get(o,"column")) as usize {
+                    out.push_str(&format!(
+                        "<text x=\\"{}\\" y=\\"{}\\" text-anchor=\\"middle\\" dominant-baseline=\\"middle\\" font-family=\\"{}\\" font-size=\\"{}\\" fill=\\"{}\\">{}</text>\\n",
+                        cx,cy,esc(family),num(get(a,"font_size")),esc(strv(get(a,"color"))),esc(strv(get(a,"text")))
+                    ));
+                }
             }
         }
         out.push_str("</svg>\n");
