@@ -1,7 +1,7 @@
 name: Rust CRAN dependency audit
 
 on:
-  workflow_dispatch:
+  # Fast license-policy check for dependency-related changes.
   pull_request:
     paths:
       - "prototypes/rust-rextendr/Cargo.toml"
@@ -9,12 +9,36 @@ on:
       - "prototypes/rust-rextendr/deny.toml"
       - "prototypes/rust-rextendr/src/**"
       - ".github/workflows/rust-cran-dependency-audit.yml"
+  # Full vendoring and offline-build audit, weekly.
+  schedule:
+    - cron: "23 5 * * 1"
+  # Full audit can also be started manually, e.g. before a CRAN release.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  audit:
+  license-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Resolve dependencies and create lockfile
+        working-directory: prototypes/rust-rextendr
+        run: cargo generate-lockfile
+      - name: Enforce dependency license policy
+        working-directory: prototypes/rust-rextendr
+        run: cargo deny check licenses
+
+  full-audit:
+    # PRs run only the inexpensive license-policy check. Scheduled and
+    # manually dispatched runs also perform vendoring and offline validation.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,16 +76,16 @@ jobs:
 
           metadata = json.loads(Path("cargo-metadata.json").read_text())
           packages = sorted(metadata["packages"], key=lambda p: (p["name"], p["version"]))
-          lines = ["name\tversion\tlicense\tlicense_file\tsource"]
+          lines = ["name\\tversion\\tlicense\\tlicense_file\\tsource"]
           for package in packages:
-              lines.append("\t".join([
+              lines.append("\\t".join([
                   package["name"],
                   package["version"],
                   package.get("license") or "MISSING",
                   package.get("license_file") or "",
                   package.get("source") or "workspace",
               ]))
-          Path("dependency-licenses.tsv").write_text("\n".join(lines) + "\n")
+          Path("dependency-licenses.tsv").write_text("\\n".join(lines) + "\\n")
           missing = [p for p in packages if not p.get("license") and not p.get("license_file")]
           print(f"Resolved packages: {len(packages)}")
           print(f"Packages without SPDX license or license-file metadata: {len(missing)}")
