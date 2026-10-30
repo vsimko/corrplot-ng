@@ -81,7 +81,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     # Conservative deterministic estimate; does not depend on browser/font APIs.
     char_width = font_size * 0.6
     max_label_width = max(len(label) * char_width for label in label_texts)
-    left = max(104, int(max_label_width + LABEL_GAP * 2))
+    row_label_width = min(max_label_width, cell) if collision == "truncate" else max_label_width
+    left = max(104, int(row_label_width + LABEL_GAP * 2))
     horizontal_lines = max(1, ceil(max_label_width / max(cell, 1))) if collision == "wrap" else 1
     top = max(76, int((max_label_width if orientation == "vertical" else horizontal_lines * font_size * 1.1) + 32))
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
