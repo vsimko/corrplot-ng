@@ -180,6 +180,7 @@ def to_scene_config(config: dict[str, Any]) -> dict[str, Any]:
         legend.append({"kind": entry["kind"], "label": label, "color": entry["color"]})
 
     result = {
+        "matrix_mode": semantics["mode"],
         "labels": ordered_labels,
         "matrix": values,
         "cell_colors": cell_colors,
