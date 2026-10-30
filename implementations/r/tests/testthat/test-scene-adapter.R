@@ -133,10 +133,14 @@ test_that("coefficient annotation fixtures match pinned corrplot 0.95 semantics"
     if (!is.null(options$diag)) args$diag <- options$diag
     if (!is.null(options$method)) args$method <- options$method
     if (!is.null(options$number_digits)) args$number.digits <- options$number_digits
+    if (!is.null(options$number_cex)) args$number.cex <- options$number_cex
+    if (!is.null(options$number_font)) args$number.font <- options$number_font
 
     scene <- do.call(corrplot_ng, c(list(corr = corr), args))
     actual <- lapply(scene$text_annotations, function(item) {
-      list(row = item$row, column = item$column, role = item$role, text = item$text)
+      list(row = item$row, column = item$column, role = item$role, text = item$text,
+        color = item$color, font_size = item$font_size,
+        font_weight = item$font_weight, font_style = item$font_style)
     })
     expect_equal(actual, case$expected, info = case$id)
   }
