@@ -176,5 +176,21 @@ class PlotSceneTests(unittest.TestCase):
             })
 
 
+
+    def test_horizontal_labels_can_wrap_without_losing_text(self):
+        svg = render_svg({
+            "labels": ["customer satisfaction score", "monthly recurring revenue"],
+            "matrix": [[1.0, 0.3], [0.3, 1.0]],
+            "layout": {
+                "column_label_orientation": "horizontal",
+                "label_collision": "wrap",
+                "label_font_size": 16,
+                "cell_size": 36,
+            },
+        })
+        self.assertIn("<tspan", svg)
+        self.assertIn("customer", svg)
+        self.assertIn("satisfaction", svg)
+
 if __name__ == "__main__":
     unittest.main()
