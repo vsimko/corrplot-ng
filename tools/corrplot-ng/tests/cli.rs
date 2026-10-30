@@ -173,3 +173,40 @@ fn invalid_publication_config_fails_before_creating_output() {
 
     fs::remove_dir_all(directory).ok();
 }
+
+
+#[test]
+fn publication_svg_respects_display_visibility_and_value_annotations() {
+    let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(fixture).unwrap();
+    let config = source
+        .replace("\"display\": \"full\"", "\"display\": \"upper\"")
+        .replace("\"show_values\": false", "\"show_values\": true");
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-annotations-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let config_path = directory.join("figure.json");
+    let scene_path = directory.join("scene.json");
+    let svg_path = directory.join("figure.svg");
+    fs::write(&config_path, config).unwrap();
+
+    let scene_output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--format", "scene-json", "--output"]).arg(&scene_path)
+        .output().unwrap();
+    assert!(scene_output.status.success(), "{}", String::from_utf8_lossy(&scene_output.stderr));
+    let scene = fs::read_to_string(&scene_path).unwrap();
+    assert!(scene.contains("\"visible\":false"), "lower-triangle cells should be hidden");
+    assert!(scene.contains("\"role\":\"value\""), "show_values should produce value annotations");
+
+    let svg_output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&svg_path)
+        .output().unwrap();
+    assert!(svg_output.status.success(), "{}", String::from_utf8_lossy(&svg_output.stderr));
+    let svg = fs::read_to_string(&svg_path).unwrap();
+    assert!(svg.contains(">0.71</text>"), "visible cell values should be rendered as SVG annotations");
+    assert!(svg.contains("#b2182b"), "configured negative color should be used");
+
+    fs::remove_dir_all(directory).ok();
+}
