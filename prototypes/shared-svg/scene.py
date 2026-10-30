@@ -134,8 +134,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     digits = config.get("number_digits")
     if digits is None:
         digits = 0 if add_coef_as_percent else 2
-    if isinstance(digits, bool) or not isinstance(digits, int) or digits < 0 or digits > 15:
-        raise ValueError("number_digits must be a non-negative integer no greater than 15")
+    if isinstance(digits, bool) or not isinstance(digits, int) or digits < 0:
+        raise ValueError("number_digits must be a non-negative integer ")
     number_cex = config.get("number_cex", 1)
     if isinstance(number_cex, bool) or not isinstance(number_cex, (int, float)) or not 0 < number_cex <= 10:
         raise ValueError("number_cex must be greater than 0 and at most 10")
@@ -159,7 +159,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             continue
         if method == "number":
             role = "value"
-            color = style_color = (
+            color = (
                 "#2166ac" if value > 0 else "#b2182b" if value < 0 else "#bdbdbd"
             )
         elif add_coef_color is not None:
