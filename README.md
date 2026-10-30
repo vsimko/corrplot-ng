@@ -27,6 +27,19 @@ The intended architecture separates visualization semantics from language-specif
 - **Migration tool:** assists in converting legacy R code to the new API.
 - **Rendering backends:** shared output formats and native integrations where appropriate.
 
+### CLI execution and interactive configuration
+
+The native CLI has two deliberately separate execution paths:
+
+- **Non-interactive commands** such as `render` and `validate` are the default path for scripts, CI, and batch workflows. They must remain deterministic and must not initialize terminal UI, prompt handling, or other wizard-specific components.
+- **Interactive configuration** is an explicit opt-in workflow (planned as `corrplot-ng init`). It guides users through creating the existing `publication-config v1` format; it does not introduce a second configuration format or a separate validation implementation.
+
+The wizard should live behind a separate module/crate boundary and be initialized only after its explicit command is selected. Interactive dependencies must not leak into the core, configuration, or rendering layers. A separate executable or dynamically loaded shared library is not required: the architectural requirement is that the wizard does not materially affect normal CLI startup or render runtime.
+
+Startup and representative render performance must be measured before and after the wizard is introduced. Acceptance thresholds should be based on those baselines rather than assuming an unmeasured zero-cost implementation. Non-interactive commands must never fall back to prompting when arguments are missing, and wizard invocation without an interactive terminal must fail clearly.
+
+Implementation tracking: [interactive CLI configuration wizard (#103)](https://github.com/vsimko/corrplot-ng/issues/103).
+
 Rust is a candidate for the shared core. The implementation language and rendering architecture will be confirmed through a technical prototype.
 
 ## Planned visualization capabilities
