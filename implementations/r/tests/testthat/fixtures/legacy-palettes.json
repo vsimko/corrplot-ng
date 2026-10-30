@@ -1,0 +1,36 @@
+{
+  "reference": {
+    "repository": "https://github.com/taiyun/corrplot",
+    "version": "0.95",
+    "commit": "62532f700e6c9d04b93ffbf0bf56e264b0e0368e",
+    "source": "R/colors.R",
+    "generator": "corrplot::COL1/COL2 and grDevices::colorRampPalette"
+  },
+  "sequential": [
+    "Oranges",
+    "Purples",
+    "Reds",
+    "Blues",
+    "Greens",
+    "Greys",
+    "OrRd",
+    "YlOrRd",
+    "YlOrBr",
+    "YlGn"
+  ],
+  "diverging": [
+    "RdBu",
+    "BrBG",
+    "PiYG",
+    "PRGn",
+    "PuOr",
+    "RdYlBu"
+  ],
+  "lengths": [
+    1,
+    2,
+    3,
+    11,
+    200
+  ]
+}
