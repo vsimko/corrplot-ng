@@ -862,4 +862,45 @@ mod tests {
         assert_eq!(hclust_order(&values).unwrap(), vec![0, 1, 2]);
     }
 
+    #[test]
+    fn publication_ordering_reorders_both_axes_and_preserves_scene_source_mapping() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        let source = std::fs::read_to_string(fixture).unwrap();
+        let path = std::env::temp_dir().join(format!(
+            "corrplot-ng-ordering-scene-{}.json",
+            std::process::id()
+        ));
+        let expected = vec![0, 2, 1];
+        for ordering in ["aoe", "hclust"] {
+            let config = source.replace(
+                "\"ordering\": \"original\"",
+                &format!("\"ordering\": \"{ordering}\""),
+            );
+            std::fs::write(&path, config).unwrap();
+            let publication = Publication::load(path.to_str().unwrap()).unwrap();
+            assert_eq!(publication.order_indices, expected);
+            assert_eq!(publication.labels, vec!["temperature", "yield", "humidity"]);
+            assert_eq!(publication.values[0][1], Some(0.71));
+            assert_eq!(publication.values[0][2], Some(-0.42));
+
+            let scene_text = publication.scene_json("ordering test");
+            assert_eq!(scene_text, publication.scene_json("ordering test"));
+            let scene = parse_json(&scene_text).unwrap();
+            let root = object(&scene, "scene").unwrap();
+            let order = object(required(root, "variable_order", "scene").unwrap(), "variable_order").unwrap();
+            let indices = array(required(order, "indices", "variable_order").unwrap(), "indices").unwrap();
+            let indices: Vec<usize> = indices.iter().map(|value| number(value, "index").unwrap() as usize).collect();
+            assert_eq!(indices, expected);
+            let source_labels = array(required(order, "labels", "variable_order").unwrap(), "labels").unwrap();
+            let source_labels: Vec<&str> = source_labels.iter().map(|value| string(value, "label").unwrap()).collect();
+            assert_eq!(source_labels, vec!["temperature", "humidity", "yield"]);
+
+            let cells = array(required(root, "cells", "scene").unwrap(), "cells").unwrap();
+            let first_row_second_cell = object(&cells[1], "cell").unwrap();
+            assert!((number(required(first_row_second_cell, "value", "cell").unwrap(), "cell.value").unwrap() - 0.71).abs() < 1e-12);
+        }
+        std::fs::remove_file(path).ok();
+    }
+
 }
