@@ -229,6 +229,11 @@ test_that("label placement modes reject incompatible layouts and invalid offsets
   expect_error(corrplot_ng(corr, engine = "scene", tl.srt = NA_real_), "tl.srt")
 })
 
+test_that("general-matrix palettes match corrplot 0.95 palette vectors", {
+  expect_identical(COL1("YlOrBr", 200), corrplot::COL1("YlOrBr", 200))
+  expect_identical(COL2("RdBu", 200), corrplot::COL2("RdBu", 200))
+})
+
 test_that("general-matrix mode preserves values and resolves legacy color domains", {
   positive <- matrix(c(2, 4, 4, 8), 2, byrow = TRUE)
   scene <- corrplot_ng(positive, engine = "scene", is.corr = FALSE)
