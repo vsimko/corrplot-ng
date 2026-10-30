@@ -169,6 +169,13 @@ class PlotSceneTests(unittest.TestCase):
         self.assertIn('fill="#b2182b"', svg)
         self.assertIn('r="36.12"', svg)
 
+    def test_renderer_uses_mapped_missing_color(self):
+        scene = build_scene({
+            "labels": ["A"], "matrix": [[None]],
+            "cell_colors": ["#abcdef"],
+        })
+        self.assertIn('fill="#abcdef"', render_scene_svg(scene))
+
     def test_general_numeric_accepts_values_outside_correlation_domain(self):
         scene = build_scene({
             "labels": ["A"], "matrix": [[125.0]], "matrix_mode": "general_numeric",
