@@ -8,6 +8,7 @@ from typing import Any
 from math import ceil
 
 LABEL_FONT_SIZE = 13
+LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6  # Backwards-compatible estimate used by the legacy bridge.
 LABEL_GAP = 12
 DEFAULT_CELL_SIZE = 84
 
