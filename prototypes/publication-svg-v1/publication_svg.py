@@ -35,7 +35,7 @@ def render_publication_svg(
 
     The viewBox remains in scene logical units. SVG width/height are physical
     millimetres, allowing the same figure to retain its page size in print and
-    LaTeX. Label margins are expanded for the requested font size before output.
+    LaTeX. Label and annotation margins expand for the requested font size.
     """
     width_mm = _positive_finite(width_mm, "width_mm")
     height_mm = _positive_finite(height_mm, "height_mm")
@@ -50,15 +50,28 @@ def render_publication_svg(
         raise ValueError("scene must contain labels and cells")
 
     # CSS/SVG font sizes use points; estimate text extents conservatively so a
-    # larger requested font cannot push labels outside the exported viewBox.
+    # larger requested font cannot push labels or annotations outside the viewBox.
     font_px = font_size_pt * (96.0 / 72.0)
-    max_label_width = max(len(item["text"]) * font_px * 0.6 for item in scene["labels"])
-    min_row_left = min(item["row_x"] - len(item["text"]) * font_px * 0.6 for item in scene["labels"])
-    min_column_top = min(item["column_y"] - len(item["text"]) * font_px * 0.6 for item in scene["labels"])
+    char_width = font_px * 0.6
+    min_row_left = min(
+        item["row_x"] - len(item["text"]) * char_width
+        for item in scene["labels"]
+    )
+    min_column_top = min(
+        item["column_y"] - len(item["text"]) * char_width
+        for item in scene["labels"]
+    )
     shift_x = max(0.0, 12.0 - min_row_left)
     shift_y = max(0.0, 12.0 - min_column_top)
+
+    annotation = scene.get("annotation", "")
+    annotation_right = 0.0
+    if annotation:
+        annotation_x = scene["cells"][0]["x"] + shift_x
+        annotation_right = annotation_x + len(annotation) * char_width + 12.0
+
+    view_width = max(float(scene["width"]) + shift_x, annotation_right)
     annotation_extra = max(0.0, font_px + 8.0 - 22.0)
-    view_width = float(scene["width"]) + shift_x
     view_height = float(scene["height"]) + shift_y + annotation_extra
 
     family = html.escape(font_family.strip(), quote=True)
@@ -108,11 +121,11 @@ def render_publication_svg(
                 f'<circle cx="{_number(cx)}" cy="{_number(cy)}" r="{_number(radius)}" fill="{color}"/>'
             )
 
-    if scene.get("annotation"):
+    if annotation:
         annotation_x = scene["cells"][0]["x"] + shift_x
         annotation_y = float(scene["height"]) - 22.0 + shift_y
         parts.append(
-            f'<text x="{_number(annotation_x)}" y="{_number(annotation_y)}" font-family="{family}" font-size="{_number(font_size_pt)}pt" fill="#333333">{html.escape(scene["annotation"])}</text>'
+            f'<text x="{_number(annotation_x)}" y="{_number(annotation_y)}" font-family="{family}" font-size="{_number(font_size_pt)}pt" fill="#333333">{html.escape(annotation)}</text>'
         )
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
