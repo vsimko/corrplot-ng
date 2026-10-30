@@ -440,6 +440,13 @@
                 }
               }
             }
+          },
+          "matrix": {
+            "required": [
+              "kind",
+              "missing",
+              "method"
+            ]
           }
         }
       }
