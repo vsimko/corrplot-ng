@@ -14,13 +14,13 @@ The repository contains several working components with different maturity level
 - **Rust standalone CLI:** a compiled native executable that validates and renders supported publication configurations and matrix inputs to SVG. It has no Python or R runtime dependency and is tested on Linux, macOS, and Windows.
 - **Scene-v1 and publication-config v1:** versioned interchange/configuration contracts used by the current prototypes and CLI.
 
-**Rust is the selected strategic shared-core implementation** under [ADR 0001](docs/adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. PR #184 records the current toolchain and package-size evidence. This is a focused proof, not a production R migration or a complete shared visualization engine. Production R rollout remains gated by CRAN guidance on the remaining vendor-metadata NOTE and installed package size, plus a controlled measurement of maintainer effort. C++/Rcpp remains a possible R-only fallback if Rust packaging proves unacceptable. TypeScript, Node bindings, browser WASM, Canvas, and additional renderers remain future work.
+**Rust is the selected strategic shared-core implementation** under [ADR 0001](docs/adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. PR #184 records the current toolchain and package-size evidence. This is a focused proof, not a production R migration or a complete shared visualization engine. Production R rollout remains gated by CRAN guidance on the remaining vendor-metadata NOTE and installed package size, plus a controlled measurement of maintainer effort. C++/Rcpp remains a possible R-only fallback if Rust packaging proves unacceptable. The cross-runtime TypeScript architecture is specified in [ADR 0002](docs/adr/0002-cross-runtime-typescript-architecture.md); Node bindings, browser WASM, Canvas, and additional renderers remain unimplemented.
 
 ## Architecture
 
 The project separates language-specific input adapters, versioned language-neutral contracts, shared Rust semantics, and output renderers. The Rust core is the strategic shared implementation; scene-v1 remains the language-neutral interchange and conformance contract.
 
-See [the current architecture](docs/architecture.md), [ADR 0001](docs/adr/0001-shared-core-architecture.md), the [repository layout and ownership map](docs/repository-layout.md), [top-level requirements](docs/requirements.md), and the [future vision](docs/future-vision.md).
+See [the current architecture](docs/architecture.md), [ADR 0001](docs/adr/0001-shared-core-architecture.md), [ADR 0002](docs/adr/0002-cross-runtime-typescript-architecture.md), the [repository layout and ownership map](docs/repository-layout.md), [top-level requirements](docs/requirements.md), and the [future vision](docs/future-vision.md).
 
 ## Compatibility scope
 
