@@ -138,7 +138,7 @@ test_that("R adapter output matches shared normalized-matrix v1 fixtures", {
     values <- do.call(rbind, lapply(input$values, function(row) {
       vapply(row, function(value) if (is.null(value)) NA_real_ else as.numeric(value), numeric(1))
     }))
-    dimnames(values) <- list(input$labels, input$labels)
+    dimnames(values) <- list(unlist(input$labels, use.names = FALSE), unlist(input$labels, use.names = FALSE))
     normalized <- corrplot_ng_normalize_matrix(values)
     expect_identical(normalized$labels, unlist(input$labels), info = case$id)
     expect_equal(normalized$values, input$values, info = case$id)
