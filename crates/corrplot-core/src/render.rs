@@ -101,6 +101,7 @@ pub struct SceneDocument<'a> {
     logical_width: f64,
     logical_height: f64,
     cell_methods: &'a [&'a str],
+    features: &'a [SceneFeature],
 }
 
 impl<'a> SceneDocument<'a> {
@@ -111,6 +112,7 @@ impl<'a> SceneDocument<'a> {
         logical_width: f64,
         logical_height: f64,
         cell_methods: &'a [&'a str],
+        features: &'a [SceneFeature],
     ) -> Result<Self, RenderError> {
         if !logical_width.is_finite() || logical_width <= 0.0
             || !logical_height.is_finite() || logical_height <= 0.0
@@ -120,7 +122,7 @@ impl<'a> SceneDocument<'a> {
                 "scene logical width and height must be positive finite numbers",
             ));
         }
-        Ok(Self { json, schema_version, kind, logical_width, logical_height, cell_methods })
+        Ok(Self { json, schema_version, kind, logical_width, logical_height, cell_methods, features })
     }
 
     pub fn json(&self) -> &'a str { self.json }
@@ -128,6 +130,7 @@ impl<'a> SceneDocument<'a> {
     pub fn kind(&self) -> SceneKind { self.kind }
     pub fn logical_size(&self) -> (f64, f64) { (self.logical_width, self.logical_height) }
     pub fn cell_methods(&self) -> &'a [&'a str] { self.cell_methods }
+    pub fn features(&self) -> &'a [SceneFeature] { self.features }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -230,6 +233,15 @@ pub fn validate_render_request(
 
     validate_size(request.format, request.size)?;
     validate_alpha(request)?;
+
+    for feature in request.required_features.iter().chain(request.optional_features.iter()) {
+        if !scene.features.contains(feature) {
+            return Err(RenderError::new(
+                "renderer.scene_feature_missing",
+                format!("scene does not contain requested feature {:?}", feature),
+            ));
+        }
+    }
 
     for feature in &request.required_features {
         if !capabilities.features.contains(feature) {
@@ -344,6 +356,7 @@ mod tests {
         SceneDocument::new(
             r#"{"schema_version":1,"kind":"correlation_plot"}"#,
             SCENE_SCHEMA_V1, SceneKind::CorrelationPlot, 640.0, 480.0, &["circle"],
+            &[SceneFeature::RowLabels, SceneFeature::ColumnLabels, SceneFeature::Legend],
         ).unwrap()
     }
 
@@ -382,14 +395,14 @@ mod tests {
     #[test]
     fn rejects_unknown_scene_versions_and_unsupported_cell_methods() {
         let future = SceneDocument::new(
-            "{}", 2, SceneKind::CorrelationPlot, 1.0, 1.0, &["circle"],
+            "{}", 2, SceneKind::CorrelationPlot, 1.0, 1.0, &["circle"], &[],
         ).unwrap();
         assert_eq!(
             validate_render_request(&CAPS, &future, &RenderRequest::default()).unwrap_err().code,
             "renderer.schema_version_unsupported"
         );
         let unknown_method = SceneDocument::new(
-            "{}", 1, SceneKind::CorrelationPlot, 1.0, 1.0, &["pie"],
+            "{}", 1, SceneKind::CorrelationPlot, 1.0, 1.0, &["pie"], &[],
         ).unwrap();
         assert_eq!(
             validate_render_request(&CAPS, &unknown_method, &RenderRequest::default()).unwrap_err().code,
