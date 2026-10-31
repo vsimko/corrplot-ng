@@ -5,6 +5,8 @@ on:
     paths:
       - "tools/corrplot-ng/**"
       - "prototypes/shared-svg/**"
+      - "prototypes/publication-config-v1/**"
+      - "scripts/validate_svg.py"
       - ".github/workflows/test-rust-cli.yml"
   push:
     branches: [main]
@@ -36,6 +38,11 @@ jobs:
         run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Build release executable
         run: cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Validate native CLI SVG artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tools/corrplot-ng/target/release/corrplot-ng render --config prototypes/publication-config-v1/examples/basic.json --output "$RUNNER_TEMP/native-cli.svg"
+          python scripts/validate_svg.py "$RUNNER_TEMP/native-cli.svg"
 
   performance-comparison:
     name: Compare CLI performance with PR base
