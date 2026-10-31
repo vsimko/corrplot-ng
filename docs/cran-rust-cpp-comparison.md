@@ -154,3 +154,35 @@ This issue does not select the production implementation language. The compariso
 ---
 
 *Review date: 2026-10-31. CRAN policy and toolchain requirements can change; re-check the linked canonical guidance immediately before the first submission. The current rextendr 0.5.0 scaffold details above are based on its published package-development article and may change in later releases.*
+
+
+## 9. Prototype validation evidence (2026-10-31)
+
+The repository already contains useful implementation evidence that supplements the policy review:
+
+### Rust/rextendr source-package check
+
+The merged PR [#55](https://github.com/vsimko/corrplot-ng/pull/55) expanded the disposable rextendr package validation to Ubuntu, macOS, and Windows. Workflow run [#49](https://github.com/vsimko/corrplot-ng/actions/runs/41118035720) completed all three jobs successfully. Each job generated the rextendr package, audited and vendored its dependencies, installed it with network access disabled, exercised the R-to-Rust call, built and inspected the source tarball, and ran `R CMD check --as-cran`.
+
+Measured source tarball sizes were approximately 1.26 MB compressed:
+- Ubuntu: 1,270,268 bytes
+- macOS: 1,264,644 bytes
+- Windows: 1,259,971 bytes
+
+The Ubuntu check reported an installed package size of 5.9 MB. All three platform checks completed with **2 NOTEs**, not a clean NOTE-free result:
+- hidden Cargo vendor metadata files (`.cargo-checksum.json` and `.cargo_vcs_info.json`) in the source package;
+- a compiled-code note for the non-API R entry point `R_NamespaceRegistry`.
+
+The workflow disables CRAN incoming and remote incoming checks for deterministic CI, so this is not a substitute for a real CRAN submission or remote incoming checks. The 5.9 MB installed-size measurement should be assessed against rextendr's package-size warning; it is not the compressed source-tarball size. The two NOTEs need explicit disposition before a release candidate is considered ready.
+
+### C++/Rcpp cross-platform source-install evidence
+
+The merged PR [#38](https://github.com/vsimko/corrplot-ng/pull/38) added a three-platform smoke matrix. Workflow run [#16](https://github.com/vsimko/corrplot-ng/actions/runs/41061324489) successfully generated Rcpp wrappers, installed the C++/Rcpp prototype from source, installed the Rust/rextendr prototype, and verified semantic parity against all five shared scene-v1 fixtures on Ubuntu, macOS, and Windows.
+
+This validates C++ source installation and behavior on the three hosted operating systems, but it did **not** build a C++ source tarball or run `R CMD check --as-cran` on that tarball. To close that gap, this branch adds `.github/workflows/cpp-rcpp-cran-package.yml`, a dedicated three-platform source-tarball check, and the minimum Rd/testthat/C++11 metadata needed to make the prototype checkable. Its result is pending CI.
+
+### Updated interpretation
+
+- Rust/rextendr: source-tarball build, offline install, R integration, and `R CMD check --as-cran` have run on all three platforms. Status is **PASS WITH NOTES / CONDITIONS**, not a clean pass. Resolve or justify both notes and confirm the installed-size policy interpretation.
+- C++/Rcpp: source install and semantic parity passed on all three platforms. Full source-tarball and `R CMD check --as-cran` evidence is being added by the new workflow; until it completes, the CRAN-check status remains **PENDING**.
+- Neither prototype is the production R package. These results do not establish CRAN acceptance, binary publication, oldest-toolchain compatibility, or final language choice.
