@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any
 
 SVG_NS = "http://www.w3.org/2000/svg"
-XLINK_NS = "http://www.w3.org/1999/xlink"
 DIMENSION = re.compile(r"^(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:px|pt|pc|mm|cm|in)?$")
 URL_REFERENCE = re.compile(r"url\(([^)]+)\)")
 ALLOWED_ELEMENTS = {
@@ -101,11 +100,6 @@ def validate_svg_text(source_text: str, source: str = "<memory>") -> dict[str, A
                 raise SvgValidationError(f"{source}: external CSS dependency is not allowed on <{label}>")
             if "javascript:" in value.lower():
                 raise SvgValidationError(f"{source}: JavaScript URL is not allowed on <{label}>")
-            if attribute_name in {"aria-labelledby", "aria-describedby"}:
-                for reference in value.split():
-                    if not reference.startswith("#") and reference not in identifiers:
-                        # References may point forward; resolve after collecting all IDs.
-                        pass
             for match in URL_REFERENCE.findall(value):
                 reference = match.strip().strip("'\"")
                 if not reference.startswith("#"):
