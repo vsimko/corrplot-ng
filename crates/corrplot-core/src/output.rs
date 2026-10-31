@@ -300,8 +300,10 @@ impl RenderOutput {
     }
 }
 
-/// A renderer consumes an immutable scene and produces one declared output.
+/// A renderer consumes an immutable scene input and produces one declared output.
 ///
+/// The generic input permits transitional adapters while the core Scene type is
+/// introduced. New shared renderers should accept the typed core Scene directly.
 /// Concrete renderers must validate OutputOptions before allocating output,
 /// return an output variant matching options.format(), and map failures to
 /// the shared diagnostic-v1 contract in their runtime adapter. Capability
