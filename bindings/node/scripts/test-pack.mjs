@@ -18,12 +18,15 @@ mkdirSync(installDirectory, { recursive: true });
 writeFileSync(join(installDirectory, "package.json"), JSON.stringify({ private: true }));
 
 try {
-  const packedJson = execFileSync(process.execPath, [npmCli, "pack", "--json", "--pack-destination", packDirectory], {
+  const packOutput = execFileSync(process.execPath, [npmCli, "pack", "--json", "--pack-destination", packDirectory], {
     cwd: packageRoot,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "inherit"],
   });
-  const packed = JSON.parse(packedJson)[0];
+  // Lifecycle scripts (prepack) may write their own stdout before npm's JSON.
+  const jsonStart = packOutput.indexOf("[");
+  assert.notEqual(jsonStart, -1, "npm pack must return JSON metadata");
+  const packed = JSON.parse(packOutput.slice(jsonStart))[0];
   assert.ok(packed.files.some((file) => file.path === "index.node"), "npm tarball must contain the native addon");
   const tarball = join(packDirectory, packed.filename);
 
