@@ -47,6 +47,8 @@ fn build_scene_json_rust(
     let cell = 84.0_f64;
     let left = 104.0_f64;
     let top = 76.0_f64;
+    // extendr exposes the R NA sentinel as an optional value.
+    let na_real_bits = NA_REAL.expect("R NA sentinel is available").to_bits();
     let width = left + n as f64 * cell + 24.0;
     let height = top + n as f64 * cell + 64.0;
 
@@ -73,7 +75,8 @@ fn build_scene_json_rust(
     for row in 0..n {
         for column in 0..n {
             let value = matrix[[row, column]];
-            if !value.is_nan() && (!value.is_finite() || value < -1.0 || value > 1.0) {
+            let is_missing = value.to_bits() == na_real_bits;
+            if !is_missing && (!value.is_finite() || value < -1.0 || value > 1.0) {
                 return Err("matrix values must be finite, NA, or between -1 and 1".to_string());
             }
             if !first { out.push(','); }
@@ -83,7 +86,7 @@ fn build_scene_json_rust(
             out.push_str(",\"column\":");
             out.push_str(&column.to_string());
             out.push_str(",\"value\":");
-            if value.is_nan() { out.push_str("null"); }
+            if is_missing { out.push_str("null"); }
             else { out.push_str(&json_number(value)); }
             out.push_str(",\"x\":");
             out.push_str(&json_number(left + column as f64 * cell));
