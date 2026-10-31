@@ -634,6 +634,21 @@ impl Publication {
             missing: missing_color, matrix_scale, width, height, unit, family, base_size, output: output_path })
     }
 
+    /// Export the complete prepared matrix as a semantic HTML data table.
+    ///
+    /// The table is independent of plot display clipping: upper/lower triangle
+    /// settings affect the figure, not the underlying data. order_indices maps
+    /// each displayed row/column to its zero-based source variable.
+    pub fn html_table(&self, title: &str) -> String {
+        matrix_html_table(
+            &self.labels,
+            &self.values,
+            &self.order_indices,
+            title,
+            &self.kind,
+        )
+    }
+
     pub fn scene_json(&self, title: &str) -> String {
         let n = self.labels.len();
         let cell = 64.0;
@@ -1421,6 +1436,70 @@ mod scene_input_tests {
 ///
 /// The adapter keeps publication semantics in the existing scene builder and
 /// applies output-only settings from the shared renderer contract.
+/// Build an accessible HTML table without depending on SVG markup or plot glyphs.
+pub fn matrix_html_table(
+    labels: &[String],
+    values: &[Vec<Option<f64>>],
+    source_indices: &[usize],
+    title: &str,
+    kind: &str,
+) -> String {
+    debug_assert_eq!(labels.len(), values.len());
+    debug_assert_eq!(labels.len(), source_indices.len());
+    debug_assert!(values.iter().all(|row| row.len() == labels.len()));
+
+    let escape = |value: &str| -> String {
+        value
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#39;")
+    };
+    let escaped_title = escape(title);
+    let description = if kind == "correlation" {
+        "Correlation matrix"
+    } else {
+        "General numeric matrix"
+    };
+    let mut html = format!(
+        "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>{escaped_title}</title>\n</head>\n<body>\n<main>\n<h1>{escaped_title}</h1>\n<p>{description}. Values are shown in the prepared variable order. Missing values are labelled explicitly. Source indices are zero-based.</p>\n<table>\n<caption>{description} values</caption>\n<thead>\n<tr><th scope=\"col\">Row / column</th>"
+    );
+    for (index, label) in labels.iter().enumerate() {
+        html.push_str(&format!(
+            "<th scope=\"col\" data-source-index=\"{}\">{}</th>",
+            source_indices[index],
+            escape(label),
+        ));
+    }
+    html.push_str("</tr>\n</thead>\n<tbody>\n");
+    for (row_index, row) in values.iter().enumerate() {
+        html.push_str(&format!(
+            "<tr><th scope=\"row\" data-source-index=\"{}\">{}</th>",
+            source_indices[row_index],
+            escape(&labels[row_index]),
+        ));
+        for (column_index, value) in row.iter().enumerate() {
+            let row_source = source_indices[row_index];
+            let column_source = source_indices[column_index];
+            match value {
+                Some(number) => {
+                    let value = number.to_string();
+                    html.push_str(&format!(
+                        "<td data-row-source-index=\"{row_source}\" data-column-source-index=\"{column_source}\" data-value=\"{value}\">{value}</td>"
+                    ));
+                }
+                None => html.push_str(&format!(
+                    "<td data-row-source-index=\"{row_source}\" data-column-source-index=\"{column_source}\" data-missing=\"true\">Missing</td>"
+                )),
+            }
+        }
+        html.push_str("</tr>\n");
+    }
+    html.push_str("</tbody>\n</table>\n</main>\n</body>\n</html>\n");
+    html
+}
+
 pub struct PublicationRenderInput<'a> {
     pub publication: &'a Publication,
     pub title: &'a str,
@@ -1478,6 +1557,30 @@ impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
         );
         output.validate_for(options)?;
         Ok(output)
+    }
+}
+
+#[cfg(test)]
+mod html_table_tests {
+    use super::*;
+
+    #[test]
+    fn html_table_preserves_values_missingness_and_source_order() {
+        let labels = vec!["B & beta".to_string(), "<A>".to_string()];
+        let values = vec![
+            vec![Some(1.0), None],
+            vec![Some(0.0), Some(1.0)],
+        ];
+        let html = matrix_html_table(&labels, &values, &[1, 0], "R&D <study>", "general_numeric");
+
+        assert!(html.contains("<title>R&amp;D &lt;study&gt;</title>"));
+        assert!(html.contains("<caption>General numeric matrix values</caption>"));
+        assert!(html.contains("data-source-index=\"1\">B &amp; beta</th>"));
+        assert!(html.contains("data-source-index=\"0\">&lt;A&gt;</th>"));
+        assert!(html.contains("data-missing=\"true\">Missing</td>"));
+        assert!(html.contains("data-value=\"0\">0</td>"));
+        assert!(html.contains("data-row-source-index=\"0\" data-column-source-index=\"1\""));
+        assert_eq!(html.matches("<td ").count(), 4);
     }
 }
 
