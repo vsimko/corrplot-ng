@@ -39,7 +39,7 @@ jobs:
             tree="$(cargo tree --manifest-path "$manifest" -i corrplot-core)"
             echo "$tree"
             echo "$tree" | grep -F "corrplot-core v0.1.0"
-            echo "$tree" | grep -F "crates/corrplot-core"
+            echo "$tree" | grep -E 'crates[/\\\\]corrplot-core'
           done
 
   rextendr-package-install:
