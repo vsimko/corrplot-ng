@@ -59,7 +59,7 @@ COMMANDS:
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
   capabilities Print machine-readable renderer capabilities
-  render-batch Render a manifest of independent publication configs
+  render-batch Render a manifest of independent publication configs (supports --incremental)
   version    Print version and build information
   help       Show this help
 
