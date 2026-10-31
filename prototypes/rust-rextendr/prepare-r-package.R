@@ -44,7 +44,7 @@ setwd(pkg_dir)
 rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
 # Keep the generated package aligned with the audited and vendored extendr
-# 0.8.2 license notice. rextendr may otherwise scaffold the latest 0.9.x API.
+# 0.9.0 API and license notice. Pinning avoids scaffold-version drift.
 cargo_manifest <- file.path(pkg_dir, "src", "rust", "Cargo.toml")
 cargo_lines <- readLines(cargo_manifest, warn = FALSE)
 extendr_dependency <- grep("^extendr-api[[:space:]]*=", cargo_lines)
