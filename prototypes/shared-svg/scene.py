@@ -180,14 +180,17 @@ def _prepare_cluster_regions(
     if not isinstance(entries, list):
         raise ValueError("cluster_regions must be a list")
     display_labels = variable_order["labels"] if variable_order is not None else labels
+    display_indices = variable_order["indices"] if variable_order is not None else list(range(len(labels)))
     if len(set(display_labels)) != len(display_labels):
         raise ValueError("cluster_regions require unique variable identities after ordering")
+    if len(set(display_indices)) != len(display_indices):
+        raise ValueError("cluster_regions require unique source indices after ordering")
     prepared = []
     seen_ids = set()
     for index, entry in enumerate(entries):
         if not isinstance(entry, dict):
             raise ValueError(f"cluster_regions[{index}] must be an object")
-        allowed = {"id", "variables", "color", "line_width"}
+        allowed = {"id", "variables", "indices", "color", "line_width"}
         unknown = set(entry) - allowed
         if unknown:
             raise ValueError(f"cluster_regions[{index}] has unknown fields: {', '.join(sorted(unknown))}")
@@ -198,21 +201,38 @@ def _prepare_cluster_regions(
             raise ValueError(f"cluster_regions contains duplicate id {region_id!r}")
         seen_ids.add(region_id)
         variables = entry.get("variables")
-        if (not isinstance(variables, list) or not variables
-            or any(not isinstance(name, str) or not name for name in variables)
-            or len(set(variables)) != len(variables)):
-            raise ValueError(f"cluster_regions[{index}].variables must contain unique non-empty variable names")
-        unknown_variables = [name for name in variables if name not in display_labels]
-        if unknown_variables:
-            raise ValueError(
-                f"cluster region {region_id!r} references unknown variables: {', '.join(unknown_variables)}"
-            )
-        positions = [position for position, name in enumerate(display_labels) if name in set(variables)]
+        indices = entry.get("indices")
+        if (variables is None) == (indices is None):
+            raise ValueError(f"cluster region {region_id!r} must specify exactly one of variables or indices")
+        if variables is not None:
+            if (not isinstance(variables, list) or not variables
+                or any(not isinstance(name, str) or not name for name in variables)
+                or len(set(variables)) != len(variables)):
+                raise ValueError(f"cluster_regions[{index}].variables must contain unique non-empty variable names")
+            unknown_variables = [name for name in variables if name not in display_labels]
+            if unknown_variables:
+                raise ValueError(
+                    f"cluster region {region_id!r} references unknown variables: {', '.join(unknown_variables)}"
+                )
+            positions = [position for position, name in enumerate(display_labels) if name in set(variables)]
+        else:
+            if (not isinstance(indices, list) or not indices
+                or any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in indices)
+                or len(set(indices)) != len(indices)):
+                raise ValueError(f"cluster_regions[{index}].indices must contain unique non-negative source indices")
+            unknown_indices = [value for value in indices if value not in display_indices]
+            if unknown_indices:
+                raise ValueError(
+                    f"cluster region {region_id!r} references unknown source indices: {unknown_indices}"
+                )
+            positions = [position for position, value in enumerate(display_indices) if value in set(indices)]
         start, end = min(positions), max(positions)
         if positions != list(range(start, end + 1)):
             raise ValueError(
                 f"cluster region {region_id!r} variables must be contiguous after ordering"
             )
+        resolved_variables = [display_labels[position] for position in positions]
+        resolved_indices = [display_indices[position] for position in positions]
         color = entry.get("color", "#000000")
         if (not isinstance(color, str) or len(color) != 7 or color[0] != "#"
             or any(char not in "0123456789abcdefABCDEF" for char in color[1:])):
@@ -222,7 +242,8 @@ def _prepare_cluster_regions(
         span = (end - start + 1) * cell
         prepared.append({
             "id": region_id,
-            "variables": variables,
+            "variables": resolved_variables,
+            "source_indices": resolved_indices,
             "row_start": start,
             "row_end": end,
             "column_start": start,
