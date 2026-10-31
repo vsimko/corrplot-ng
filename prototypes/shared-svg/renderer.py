@@ -11,7 +11,7 @@ from scene import build_scene
 
 
 
-def render_scene_svg(scene: dict[str, Any]) -> str:
+def _render_scene_svg_unchecked(scene: dict[str, Any]) -> str:
     """Serialize a prepared plot scene to deterministic SVG."""
     width, height = scene["width"], scene["height"]
     style = scene["style"]
@@ -242,6 +242,15 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
 
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
+
+
+from renderer_capabilities import render_scene_svg_with_diagnostics
+
+
+def render_scene_svg(scene: dict[str, Any]) -> str:
+    """Negotiate capabilities strictly, then serialize a scene to SVG."""
+    svg, _diagnostics = render_scene_svg_with_diagnostics(scene)
+    return svg
 
 
 def render_svg(config: dict[str, Any]) -> str:
