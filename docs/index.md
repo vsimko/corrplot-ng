@@ -23,9 +23,10 @@ The repository currently provides:
 - A provisional R package with a legacy-compatible delegation path, normalized-matrix adapters, and an experimental scene-v1 preparation path.
 - Versioned normalized-matrix v1 and scene-v1 contracts.
 - A Python scene/SVG reference prototype.
+- A reusable Rust library in `crates/corrplot-core` for shared matrix validation, consumed by the standalone Rust CLI and disposable R/rextendr adapter.
 - A standalone Rust CLI with its own native build and test workflow.
 
-The Rust toolchain is selected for the standalone CLI. The production shared-core language is deferred by [ADR 0001](adr/0001-shared-core-architecture.md). Rust/rextendr and C++/Rcpp are evaluation spikes. TypeScript, Node native bindings, browser WASM, Canvas, and other renderers are planned, not current production interfaces.
+Rust is the selected shared-core implementation under [ADR 0001](adr/0001-shared-core-architecture.md). The CLI and disposable R/rextendr adapter both call `crates/corrplot-core` for matrix validation; the rextendr adapter is not a production R backend. C++/Rcpp remains an evaluation spike. TypeScript, Node native bindings, browser WASM, Canvas, and other renderers are planned, not current production interfaces.
 
 See [the current architecture](architecture.md) for implementation boundaries. See [top-level requirements](requirements.md) for product priorities; requirements are goals and are not proof that a feature is implemented.
 
@@ -33,11 +34,12 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 
 - [Top-level requirements](requirements.md): product and engineering requirements, priorities, and acceptance checks.
 - [Current architecture](architecture.md): implemented components, versioned contracts, experimental integrations, and deferred decisions.
-- [ADR 0001: shared-core architecture](adr/0001-shared-core-architecture.md): Rust shared-core decision and the CLI/rextendr reuse proof.
+- [ADR 0001: shared-core architecture](adr/0001-shared-core-architecture.md): Rust shared-core decision, CLI/rextendr reuse proof, and remaining rollout gates.
+- [Repository structure and ownership](repository-structure.md): top-level directory responsibilities, contract/reference/experiment categories, and canonical shared-fixture ownership.
 - [corrplot-core](../crates/corrplot-core/README.md): the dependency-free shared matrix validation library.
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, and current backend limits.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
-- [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md): decision to keep scene-v1 as the interoperability boundary and defer the production shared-core language.
+
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 - [Testing strategy](testing-strategy.md): current test layers, evidence limits, and CI workflows.
@@ -47,7 +49,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 
 The R package lives in [implementations/r](../implementations/r/README.md). It delegates legacy plotting to upstream `corrplot` by default and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
 
-The standalone Rust CLI lives in [tools/corrplot-ng](../tools/corrplot-ng/README.md). The Python scene/SVG prototype and language-neutral contracts live under [prototypes](../prototypes/shared-svg/README.md). Experimental Rust/rextendr and C++/Rcpp evaluation work must not be described as production backends.
+The standalone Rust CLI lives in [tools/corrplot-ng](../tools/corrplot-ng/README.md). The Python scene/SVG reference, versioned contract specifications, and disposable Rust/rextendr and C++/Rcpp experiments currently live under [prototypes](../prototypes/shared-svg/README.md). Their different lifecycle and ownership rules are documented in the [repository structure map](repository-structure.md).
 
 ## Editing guidelines
 
