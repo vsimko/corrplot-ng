@@ -57,8 +57,8 @@ test("renders a typed scene through the shared Rust SVG renderer", () => {
     width: 100,
     height: 100,
     unit: "px",
-    font_family: "sans-serif",
-    font_size_pt: 10,
+    fontFamily: "sans-serif",
+    fontSizePt: 10,
     background: white,
   });
 
@@ -69,6 +69,6 @@ test("renders a typed scene through the shared Rust SVG renderer", () => {
 
 test("exposes the shared renderer capability declaration", () => {
   const capabilities = getRendererCapabilities();
-  assert.equal(capabilities.schema_version, 1);
+  assert.equal(capabilities.capability_schema_version, 1);
   assert.ok(Array.isArray(capabilities.cell_methods));
 });
