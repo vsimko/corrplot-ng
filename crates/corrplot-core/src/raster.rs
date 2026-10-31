@@ -128,6 +128,8 @@ impl Renderer<Scene> for RgbaRenderer {
     }
 }
 
+const MAX_RASTER_BYTES: usize = 128 * 1024 * 1024;
+
 pub fn render_rgba(
     scene: &Scene,
     options: RasterOptions,
@@ -140,6 +142,12 @@ pub fn render_rgba(
     let byte_len = row_bytes.checked_mul(options.height_px as usize).ok_or_else(|| {
         OutputValidationError::invalid_options("raster buffer size exceeds addressable memory")
     })?;
+    if byte_len > MAX_RASTER_BYTES {
+        return Err(OutputValidationError::invalid_options(format!(
+            "RGBA output exceeds the {} MiB per-render allocation limit",
+            MAX_RASTER_BYTES / (1024 * 1024),
+        )));
+    }
     let mut canvas = Canvas {
         width: options.width_px as usize,
         height: options.height_px as usize,
@@ -617,6 +625,35 @@ mod tests {
         ]);
         let buffer = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
         assert!(buffer.pixels.chunks_exact(4).any(|pixel| pixel == [220, 20, 60, 255]));
+    }
+
+    #[test]
+    fn svg_and_rgba_renderers_consume_the_same_scene() {
+        let scene = sample_scene();
+        let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(
+            100.0, 100.0, crate::output::SvgUnit::Pixels,
+        ));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output") };
+        assert!(svg.contains("<circle"));
+        assert!(svg.contains("-0.5"));
+        assert!(svg.contains(">A</text>"));
+
+        let rgba_options = OutputOptions::Rgba(RasterOptions::new(100, 100));
+        let rgba = RgbaRenderer.render(&scene, &rgba_options).unwrap();
+        let RenderOutput::Rgba(rgba) = rgba else { panic!("expected RGBA output") };
+        assert_eq!((rgba.width_px, rgba.height_px), (100, 100));
+        assert!(rgba.pixels.chunks_exact(4).any(|pixel| pixel == [20, 80, 160, 255]));
+    }
+
+    #[test]
+    fn rejects_raster_allocations_above_the_documented_limit() {
+        let scene = sample_scene();
+        let options = RasterOptions::new(20_000, 20_000);
+        assert_eq!(
+            render_rgba(&scene, options).unwrap_err().code,
+            "renderer.output.invalid_options",
+        );
     }
 
     #[test]
