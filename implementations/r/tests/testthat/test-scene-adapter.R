@@ -333,8 +333,9 @@ test_that("matrix semantic mode and explicit color limits are validated", {
     col.lim = c(0, Inf)), "finite")
   expect_error(corrplot_ng(matrix(0, 1), engine = "scene", is.corr = TRUE,
     col.lim = c(-2, 1)), "within \\[-1, 1\\]")
-  expect_error(corrplot_ng(matrix(NA_real_, 2, 2), engine = "scene",
-    is.corr = FALSE), "no observed values")
+  empty <- corrplot_ng(matrix(NA_real_, 2, 2), engine = "scene",
+    is.corr = FALSE)
+  expect_false(empty$matrix_semantics$has_observed_values)
 })
 
 test_that("missing cells receive explicit labels and colors without numeric glyphs", {
