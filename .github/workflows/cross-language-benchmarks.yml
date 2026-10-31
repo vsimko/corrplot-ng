@@ -1,6 +1,12 @@
 name: Performance benchmarks
 
 on:
+  pull_request:
+    paths:
+      - "benchmarks/**"
+      - "prototypes/cpp-rcpp/**"
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/cross-language-benchmarks.yml"
   workflow_dispatch:
     inputs:
       include_stress:
