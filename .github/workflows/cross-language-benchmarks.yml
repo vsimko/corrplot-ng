@@ -142,13 +142,13 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.include_stress
         run: python benchmarks/export_native_fixtures.py --stress-only --output benchmark-results/stress-fixtures.json
       - name: Benchmark Python reference on B03/B04
-        if: inputs.include_stress
+        if: github.event_name == 'workflow_dispatch' && inputs.include_stress
         run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/stress-fixtures.json --output benchmark-results/python-stress-scene-v1.json
       - name: Benchmark C++/Rcpp and Rust/rextendr on B03/B04
-        if: inputs.include_stress
+        if: github.event_name == 'workflow_dispatch' && inputs.include_stress
         run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/stress-fixtures.json benchmark-results/native-stress-scene-v1.json --stress-mode
       - name: Upload cross-language stress results
-        if: inputs.include_stress
+        if: github.event_name == 'workflow_dispatch' && inputs.include_stress
         uses: actions/upload-artifact@v4
         with:
           name: cross-language-stress-benchmark-results
