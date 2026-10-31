@@ -102,9 +102,9 @@ test_that("numeric data frames are supported and non-numeric columns are rejecte
 test_that("invalid inputs and cor.test failures have actionable errors", {
   expect_error(cor.mtest(matrix(numeric(), nrow = 0, ncol = 2)),
     "at least one observation")
-  expect_error(cor.mtest(matrix(1:5, ncol = 1) |> as.logical()),
+  expect_error(cor.mtest(as.logical(matrix(1:5, ncol = 1))),
     "numeric matrix")
-  expect_error(cor.mtest(matrix(c(1, 2, Inf, 4), 2)),
+  expect_error(cor.mtest(matrix(c(1, Inf, 2, 4), 2, byrow = TRUE)),
     "infinite value at row 1, column 2")
   mat <- cbind(alpha = 1:5, beta = 5:1)
   expect_error(cor.mtest(mat, method = "unsupported"),
