@@ -1,0 +1,73 @@
+name: Test installed CLI layout
+
+on:
+  pull_request:
+    paths:
+      - "tools/corrplot-ng/**"
+      - "crates/corrplot-core/**"
+      - "docs/cli-installation.md"
+      - ".github/workflows/test-cli-installation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/corrplot-ng/**"
+      - "crates/corrplot-core/**"
+      - "docs/cli-installation.md"
+      - ".github/workflows/test-cli-installation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installed-binary:
+    name: Installed binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - name: Build release executable
+        run: cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Install and render outside the checkout (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          prefix="$RUNNER_TEMP/corrplot-install"
+          mkdir -p "$prefix/bin" "$prefix/work"
+          install -m 0755 tools/corrplot-ng/target/release/corrplot-ng "$prefix/bin/corrplot-ng"
+          cd "$prefix/work"
+          printf ',alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n' > matrix.csv
+          "$prefix/bin/corrplot-ng" version
+          "$prefix/bin/corrplot-ng" presets
+          "$prefix/bin/corrplot-ng" capabilities > capabilities.json
+          "$prefix/bin/corrplot-ng" render --input matrix.csv --output correlation.svg
+          test -s correlation.svg
+          grep -q '<svg' correlation.svg
+          test -s capabilities.json
+      - name: Install and render outside the checkout (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $prefix = Join-Path $env:RUNNER_TEMP "corrplot-install"
+          $bin = Join-Path $prefix "bin"
+          $work = Join-Path $prefix "work"
+          New-Item -ItemType Directory -Force $bin, $work | Out-Null
+          Copy-Item tools/corrplot-ng/target/release/corrplot-ng.exe (Join-Path $bin "corrplot-ng.exe")
+          @"
+          ,alpha,beta
+          alpha,1,0.5
+          beta,0.5,1
+          "@ | Set-Content -Encoding utf8NoBOM (Join-Path $work "matrix.csv")
+          Push-Location $work
+          & (Join-Path $bin "corrplot-ng.exe") version
+          & (Join-Path $bin "corrplot-ng.exe") presets
+          & (Join-Path $bin "corrplot-ng.exe") capabilities | Set-Content -Encoding utf8NoBOM capabilities.json
+          & (Join-Path $bin "corrplot-ng.exe") render --input matrix.csv --output correlation.svg
+          if (!(Test-Path correlation.svg)) { throw "Installed CLI did not create correlation.svg" }
+          if (!(Select-String -Path correlation.svg -Pattern '<svg' -Quiet)) { throw "Installed CLI output is not SVG" }
+          if (!(Test-Path capabilities.json)) { throw "Installed CLI did not emit capabilities" }
+          Pop-Location
