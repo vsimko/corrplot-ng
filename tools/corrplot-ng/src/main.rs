@@ -28,7 +28,7 @@ pub(crate) struct Matrix {
 pub(crate) enum Kind { Correlation, General }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Format { Svg, SceneJson, NormalizedJson }
+enum Format { Svg, SceneJson, NormalizedJson, HtmlTable }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum InputFormat { Auto, Csv, Tsv, SceneJson }
@@ -66,7 +66,7 @@ COMMANDS:
 RENDER OPTIONS:
   -i, --input PATH       Input CSV/TSV or scene-v1 JSON file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
   -o, --output PATH      Output file; default is stdout
-      --format FORMAT    svg (default), scene-json, or normalized-json
+      --format FORMAT    svg (default), scene-json, normalized-json, or html-table
       --input-format FMT  auto (default), csv, tsv, or scene-json
       --kind KIND        correlation (default) or general
       --method METHOD    circle (default) or number
@@ -165,7 +165,8 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
                 "svg" => Format::Svg,
                 "scene-json" => Format::SceneJson,
                 "normalized-json" => Format::NormalizedJson,
-                _ => return Err(format!("unsupported format '{value}' (expected svg, scene-json, or normalized-json)")),
+                "html-table" => Format::HtmlTable,
+                _ => return Err(format!("unsupported format '{value}' (expected svg, scene-json, normalized-json, or html-table)")),
             },
             "--input-format" => input_format = match value.as_str() {
                 "auto" => InputFormat::Auto,
@@ -499,7 +500,7 @@ fn run() -> Result<(), String> {
             if let Some(config_path) = opts.config.as_deref() {
                 let destination = match opts.format {
                     Format::Svg => opts.output.clone().or(Some(publication::Publication::configured_output_path(config_path)?.to_string_lossy().into_owned())),
-                    Format::SceneJson | Format::NormalizedJson => opts.output.clone(),
+                    Format::SceneJson | Format::NormalizedJson | Format::HtmlTable => opts.output.clone(),
                 };
                 let incremental_key = if opts.incremental {
                     let destination = destination.as_deref().filter(|path| *path != "-")
@@ -509,7 +510,7 @@ fn run() -> Result<(), String> {
                     let key = cache::fingerprint(
                         &dependencies,
                         &["publication-config-v1", VERSION, RENDERER_CACHE_VERSION,
-                          match opts.format { Format::Svg => "svg", Format::SceneJson => "scene-json", Format::NormalizedJson => "normalized-json" },
+                          match opts.format { Format::Svg => "svg", Format::SceneJson => "scene-json", Format::NormalizedJson => "normalized-json", Format::HtmlTable => "html-table" },
                           &opts.title],
                     )?;
                     let output_path = PathBuf::from(destination);
@@ -541,10 +542,11 @@ fn run() -> Result<(), String> {
                             },
                             Format::SceneJson => publication.scene_json(&opts.title),
                             Format::NormalizedJson => return Err("normalized-json output is available for direct matrix inputs, not publication configs".into()),
+                            Format::HtmlTable => publication.html_table(&opts.title),
                         };
                         let destination = match opts.format {
                             Format::Svg => opts.output.as_deref().or(Some(publication.output.as_str())),
-                            Format::SceneJson | Format::NormalizedJson => opts.output.as_deref(),
+                            Format::SceneJson | Format::NormalizedJson | Format::HtmlTable => opts.output.as_deref(),
                         };
                         if opts.incremental && destination.is_none() {
                             return Err("--incremental requires a file output path via --output or config output.path".into());
@@ -572,7 +574,7 @@ fn run() -> Result<(), String> {
                 let key = cache::fingerprint(
                     &dependencies,
                     &["matrix-input", VERSION, RENDERER_CACHE_VERSION,
-                      match opts.format { Format::Svg => "svg", Format::SceneJson => "scene-json", Format::NormalizedJson => "normalized-json" },
+                      match opts.format { Format::Svg => "svg", Format::SceneJson => "scene-json", Format::NormalizedJson => "normalized-json", Format::HtmlTable => "html-table" },
                       match opts.input_format { InputFormat::Auto => "auto", InputFormat::Csv => "csv", InputFormat::Tsv => "tsv", InputFormat::SceneJson => "scene-json" },
                       match opts.kind { Kind::Correlation => "correlation", Kind::General => "general" },
                       &opts.method, &opts.title],
@@ -617,6 +619,13 @@ fn run() -> Result<(), String> {
                         Format::Svg => svg(&matrix, &opts.title, &opts.method, kind),
                         Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, kind),
                         Format::NormalizedJson => normalized_matrix_json(&matrix, normalized_source_format(input_format)),
+                        Format::HtmlTable => publication::matrix_html_table(
+                            &matrix.labels,
+                            &matrix.values,
+                            &(0..matrix.labels.len()).collect::<Vec<_>>(),
+                            &opts.title,
+                            if kind == Kind::Correlation { "correlation" } else { "general_numeric" },
+                        ),
                     };
                     write_output(opts.output.as_deref(), &output)?;
                     if let Some((output_path, key)) = incremental_key.as_ref() {
@@ -831,6 +840,22 @@ mod tests {
         assert!(rendered.starts_with("<svg xmlns="));
         assert!(rendered.contains("<title>R&amp;D &lt;metrics&gt;</title>"));
         assert_eq!(rendered, svg(&matrix, "R&D <metrics>", "number", Kind::Correlation));
+    }
+
+    #[test]
+    fn html_table_format_preserves_zero_missingness_and_source_indices() {
+        let matrix = parse_matrix(",alpha,beta\\nalpha,1,NA\\nbeta,0,1\\n", Kind::Correlation).unwrap();
+        let html = publication::matrix_html_table(
+            &matrix.labels,
+            &matrix.values,
+            &[0, 1],
+            "Accessible values",
+            "correlation",
+        );
+        assert!(html.contains("<caption>Correlation matrix values</caption>"));
+        assert!(html.contains("data-missing=\\"true\\">Missing</td>"));
+        assert!(html.contains("data-value=\\"0\\">0</td>"));
+        assert_eq!(html.matches("<td ").count(), 4);
     }
 
     #[test]
