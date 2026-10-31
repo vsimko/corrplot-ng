@@ -87,7 +87,7 @@ R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
 Rscript -e 'library(corrplotngrustspike); source("prototypes/rust-rextendr/test-r-integration.R")'
 ```
 
-The generator deletes and recreates `.ci-r-package`. It calls `rextendr::use_extendr()`, pins the generated `extendr-api` dependency to 0.8.2, adapts the committed lockfile to the generated package identity, copies the Rust implementation, adjusts generated Makevars/target handling, and creates the R wrapper, namespace export, help page, and testthat smoke test. Do not hand-edit generated files as the source of truth; change the prototype or generator and regenerate.
+The generator deletes and recreates `.ci-r-package`. It calls `rextendr::use_extendr()`, pins the generated `extendr-api` dependency to 0.9.0, adapts the committed lockfile to the generated package identity, copies the Rust implementation, adjusts generated Makevars/target handling, and creates the R wrapper, namespace export, help page, and testthat smoke test. Do not hand-edit generated files as the source of truth; change the prototype or generator and regenerate.
 
 **Additional release-oriented/offline path**
 
@@ -161,7 +161,7 @@ The current Rust generator contains explicit compatibility adjustments around re
 
 ### Rust / rextendr
 
-- **Generated scaffold drift:** rextendr output can change across versions. The generator currently pins extendr-api 0.8.2 after scaffolding and makes targeted Makevars/lockfile adjustments; upgrades need explicit review.
+- **Generated scaffold drift:** rextendr output can change across versions. The generator currently pins extendr-api 0.9.0 after scaffolding and makes targeted Makevars/lockfile adjustments; upgrades need explicit review.
 - **Cargo dependency graph:** the lockfile makes the resolved graph reproducible, but each crate upgrade can change transitive dependencies, licenses, source archive size, or platform build behavior.
 - **Offline packaging complexity:** Cargo vendoring and path/config handling must survive R package build/clean steps. The workflow currently performs archive extraction/restoration to verify the actual source tarball.
 - **Toolchain and linker failures:** Rust compiler, target, static-library and linker diagnostics add a separate toolchain to investigate.
@@ -203,3 +203,16 @@ Until these are complete, the evidence supports a limited conclusion: **Rcpp is 
 - [Rust offline package workflow](../.github/workflows/rust-rextendr-offline-package.yml), [dependency audit workflow](../.github/workflows/rust-cran-dependency-audit.yml), [Windows binary workflow](../.github/workflows/test-rust-windows-binary.yml).
 - [CRAN Rust readiness review](cran-rust-readiness.md) and [dependency audit results](cran-rust-dependency-audit-results.md).
 - [ADR 0001](adr/0001-shared-core-architecture.md), which defers the production implementation-language choice.
+
+## Current measured Rust/rextendr footprint (2026-10-31)
+
+The generated package now pins extendr-api 0.9.0 and declares Rust/Cargo 1.78. The Ubuntu 24.04 / R 4.6.2 / GCC 13.3.0 source-package run measured:
+
+- Compressed source tarball: 1,314,420 bytes (about 1.25 MiB).
+- Installed package: 6.0 MB, including 5.9 MB in `libs`.
+- `R CMD check --as-cran`: one NOTE, for Cargo vendor checksum/provenance metadata required by offline builds.
+
+The previous `R_NamespaceRegistry` compiled-code NOTE is gone after the extendr 0.9.0 upgrade. The non-portable `lazy_static` test paths were removed from the vendored build tree; test sources are not needed to compile or install the package. The installed size exceeds rextendr's documented 5 MB caution, so a production submission needs explicit CRAN guidance even though the compressed source archive is well below the general 10 MB source-package guideline.
+
+The repository's CI verifies Rust 1.78 on Ubuntu and stable builds on Linux, macOS, and Windows. The documented maintainer steps are reproducible, but elapsed human maintainer time remains unmeasured; the estimates above are not observations.
+
