@@ -36,7 +36,9 @@ runs the packaged executable's help/version smoke tests before publishing.
 | `corrplot-ng-windows-x86_64.zip` | Windows x86_64, MSVC with static CRT | Windows system libraries; no Python or R runtime |
 
 Download the archive for your platform and verify it against the published
-checksums before installation. On Linux or macOS:
+checksums before installation. The detailed [installation guide](../../docs/cli-installation.md)
+defines the supported install paths, runtime asset policy, and upgrade steps.
+On Linux or macOS:
 
 ```sh
 sha256sum -c SHA256SUMS
@@ -57,8 +59,9 @@ directory on `PATH`, and verify the archive with:
 Compare that value with the corresponding line in `SHA256SUMS`. The
 `BUILD-INFO.txt` file records the release ref, commit, target triple,
 Rust/Cargo versions, license, and runtime assumptions. The release workflow
-also runs the compiled executable's help/version smoke tests; the Linux static
-binary is additionally executed inside a minimal container without Python.
+also extracts each packaged archive and runs help/version plus a render smoke
+test outside the repository. The Linux static binary is additionally executed
+inside a minimal container without Python, R, or Rust.
 
 Each platform archive also contains `RELEASE-AUDIT.json`. It records the
 executable size, version-command startup latency (30 samples, median and p95),
