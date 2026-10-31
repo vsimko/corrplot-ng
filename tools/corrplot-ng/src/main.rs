@@ -82,6 +82,46 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
     process::exit(code);
 }
 
+fn json_escape(value: &str) -> String {
+    let mut escaped = String::new();
+    for ch in value.chars() {
+        match ch {
+            '"' => escaped.push_str("\\\""),
+            '\\' => escaped.push_str("\\\\"),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            ch if ch.is_control() => escaped.push_str(&format!("\\u{:04x}", ch as u32)),
+            ch => escaped.push(ch),
+        }
+    }
+    escaped
+}
+
+fn diagnostic_json(message: &str) -> String {
+    let lower = message.to_lowercase();
+    let (code, stage, path) = if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
+        ("input.matrix.non_finite_value", "input", Some("matrix"))
+    } else if lower.contains("square") || lower.contains("dimensions") || lower.contains("matrix size") {
+        ("input.matrix.invalid_shape", "input", Some("matrix"))
+    } else if lower.contains("label") {
+        ("input.matrix.invalid_label", "input", Some("labels"))
+    } else if lower.contains("unsupported method") || lower.contains("unsupported feature") {
+        ("renderer.unsupported_feature", "renderer", Some("method"))
+    } else if lower.contains("config") || lower.contains("publication") {
+        ("configuration.invalid_field", "configuration", None)
+    } else if lower.contains("scene") {
+        ("scene.invalid_content", "scene", None)
+    } else {
+        ("cli.operation.failed", "input", None)
+    };
+    let path_field = path.map(|value| format!(",\"path\":\"{}\"", value)).unwrap_or_default();
+    format!(
+        "{{\"schema_version\":1,\"code\":\"{}\",\"severity\":\"error\",\"stage\":\"{}\",\"message\":\"{}\"{}}}",
+        code, stage, json_escape(message), path_field
+    )
+}
+
 fn parse_args(args: &[String]) -> Result<Options, String> {
     if args.len() < 2 { return Err(usage().to_string()); }
     let mut input = None;
@@ -425,7 +465,20 @@ fn write_output(path: Option<&str>, content: &str) -> Result<(), String> {
 }
 
 fn run() -> Result<(), String> {
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
+    let mut index = 1;
+    while index < args.len() {
+        if args[index] == "--diagnostics" {
+            if index + 1 >= args.len() || args[index + 1] != "json" {
+                return Err("--diagnostics currently accepts only 'json'".into());
+            }
+            args.drain(index..=index + 1);
+        } else if args[index] == "--diagnostics=json" {
+            args.remove(index);
+        } else {
+            index += 1;
+        }
+    }
     if args.len() < 2 || args[1] == "help" || args[1] == "--help" || args[1] == "-h" {
         print!("{}", usage());
         return Ok(());
@@ -504,12 +557,18 @@ fn run() -> Result<(), String> {
 }
 
 fn main() {
+    let diagnostics_json = env::args().any(|arg| arg == "--diagnostics" || arg == "--diagnostics=json");
     if let Err(message) = run() {
         let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported input format") || message.contains("unsupported method") ||
             message.contains("missing value for") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
-        fail(message, if usage_error { 2 } else { 1 });
+        let code = if usage_error { 2 } else { 1 };
+        if diagnostics_json {
+            println!("{}", diagnostic_json(&message));
+            process::exit(code);
+        }
+        fail(message, code);
     }
 }
 
