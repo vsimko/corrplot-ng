@@ -411,6 +411,117 @@ fn bitmap_glyph(character: char) -> [u8; 7] {
     }
 }
 
+/// SVG renderer for the same typed scene consumed by `RgbaRenderer`.
+pub struct SceneSvgRenderer;
+
+impl Renderer<Scene> for SceneSvgRenderer {
+    type Error = OutputValidationError;
+
+    fn render(
+        &self,
+        scene: &Scene,
+        options: &OutputOptions,
+    ) -> Result<RenderOutput, Self::Error> {
+        options.validate()?;
+        scene.validate()?;
+        let OutputOptions::Svg(svg) = options else {
+            return Err(OutputValidationError::invalid_options(
+                "scene SVG renderer supports only SVG output",
+            ));
+        };
+        let unit = svg.unit.as_str();
+        let mut out = format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\">",
+            svg.width, unit, svg.height, unit, scene.width, scene.height
+        );
+        out.push_str(&format!(
+            "<rect width=\"100%\" height=\"100%\" fill=\"{}\" fill-opacity=\"{}\"/>",
+            color_hex(svg.background),
+            alpha(svg.background),
+        ));
+        for cell in &scene.cells {
+            if !cell.visible { continue; }
+            out.push_str(&format!(
+                "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\" stroke=\"{}\"/>",
+                cell.x, cell.y, cell.size, cell.size, color_hex(cell.fill), color_hex(cell.stroke)
+            ));
+            let cx = cell.x + cell.size / 2.0;
+            let cy = cell.y + cell.size / 2.0;
+            match &cell.glyph {
+                Some(CellGlyph::Circle { radius, color }) => out.push_str(&format!(
+                    "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\"/>",
+                    color_hex(*color)
+                )),
+                Some(CellGlyph::Square { side, color }) => out.push_str(&format!(
+                    "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\"/>",
+                    cx - side / 2.0, cy - side / 2.0, color_hex(*color)
+                )),
+                Some(CellGlyph::Ellipse { rx, ry, color }) => out.push_str(&format!(
+                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{}\"/>",
+                    color_hex(*color)
+                )),
+                Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => {
+                    let start_x = cx + radius * start_radians.cos();
+                    let start_y = cy + radius * start_radians.sin();
+                    let end_x = cx + radius * end_radians.cos();
+                    let end_y = cy + radius * end_radians.sin();
+                    let span = (end_radians - start_radians).abs();
+                    if span >= std::f64::consts::TAU {
+                        out.push_str(&format!(
+                            "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\"/>",
+                            color_hex(*color)
+                        ));
+                    } else {
+                        let large_arc = if span > std::f64::consts::PI { 1 } else { 0 };
+                        out.push_str(&format!(
+                            "<path d=\"M {cx} {cy} L {start_x} {start_y} A {radius} {radius} 0 {large_arc} 1 {end_x} {end_y} Z\" fill=\"{}\"/>",
+                            color_hex(*color)
+                        ));
+                    }
+                }
+                Some(CellGlyph::Number { text, font_size, color }) => out.push_str(&format!(
+                    "<text x=\"{cx}\" y=\"{cy}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\">{}</text>",
+                    escape_xml(&svg.font_family), font_size, color_hex(*color), escape_xml(text)
+                )),
+                Some(CellGlyph::Shade { color }) => out.push_str(&format!(
+                    "<path d=\"M {} {} L {} {}\" stroke=\"{}\" fill=\"none\"/>",
+                    cell.x, cell.y + cell.size, cell.x + cell.size, cell.y, color_hex(*color)
+                )),
+                Some(CellGlyph::Color) | None => {}
+            }
+        }
+        for text in &scene.texts {
+            let anchor = match text.anchor {
+                TextAnchor::Start => "start",
+                TextAnchor::Middle => "middle",
+                TextAnchor::End => "end",
+            };
+            out.push_str(&format!(
+                "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\">{}</text>",
+                text.x, text.y, anchor, escape_xml(&svg.font_family), text.font_size,
+                color_hex(text.color), escape_xml(&text.text)
+            ));
+        }
+        out.push_str("</svg>");
+        let output = RenderOutput::Svg(out);
+        output.validate_for(options)?;
+        Ok(output)
+    }
+}
+
+fn color_hex(color: RgbaColor) -> String {
+    format!("#{:02x}{:02x}{:02x}", color.red, color.green, color.blue)
+}
+
+fn alpha(color: RgbaColor) -> String {
+    format!("{:.6}", color.alpha as f64 / 255.0)
+}
+
+fn escape_xml(value: &str) -> String {
+    value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+        .replace('"', "&quot;").replace('\'', "&apos;")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
