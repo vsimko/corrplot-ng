@@ -65,6 +65,9 @@ RENDER OPTIONS:
       --method METHOD    circle (default) or number
       --title TEXT       Figure title
 
+GLOBAL OPTIONS:
+      --diagnostics json Emit one diagnostic-v1 JSON record on failure
+
 INPUT FORMAT:
   A square labelled matrix. The first row contains an empty corner cell
   followed by column labels; each following row starts with its row label.
@@ -577,6 +580,16 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n";
+
+    #[test]
+    fn serializes_stable_input_diagnostics_as_json() {
+        let json = diagnostic_json("input must be a non-empty square matrix");
+        assert!(json.contains("\"schema_version\":1"));
+        assert!(json.contains("\"code\":\"input.matrix.invalid_shape\""));
+        assert!(json.contains("\"stage\":\"input\""));
+        let escaped = diagnostic_json("bad \"label\"\nvalue");
+        assert!(escaped.contains("bad \\\"label\\\"\\nvalue"));
+    }
 
     #[test]
     fn exposes_machine_readable_renderer_capabilities() {
