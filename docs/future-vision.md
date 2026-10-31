@@ -52,6 +52,11 @@ foundations are implemented:
   inputs, publication-config v1 support, validation, and SVG output. It
   does not require Python or R at runtime and has native build/test coverage
   on Linux, macOS, and Windows.
+- **Native Node.js binding:** an experimental N-API addon in `bindings/node/`
+  exposes shared matrix validation and typed-scene SVG/RGBA rendering. Its
+  clean npm tarball install is tested without Cargo at runtime on Node.js 22,
+  24, and 26 across Linux, macOS, and Windows. Prebuilt package publishing,
+  scene construction, and the unified TypeScript facade remain open.
 - **Correctness and compatibility checks:** shared fixture validation,
   normalized-input contract tests, R compatibility tests against a pinned
   upstream reference, scene/SVG tests, native CLI tests, and SVG
@@ -146,7 +151,7 @@ the issue is deliberately reactivated.
 
 ### Phase 3 — Establish the shared Rust core
 
-**Status:** Strategic architecture selected; initial CLI/R crate-reuse proof complete; portable core and runtime bindings remain.
+**Status:** Strategic architecture selected; CLI/R crate-reuse proof and native Node binding slices complete; browser WASM and complete scene construction remain.
 
 The target is one authoritative Rust implementation of shared correlation,
 validation, scene construction, layout, and other common visualization
@@ -166,7 +171,7 @@ The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross
 
 - [#139 — Cross-runtime Rust and TypeScript architecture](https://github.com/vsimko/corrplot-ng/issues/139) — architecture decision recorded in ADR 0002.
 - [#140 — Portable Rust core for native and WebAssembly](https://github.com/vsimko/corrplot-ng/issues/140).
-- [#141 — Node.js native binding](https://github.com/vsimko/corrplot-ng/issues/141).
+- [#141 — Node.js native binding](https://github.com/vsimko/corrplot-ng/issues/141) — initial N-API validation, typed-scene SVG/RGBA rendering, and clean package-install smoke test are implemented; scene construction and prebuilt distribution remain.
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142).
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145).
 
