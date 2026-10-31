@@ -18,30 +18,32 @@ Use this file as the starting point. Keep all repository documentation in Englis
 
 ## Project at a glance
 
-The main requirements are:
+The repository currently provides:
 
-1. Keep the original R package useful and stable.
-2. Preserve legacy R behavior in the new project, with compatibility claims backed by tests.
-3. Use a shared core and clear interfaces for multiple programming languages.
-4. Keep shared plot behavior consistent across languages.
-5. Support the common correlation-plot methods from the original package.
-6. Document features, defaults, limitations, and examples.
-7. Keep the design small enough to maintain with a few hours of work per week and AI assistance.
-8. Provide a migration aid and citation support as planned follow-up work.
+- A provisional R package with a legacy-compatible delegation path, normalized-matrix adapters, and an experimental scene-v1 preparation path.
+- Versioned normalized-matrix v1 and scene-v1 contracts.
+- A Python scene/SVG reference prototype.
+- A standalone Rust CLI with its own native build and test workflow.
 
-See [top-level requirements](requirements.md) for priorities and checks. These are project goals, not claims about the current implementation.
+The Rust toolchain is selected for the standalone CLI. The production shared-core language is deferred by [ADR 0001](adr/0001-shared-core-architecture.md). Rust/rextendr and C++/Rcpp are evaluation spikes. TypeScript, Node native bindings, browser WASM, Canvas, and other renderers are planned, not current production interfaces.
+
+See [the current architecture](architecture.md) for implementation boundaries. See [top-level requirements](requirements.md) for product priorities; requirements are goals and are not proof that a feature is implemented.
 
 ## Documents
 
-- [Top-level requirements](requirements.md): main product and engineering requirements, priorities, and acceptance checks.
-- [Proposed architecture](architecture.md): components, dependency direction, language interfaces, shared core, and rendering backends.
-- [Future vision](future-vision.md): project goals, possible development steps, and open questions.
+- [Top-level requirements](requirements.md): product and engineering requirements, priorities, and acceptance checks.
+- [Current architecture](architecture.md): implemented components, versioned contracts, experimental integrations, and deferred decisions.
+- [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md): decision to keep scene-v1 as the interoperability boundary and defer the production shared-core language.
+- [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
-- [Testing strategy](testing-strategy.md): test layers, compatibility evidence, shared fixtures, and CI plan.
+- [Testing strategy](testing-strategy.md): current test layers, evidence limits, and CI workflows.
+- [Regression test guide](../tests/README.md): pinned legacy reference, raster baselines, normalized input tests, and SVG validation.
 - [Shared-core benchmark plan](shared-core-benchmark-plan.md): benchmark scope, correctness gates, measurement protocol, and decision criteria.
 - [Benchmark operations](../benchmarks/README.md): how to run the shared-core, cross-language, stress, and package-smoke workflows.
 
-Implementations live in their own directories under [`implementations/`](../implementations/README.md). The R package scaffold in [`implementations/r/`](../implementations/r/README.md) currently delegates to the original `corrplot` package. It is a test adapter, not a new plotting implementation. See [the test guide](../tests/README.md).
+The R package lives in [implementations/r](../implementations/r/README.md). It delegates legacy plotting to upstream `corrplot` by default and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
+
+The standalone Rust CLI lives in [tools/corrplot-ng](../tools/corrplot-ng/README.md). The Python scene/SVG prototype and language-neutral contracts live under [prototypes](../prototypes/shared-svg/README.md). Experimental Rust/rextendr and C++/Rcpp evaluation work must not be described as production backends.
 
 ## Editing guidelines
 
