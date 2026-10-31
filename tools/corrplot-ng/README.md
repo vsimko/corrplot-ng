@@ -114,6 +114,31 @@ record on failure while preserving the nonzero exit status:
 corrplot-ng render --input data/correlation.csv --diagnostics json
 \`\`\`
 
+### Incremental and atomic output
+
+File output is written through a temporary file in the destination directory
+and replaced only after the complete output has been flushed. If the new bytes
+match the existing file, the CLI leaves the file untouched. Failed rendering
+does not create or truncate the destination.
+
+Use `--incremental` to skip rendering when the inputs and rendering options
+match the last successful output:
+
+```sh
+corrplot-ng render --config figures/correlation.json --incremental
+corrplot-ng render --input data/correlation.csv --output figures/correlation.svg --incremental
+corrplot-ng render-batch --manifest figures.txt --output-dir figures --incremental --incremental
+```
+
+Incremental mode stores a small `.corrplot-cache` sidecar next to each output.
+The cache fingerprint includes the configuration, referenced CSV files or
+direct matrix input, output format, render options, CLI version, and renderer
+cache version. Changing any of these inputs invalidates only the affected
+output. The renderer cache version is bumped when rendering semantics change
+without a package-version change. Cache files are local build metadata; they
+are not part of the rendered artifact. Stdin and stdout cannot use incremental
+caching because they have no stable file identity.
+
 ### Batch rendering
 
 Create a UTF-8 text manifest with one publication-config v1 JSON path per
@@ -147,7 +172,7 @@ input changes:
 ```make
 figures/correlation.svg: data/correlation.csv
 	mkdir -p figures
-	corrplot-ng render --input $< --output $@
+	corrplot-ng render --input $< --output $@ --incremental
 
 .PHONY: figures
 figures: figures/correlation.svg
