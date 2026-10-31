@@ -59,9 +59,11 @@ directory on `PATH`, and verify the archive with:
 Compare that value with the corresponding line in `SHA256SUMS`. The
 `BUILD-INFO.txt` file records the release ref, commit, target triple,
 Rust/Cargo versions, license, and runtime assumptions. The release workflow
-also extracts each packaged archive and runs help/version plus a render smoke
-test outside the repository. The Linux static binary is additionally executed
-inside a minimal container without Python, R, or Rust.
+extracts each packaged archive and runs help/version smoke tests. A separate
+installed-binary workflow copies the release executable outside the checkout
+and renders a fixture from another working directory on all three platforms.
+The Linux static binary is additionally executed inside a minimal container
+without Python, R, or Rust.
 
 Each platform archive also contains `RELEASE-AUDIT.json`. It records the
 executable size, version-command startup latency (30 samples, median and p95),
