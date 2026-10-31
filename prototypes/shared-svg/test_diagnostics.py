@@ -34,6 +34,20 @@ class DiagnosticContractTests(unittest.TestCase):
             })
         self.assertEqual(raised.exception.diagnostic.code, "input.matrix.invalid_label")
 
+
+    def test_non_square_matrix_matches_cross_adapter_validation_contract(self):
+        with self.assertRaises(DiagnosticError) as raised:
+            build_scene_with_diagnostics({
+                "labels": ["A", "B"],
+                "matrix": [[1.0]],
+            })
+        diagnostic = raised.exception.diagnostic
+        self.assertEqual(diagnostic.code, "input.matrix.invalid_shape")
+        self.assertEqual(diagnostic.severity, "error")
+        self.assertEqual(diagnostic.stage, "input")
+        self.assertEqual(diagnostic.path, "matrix")
+        self.assertEqual(list(Draft202012Validator(SCHEMA).iter_errors(diagnostic.to_dict())), [])
+
     def test_deprecation_warning_record_follows_diagnostic_v1(self):
         diagnostic = Diagnostic(
             "configuration.option.deprecated",
