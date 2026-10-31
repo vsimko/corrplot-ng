@@ -155,3 +155,15 @@ test_that("corrRect.hclust validates matrices, cluster counts, and methods", {
   expect_error(corrRect.hclust(corrrect_test_matrix(), method = "invalid"),
     "should be one of")
 })
+
+
+test_that("corrplot_ng forwards legacy addrect, rect.col, and rect.lwd options", {
+  corr <- corrrect_test_matrix()
+  with_corrrect_test_pdf({
+    expect_no_error(corrplot_ng(
+      corr, order = "hclust", addrect = 2,
+      rect.col = "purple", rect.lwd = 3,
+      tl.pos = "n", cl.pos = "n"
+    ))
+  })
+})
