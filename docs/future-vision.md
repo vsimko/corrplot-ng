@@ -142,14 +142,21 @@ explicitly deferred under [#99](https://github.com/vsimko/corrplot-ng/issues/99)
 Do not start that work until the native CLI release process is stable and
 the issue is deliberately reactivated.
 
-### Phase 3 — Reassess cross-runtime architecture before implementation
+### Phase 3 — Establish the shared Rust core
 
-**Status:** Conditional future work; no production shared-core commitment.
+**Status:** Strategic architecture selected; production rollout gated by a focused integration proof.
 
-The project has language-neutral contracts and a Rust CLI, but it has not
-demonstrated that one compiled core is reused by two production consumers.
-ADR 0001 therefore defers selecting or implementing a production shared-core
-language.
+The target is one authoritative Rust implementation of shared correlation,
+validation, scene construction, layout, and other common visualization
+semantics. The CLI, R, Node, and WebAssembly consumers should call that same
+core through thin adapters. This avoids semantic drift, duplicated fixes,
+and multiple implementations to maintain, while keeping performance-critical
+logic in one place.
+
+Rust is selected as the shared-core language because the standalone CLI is
+already Rust and the same source can serve native and WebAssembly targets.
+The decision is architectural; the current CLI and R/rextendr prototype are
+still separate crates and do not yet demonstrate compiled-library reuse.
 
 The related future-work track is:
 
@@ -159,16 +166,18 @@ The related future-work track is:
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142).
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145).
 
-**Decision gate:** before production implementation begins, revisit ADR 0001
-with evidence of at least two concrete consumers that need the same compiled
-semantics. Demonstrate one minimal operation through both consumers and
-compare the actual build, ABI, packaging, release, and maintenance costs.
-A Rust CLI and an R binding prototype do not count as shared-library reuse
-unless they link to and exercise the same maintained core.
+**Implementation gate:** prove the selected architecture with the smallest
+meaningful shared operation, initially through the Rust CLI and a disposable
+R/rextendr binding. Both must depend on the exact same reusable library crate
+and call its implementation; shared JSON fixtures alone are not proof.
+Record build/dependency evidence and compare actual ABI, packaging, release,
+CRAN/toolchain, and maintenance costs. This gate validates safe rollout; it
+does not reopen the strategic choice in favor of independent implementations.
 
-If the gate is not met, continue to use normalized-matrix v1 and scene-v1
-for interoperability. Do not create a shared native library merely because
-the current CLI is written in Rust.
+If the R integration cannot meet its packaging constraints, keep the Rust
+core authoritative for the CLI and future consumers and assess a narrowly
+scoped R adapter exception. Do not fork common semantics silently. Continue
+to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
 **Measurable outcomes if the gate is approved:**
 
@@ -221,10 +230,15 @@ prerequisite for the current contract, R adapter, or CLI work.
 ## Architecture decisions and non-goals
 
 - Keep normalized-matrix v1 and scene-v1 as language-neutral contracts.
-- Keep the Rust standalone CLI decision separate from the production
-  shared-core language decision.
-- Do not promote the Python prototype or Rust/rextendr and C++/Rcpp spikes
-  to production backends without a separate decision.
+- Treat Rust as the authoritative implementation language for shared
+  production semantics across CLI, R, Node, and WebAssembly.
+- Keep language-specific adapters thin: R API/legacy compatibility and
+  graphics-device behavior remain in R; CLI argument/file handling remains
+  in the CLI; TypeScript runtime and DOM integration remain in adapters.
+- Keep Python as a reference implementation and test oracle during migration,
+  not a second production source of shared semantics.
+- Do not promote the current Rust/rextendr or C++/Rcpp spikes directly;
+  first prove the shared Rust library crate and pass its packaging gates.
 - Do not claim full corrplot compatibility from the representative
   regression corpus.
 - Do not promise dates or release milestones in this roadmap.
