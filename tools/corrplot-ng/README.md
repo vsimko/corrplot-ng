@@ -218,6 +218,34 @@ render a figure without installing Python or R:
 
 
 
+## Accessible matrix data table
+
+The CLI can export the complete prepared matrix as a semantic HTML table.
+This is useful when readers need to inspect exact values with a screen reader
+or use the matrix data in downstream reporting. It does not replace an
+interactive accessible visualization.
+
+For a direct CSV/TSV or scene-v1 input, the table preserves the input order:
+
+~~~sh
+corrplot-ng render --input data/correlation.csv --format html-table --output data/correlation.html
+~~~
+
+For a publication configuration, the table uses the prepared variable order
+and preserves the zero-based source-variable mapping:
+
+~~~sh
+corrplot-ng render --config figures/correlation.json --format html-table --output figures/correlation-data.html
+~~~
+
+The table always contains the full matrix, even when the figure uses an
+upper- or lower-triangle display. Missing values are announced as
+"Missing"; numeric zero remains 0. Row and column headers use semantic
+table header elements, and source indices are included as data attributes.
+The HTML table is a separate data representation: it does not parse SVG and
+does not claim that figure-level SVG title/description metadata alone makes
+a dense matrix fully accessible.
+
 ## Input format
 
 The first version accepts a square labelled CSV or TSV matrix. The first cell is empty (or `label`), followed by column labels. Each subsequent row begins with the corresponding row label. Empty cells, `NA`, `NaN`, and `null` mean missing values.
