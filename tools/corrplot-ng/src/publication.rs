@@ -1082,10 +1082,14 @@ mod tests {
                     _ => panic!("fixture matrix values must be numeric or null"),
                 }).collect()
             }).collect();
-            let explicit = case.get("col_limits").map(|value| {
-                let limits = array(value, "case.col_limits").unwrap();
-                (number(&limits[0], "lower").unwrap(), number(&limits[1], "upper").unwrap())
-            });
+            let explicit = if id == "mixed-sign-custom-limits" {
+                case.get("col_limits").map(|value| {
+                    let limits = array(value, "case.col_limits").unwrap();
+                    (number(&limits[0], "lower").unwrap(), number(&limits[1], "upper").unwrap())
+                })
+            } else {
+                None
+            };
             let scale = resolve_matrix_scale("general_numeric", "inline_matrix", &values, explicit)
                 .unwrap_or_else(|error| panic!("{id}: {error}"));
             let expected_limits = array(required(case, "col_limits", "case").unwrap(), "case.col_limits").unwrap();
