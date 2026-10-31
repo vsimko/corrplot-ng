@@ -318,6 +318,14 @@ fn validate_alpha(request: &RenderRequest) -> Result<(), RenderError> {
             "a transparent background requires an alpha-capable output mode",
         ));
     }
+    if let Background::Color(color) = request.background {
+        if request.alpha_mode == AlphaMode::Opaque && color.alpha != 255 {
+            return Err(RenderError::new(
+                "renderer.invalid_raster_options",
+                "opaque output requires an opaque background color",
+            ));
+        }
+    }
     if request.format == OutputFormat::Png && request.alpha_mode == AlphaMode::Premultiplied {
         return Err(RenderError::new(
             "renderer.invalid_raster_options",
