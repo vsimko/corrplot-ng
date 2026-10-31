@@ -194,4 +194,46 @@ mod tests {
         );
         assert!(validate_matrix(&labels(), 2, 2, &values, MatrixKind::GeneralNumeric).is_ok());
     }
+
+    #[test]
+    fn rejects_nan_and_infinity_but_preserves_explicit_missing_values() {
+        for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let values = [Some(1.0), Some(value), Some(value), Some(1.0)];
+            let error = validate_matrix(&labels(), 2, 2, &values, MatrixKind::GeneralNumeric)
+                .unwrap_err();
+            assert_eq!(error.code, "input.matrix.non_finite_value");
+        }
+        let values = [Some(1.0), None, None, Some(1.0)];
+        assert!(validate_matrix(&labels(), 2, 2, &values, MatrixKind::Correlation).is_ok());
+    }
+
+    #[test]
+    fn rejects_asymmetry_and_missing_mismatch_with_coordinates() {
+        let asymmetric = [Some(1.0), Some(0.2), Some(0.3), Some(1.0)];
+        let error = validate_matrix(&labels(), 2, 2, &asymmetric, MatrixKind::Correlation)
+            .unwrap_err();
+        assert_eq!(error.code, "input.matrix.not_symmetric");
+        assert_eq!((error.row, error.column), (Some(0), Some(1)));
+
+        let missing_mismatch = [Some(1.0), None, Some(0.2), Some(1.0)];
+        let error = validate_matrix(&labels(), 2, 2, &missing_mismatch, MatrixKind::Correlation)
+            .unwrap_err();
+        assert_eq!(error.code, "input.matrix.not_symmetric");
+    }
+
+    #[test]
+    fn rejects_invalid_correlation_diagonal() {
+        let values = [Some(0.9), Some(0.2), Some(0.2), Some(1.0)];
+        let error = validate_matrix(&labels(), 2, 2, &values, MatrixKind::Correlation)
+            .unwrap_err();
+        assert_eq!(error.code, "input.matrix.invalid_diagonal");
+        assert_eq!((error.row, error.column), (Some(0), Some(0)));
+    }
+
+    #[test]
+    fn reports_wrong_flat_value_count() {
+        let error = validate_matrix(&labels(), 2, 2, &[Some(1.0)], MatrixKind::GeneralNumeric)
+            .unwrap_err();
+        assert_eq!(error.code, "input.matrix.invalid_shape");
+    }
 }
