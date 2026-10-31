@@ -7,7 +7,7 @@
   "required": ["schema_version", "code", "severity", "stage", "message"],
   "properties": {
     "schema_version": {"const": 1},
-    "code": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\\\.[a-z][a-z0-9_]*)+$"},
+    "code": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
     "severity": {"enum": ["error", "warning", "info"]},
     "stage": {"enum": ["configuration", "input", "scene", "renderer", "export"]},
     "message": {"type": "string", "minLength": 1},
