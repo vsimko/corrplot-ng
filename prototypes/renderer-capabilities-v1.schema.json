@@ -24,7 +24,7 @@
     "features": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["row_labels", "column_labels", "plotmath_labels", "missing_cells", "cell_text_annotations", "significance", "confidence_intervals", "legend", "figure_text", "accessible_metadata"],
+      "required": ["row_labels", "column_labels", "plotmath_labels", "missing_cells", "cell_text_annotations", "significance", "confidence_intervals", "legend", "figure_text", "accessible_metadata", "cluster_regions"],
       "properties": {
         "row_labels": {"type": "boolean"},
         "column_labels": {"type": "boolean"},
