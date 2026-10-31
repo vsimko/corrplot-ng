@@ -82,3 +82,19 @@ test_that("non-numeric matrix diagnostics use the shared diagnostic-v1 contract"
   expect_equal(diagnostic$stage, "input")
   expect_equal(diagnostic$path, "matrix")
 })
+
+test_that("unsupported scene cell methods expose renderer diagnostic-v1 fields", {
+  x <- matrix(c(1, 0.5, 0.5, 1), nrow = 2)
+  error <- tryCatch(
+    corrplot_ng(x, engine = "scene", method = "pie"),
+    corrplot_ng_error = function(condition) condition
+  )
+
+  expect_s3_class(error, "corrplot_ng_error")
+  diagnostic <- corrplot_ng_diagnostic(error)
+  expect_equal(diagnostic$schema_version, 1L)
+  expect_equal(diagnostic$code, "renderer.unsupported_feature")
+  expect_equal(diagnostic$severity, "error")
+  expect_equal(diagnostic$stage, "renderer")
+  expect_equal(diagnostic$path, "method")
+})
