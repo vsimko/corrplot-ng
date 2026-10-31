@@ -13,6 +13,7 @@ from typing import Callable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "prototypes" / "shared-svg"))
 from scene import build_scene
+from export_native_fixtures import project_scene_v1
 
 TARGET_SAMPLE_MS = 100.0
 SAMPLES = 30
@@ -67,12 +68,12 @@ def main() -> None:
                   "annotation": case["annotation"]}
         expected = case["expected_scene"]
         scene = build_scene(config)
-        if scene != expected:
-            raise AssertionError(f'{case["id"]}: Python oracle differs from exported expected scene')
+        if project_scene_v1(scene) != expected:
+            raise AssertionError(f'{case["id"]}: Python scene differs from the native scene-v1 contract')
         encoded = json.dumps(scene, separators=(",", ":"), ensure_ascii=False,
                              allow_nan=False)
-        if json.loads(encoded) != expected:
-            raise AssertionError(f'{case["id"]}: JSON round-trip differs from expected scene')
+        if project_scene_v1(json.loads(encoded)) != expected:
+            raise AssertionError(f'{case["id"]}: JSON round-trip differs from the native scene-v1 contract')
 
         operations = (
             ("scene_construction_only", lambda: build_scene(config)),
