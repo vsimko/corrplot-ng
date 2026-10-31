@@ -30,10 +30,10 @@ export interface CellGlyphInput {
   side?: number;
   rx?: number;
   ry?: number;
-  start_radians?: number;
-  end_radians?: number;
+  startRadians?: number;
+  endRadians?: number;
   text?: string;
-  font_size?: number;
+  fontSize?: number;
   color?: RgbaColorInput;
 }
 
@@ -51,7 +51,7 @@ export interface SceneTextInput {
   text: string;
   x: number;
   y: number;
-  font_size: number;
+  fontSize: number;
   color: RgbaColorInput;
   anchor: "start" | "middle" | "end";
 }
@@ -67,8 +67,8 @@ export interface SvgOptionsInput {
   width: number;
   height: number;
   unit: "px" | "mm" | "in";
-  font_family: string;
-  font_size_pt: number;
+  fontFamily: string;
+  fontSizePt: number;
   background: RgbaColorInput;
 }
 
