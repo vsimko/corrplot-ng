@@ -35,7 +35,7 @@ writeLines(c(
   "License: MIT + file LICENSE",
   "Encoding: UTF-8",
   "Suggests: testthat",
-  "SystemRequirements: Cargo, rustc"
+  "SystemRequirements: Cargo (>= 1.78), rustc (>= 1.78)"
 ), file.path(pkg_dir, "DESCRIPTION"))
 
 dir.create(file.path(pkg_dir, "R"))
@@ -44,7 +44,7 @@ setwd(pkg_dir)
 rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
 # Keep the generated package aligned with the audited and vendored extendr
-# 0.8.2 license notice. rextendr may otherwise scaffold the latest 0.9.x API.
+# 0.9.0 API and the repository minimum Rust/Cargo toolchain.
 cargo_manifest <- file.path(pkg_dir, "src", "rust", "Cargo.toml")
 cargo_lines <- readLines(cargo_manifest, warn = FALSE)
 extendr_dependency <- grep("^extendr-api[[:space:]]*=", cargo_lines)
@@ -52,6 +52,11 @@ if (length(extendr_dependency) != 1L) {
   stop("Could not identify generated extendr-api dependency in ", cargo_manifest)
 }
 cargo_lines[extendr_dependency] <- 'extendr-api = "=0.9.0"'
+edition_line <- grep('^edition[[:space:]]*=', cargo_lines)
+if (length(edition_line) == 1L &&
+    !any(grepl('^rust-version[[:space:]]*=', cargo_lines))) {
+  cargo_lines <- append(cargo_lines, 'rust-version = "1.78"', after = edition_line)
+}
 core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-core" }'
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
