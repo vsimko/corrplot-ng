@@ -5,7 +5,7 @@ The repository has two benchmark suites:
 - **Shared-core benchmark:** measures the Python scene prototype on B01, B02, B05, B07 and B08.
 - **Cross-language benchmark:** compares Python, Pure R, C++/Rcpp and Rust/rextendr on the common scene-v1 workloads. The regular suite covers B01, B02, B05, B06 and B07. The optional stress suite covers B03 (500x500) and B04 (1000x1000); Pure R is excluded from these two large workloads.
 
-Performance benchmarks are deliberately excluded from pull-request workflows. They run only when a maintainer manually starts **Performance benchmarks** from the GitHub Actions tab.
+Performance benchmarks are deliberately excluded from pull-request workflows. The regular shared-core and cross-language suites run on the scheduled workflow and can also be started manually from the GitHub Actions tab. Stress workloads and the three-platform package-smoke matrix are opt-in inputs available only to manual runs.
 
 ## Run locally
 
@@ -50,7 +50,7 @@ Open **Actions → Performance benchmarks → Run workflow**.
 - Enable **Include stress** to add B03/B04 to the existing shared-core and cross-language suites.
 - Enable **Package smoke** only when native package build and semantic parity checks are needed on Ubuntu, macOS and Windows.
 
-The existing workflow uploads machine-readable JSON fixtures and timing results as artifacts. Benchmark execution remains manual, not part of routine pull-request CI.
+The workflow uploads machine-readable JSON fixtures and timing results as artifacts. Scheduled and manually dispatched benchmark runs are separate from routine pull-request correctness CI.
 
 ## Cross-language methodology
 
