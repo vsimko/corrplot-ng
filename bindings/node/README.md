@@ -9,11 +9,16 @@ or rendering semantics in JavaScript.
 - `validateMatrix(input)` calls the shared Rust matrix validator.
 - `renderSceneSvg(scene, options)` converts a typed scene object and invokes
   the shared Rust SVG renderer.
+- `renderSceneRgba(scene, options)` invokes the shared Rust RGBA renderer and
+  returns an owned Node Buffer with dimensions, stride, pixel format, alpha,
+  color-space, and optional DPI metadata.
 - `getRendererCapabilities()` returns the core's capability-v1 declaration.
 
 Errors are exposed as `CorrplotError` instances with a diagnostic-v1 record.
-Matrix values and scene fields are copied into Rust-owned values. This first
-slice does not promise zero-copy buffers.
+Matrix values and scene fields are converted into Rust-owned values. The RGBA
+pixel vector is moved into the returned Node Buffer, avoiding a second pixel
+buffer copy at the Rust/Node ownership boundary. The caller owns the returned
+buffer and may retain or modify it independently of the Rust renderer.
 
 ## Build and test
 
@@ -39,5 +44,5 @@ Windows x64, with Node.js 24 and 26. Other architectures are not yet claimed.
 The Rust core currently provides matrix validation and typed-scene SVG/RGBA
 rendering, but not a complete scene-v1 parser or matrix-to-scene builder.
 This binding exposes the existing operations without inventing those missing
-semantics. Scene creation and the unified asynchronous TypeScript facade
+semantics. Scene construction and the unified asynchronous TypeScript facade
 remain follow-up work in #141 and #145.
