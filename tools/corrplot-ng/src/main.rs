@@ -54,7 +54,7 @@ USAGE:
 
 COMMANDS:
   init       Interactively create a publication-config v1 file
-  render     Render a labelled matrix to SVG or scene-v1 JSON
+  render     Render a labelled matrix to SVG, scene-v1 JSON, or HTML table
   validate   Validate a labelled matrix without rendering
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
