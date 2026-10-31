@@ -157,7 +157,7 @@ jobs:
                       ))
               baseline_library.mkdir(parents=True, exist_ok=True)
               subprocess.run([
-                  "R", "CMD", "INSTALL", "--library", str(baseline_library), str(package)
+                  "R", "CMD", "INSTALL", "-l", str(baseline_library), str(package)
               ], check=True)
           finally:
               for path, content in backups.items():
