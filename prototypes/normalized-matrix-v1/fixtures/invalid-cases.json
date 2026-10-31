@@ -4,7 +4,7 @@
   "cases": [
     {
       "id": "rectangular-matrix",
-      "expected_error": "values must be a square matrix",
+      "expected_error": "values[0] must contain exactly 2 columns",
       "input": {
         "schema_version": 1,
         "kind": "normalized_matrix",
