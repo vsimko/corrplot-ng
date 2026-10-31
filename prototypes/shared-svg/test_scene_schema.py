@@ -134,3 +134,17 @@ if __name__ == "__main__":
         }]
         self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
 
+
+    def test_figure_text_roles_are_part_of_the_versioned_scene_contract(self):
+        scene = build_scene({
+            "labels": ["A"], "matrix": [[1.0]],
+            "figure_text": {
+                "title": "Visible title",
+                "subtitle": {"text": "Subtitle", "alignment": "center"},
+                "caption": "Caption",
+                "footnote": {"text": "Footnote", "font_size": 9},
+            },
+        })
+        errors = list(Draft202012Validator(self.schema).iter_errors(scene))
+        self.assertEqual(errors, [])
+
