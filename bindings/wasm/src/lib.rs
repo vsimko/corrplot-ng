@@ -144,7 +144,7 @@ fn from_js<T: for<'de> Deserialize<'de>>(value: JsValue, name: &str) -> Result<T
     ))
 }
 
-#[wasm_bindgen(js_name = validateMatrix)]
+#[wasm_bindgen(js_name = "validateMatrix")]
 pub fn validate_matrix_wasm(input: JsValue) -> Result<JsValue, JsValue> {
     let input: MatrixInput = match from_js(input, "matrix") {
         Ok(input) => input,
@@ -283,7 +283,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
     Ok(Scene { width: input.width, height: input.height, cells, texts })
 }
 
-#[wasm_bindgen(js_name = renderSceneSvg)]
+#[wasm_bindgen(js_name = "renderSceneSvg")]
 pub fn render_scene_svg_wasm(scene_input: JsValue, options_input: JsValue) -> Result<JsValue, JsValue> {
     let input: SceneInput = match from_js(scene_input, "scene") {
         Ok(input) => input,
@@ -339,7 +339,7 @@ pub fn render_scene_svg_wasm(scene_input: JsValue, options_input: JsValue) -> Re
     to_js(&result)
 }
 
-#[wasm_bindgen(js_name = getRendererCapabilities)]
+#[wasm_bindgen(js_name = "getRendererCapabilities")]
 pub fn get_renderer_capabilities_wasm() -> String {
     RENDERER_CAPABILITIES_V1.to_string()
 }
