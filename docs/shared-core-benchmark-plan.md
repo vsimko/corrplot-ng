@@ -90,7 +90,7 @@ A candidate that fails correctness is reported as **not comparable** for that wo
 
 ## CI execution policy
 
-Performance benchmarks are intentionally not triggered by pull requests. Routine PR workflows run correctness and compatibility checks only. Start the dedicated **Performance benchmarks** GitHub Actions workflow manually with `workflow_dispatch` when a new measurement is needed. The regular shared-core and cross-language suites run by default. B03/B04 stress measurements and the Ubuntu/macOS/Windows native package smoke matrix are separate opt-in inputs. This keeps long-running measurements deliberate and prevents unrelated PRs from consuming benchmark capacity.
+Performance benchmarks are intentionally not triggered by pull requests. Routine PR workflows run correctness and compatibility checks only. The dedicated **Performance benchmarks** GitHub Actions workflow runs the regular shared-core and cross-language suites on a daily schedule and can also be started manually with `workflow_dispatch`. B03/B04 stress measurements and the Ubuntu/macOS/Windows native package smoke matrix are separate opt-in inputs for manual runs. This keeps long-running measurements deliberate and prevents unrelated PRs from consuming benchmark capacity.
 
 ## Metrics
 

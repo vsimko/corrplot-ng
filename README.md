@@ -79,7 +79,7 @@ tools/corrplot-ng/target/release/corrplot-ng render --config prototypes/publicat
 python scripts/validate_svg.py /tmp/corrplot-ng.svg
 ```
 
-The current CI workflows run path-filtered correctness checks. Performance benchmarks are manual and are not part of ordinary pull-request CI. See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
+The current CI workflows run path-filtered correctness checks. Performance benchmarks run on a schedule or by manual dispatch; they are not part of ordinary pull-request CI. See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
 
 ## License
 
