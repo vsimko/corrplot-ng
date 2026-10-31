@@ -1,7 +1,7 @@
 {
   "capability_schema_version": 1,
   "renderer": {"id": "rust-cli-svg", "name": "Standalone Rust CLI SVG renderer", "version": "0.1"},
-  "scene_schema_versions": [],
+  "scene_schema_versions": [1],
   "output_formats": ["svg", "scene-json", "normalized-json"],
   "matrix_kinds": ["correlation_plot", "general_matrix_plot"],
   "cell_methods": ["circle", "number"],
