@@ -70,3 +70,15 @@ test_that("non-square matrices share the diagnostic-v1 validation contract", {
   expect_equal(diagnostic$stage, "input")
   expect_equal(diagnostic$path, "matrix")
 })
+
+test_that("non-numeric matrix diagnostics use the shared diagnostic-v1 contract", {
+  error <- tryCatch(
+    corrplot_ng_normalize_matrix(matrix(c("1", "not-a-number", "0.5", "1"), nrow = 2)),
+    corrplot_ng_error = function(condition) condition
+  )
+  diagnostic <- corrplot_ng_diagnostic(error)
+  expect_equal(diagnostic$code, "input.matrix.non_numeric")
+  expect_equal(diagnostic$severity, "error")
+  expect_equal(diagnostic$stage, "input")
+  expect_equal(diagnostic$path, "matrix")
+})

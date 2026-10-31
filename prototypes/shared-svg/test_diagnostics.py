@@ -40,6 +40,20 @@ class DiagnosticContractTests(unittest.TestCase):
         self.assertEqual((diagnostic.row, diagnostic.column), (1, 0))
         self.assertEqual(list(Draft202012Validator(SCHEMA).iter_errors(diagnostic.to_dict())), [])
 
+
+    def test_non_numeric_matrix_diagnostic_uses_shared_contract(self):
+        with self.assertRaises(DiagnosticError) as raised:
+            build_scene_with_diagnostics({
+                "labels": ["A", "B"],
+                "matrix": [[1.0, "not-a-number"], [0.5, 1.0]],
+            })
+        diagnostic = raised.exception.diagnostic
+        self.assertEqual(diagnostic.code, "input.matrix.non_numeric")
+        self.assertEqual(diagnostic.severity, "error")
+        self.assertEqual(diagnostic.stage, "input")
+        self.assertEqual(diagnostic.path, "matrix")
+        self.assertEqual(list(Draft202012Validator(SCHEMA).iter_errors(diagnostic.to_dict())), [])
+
     def test_label_failure_uses_a_stable_code(self):
         with self.assertRaises(DiagnosticError) as raised:
             build_scene_with_diagnostics({
