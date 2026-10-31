@@ -1,3 +1,5 @@
+use corrplot_core::{validate_matrix, MatrixKind};
+
 use extendr_api::prelude::*;
 
 fn json_escape(value: &str) -> String {
@@ -40,15 +42,26 @@ fn build_scene_json_rust(
     annotation: &str,
 ) -> std::result::Result<String, String> {
     let n = labels.len();
-    if n == 0 || matrix.nrows() != n || matrix.ncols() != n {
-        return Err("labels and matrix dimensions must agree and be non-empty".to_string());
+    let na_real_bits = f64::na().to_bits();
+    let label_values: Vec<String> = (0..n)
+        .map(|index| labels.elt(index).as_ref().to_string())
+        .collect();
+    let mut flat_values = Vec::with_capacity(matrix.nrows() * matrix.ncols());
+    for row in 0..matrix.nrows() {
+        for column in 0..matrix.ncols() {
+            let value = matrix[[row, column]];
+            flat_values.push(if value.to_bits() == na_real_bits { None } else { Some(value) });
+        }
     }
+    validate_matrix(
+        &label_values, matrix.nrows(), matrix.ncols(), &flat_values,
+        MatrixKind::Correlation,
+    ).map_err(|error| error.to_string())?;
 
     let cell = 84.0_f64;
     let left = 104.0_f64;
     let top = 76.0_f64;
     // extendr exposes the R NA sentinel as an optional value.
-    let na_real_bits = f64::na().to_bits();
     let width = left + n as f64 * cell + 24.0;
     let height = top + n as f64 * cell + 64.0;
 
@@ -76,9 +89,6 @@ fn build_scene_json_rust(
         for column in 0..n {
             let value = matrix[[row, column]];
             let is_missing = value.to_bits() == na_real_bits;
-            if !is_missing && (!value.is_finite() || value < -1.0 || value > 1.0) {
-                return Err("matrix values must be finite, NA, or between -1 and 1".to_string());
-            }
             if !first { out.push(','); }
             first = false;
             out.push_str("{\"row\":");
