@@ -441,7 +441,7 @@ fn help_documents_all_commands_and_input_format_options() {
 fn publication_general_numeric_config_uses_automatic_limits_and_sequential_palette() {
     let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../prototypes/publication-config-v1/examples/basic.json");
-    let source = fs::read_to_string(basic).unwrap();
+    let source = fs::read_to_string(basic).unwrap().replace("\r\n", "\n");
     let config = source
         .replace(
             "\"kind\": \"correlation\", \"method\": \"pearson\", \"missing\": \"preserve\"",
@@ -474,7 +474,7 @@ fn publication_general_numeric_config_uses_automatic_limits_and_sequential_palet
 fn publication_general_numeric_config_honors_explicit_limits_and_rejects_outside_values() {
     let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../prototypes/publication-config-v1/examples/basic.json");
-    let source = fs::read_to_string(basic).unwrap();
+    let source = fs::read_to_string(basic).unwrap().replace("\r\n", "\n");
     let general = source
         .replace(
             "\"kind\": \"correlation\", \"method\": \"pearson\", \"missing\": \"preserve\"",
@@ -510,7 +510,7 @@ fn publication_general_numeric_csv_requires_and_uses_explicit_limits() {
     fs::write(directory.join("matrix.csv"), ",a,b\na,2,4\nb,4,8\n").unwrap();
     let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../prototypes/publication-config-v1/examples/basic.json");
-    let source = fs::read_to_string(basic).unwrap();
+    let source = fs::read_to_string(basic).unwrap().replace("\r\n", "\n");
     let general = source
         .replace(
             "\"kind\": \"inline_matrix\",\n    \"labels\": [\"temperature\", \"humidity\", \"yield\"],\n    \"values\": [\n      [1.0, -0.42, 0.71],\n      [-0.42, 1.0, -0.18],\n      [0.71, -0.18, 1.0]\n    ]",
