@@ -21,3 +21,5 @@ demonstrates one compiled validation operation shared with the CLI and a
 Linux generated-package installation smoke test. CRAN readiness, oldest
 supported toolchain validation, and Windows R-package installation remain
 separate release gates.
+
+The 2026-10-31 Ubuntu 24.04 / R 4.6.2 measurement produced a 1,314,420-byte source tarball and a 6.0 MB installed package (5.9 MB in `libs`). The latest `R CMD check --as-cran` reports one NOTE for Cargo vendor metadata required by offline builds. The 6.0 MB installed size is above rextendr's 5 MB caution and requires CRAN guidance before production use.
