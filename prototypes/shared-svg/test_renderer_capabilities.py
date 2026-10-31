@@ -44,8 +44,13 @@ class RendererCapabilityTests(unittest.TestCase):
         with self.assertRaises(RendererCapabilityError) as raised:
             render_scene_svg(scene)
         self.assertEqual(raised.exception.diagnostics[0]["code"], "renderer.unsupported_feature")
-        self.assertEqual(raised.exception.diagnostics[0]["feature"], "plotmath_labels")
-        self.assertEqual(raised.exception.diagnostics[0]["renderer_version"], "1")
+        diagnostic = raised.exception.diagnostics[0]
+        self.assertEqual(diagnostic["feature"], "plotmath_labels")
+        self.assertEqual(diagnostic["code"], "renderer.unsupported_feature")
+        self.assertEqual(diagnostic["severity"], "error")
+        self.assertEqual(diagnostic["stage"], "renderer")
+        self.assertEqual(diagnostic["path"], "labels.plotmath")
+        self.assertEqual(diagnostic["renderer_version"], "1")
 
     def test_permissive_mode_omits_only_explicitly_optional_plotmath_and_reports_it(self):
         scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
@@ -58,6 +63,8 @@ class RendererCapabilityTests(unittest.TestCase):
         self.assertEqual(len(diagnostics), 1)
         self.assertEqual(diagnostics[0]["code"], "renderer.optional_feature_omitted")
         self.assertEqual(diagnostics[0]["severity"], "warning")
+        self.assertEqual(diagnostics[0]["stage"], "renderer")
+        self.assertEqual(diagnostics[0]["path"], "labels.plotmath")
         self.assertNotIn("alpha", svg)
         self.assertIsNotNone(scene["labels"][0].get("plotmath"))
 
@@ -73,6 +80,10 @@ class RendererCapabilityTests(unittest.TestCase):
             {"plotmath_labels", "legend"},
         )
         self.assertEqual(len(diagnostics), 2)
+        self.assertEqual(
+            {item["path"] for item in diagnostics},
+            {"labels.plotmath", "legend"},
+        )
         self.assertNotIn("alpha", svg)
         self.assertNotIn("low", svg)
 
@@ -101,6 +112,23 @@ class RendererCapabilityTests(unittest.TestCase):
         self.assertEqual(diagnostic["stage"], "renderer")
         self.assertEqual(diagnostic["path"], "method")
         self.assertEqual(diagnostic["feature"], "pie")
+
+    def test_unsupported_legend_has_stable_diagnostics_for_both_renderer_declarations(self):
+        scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
+        scene["legend"] = [{"kind": "stop", "label": "low", "color": "#000000"}]
+
+        for capabilities in (PYTHON_SVG_CAPABILITIES, RUST_CAPABILITIES):
+            with self.subTest(renderer=capabilities["renderer"]["id"]):
+                with self.assertRaises(RendererCapabilityError) as raised:
+                    negotiate_scene_capabilities(scene, capabilities=capabilities)
+
+                diagnostic = raised.exception.diagnostics[0]
+                self.assertEqual(diagnostic["code"], "renderer.unsupported_feature")
+                self.assertEqual(diagnostic["severity"], "error")
+                self.assertEqual(diagnostic["stage"], "renderer")
+                self.assertEqual(diagnostic["path"], "legend")
+                self.assertEqual(diagnostic["feature"], "legend")
+                self.assertEqual(diagnostic["renderer"], capabilities["renderer"]["id"])
 
     def test_rust_cli_declaration_is_narrow_and_explicit(self):
         self.assertEqual(RUST_CAPABILITIES["cell_methods"], ["circle", "number"])
