@@ -67,6 +67,7 @@ class FigureTextTests(unittest.TestCase):
         scene = build_scene({
             "labels": ["A"],
             "matrix": [[1.0]],
+            "layout": {"width": 600},
             "figure_text": [{"role": "title", "text": text}],
         })
         title = scene["figure_text"][0]
