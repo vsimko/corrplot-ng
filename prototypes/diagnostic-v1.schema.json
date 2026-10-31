@@ -14,6 +14,9 @@
     "path": {"type": "string", "minLength": 1},
     "row": {"type": "integer", "minimum": 0},
     "column": {"type": "integer", "minimum": 0},
-    "details": {"type": "object"}
+    "details": {"type": "object"},
+    "renderer": {"type": "string", "minLength": 1},
+    "renderer_version": {"type": "string", "minLength": 1},
+    "feature": {"type": "string", "minLength": 1}
   }
 }
