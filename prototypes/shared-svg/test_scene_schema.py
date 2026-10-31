@@ -118,10 +118,6 @@ class SceneSchemaTests(unittest.TestCase):
             })
         self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
 
-
-if __name__ == "__main__":
-    unittest.main()
-
     def test_missing_cell_text_annotation_role_matches_scene_schema(self):
         scene = build_scene({
             "labels": ["A", "B"],
@@ -134,3 +130,6 @@ if __name__ == "__main__":
         }]
         self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
 
+
+if __name__ == "__main__":
+    unittest.main()
