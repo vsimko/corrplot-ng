@@ -24,11 +24,11 @@ C++/Rcpp remains useful as an R-only integration comparison and fallback only if
 ## Shared-crate proof: Issue #173
 
 The first real shared-library integration is implemented in
-\`crates/corrplot-core\`. Its \`validate_matrix\` operation is consumed directly
+`crates/corrplot-core`. Its `validate_matrix` operation is consumed directly
 by both:
 
-- \`tools/corrplot-ng\`, after CSV/JSON parsing and before publication output;
-- \`prototypes/rust-rextendr\`, before constructing scene-v1 JSON.
+- `tools/corrplot-ng`, after CSV/JSON parsing and before publication output;
+- `prototypes/rust-rextendr`, before constructing scene-v1 JSON.
 
 Both Cargo manifests use a path dependency to the same crate source and
 version. There is no copied validation implementation in either consumer.
@@ -37,13 +37,13 @@ third-party-dependency-free runtime while sharing application semantics.
 
 The shared operation validates non-empty square dimensions, label uniqueness,
 missing-value representation, finite observed values, and correlation range,
-symmetry, and diagonal rules. Its input is row-major \`Option<f64>\`: R's
-\`NA_REAL\` maps to \`None\`, while an ordinary NaN remains \`Some(NaN)\` and is
+symmetry, and diagonal rules. Its input is row-major `Option<f64>`: R's
+`NA_REAL` maps to `None`, while an ordinary NaN remains `Some(NaN)` and is
 rejected. Error codes and cell coordinates are stable and zero-based.
 
 The new cross-platform workflow runs the core and CLI test suites and compiles
 the rextendr consumer on Linux, macOS, and Windows. It verifies that both
-consumers resolve \`corrplot-core\` from the same repository path. A generated
+consumers resolve `corrplot-core` from the same repository path. A generated
 R package is installed and exercised on Linux, including a valid correlation
 matrix and a non-symmetric matrix rejected by the shared core.
 
