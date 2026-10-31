@@ -111,7 +111,7 @@ test_that("legacy graphics parameters and device selection are restored after er
   parameters_before <- graphics::par(c("mar", "oma", "xpd", "mfrow", "pty"))
 
   expect_error(corrplot_ng(corr, add = TRUE, method = "not-a-method"),
-    "arg should be one of")
+    "should be one of")
   expect_identical(grDevices::dev.cur(), device_before)
   expect_identical(grDevices::dev.list(), devices_before)
   expect_equal(graphics::par(c("mar", "oma", "xpd", "mfrow", "pty")),
