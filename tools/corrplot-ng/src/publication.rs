@@ -622,7 +622,7 @@ impl Publication {
                 match ch {
                     '"' => out.push_str("\\\""),
                     '\\' => out.push_str("\\\\"),
-                    '\n' => out.push_str("\\n"),
+                    '\n' => out.push_str("\n"),
                     '\r' => out.push_str("\\r"),
                     '\t' => out.push_str("\\t"),
                     c if c < '\u{20}' => out.push_str(&format!("\\u{:04x}", c as u32)),
@@ -842,15 +842,15 @@ impl Publication {
         match background {
             Background::Transparent => {}
             Background::Color(color) if color == RgbaColor::WHITE => {
-                out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\\n");
+                out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n");
             }
             Background::Color(color) => {
                 let fill = format!("#{:02x}{:02x}{:02x}", color.red, color.green, color.blue);
                 if color.alpha == 255 {
-                    out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"{fill}\"/>\\n"));
+                    out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"{fill}\"/>\n"));
                 } else {
                     let opacity = color.alpha as f64 / 255.0;
-                    out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"{fill}\" fill-opacity=\"{opacity}\"/>\\n"));
+                    out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"{fill}\" fill-opacity=\"{opacity}\"/>\n"));
                 }
             }
         }
