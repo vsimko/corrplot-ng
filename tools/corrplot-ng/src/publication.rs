@@ -774,8 +774,18 @@ impl Publication {
         let logical_height = number(required(root, "height", "scene").expect("scene height"), "scene.height")
             .expect("scene height must be numeric");
         let cell_methods = [self.method.as_str()];
+        let mut requested_features = vec![
+            SceneFeature::RowLabels,
+            SceneFeature::ColumnLabels,
+            SceneFeature::MissingCells,
+            SceneFeature::AccessibleMetadata,
+        ];
+        if self.method == "number" || self.show_values {
+            requested_features.push(SceneFeature::CellTextAnnotations);
+        }
         let scene = SceneDocument::new(
-            &scene_json, schema_version, kind, logical_width, logical_height, &cell_methods,
+            &scene_json, schema_version, kind, logical_width, logical_height,
+            &cell_methods, &requested_features,
         ).expect("scene builder emits valid logical dimensions");
 
         let unit = match self.unit.as_str() {
@@ -783,7 +793,7 @@ impl Publication {
             "in" => PhysicalUnit::Inch,
             _ => unreachable!("publication config validates physical units"),
         };
-        let mut request = RenderRequest {
+        let request = RenderRequest {
             format: OutputFormat::Svg,
             size: OutputSize::Physical {
                 width: self.width, height: self.height, unit, dpi: None,
@@ -792,17 +802,9 @@ impl Publication {
             pixel_format: corrplot_core::render::PixelFormat::Rgba8,
             alpha_mode: AlphaMode::Straight,
             negotiation: NegotiationMode::Strict,
-            required_features: vec![
-                SceneFeature::RowLabels,
-                SceneFeature::ColumnLabels,
-                SceneFeature::MissingCells,
-                SceneFeature::AccessibleMetadata,
-            ],
+            required_features: requested_features,
             optional_features: Vec::new(),
         };
-        if self.method == "number" || self.show_values {
-            request.required_features.push(SceneFeature::CellTextAnnotations);
-        }
         PublicationSvgRenderer { publication: self }
             .render(&scene, &request)
             .expect("the publication SVG renderer supports the generated scene")
