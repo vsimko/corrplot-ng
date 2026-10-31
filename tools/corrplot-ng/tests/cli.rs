@@ -698,7 +698,7 @@ fn incremental_batch_render_reuses_cached_outputs() {
 
 #[test]
 fn batch_diagnostics_json_preserves_partial_success_and_item_context() {
-    let directory = env::temp_dir().join(format!("corrplot-ng-batch-diagnostics-{}", std::process::id()));
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-batch-diagnostics-{}", std::process::id()));
     fs::create_dir_all(&directory).unwrap();
     let matrix_path = directory.join("matrix.csv");
     let valid_config_path = directory.join("valid.json");
