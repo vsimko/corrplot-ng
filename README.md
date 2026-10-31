@@ -81,6 +81,21 @@ python scripts/validate_svg.py /tmp/corrplot-ng.svg
 
 The current CI workflows run path-filtered correctness checks. Performance benchmarks run on a schedule or by manual dispatch; they are not part of ordinary pull-request CI. See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
 
+## Citation
+
+For a released version, cite the exact corrplot-ng release identified by its
+Git tag and use the machine-readable metadata in
+[`CITATION.cff`](CITATION.cff). The repository-level citation metadata does
+not set a project version yet because the repository has not established a
+versioned project release; component package versions are not a substitute
+for a corrplot-ng release version. The release process should add the release
+version and date to `CITATION.cff` when the first project release is tagged.
+
+If no tagged release is available, cite the exact source commit (full Git
+commit SHA) used. No archival DOI is currently specified. If a release is
+later archived and assigned a DOI, cite that DOI together with the archived
+release version; do not infer or reuse a DOI from another version.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

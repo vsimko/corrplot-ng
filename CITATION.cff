@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: >-
+  If you use corrplot-ng, please cite the exact released version or source
+  commit using this metadata.
+title: corrplot-ng
+type: software
+authors:
+  - family-names: Simko
+    given-names: Viliam
+repository-code: https://github.com/vsimko/corrplot-ng
+license: MIT
+abstract: >-
+  An experimental toolkit for correlation-matrix visualization and
+  compatibility across runtimes, with a legacy-compatible R adapter,
+  language-neutral matrix and scene contracts, a Rust shared core, and
+  reference implementations.
+keywords:
+  - correlation matrix
+  - data visualization
+  - scientific software
+  - Rust
+  - R
