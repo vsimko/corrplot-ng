@@ -1406,3 +1406,44 @@ impl<'a, 'scene> Renderer<SceneDocument<'scene>> for PublicationSvgRenderer<'a> 
         })
     }
 }
+
+#[cfg(test)]
+mod output_contract_tests {
+    use super::*;
+
+    fn example_publication() -> Publication {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        Publication::load(path.to_str().unwrap()).unwrap()
+    }
+
+    #[test]
+    fn publication_svg_uses_renderer_contract_and_preserves_existing_svg_semantics() {
+        let publication = example_publication();
+        let svg = publication.svg("renderer contract test");
+        assert!(svg.starts_with("<svg xmlns=\"http://www.w3.org/2000/svg\""));
+        assert!(svg.contains("<title>renderer contract test</title>"));
+        assert!(svg.contains("fill=\"white\""));
+        assert!(svg.ends_with("</svg>\n"));
+    }
+
+    #[test]
+    fn publication_svg_renderer_rejects_unsupported_required_features_before_output() {
+        let publication = example_publication();
+        let scene = SceneDocument::new(
+            "{}",
+            SCENE_SCHEMA_V1,
+            SceneKind::CorrelationPlot,
+            100.0,
+            100.0,
+            &["circle"],
+            &[SceneFeature::Legend],
+        ).unwrap();
+        let mut request = RenderRequest::default();
+        request.required_features.push(SceneFeature::Legend);
+        let error = PublicationSvgRenderer { publication: &publication }
+            .render(&scene, &request)
+            .unwrap_err();
+        assert_eq!(error.code, "renderer.unsupported_feature");
+    }
+}
