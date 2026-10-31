@@ -37,7 +37,7 @@ flowchart TB
     subgraph Other[Other implementations and tools]
       CORE[crates/corrplot-core Rust shared library]
       CLI[Rust standalone CLI]
-      R[Rust/rextendr evaluation adapter]
+      REXTENDR[Rust/rextendr evaluation adapter]
       PY[Python scene/SVG reference implementation]
       SPIKES[C++/Rcpp evaluation spike]
     end
@@ -45,7 +45,7 @@ flowchart TB
     RNORM --> NM
     RSCENE --> SC
     CORE --> CLI
-    CORE --> R
+    CORE --> REXTENDR
     PY --> SC
     CLI -->|scene/config input and SVG output| SC
     SPIKES -. evaluation only .-> SC
@@ -135,4 +135,4 @@ The Rust shared-core direction is accepted and the initial crate-reuse proof is 
 6. Common correlation and visualization semantics belong in the Rust core as they are implemented; do not duplicate them in adapters.
 7. Keep R-specific legacy compatibility and graphics-device behavior in the R adapter.
 
-This keeps interoperability independent from the unresolved question of whether any particular functionality should eventually be factored into a shared compiled library.
+These principles keep contract interoperability explicit while assigning shared implementation semantics to the Rust core and runtime-specific behavior to thin adapters.
