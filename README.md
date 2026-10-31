@@ -11,16 +11,16 @@ The repository contains several working components with different maturity level
 - **R package:** a provisional adapter. Its default `corrplot_ng()` path delegates to upstream `corrplot`; the experimental `engine = "scene"` path prepares renderer-neutral scene-v1 data. The package also provides normalized-matrix and file adapters, `cor.mtest()`, and palette/color-legend helpers.
 - **Normalized-matrix v1:** a language-neutral contract for already-computed square matrices, including labels, missing values, and source-index mappings. R matrix and CSV/TSV/JSON file adapters produce this representation.
 - **Python scene/SVG prototype:** a reference implementation that builds a renderer-neutral scene and exports deterministic SVG. It demonstrates the seven prototype glyph methods, but it is not a production shared core.
-- **Rust standalone CLI:** a compiled native executable that validates and renders supported publication configurations and matrix inputs to SVG. It has no Python or R runtime dependency and is tested on Linux, macOS, and Windows.
+- **Rust shared core and CLI:** `crates/corrplot-core` is a reusable Rust library for shared matrix validation. The native CLI and disposable R/rextendr adapter call the same implementation; the current proof covers validation, not the full visualization engine. The CLI is a compiled executable with no Python or R runtime dependency and is tested on Linux, macOS, and Windows.
 - **Scene-v1 and publication-config v1:** versioned interchange/configuration contracts used by the current prototypes and CLI.
 
-Rust is selected for the standalone CLI only. The production shared-core language remains deferred under [ADR 0001](docs/adr/0001-shared-core-architecture.md). Rust/rextendr and C++/Rcpp integrations are evaluation spikes, not production R backends. TypeScript, Node native bindings, browser WASM, Canvas, and additional renderers remain future work.
+Rust is the selected shared-core implementation under [ADR 0001](docs/adr/0001-shared-core-architecture.md). The first compiled-library reuse proof is complete: the CLI and disposable R/rextendr adapter both call `corrplot-core` for matrix validation. The rextendr and C++/Rcpp integrations remain isolated experiments, not production R backends; the production R package has not migrated to Rust. TypeScript, Node native bindings, browser WASM, Canvas, and additional renderers remain future work.
 
 ## Architecture
 
-The project separates language-specific input adapters, versioned language-neutral contracts, scene construction, and output renderers. The contracts allow implementations to exchange data without requiring one shared compiled library.
+The project separates language-specific input adapters, versioned language-neutral contracts, shared Rust semantics, and output renderers. Scene-v1 remains the interchange format; the shared Rust library provides one compiled implementation for common operations such as matrix validation.
 
-See [the current architecture](docs/architecture.md), [ADR 0001](docs/adr/0001-shared-core-architecture.md), [top-level requirements](docs/requirements.md), and the [future vision (draft)](docs/future-vision.md).
+See [the current architecture](docs/architecture.md), [ADR 0001](docs/adr/0001-shared-core-architecture.md), [repository structure and ownership](docs/repository-structure.md), [top-level requirements](docs/requirements.md), and the [future vision (draft)](docs/future-vision.md).
 
 ## Compatibility scope
 
