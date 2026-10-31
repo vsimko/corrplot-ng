@@ -469,6 +469,16 @@ impl Publication {
         Ok(vec![base.join(relative)])
     }
 
+    pub fn configured_output_path(config_path: &str) -> Result<std::path::PathBuf, String> {
+        let source = std::fs::read_to_string(config_path)
+            .map_err(|error| format!("cannot read config '{config_path}': {error}"))?;
+        let root = parse_json(&source)?;
+        let root = object(&root, "config")?;
+        let output = object(required(root, "output", "config")?, "output")?;
+        let path = string(required(output, "path", "output")?, "output.path")?;
+        Ok(std::path::PathBuf::from(path))
+    }
+
     pub fn load(config_path: &str) -> Result<Self, String> {
         let source = std::fs::read_to_string(config_path).map_err(|e| format!("cannot read config '{config_path}': {e}"))?;
         let root = parse_json(&source)?;
