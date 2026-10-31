@@ -65,8 +65,8 @@ if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
 # The generated R package is its own Cargo package, so release settings from
 # the CLI manifest do not apply here. Optimize this static library for the
 # installed R artifact rather than for CLI execution speed.
-profile_header <- match("[profile.release]", cargo_lines)
-if (is.na(profile_header)) {
+profile_header <- match("[profile.release]", cargo_lines, nomatch = 0L)
+if (profile_header == 0L) {
   cargo_lines <- c(
     cargo_lines,
     "",
