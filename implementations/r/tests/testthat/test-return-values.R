@@ -119,7 +119,7 @@ test_that("corrplot_ng_mixed preserves the combined invisible upstream return ob
     ))
     adapted <- withVisible(corrplot_ng_mixed(
       corr, lower = "number", upper = "circle", diag = "n",
-      tl.pos = "n", cl.pos = "n"
+      tl.pos = "n"
     ))
 
     expect_identical(adapted$visible, FALSE)
