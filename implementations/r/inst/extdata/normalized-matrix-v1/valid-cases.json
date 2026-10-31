@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "kind": "normalized_matrix",
+  "cases": [
+    {
+      "id": "named-positive-matrix",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            0.25
+          ],
+          [
+            0.25,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "missing-and-zero",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B",
+          "C"
+        ],
+        "values": [
+          [
+            1,
+            null,
+            0
+          ],
+          [
+            null,
+            1,
+            -0.5
+          ],
+          [
+            0,
+            -0.5,
+            1
+          ]
+        ],
+        "source": {
+          "format": "csv",
+          "row_labels_present": true,
+          "column_labels_present": true,
+          "path": "matrix.csv"
+        },
+        "source_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "unicode-labels",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "Δ temperature",
+          "湿度"
+        ],
+        "values": [
+          [
+            1,
+            -0.2
+          ],
+          [
+            -0.2,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_data_frame",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ],
+        "metadata": {
+          "note": "Unicode is preserved exactly"
+        }
+      }
+    },
+    {
+      "id": "all-missing-matrix",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            null,
+            null
+          ],
+          [
+            null,
+            null
+          ]
+        ],
+        "source": {
+          "format": "inline",
+          "row_labels_present": false,
+          "column_labels_present": false
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "constant-zero-matrix",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "V1",
+          "V2"
+        ],
+        "values": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": false,
+          "column_labels_present": false
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "constant-nonzero-matrix",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            7,
+            7
+          ],
+          [
+            7,
+            7
+          ]
+        ],
+        "source": {
+          "format": "json",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    }
+  ]
+}
