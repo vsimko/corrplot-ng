@@ -45,20 +45,35 @@ pub fn cache_path(output: &Path) -> PathBuf {
 }
 
 pub fn is_fresh(output: &Path, fingerprint: &str) -> bool {
-    if !output.is_file() {
+    let Ok(output_bytes) = fs::read(output) else {
         return false;
-    }
-    let expected = format!("{CACHE_HEADER}\n{fingerprint}\n");
+    };
+    let expected = format!(
+        "{CACHE_HEADER}\n{fingerprint}\n{}\n",
+        content_fingerprint(&output_bytes),
+    );
     fs::read_to_string(cache_path(output))
         .map(|actual| actual == expected)
         .unwrap_or(false)
 }
 
 pub fn store_fingerprint(output: &Path, fingerprint: &str) -> Result<(), String> {
-    let value = format!("{CACHE_HEADER}\n{fingerprint}\n");
+    let output_bytes = fs::read(output)
+        .map_err(|error| format!("cannot read rendered output '{}': {error}", output.display()))?;
+    let value = format!(
+        "{CACHE_HEADER}\n{fingerprint}\n{}\n",
+        content_fingerprint(&output_bytes),
+    );
     write_atomic(&cache_path(output), value.as_bytes())
         .map(|_| ())
         .map_err(|error| format!("cannot write cache metadata for '{}': {error}", output.display()))
+}
+
+fn content_fingerprint(bytes: &[u8]) -> String {
+    let mut first = 0xcbf29ce484222325_u64;
+    let mut second = 0x84222325cbf29ce4_u64;
+    hash_part(&mut first, &mut second, bytes);
+    format!("{first:016x}{second:016x}")
 }
 
 /// Write a complete file beside its destination and replace the destination
