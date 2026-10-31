@@ -66,8 +66,10 @@ component boundaries are described in [the architecture document](architecture.m
 and [ADR 0001](adr/0001-shared-core-architecture.md).
 
 These capabilities are not equivalent to full legacy API compatibility,
-a shared compiled library, or identical rendering across every backend.
-Those claims require separate evidence.
+a complete production visualization engine in the shared Rust crate, or
+identical rendering across every backend. Those claims require separate
+evidence. The first shared compiled operation—matrix validation used by the
+CLI and disposable R/rextendr adapter—is implemented and tested.
 
 ## Roadmap phases
 
@@ -144,7 +146,7 @@ the issue is deliberately reactivated.
 
 ### Phase 3 — Establish the shared Rust core
 
-**Status:** Strategic architecture selected; production rollout gated by a focused integration proof.
+**Status:** Rust architecture selected; first shared-library operation proven; production rollout gates remain.
 
 The target is one authoritative Rust implementation of shared correlation,
 validation, scene construction, layout, and other common visualization
@@ -155,8 +157,11 @@ logic in one place.
 
 Rust is selected as the shared-core language because the standalone CLI is
 already Rust and the same source can serve native and WebAssembly targets.
-The decision is architectural; the current CLI and R/rextendr prototype are
-still separate crates and do not yet demonstrate compiled-library reuse.
+Merged PR #180 extracts `crates/corrplot-core`; the CLI and disposable
+R/rextendr adapter both depend on it and call its matrix-validation operation.
+This is a real compiled-library reuse proof, not only fixture interoperability.
+The crate currently covers matrix validation, not the full visualization
+engine or production R API.
 
 The related future-work track is:
 
@@ -166,27 +171,30 @@ The related future-work track is:
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142).
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145).
 
-**Implementation gate:** prove the selected architecture with the smallest
-meaningful shared operation, initially through the Rust CLI and a disposable
-R/rextendr binding. Both must depend on the exact same reusable library crate
-and call its implementation; shared JSON fixtures alone are not proof.
-Record build/dependency evidence and compare actual ABI, packaging, release,
-CRAN/toolchain, and maintenance costs. This gate validates safe rollout; it
-does not reopen the strategic choice in favor of independent implementations.
+**Implementation gate:** the first shared operation is proven. Keep the
+reusable crate independent of CLI/R APIs and preserve thin adapters. Before
+production R migration or adding further runtime bindings, complete the
+remaining package, CRAN, portability, and maintenance review. Shared JSON
+fixtures remain useful conformance evidence but do not replace compiled
+library reuse.
 
 If the R integration cannot meet its packaging constraints, keep the Rust
 core authoritative for the CLI and future consumers and assess a narrowly
 scoped R adapter exception. Do not fork common semantics silently. Continue
 to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
-**Measurable outcomes after the integration proof:**
+**Remaining measurable outcomes:**
 
-- One architecture decision records runtime boundaries, backend selection,
-  portability constraints, and rejected alternatives.
-- The same semantic core builds for the approved native and WASM targets.
-- At least two real consumers exercise the same operation and shared fixtures.
-- Packaging and clean-environment installation work on the declared support
-  matrix without requiring a developer toolchain at runtime.
+- The shared crate's API and dependency boundary remain independent of R,
+  CLI parsing, JSON, and renderer-specific behavior.
+- The core builds on the declared native and future WASM target matrix before
+  a WASM backend is claimed as supported.
+- R source-package and binary distribution meet documented package-size,
+  offline-build, dependency-license, and platform requirements.
+- Any CRAN NOTE has an explicit disposition; actual CRAN acceptance is not
+  inferred from local `R CMD check --as-cran` runs.
+- Controlled maintainer effort for a representative code change and
+  dependency upgrade is measured against the C++/Rcpp adapter path.
 - The additional maintenance burden is justified by demonstrated user value.
 
 ### Phase 4 — Add output backends and parity only when consumers exist
@@ -238,7 +246,8 @@ prerequisite for the current contract, R adapter, or CLI work.
 - Keep Python as a reference implementation and test oracle during migration,
   not a second production source of shared semantics.
 - Do not promote the current Rust/rextendr or C++/Rcpp spikes directly;
-  first prove the shared Rust library crate and pass its packaging gates.
+  the shared crate proof exists, but production R migration still requires
+  package/CRAN and maintenance gates.
 - Do not claim full corrplot compatibility from the representative
   regression corpus.
 - Do not promise dates or release milestones in this roadmap.
