@@ -742,3 +742,24 @@ fn batch_diagnostics_json_preserves_partial_success_and_item_context() {
     fs::remove_dir_all(&directory).ok();
 }
 
+
+#[test]
+fn non_square_matrix_cli_diagnostic_matches_r_and_python_contract() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-diagnostic-parity-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let input = directory.join("non-square.csv");
+    fs::write(&input, ",A,B\nA,1\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&input)
+        .args(["--diagnostics", "json"])
+        .output().unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let json = String::from_utf8(output.stdout).unwrap();
+    assert!(json.contains(r#""code":"input.matrix.invalid_shape""#), "{json}");
+    assert!(json.contains(r#""severity":"error""#), "{json}");
+    assert!(json.contains(r#""stage":"input""#), "{json}");
+    assert!(json.contains(r#""path":"matrix""#), "{json}");
+    fs::remove_dir_all(directory).ok();
+}
