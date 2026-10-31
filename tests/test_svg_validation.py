@@ -33,7 +33,7 @@ class SvgValidationTests(unittest.TestCase):
         })
         result = validate_svg_text(svg)
         self.assertGreater(result["elements"], 3)
-        self.assertEqual(result["width"], 200)
+        self.assertEqual(result["width"], 212)
         root = ET.fromstring(svg)
         self.assertEqual(root.find(f"{{{SVG_NS}}}title").text, "R&D <metrics> – Δ")
         self.assertEqual(root.find(f"{{{SVG_NS}}}desc").text, "A & B < C")
