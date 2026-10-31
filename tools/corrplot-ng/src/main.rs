@@ -120,9 +120,18 @@ fn diagnostic_json(message: &str) -> String {
         ("cli.operation.failed", "input", None)
     };
     let path_field = path.map(|value| format!(",\"path\":\"{}\"", value)).unwrap_or_default();
+    let coordinates = message.find("matrix value at row ").and_then(|start| {
+        let rest = &message[start + "matrix value at row ".len()..];
+        let (row, rest) = rest.split_once(", column ")?;
+        let column = rest.split(|ch: char| !ch.is_ascii_digit()).next()?;
+        Some((row.parse::<usize>().ok()?, column.parse::<usize>().ok()?))
+    });
+    let coordinate_fields = coordinates.map(|(row, column)| {
+        format!(",\"row\":{row},\"column\":{column}")
+    }).unwrap_or_default();
     format!(
-        "{{\"schema_version\":1,\"code\":\"{}\",\"severity\":\"error\",\"stage\":\"{}\",\"message\":\"{}\"{}}}",
-        code, stage, json_escape(message), path_field
+        "{{\"schema_version\":1,\"code\":\"{}\",\"severity\":\"error\",\"stage\":\"{}\",\"message\":\"{}\"{}{}}}",
+        code, stage, json_escape(message), path_field, coordinate_fields
     )
 }
 
