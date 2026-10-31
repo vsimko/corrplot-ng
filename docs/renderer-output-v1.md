@@ -36,7 +36,7 @@ OutputOptions is a format-tagged enum. A renderer must validate the options befo
 - Preserve the scene aspect ratio and center the scene in the viewport. Do not stretch or crop the plot.
 - Typography is explicit through font family and point size. Font availability and glyph metrics remain viewer-dependent; renderers must not claim that fonts are embedded unless they are.
 
-The current publication SVG path retains its existing physical mm/in sizing, viewBox, typography, and deterministic element ordering. It now adapts through the shared Renderer/OutputOptions types. Existing output is regression-tested against the previous convenience method. The direct matrix CLI SVG path remains supported with its current dimensions and glyph behavior.
+The current publication SVG path retains its existing physical mm/in sizing, viewBox, typography, and deterministic element ordering. It now adapts through the shared Renderer/OutputOptions types. The transitional adapter still accepts the publication input and builds its scene-v1 JSON internally because the Rust core does not yet expose a typed Scene. Existing output is regression-tested against the previous convenience method. The direct matrix CLI SVG path remains supported with its current dimensions and glyph behavior.
 
 ### PNG and raw RGBA
 
