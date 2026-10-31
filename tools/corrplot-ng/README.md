@@ -91,6 +91,46 @@ triggered only by a matching `cli-vX.Y.Z` tag. DEB/RPM and distribution
 repository packaging remain deferred to issue #99.
 
 
+### Renderer capabilities and diagnostics
+
+Print the machine-readable capability declaration for the native SVG output:
+
+\`\`\`sh
+corrplot-ng capabilities
+\`\`\`
+
+For a single command, add \`--diagnostics json\` to emit a diagnostic-v1
+record on failure while preserving the nonzero exit status:
+
+\`\`\`sh
+corrplot-ng render --input data/correlation.csv --diagnostics json
+\`\`\`
+
+### Batch rendering
+
+Create a UTF-8 text manifest with one publication-config v1 JSON path per
+line. Paths are relative to the manifest file. Blank lines and lines beginning
+with \`#\` are ignored.
+
+\`\`\`text
+configs/experiment-a.json
+configs/experiment-b.json
+configs/experiment-c.json
+\`\`\`
+
+Render each configuration independently:
+
+\`\`\`sh
+corrplot-ng render-batch --manifest figures.txt --output-dir figures
+\`\`\`
+
+Successful outputs are retained even when another item fails. Output names
+use a three-digit manifest index and the configuration file stem to avoid
+collisions. The process exits with status 1 if any item fails. With
+\`--diagnostics json\`, stdout contains a report with a \`successes\` array and
+a \`diagnostics\` array. Each diagnostic includes the manifest index and input
+path in \`details\`.
+
 ### Make
 
 After installing the binary, a Make target can render figures only when the

@@ -3,6 +3,7 @@ use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::process;
+use std::path::Path;
 
 mod publication;
 mod wizard;
@@ -53,6 +54,7 @@ COMMANDS:
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
   capabilities Print machine-readable renderer capabilities
+  render-batch Render a manifest of independent publication configs
   version    Print version and build information
   help       Show this help
 
@@ -97,6 +99,8 @@ fn diagnostic_json(message: &str) -> String {
         ("input.matrix.invalid_label", "input", Some("labels"))
     } else if lower.contains("unsupported method") || lower.contains("unsupported feature") {
         ("renderer.unsupported_feature", "renderer", Some("method"))
+    } else if lower.contains("write output") || lower.contains("cannot write output") {
+        ("export.output.write_failed", "export", Some("output"))
     } else if lower.contains("config") || lower.contains("publication") {
         ("configuration.invalid_field", "configuration", None)
     } else if lower.contains("scene") {
@@ -455,6 +459,7 @@ fn write_output(path: Option<&str>, content: &str) -> Result<(), String> {
 
 fn run() -> Result<(), String> {
     let mut args: Vec<String> = env::args().collect();
+    let diagnostics_json = args.iter().any(|arg| arg == "--diagnostics" || arg == "--diagnostics=json");
     let mut index = 1;
     while index < args.len() {
         if args[index] == "--diagnostics" {
@@ -477,6 +482,7 @@ fn run() -> Result<(), String> {
         "version" => println!("corrplot-ng {VERSION} (Rust {})", env!("CARGO_PKG_VERSION")),
         "presets" => println!("default\tCircle glyphs with sign-based colors\nnumber\tNumeric values in cells"),
         "capabilities" => print!("{RENDERER_CAPABILITIES}"),
+        "render-batch" => run_batch(&args[2..], diagnostics_json)?,
         "render" | "validate" | "inspect" => {
             let opts = parse_args(&args)?;
             if let Some(config_path) = opts.config.as_deref() {
@@ -545,6 +551,107 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
+
+fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, Vec<(String, String)>), String> {
+    let manifest = Path::new(manifest_path);
+    let base = manifest.parent().unwrap_or_else(|| Path::new("."));
+    let source = fs::read_to_string(manifest_path)
+        .map_err(|error| format!("cannot read batch manifest '{manifest_path}': {error}"))?;
+    fs::create_dir_all(output_dir)
+        .map_err(|error| format!("cannot create output directory '{output_dir}': {error}"))?;
+    let mut successes = Vec::new();
+    let mut diagnostics = Vec::new();
+    let mut item_index = 0usize;
+
+    for line in source.lines() {
+        let entry = line.trim();
+        if entry.is_empty() || entry.starts_with('#') {
+            continue;
+        }
+        item_index += 1;
+        let config_path = if Path::new(entry).is_absolute() {
+            Path::new(entry).to_path_buf()
+        } else {
+            base.join(entry)
+        };
+        let stem = config_path.file_stem().and_then(|value| value.to_str()).unwrap_or("figure");
+        let safe_stem: String = stem.chars().map(|ch| if ch.is_ascii_alphanumeric() || ch == '-' || ch == '_' { ch } else { '-' }).collect();
+        let output_path = Path::new(output_dir).join(format!("{item_index:03}-{safe_stem}.svg"));
+        let result = (|| {
+            let config_string = config_path.to_string_lossy();
+            let publication = publication::Publication::load(&config_string)?;
+            let svg = publication.svg(stem);
+            fs::write(&output_path, svg)
+                .map_err(|error| format!("cannot write output '{}': {error}", output_path.display()))?;
+            Ok::<(), String>(())
+        })();
+
+        match result {
+            Ok(()) => successes.push(format!(
+                "{{\"input\":\"{}\",\"output\":\"{}\"}}",
+                json_escape(entry),
+                json_escape(&output_path.to_string_lossy())
+            )),
+            Err(message) => {
+                let mut diagnostic = diagnostic_json(&message);
+                diagnostic.pop();
+                diagnostic.push_str(&format!(
+                    ",\"details\":{{\"manifest_index\":{},\"input\":\"{}\"}}}}",
+                    item_index,
+                    json_escape(entry)
+                ));
+                diagnostics.push((diagnostic, message));
+            }
+        }
+    }
+    if item_index == 0 {
+        return Err("batch manifest contains no input entries".into());
+    }
+    Ok((successes, diagnostics))
+}
+
+fn run_batch(args: &[String], diagnostics_json: bool) -> Result<(), String> {
+    let mut manifest = None;
+    let mut output_dir = None;
+    let mut index = 0;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--manifest" => {
+                index += 1;
+                manifest = args.get(index).cloned();
+            }
+            "--output-dir" => {
+                index += 1;
+                output_dir = args.get(index).cloned();
+            }
+            option => return Err(format!("unknown render-batch option '{option}'")),
+        }
+        index += 1;
+    }
+    let manifest = manifest.ok_or("render-batch requires --manifest PATH")?;
+    let output_dir = output_dir.ok_or("render-batch requires --output-dir DIR")?;
+    let (successes, diagnostics) = process_batch(&manifest, &output_dir)?;
+
+    if diagnostics_json {
+        println!(
+            "{{\"schema_version\":1,\"successes\":[{}],\"diagnostics\":[{}]}}",
+            successes.join(","),
+            diagnostics.iter().map(|(diagnostic, _)| diagnostic.as_str()).collect::<Vec<_>>().join(",")
+        );
+    } else {
+        for success in &successes {
+            println!("rendered {success}");
+        }
+        for (_diagnostic, message) in &diagnostics {
+            eprintln!("error: {message}");
+        }
+    }
+    if !diagnostics.is_empty() {
+        process::exit(1);
+    }
+    Ok(())
+}
+
 fn main() {
     let diagnostics_json = env::args().any(|arg| arg == "--diagnostics" || arg == "--diagnostics=json");
     if let Err(message) = run() {
@@ -582,6 +689,33 @@ mod tests {
         assert!(RENDERER_CAPABILITIES.contains("\"renderer\""));
         assert!(RENDERER_CAPABILITIES.contains("\"cell_methods\""));
         assert!(RENDERER_CAPABILITIES.contains("\"circle\""));
+    }
+
+    #[test]
+    fn batch_render_keeps_successes_and_reports_each_independent_failure() {
+        let temp = env::temp_dir().join(format!("corrplot-ng-batch-{}", process::id()));
+        let _ = fs::remove_dir_all(&temp);
+        fs::create_dir_all(&temp).unwrap();
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let valid_config = repo_root.join("prototypes/publication-config-v1/examples/basic.json");
+        let manifest = temp.join("manifest.txt");
+        fs::write(
+            &manifest,
+            format!("{}\nmissing-one.json\nmissing-two.json\n", valid_config.display()),
+        ).unwrap();
+        let output_dir = temp.join("out");
+
+        let (successes, diagnostics) = process_batch(
+            manifest.to_str().unwrap(),
+            output_dir.to_str().unwrap(),
+        ).unwrap();
+
+        assert_eq!(successes.len(), 1);
+        assert_eq!(diagnostics.len(), 2);
+        assert!(diagnostics[0].0.contains("\"code\":\"configuration.invalid_field\""));
+        assert!(diagnostics[0].0.contains("\"manifest_index\":2"));
+        assert!(output_dir.join("001-basic.svg").exists());
+        fs::remove_dir_all(&temp).unwrap();
     }
 
     #[test]
