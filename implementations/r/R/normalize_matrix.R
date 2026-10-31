@@ -30,7 +30,7 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
       stop("data frame must have at least one row and one column", call. = FALSE)
     }
     numeric_columns <- vapply(x, function(column) {
-      is.integer(column) || is.double(column)
+      is.numeric(column)
     }, logical(1))
     if (any(!numeric_columns)) {
       column_index <- which(!numeric_columns)[[1L]]
@@ -57,7 +57,7 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
     column_labels <- names(x)
   } else if (is.matrix(x)) {
     source_format <- "r_matrix"
-    if (!(is.integer(x) || is.double(x))) {
+    if (!is.numeric(x)) {
       stop("matrix must contain integer or double values", call. = FALSE)
     }
     values <- x
