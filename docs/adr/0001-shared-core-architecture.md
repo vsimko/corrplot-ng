@@ -56,7 +56,7 @@ The measured performance difference does not override these operational consider
 - The vendoring, lockfile, license inventory, generated rextendr scaffold, and offline archive add ongoing maintenance work.
 - No production Rust library is yet shared between the CLI and R binding; that reuse must be demonstrated before it is counted as a benefit.
 
-**Assessment:** viable candidate for a future multi-consumer native core; not justified as an immediate R-package migration.
+**Assessment:** selected as the repository-wide shared-core implementation; production R integration remains gated by CRAN/toolchain and maintenance validation.
 
 ### C++ + Rcpp
 
@@ -87,7 +87,7 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 - Keep the Rust/rextendr and C++/Rcpp spikes isolated. Do not add either binding to the production R package yet.
 - Preserve the legacy R API, defaults, return values, graphics-device behavior, and compatibility tests. No breaking migration is implied.
 - Keep the standalone CLI in Rust as already decided in #98. This decision does not require the CLI to depend on the rextendr package.
-- Future Python and TypeScript consumers should read and validate scene-v1 JSON/Schema. They do not need to embed the R binding or inherit the native core language.
+- Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
 - Do not use the prototype benchmark to claim a production performance win.
 
 ## Conditions for production rollout
@@ -113,8 +113,8 @@ No production package depends on either spike yet, so the shared-library rollout
 4. If Rust's CRAN/toolchain conditions cannot be met within the maintainer budget, do not force an unsafe or unmaintainable Rust dependency into the R package. Keep Rust as the authoritative core for consumers it can serve, and document any R-only adapter exception against the same conformance fixtures. The scene-v1 schema and fixtures remain unchanged.
 5. If C++ cannot serve the required non-R consumers without a second implementation, do not force it into the shared-core role; retain the language-neutral interchange boundary and revisit the architecture.
 
-## Revisit when
+## Revisit the rollout plan when
 
-- A second production consumer needs the same visualization semantics and a shared compiled library would materially remove duplicated work.
+- The shared-crate proof identifies a better crate boundary or binding strategy.
 - CRAN toolchain policy, Rcpp/rextendr maintenance costs, or binary distribution constraints change.
 - A full compatibility and performance comparison exists for representative corrplot workloads rather than only the current scene-v1 prototype.
