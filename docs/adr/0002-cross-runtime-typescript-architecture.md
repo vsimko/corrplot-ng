@@ -60,9 +60,9 @@ The facade may accept an injected backend in tests and advanced integrations. Ru
 The initial facade should expose a small, backend-neutral surface:
 
 - `createCorrplotEngine({ backend })`: asynchronously initialize the selected execution backend.
-- `engine.validate(input)`: validate normalized matrix input and return structured diagnostics on failure.
+- `engine.validate(input)`: validate normalized matrix input; invalid input raises `CorrplotError` with a diagnostic-v1 record.
 - `engine.createScene(input, options)`: construct the renderer-neutral scene using Rust semantics.
-- `engine.getRendererCapabilities(format)`: return the selected renderer's declaration, validated against the existing capability-v1 contract.
+- `engine.getRendererCapabilities(rendererId)`: return that renderer's declaration, validated against the existing capability-v1 contract.
 - `engine.render(input, options)`: render a supported output format using the renderer contract defined in #153.
 - `engine.dispose()`: release backend-owned resources where the runtime requires it; it is safe to call more than once.
 
@@ -116,8 +116,8 @@ Use the existing diagnostic-v1 schema from #72 as the cross-runtime error contra
 - Node calls expose a typed `CorrplotError` whose `diagnostic` property contains the diagnostic-v1 record.
 - Browser calls reject with the same typed error shape. The facade must not require callers to parse message text.
 - Warnings remain structured diagnostics in successful results; they are not converted to errors.
-- A backend initialization failure uses a stable backend-loading code and includes the runtime/backend context in `details`.
-- Unexpected internal failures use a distinct stable code; do not expose Rust panic payloads as a public API.
+- A backend initialization failure must be represented in the shared diagnostic-v1 schema, with runtime/backend context in `details`. Add a shared catalogue code if the existing catalogue has no suitable entry before implementing the bindings.
+- Unexpected internal failures use a distinct shared diagnostic code; do not expose Rust panic payloads as a public API.
 
 The diagnostic schema and catalogue remain authoritative. Do not add a second TypeScript-only or WASM-only error model.
 
