@@ -802,7 +802,7 @@ impl Publication {
             pixel_format: corrplot_core::render::PixelFormat::Rgba8,
             alpha_mode: AlphaMode::Straight,
             negotiation: NegotiationMode::Strict,
-            required_features: requested_features,
+            required_features: requested_features.clone(),
             optional_features: Vec::new(),
         };
         PublicationSvgRenderer { publication: self }
