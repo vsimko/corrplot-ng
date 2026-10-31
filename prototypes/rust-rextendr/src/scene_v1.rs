@@ -35,7 +35,7 @@ fn json_number(value: f64) -> String {
 fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str) -> extendr_api::Result<String> {
     let n = labels.len();
     if n == 0 || matrix.nrows() != n || matrix.ncols() != n {
-        return Err(\"labels and matrix dimensions must agree and be non-empty\".into());
+        return Err("labels and matrix dimensions must agree and be non-empty".into());
     }
 
     let cell = 84.0_f64;
