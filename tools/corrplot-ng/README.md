@@ -1,6 +1,6 @@
 # corrplot-ng CLI (first native slice)
 
-This is a standalone Rust executable. It has **zero third-party Cargo dependencies** and does not invoke Python or R.
+This is a standalone Rust executable. It has **no third-party Cargo runtime dependencies**; its only application dependency is the local `crates/corrplot-core` library, shared with the rextendr spike. It does not invoke Python or R.
 
 ## Build
 
