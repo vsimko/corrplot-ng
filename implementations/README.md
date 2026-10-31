@@ -10,4 +10,6 @@ Other working components live outside this directory:
 - [Python scene/SVG prototype](../prototypes/shared-svg/README.md) — a reference implementation and architecture experiment, not a production shared core.
 - [Versioned contracts](../prototypes/normalized-matrix-v1/README.md) — language-neutral normalized-matrix input contract; scene-v1 and publication configuration contracts are documented in their respective prototype directories.
 
-Rust/rextendr and C++/Rcpp work remains experimental evaluation. The production shared-core language is deferred by [ADR 0001](../docs/adr/0001-shared-core-architecture.md).
+Rust is the selected shared-core implementation under [ADR 0001](../docs/adr/0001-shared-core-architecture.md). The reusable library lives in [crates/corrplot-core](../crates/corrplot-core/README.md); the standalone CLI and disposable R/rextendr adapter both call it for matrix validation. The rextendr adapter remains an experiment, not a production R backend, and the provisional R package has not migrated to Rust. C++/Rcpp remains an isolated R-only comparison spike.
+
+See the [repository structure and ownership map](../docs/repository-structure.md) for the role of this directory and package-local fixture copies.
