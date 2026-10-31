@@ -460,16 +460,16 @@ impl Renderer<Scene> for SceneSvgRenderer {
             let cy = cell.y + cell.size / 2.0;
             match &cell.glyph {
                 Some(CellGlyph::Circle { radius, color }) => out.push_str(&format!(
-                    "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\"/>",
-                    color_hex(*color)
+                    "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                    color_hex(*color), alpha(*color)
                 )),
                 Some(CellGlyph::Square { side, color }) => out.push_str(&format!(
-                    "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\"/>",
-                    cx - side / 2.0, cy - side / 2.0, color_hex(*color)
+                    "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                    cx - side / 2.0, cy - side / 2.0, color_hex(*color), alpha(*color)
                 )),
                 Some(CellGlyph::Ellipse { rx, ry, color }) => out.push_str(&format!(
-                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{}\"/>",
-                    color_hex(*color)
+                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                    color_hex(*color), alpha(*color)
                 )),
                 Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => {
                     let start_x = cx + radius * start_radians.cos();
@@ -479,24 +479,25 @@ impl Renderer<Scene> for SceneSvgRenderer {
                     let span = (end_radians - start_radians).abs();
                     if span >= std::f64::consts::TAU {
                         out.push_str(&format!(
-                            "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\"/>",
-                            color_hex(*color)
+                            "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                            color_hex(*color), alpha(*color)
                         ));
                     } else {
                         let large_arc = if span > std::f64::consts::PI { 1 } else { 0 };
+                        let sweep = if end_radians >= start_radians { 1 } else { 0 };
                         out.push_str(&format!(
-                            "<path d=\"M {cx} {cy} L {start_x} {start_y} A {radius} {radius} 0 {large_arc} 1 {end_x} {end_y} Z\" fill=\"{}\"/>",
-                            color_hex(*color)
+                            "<path d=\"M {cx} {cy} L {start_x} {start_y} A {radius} {radius} 0 {large_arc} {sweep} {end_x} {end_y} Z\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                            color_hex(*color), alpha(*color)
                         ));
                     }
                 }
                 Some(CellGlyph::Number { text, font_size, color }) => out.push_str(&format!(
-                    "<text x=\"{cx}\" y=\"{cy}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\">{}</text>",
-                    escape_xml(&svg.font_family), font_size, color_hex(*color), escape_xml(text)
+                    "<text x=\"{cx}\" y=\"{cy}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
+                    escape_xml(&svg.font_family), font_size, color_hex(*color), alpha(*color), escape_xml(text)
                 )),
                 Some(CellGlyph::Shade { color }) => out.push_str(&format!(
-                    "<path d=\"M {} {} L {} {}\" stroke=\"{}\" fill=\"none\"/>",
-                    cell.x, cell.y + cell.size, cell.x + cell.size, cell.y, color_hex(*color)
+                    "<path d=\"M {} {} L {} {}\" stroke=\"{}\" stroke-opacity=\"{}\" fill=\"none\"/>",
+                    cell.x, cell.y + cell.size, cell.x + cell.size, cell.y, color_hex(*color), alpha(*color)
                 )),
                 Some(CellGlyph::Color) | None => {}
             }
