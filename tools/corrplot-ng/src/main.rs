@@ -54,6 +54,7 @@ COMMANDS:
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
   capabilities Print machine-readable renderer capabilities
+  render-batch Render a manifest of independent publication configs
   version    Print version and build information
   help       Show this help
 
