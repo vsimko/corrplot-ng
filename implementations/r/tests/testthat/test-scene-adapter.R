@@ -46,7 +46,7 @@ test_that("the scene engine rejects invalid matrix semantics", {
 test_that("coefficient labels preserve cell identity and legacy decimal formatting", {
   corr <- matrix(c(1, -0.125, -0.125, NA_real_), 2, byrow = TRUE,
     dimnames = list(c("A", "B"), c("A", "B")))
-  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black")
+  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black", na.label = "")
   labels <- scene$text_annotations
   expect_identical(vapply(labels, `[[`, character(1), "text"),
     c("1.00", "-0.12", "-0.12"))
@@ -364,7 +364,7 @@ test_that("missing label text and color are configurable and can be suppressed",
 
   suppressed <- corrplot_ng(corr, engine = "scene", na.label = "")
   expect_length(suppressed$text_annotations, 0L)
-  expect_true(all(vapply(suppressed$cells, function(cell) is.null(cell$value), logical(1))))
+  expect_equal(sum(vapply(suppressed$cells, function(cell) is.null(cell$value), logical(1))), 2L)
 })
 
 test_that("missing labels obey triangle and diagonal visibility", {
