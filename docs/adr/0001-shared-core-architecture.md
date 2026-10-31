@@ -17,7 +17,7 @@ The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-bindin
 
 This is the project's target architecture, not a claim that the shared library is already implemented. The existing Rust CLI makes Rust the coherent core language across native CLI, R, Node, and WebAssembly consumers. The reason is broader than raw speed: one implementation is maintained and tested once, consumers receive the same semantic behavior, fixes apply consistently, and performance-critical algorithms do not need to be reimplemented in each language.
 
-The Rust CLI and R/rextendr spike are not yet linked to one library crate. Issue #173 therefore proves the smallest real shared-crate integration and its packaging/maintenance feasibility; it no longer asks whether duplicated implementations are a desirable long-term architecture. Do not migrate the legacy R package until the proof and release gates pass.
+The Rust CLI and disposable R/rextendr binding now link to the same reusable crate. Issue #173 has established the compiled-library boundary; the remaining work is to verify its minimum toolchain, package footprint, and release/maintenance implications. Do not migrate the legacy R package until the remaining release gates pass.
 
 C++/Rcpp remains useful as an R-only integration comparison and fallback only if Rust's R packaging constraints prove unacceptable. It is not the preferred repository-wide core because it would introduce a second native implementation/integration path for the Rust CLI and future consumers.
 
@@ -60,7 +60,7 @@ The evaluation issues and merged implementation PRs provide the following eviden
 
 | Area | Evidence | Finding |
 |---|---|---|
-| CRAN source-package policy | [#111 / PR #118](https://github.com/vsimko/corrplot-ng/pull/118), `docs/cran-rust-cpp-comparison.md` | Both approaches are feasible. C++/Rcpp passed three-platform `R CMD check --as-cran`; Rust/rextendr passed offline source-package checks on three platforms but reported two NOTEs (vendor metadata and non-API `R_NamespaceRegistry`). Oldest-toolchain compatibility and actual CRAN acceptance remain unproven. |
+| CRAN source-package policy | [#111 / PR #118](https://github.com/vsimko/corrplot-ng/pull/118), `docs/cran-rust-cpp-comparison.md` | Both approaches are feasible. C++/Rcpp passed three-platform `R CMD check --as-cran`; Rust/rextendr passes offline source-package installation and `R CMD check --as-cran` on Linux, macOS, and Windows. After upgrading to extendr-api 0.9.0, the non-API `R_NamespaceRegistry` NOTE is removed; one NOTE remains for Cargo vendor metadata files that must be included for offline integrity. The metadata NOTE is accepted for this disposable spike with an explicit CRAN-comments rationale; actual CRAN acceptance remains unproven. |
 | Maintainer workflow | [#113 / PR #119](https://github.com/vsimko/corrplot-ng/pull/119), `docs/native-integration-maintenance-comparison.md` | C++/Rcpp has the shorter routine and release workflow for an R-only extension. The report's planning estimates are 1–2 h for C++ versus 2–4 h for Rust release-grade validation; these are estimates, not measured timings. |
 | Binary installation | [Rust PR #16](https://github.com/vsimko/corrplot-ng/pull/16), [C++ PR #17](https://github.com/vsimko/corrplot-ng/pull/17) | Both Windows binaries installed and passed smoke tests with the relevant compiler/toolchain removed from the restricted `PATH`. This addresses binary end-user installation, not source-build or CRAN acceptance. |
 | Scene independence | [#115 / PR #121](https://github.com/vsimko/corrplot-ng/pull/121) | Python, R, and the standalone Rust CLI consume the versioned scene-v1 JSON fixture. The Rust CLI validates the data contract independently of R. This demonstrates a language-neutral interchange boundary, not reuse of one compiled native library. |
@@ -84,10 +84,10 @@ The measured performance difference does not override these operational consider
 - Provides strong typing and a compact, measured scene-v1 implementation.
 
 **Conditions and risks**
-- The current CRAN-style checks report two NOTEs that need resolution or explicit maintainer/CRAN disposition.
-- The oldest supported Cargo/rustc versions and actual CRAN acceptance have not been verified.
+- The current CRAN-style check reports one NOTE for hidden Cargo vendor metadata. The files are required for offline Cargo checksum/provenance integrity and are retained intentionally; document this in any CRAN submission comments.
+- Rust 1.78/Cargo 1.78 is the declared and CI-tested minimum for the shared consumers. This is a project MSRV, not a claim that every older CRAN build image provides it; actual CRAN acceptance remains unproven.
 - The vendoring, lockfile, license inventory, generated rextendr scaffold, and offline archive add ongoing maintenance work.
-- No production Rust library is yet shared between the CLI and R binding; that reuse must be demonstrated before it is counted as a benefit.
+- The CLI and R spike now share `corrplot-core`; the remaining operational question is whether its package footprint and maintainer workflow fit the production R release budget.
 
 **Assessment:** selected as the repository-wide shared-core implementation; production R integration remains gated by CRAN/toolchain and maintenance validation.
 
@@ -125,14 +125,15 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 
 ## Conditions for production rollout
 
-The strategic language decision is Rust. The remaining gate is implementation viability: demonstrate that at least two real consumers (initially the standalone CLI and a disposable R/rextendr binding) link to the same library crate and invoke the same operation. This is an integration and release-readiness gate, not a reconsideration of whether shared semantics should be duplicated.
+The strategic language decision is Rust. The shared-library integration gate is satisfied: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. The remaining gates concern source-package policy, minimum toolchain, package footprint, and maintainer cost.
 
 Before making the shared Rust crate a production dependency:
 
-- Resolve or obtain explicit disposition for the two current `R CMD check --as-cran` NOTEs.
-- Verify a conservative minimum Cargo/rustc toolchain against the oldest supported CRAN build environments.
-- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates.
-- Prototype one shared Rust library crate consumed by both the CLI and the R binding; do not count JSON fixture interoperability as compiled-library reuse.
+- Retain the single Cargo-vendor-metadata NOTE only with a CRAN-comments explanation: `.cargo-checksum.json` is required for Cargo's vendored-source integrity checks and `.cargo_vcs_info.json` preserves source provenance; do not delete these files merely to silence `R CMD check`.
+- Verify Rust 1.78/Cargo 1.78 on Linux, macOS, and Windows and document platform build prerequisites (Rtools/MSVC on Windows, Xcode Command Line Tools on macOS, and a C toolchain/R headers on Linux).
+- Record the actual generated source-tarball and installed-package sizes from the offline R package workflow.
+- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates. The controlled elapsed maintainer-time comparison against C++/Rcpp has not yet been measured; current estimates are planning estimates only.
+- Do not migrate the production R package as part of this proof.
 
 If Rust's R packaging or CRAN/toolchain burden cannot be brought within the maintainer budget, keep the Rust core authoritative for CLI and other consumers and evaluate a narrowly scoped R-only C++/Rcpp or pure-R adapter as an explicit exception. Such an exception must conform to the same versioned contracts and shared fixtures; it must not silently redefine common semantics.
 
