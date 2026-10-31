@@ -186,3 +186,20 @@ The dedicated source-package workflow added in this PR, [run #2](https://github.
 - Rust/rextendr: source-tarball build, offline install, R integration, and `R CMD check --as-cran` have run on all three platforms. Status is **PASS WITH NOTES / CONDITIONS**, not a clean pass. Resolve or justify both notes and confirm the installed-size policy interpretation.
 - C++/Rcpp: source installation, semantic parity, source-tarball build, and `R CMD check --as-cran` passed on all three hosted platforms. This closes the prototype's basic CRAN source-package validation gap, but does not establish CRAN acceptance or oldest-toolchain compatibility.
 - Neither prototype is the production R package. These results do not establish CRAN acceptance, binary publication, oldest-toolchain compatibility, or final language choice.
+
+
+### Latest confirmation on PR #124 (2026-10-31)
+
+The merged [PR #124](https://github.com/vsimko/corrplot-ng/pull/124) reran the generated Rust source-package path on all three hosted platforms. [Workflow run #41151817266](https://github.com/vsimko/corrplot-ng/actions/runs/41151817266) passed all three jobs, including dependency vendoring/audit, offline installation, R integration, source-tarball creation and inspection, and `R CMD check --as-cran`.
+
+| Platform | Compressed R source tarball | `R CMD check --as-cran` |
+| --- | ---: | --- |
+| Ubuntu | 1,270,392 bytes | 2 NOTEs |
+| macOS | 1,264,958 bytes | 2 NOTEs |
+| Windows | 1,260,318 bytes | 2 NOTEs |
+
+The Linux installed package size was 5.9 MB; the macOS and Windows checks reported the installed-size check as OK. The two NOTEs on each platform are the same known items documented above: hidden Cargo vendor metadata files and use of the non-API R entry point `R_NamespaceRegistry`. They are not silently treated as a clean CRAN check; they still require maintainer/CRAN disposition before submission.
+
+The separate [Rust Windows binary install run #41151817223](https://github.com/vsimko/corrplot-ng/actions/runs/41151817223) also passed: it built the binary package and installed/smoke-tested it on a fresh Windows runner with Rust removed from the restricted `PATH`.
+
+These deterministic CI checks disable CRAN incoming and remote incoming checks. They demonstrate a reproducible prototype source-package path, not CRAN acceptance. The production R package remains independent of Rust.
