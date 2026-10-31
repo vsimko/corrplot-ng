@@ -1,3 +1,14 @@
+---
+type: User Guide
+title: Native CLI installation
+description: Platform installation paths, embedded runtime assets, upgrades, and clean-environment verification.
+tags:
+  - cli
+  - installation
+  - release
+status: active
+---
+
 # Native CLI installation
 
 The release archives contain one native executable at the archive root, the
@@ -66,6 +77,9 @@ whose filename is `corrplot-ng-windows-x86_64.zip` in `SHA256SUMS`, then:
 ```powershell
 $Version = "0.1.0"
 $Archive = "corrplot-ng-windows-x86_64.zip"
+$Expected = (Select-String -Path .\SHA256SUMS -Pattern $Archive).Line.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)[0].ToLowerInvariant()
+$Actual = (Get-FileHash $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($Actual -ne $Expected) { throw "SHA-256 checksum mismatch" }
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\\corrplot-ng"
 $TempDir = Join-Path $env:TEMP "corrplot-ng-install"
 
