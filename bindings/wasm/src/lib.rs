@@ -31,7 +31,7 @@ pub struct SvgResult {
     pub diagnostic: Option<DiagnosticV1>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct MatrixInput {
     pub labels: Vec<String>,
     pub rows: u32,
@@ -40,7 +40,7 @@ pub struct MatrixInput {
     pub kind: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RgbaColorInput {
     pub red: u32,
@@ -49,7 +49,7 @@ pub struct RgbaColorInput {
     pub alpha: u32,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CellGlyphInput {
     pub kind: String,
@@ -64,7 +64,7 @@ pub struct CellGlyphInput {
     pub color: Option<RgbaColorInput>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SceneCellInput {
     pub x: f64,
     pub y: f64,
@@ -75,7 +75,7 @@ pub struct SceneCellInput {
     pub glyph: Option<CellGlyphInput>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SceneTextInput {
     pub text: String,
@@ -86,7 +86,7 @@ pub struct SceneTextInput {
     pub anchor: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SceneInput {
     pub width: f64,
     pub height: f64,
@@ -94,7 +94,7 @@ pub struct SceneInput {
     pub texts: Vec<SceneTextInput>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SvgOptionsInput {
     pub width: f64,
