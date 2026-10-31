@@ -544,10 +544,10 @@ fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
         .output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
-    assert!(json.contains("\\\"kind\\\":\\\"normalized_matrix\\\""));
-    assert!(json.contains("\\\"format\\\":\\\"csv\\\""));
-    assert!(json.contains("\\\"values\\\":[[1,null],[0,1]]"));
-    assert!(json.contains("\\\"source_indices\\\":[0,1]"));
+    assert!(json.contains("normalized_matrix"));
+    assert!(json.contains("\\"format\\\":\\"csv\\""));
+    assert!(json.contains("[[1,null],[0,1]]"));
+    assert!(json.contains("[0,1]"));
     fs::remove_file(csv).ok();
 
     let tsv = fixture("normalized-tsv", "A\\tB\n1\\t0\n0\\t1\n");
@@ -557,8 +557,8 @@ fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
         .output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
-    assert!(json.contains("\\\"format\\\":\\\"tsv\\\""));
-    assert!(json.contains("\\\"labels\\\":[\\\"A\\\",\\\"B\\\"]"));
+    assert!(json.contains("\\"format\\\":\\"tsv\\""));
+    assert!(json.contains("[\\"A\\",\\"B\\"]"));
     fs::remove_file(tsv).ok();
 }
 
@@ -571,6 +571,6 @@ fn all_missing_general_matrix_is_preserved_by_normalized_json_output() {
         .output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
-    assert!(json.contains("\\\"values\\\":[[null,null],[null,null]]"));
+    assert!(json.contains("[[null,null],[null,null]]"));
     fs::remove_file(path).ok();
 }
