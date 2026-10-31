@@ -1,4 +1,10 @@
+#![forbid(unsafe_code)]
+
 //! Shared matrix validation and renderer output contracts used by native and WebAssembly consumers.
+//!
+//! This crate is deliberately runtime-neutral: it contains no filesystem, process,
+//! environment, dynamic-library, browser-DOM, or host-device integration. Native
+//! and `wasm32-unknown-unknown` builds compile this same implementation.
 
 pub mod output;
 
