@@ -18,7 +18,7 @@
       }
     },
     "scene_schema_versions": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
-    "output_formats": {"type": "array", "uniqueItems": true, "items": {"enum": ["svg", "png", "rgba", "scene-json", "normalized-json"]}},
+    "output_formats": {"type": "array", "uniqueItems": true, "items": {"enum": ["svg", "png", "rgba"]}},
     "matrix_kinds": {"type": "array", "uniqueItems": true, "items": {"enum": ["correlation_plot", "general_matrix_plot"]}},
     "cell_methods": {"type": "array", "uniqueItems": true, "items": {"enum": ["circle", "square", "ellipse", "number", "shade", "color", "pie"]}},
     "features": {
