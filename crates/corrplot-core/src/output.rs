@@ -25,14 +25,16 @@ impl OutputFormat {
 
 /// Physical units accepted by the vector SVG output contract.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PhysicalUnit {
+pub enum SvgUnit {
+    Pixels,
     Millimeters,
     Inches,
 }
 
-impl PhysicalUnit {
+impl SvgUnit {
     pub const fn as_str(self) -> &'static str {
         match self {
+            Self::Pixels => "px",
             Self::Millimeters => "mm",
             Self::Inches => "in",
         }
@@ -69,18 +71,20 @@ impl RgbaColor {
 pub struct SvgOptions {
     pub width: f64,
     pub height: f64,
-    pub unit: PhysicalUnit,
+    pub unit: SvgUnit,
+    pub title: String,
     pub font_family: String,
     pub font_size_pt: f64,
     pub background: RgbaColor,
 }
 
 impl SvgOptions {
-    pub fn new(width: f64, height: f64, unit: PhysicalUnit) -> Self {
+    pub fn new(width: f64, height: f64, unit: SvgUnit) -> Self {
         Self {
             width,
             height,
             unit,
+            title: String::new(),
             font_family: "sans-serif".to_string(),
             font_size_pt: 10.0,
             background: RgbaColor::WHITE,
@@ -304,12 +308,12 @@ impl RenderOutput {
 /// return an output variant matching options.format(), and map failures to
 /// the shared diagnostic-v1 contract in their runtime adapter. Capability
 /// negotiation remains governed by renderer-capabilities-v1.
-pub trait Renderer<Scene> {
+pub trait Renderer<Input> {
     type Error;
 
     fn render(
         &self,
-        scene: &Scene,
+        input: &Input,
         options: &OutputOptions,
     ) -> Result<RenderOutput, Self::Error>;
 }
@@ -351,10 +355,10 @@ mod tests {
 
     #[test]
     fn svg_options_require_finite_positive_physical_dimensions() {
-        let valid = OutputOptions::Svg(SvgOptions::new(180.0, 120.0, PhysicalUnit::Millimeters));
+        let valid = OutputOptions::Svg(SvgOptions::new(180.0, 120.0, SvgUnit::Millimeters));
         assert!(valid.validate().is_ok());
 
-        let invalid = OutputOptions::Svg(SvgOptions::new(f64::INFINITY, 120.0, PhysicalUnit::Millimeters));
+        let invalid = OutputOptions::Svg(SvgOptions::new(f64::INFINITY, 120.0, SvgUnit::Millimeters));
         assert_eq!(invalid.validate().unwrap_err().code, "renderer.output.invalid_options");
     }
 
@@ -403,7 +407,7 @@ mod tests {
         assert_eq!(RenderOutput::Svg("<svg/>".into()).format(), OutputFormat::Svg);
         assert_eq!(RenderOutput::Png(b"\\x89PNG\\r\\n\\x1a\\n".to_vec()).format(), OutputFormat::Png);
         assert_eq!(OutputOptions::Rgba(RasterOptions::new(2, 2)).format(), OutputFormat::Rgba);
-        let requested = OutputOptions::Svg(SvgOptions::new(100.0, 100.0, PhysicalUnit::Millimeters));
+        let requested = OutputOptions::Svg(SvgOptions::new(100.0, 100.0, SvgUnit::Millimeters));
         assert_eq!(
             RenderOutput::Png(b"\\x89PNG\\r\\n\\x1a\\n".to_vec()).validate_for(&requested).unwrap_err().code,
             "renderer.output.format_mismatch"
