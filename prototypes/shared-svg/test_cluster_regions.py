@@ -5,6 +5,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from diagnostics import DiagnosticError, build_scene_with_diagnostics
 from renderer import render_scene_svg
 from scene import build_scene
 
@@ -111,6 +112,14 @@ class ClusterRegionTests(unittest.TestCase):
         config["cluster_regions"] = [{"id": "ambiguous", "variables": ["alpha"], "indices": [0]}]
         with self.assertRaisesRegex(ValueError, "exactly one"):
             build_scene(config)
+
+    def test_invalid_region_reference_has_structured_scene_diagnostic(self):
+        config = base_config()
+        config["cluster_regions"] = [{"id": "unknown", "variables": ["missing"]}]
+        with self.assertRaises(DiagnosticError) as raised:
+            build_scene_with_diagnostics(config)
+        self.assertEqual(raised.exception.diagnostic.code, "scene.invalid_content")
+        self.assertEqual(raised.exception.diagnostic.path, "cluster_regions")
 
     def test_invalid_region_style_and_duplicate_ids_are_rejected(self):
         config = base_config()
