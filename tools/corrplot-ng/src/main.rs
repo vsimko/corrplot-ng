@@ -70,7 +70,7 @@ RENDER OPTIONS:
       --input-format FMT  auto (default), csv, tsv, or scene-json
       --kind KIND        correlation (default) or general
       --method METHOD    circle (default) or number
-      --title TEXT       Figure title
+      --title TEXT       Figure title\n      --incremental      Skip unchanged file outputs using a local cache
 
 GLOBAL OPTIONS:
       --diagnostics json Emit one diagnostic-v1 JSON record on failure
