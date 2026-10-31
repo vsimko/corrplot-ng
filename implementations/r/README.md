@@ -11,7 +11,7 @@ This directory is the root of the provisional R package.
 
 `corrplot_ng()` has two explicit paths:
 
-- The default `engine = "legacy"` delegates to the original corrplot package and preserves its plotting behavior.
+- The default `engine = "legacy"` delegates to the original corrplot package, draws on the caller's active device, preserves `add = TRUE` overlays, and restores writable graphics parameters after success or failure. The adapter does not open or close caller-owned devices.
 - Experimental `engine = "scene"` converts a supported square correlation matrix into a renderer-neutral scene-v1 object. It prepares scene data; it does not draw a plot yet. Unsupported plotting arguments are rejected instead of being ignored.
 
 See [the adapter design](../../docs/legacy-r-adapter.md) for argument mapping, current limitations, and the migration sequence.
