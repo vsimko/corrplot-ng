@@ -90,6 +90,18 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 - Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
 - Do not use the prototype benchmark to claim a production performance win.
 
+## Shared-crate proof status (issue #173)
+
+The first compiled-library reuse slice is now implemented in the repository:
+
+- `crates/corrplot-core` is the reusable, dependency-free Rust library crate.
+- The standalone CLI depends on that crate through a local Cargo path dependency and delegates matrix shape, finite-value, correlation-range, symmetry, and diagonal validation to `corrplot_core::validate_matrix`.
+- The disposable rextendr spike depends on the same crate. Its R-facing scene builder converts R matrix values (preserving R's NA sentinel as `None`) and calls the exact same validation function before serializing scene-v1 JSON.
+- The generated R package setup adds the same repository-local crate dependency; the committed spike lockfile includes the shared crate. No source is copied into either consumer.
+- Unit tests cover valid/missing data, asymmetric matrices, non-finite values, correlation bounds, general numeric values, shape, and duplicate labels. The generated R package adds a binding-level asymmetric-matrix regression test.
+
+This proves the intended dependency boundary in source and build configuration; it does not yet establish release readiness. The PR's CI must demonstrate the CLI and generated R binding compile and pass on Linux, macOS, and Windows. Offline source-package checks, the two pre-existing CRAN NOTEs, conservative toolchain compatibility, dependency/license inventory, archive and installed sizes, and measured maintainer effort remain explicit rollout gates. Do not migrate the production R package based on this proof alone.
+
 ## Conditions for production rollout
 
 The strategic language decision is Rust. The remaining gate is implementation viability: demonstrate that at least two real consumers (initially the standalone CLI and a disposable R/rextendr binding) link to the same library crate and invoke the same operation. This is an integration and release-readiness gate, not a reconsideration of whether shared semantics should be duplicated.
