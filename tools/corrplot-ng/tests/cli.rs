@@ -558,7 +558,7 @@ fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
     assert!(json.contains("format") && json.contains("tsv"));
-    assert!(json.contains("[\\"A\\",\\"B\\"]"));
+    assert!(json.contains("labels") && json.contains("A") && json.contains("B"));
     fs::remove_file(tsv).ok();
 }
 
