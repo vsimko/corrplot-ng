@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use corrplot_core::{validate_matrix, MatrixKind};
 use std::env;
 use std::fs;
@@ -235,24 +234,16 @@ pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: c
     }
     let labels: Vec<String> = header[1..].to_vec();
     let n = labels.len();
-    if labels.iter().any(|s| s.trim().is_empty()) { return Err("column labels must not be empty".into()); }
-    let mut seen = HashSet::new();
-    for label in &labels {
-        if !seen.insert(label) { return Err(format!("duplicate column label '{label}'")); }
-    }
     if records.len() != n + 1 {
         return Err(format!("matrix must be square: {} column labels but {} data rows", n, records.len() - 1));
     }
     let mut values = Vec::with_capacity(n);
-    let mut row_seen = HashSet::new();
     for (r, record) in records.iter().skip(1).enumerate() {
         if record.len() != n + 1 {
             return Err(format!("row {} has {} values; expected {n}", r + 1, record.len().saturating_sub(1)));
         }
         let label = record[0].as_str();
-        if label.trim().is_empty() { return Err(format!("row label at row {} must not be empty", r + 1)); }
         if label != labels[r] { return Err(format!("row label '{}' at row {} does not match column label '{}'", label, r + 1, labels[r])); }
-        if !row_seen.insert(label) { return Err(format!("duplicate row label '{label}'")); }
         let mut row = Vec::with_capacity(n);
         for (c, raw) in record.iter().skip(1).enumerate() {
             let value = match raw.trim() {
