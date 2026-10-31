@@ -1,0 +1,36 @@
+name: Test native Node binding
+
+on:
+  pull_request:
+    paths:
+      - "bindings/node/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/test-node-native.yml"
+  push:
+    branches: [main]
+    paths:
+      - "bindings/node/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/test-node-native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [24, 26]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build native addon and run Node tests
+        working-directory: bindings/node
+        run: npm test
