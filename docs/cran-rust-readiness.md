@@ -1,6 +1,6 @@
 # CRAN readiness: Rust integration
 
-**Status (2026-10-31):** the isolated `prototypes/rust-rextendr` scene-v1 spike has a reproducible, cross-platform source-package validation path. It is **not** the production R package and has **not** been accepted by CRAN. The current result is **PASS WITH TWO NOTEs / CONDITIONS**, not a clean CRAN check.
+**Status (2026-10-31):** the isolated `prototypes/rust-rextendr` scene-v1 spike has a reproducible, cross-platform source-package validation path. It is **not** the production R package and has **not** been accepted by CRAN. The latest recorded result is **PASS WITH ONE NOTE / EXTERNAL GUIDANCE REQUIRED**, not a clean CRAN check.
 
 ## Current validation evidence
 
@@ -9,35 +9,47 @@ The completed work for [issue #45](https://github.com/vsimko/corrplot-ng/issues/
 - [PR #55](https://github.com/vsimko/corrplot-ng/pull/55) established the three-platform vendored/offline source-package workflow.
 - [PR #118](https://github.com/vsimko/corrplot-ng/pull/118) added the side-by-side C++ CRAN source-package checks and consolidated the current CRAN policy comparison.
 - [PR #124](https://github.com/vsimko/corrplot-ng/pull/124) corrected NA-versus-NaN parity and reran the Rust source-package checks on the current scene-v1 prototype.
+- [PR #184](https://github.com/vsimko/corrplot-ng/pull/184) records the extendr 0.9.0 / Rust 1.78 release-readiness evidence and the six successful associated CI workflows.
 
-Latest source-package workflow: [run #41151817266](https://github.com/vsimko/corrplot-ng/actions/runs/41151817266). All Ubuntu, macOS, and Windows jobs passed. Each job:
+The latest recorded release-readiness evidence is the extendr 0.9.0 / Rust 1.78 validation summarized in [PR #184](https://github.com/vsimko/corrplot-ng/pull/184). All six associated CI workflows passed, including the cross-platform offline source-package checks and the Windows binary-install check. The workflows cover:
 
-1. Generates the temporary rextendr R package from the tracked prototype.
-2. Checks the included extendr MIT license notice.
-3. Resolves and audits the locked Cargo dependency graph and vendors the crate sources.
-4. Installs the generated R package without network access.
-5. Exercises the R-to-Rust function.
-6. Builds and inspects the actual R source tarball, including the vendored inputs.
-7. Runs `R CMD check --as-cran` on that tarball.
+1. Generating the temporary rextendr R package from the tracked prototype.
+2. Checking the included extendr MIT license notice.
+3. Resolving and auditing the locked Cargo dependency graph and vendoring the crate sources.
+4. Installing the generated R package without network access.
+5. Exercising the R-to-Rust function.
+6. Building and inspecting the actual R source tarball, including vendored inputs.
+7. Running `R CMD check --as-cran` on that tarball.
+8. Building and installing a Windows binary package on a clean runner without Rust on `PATH`.
 
-| Platform | Compressed source tarball | `R CMD check --as-cran` |
-| --- | ---: | --- |
-| Ubuntu | 1,270,392 bytes | 2 NOTEs |
-| macOS | 1,264,958 bytes | 2 NOTEs |
-| Windows | 1,260,318 bytes | 2 NOTEs |
+| Measurement | Latest recorded result |
+| --- | ---: |
+| Compressed source tarball | 1,314,220 bytes |
+| Installed package | 6.0 MB |
+| Installed `libs` directory | 5.9 MB |
+| Supported CI platforms | Ubuntu, macOS, Windows |
+| `R CMD check --as-cran` | 1 NOTE: Cargo vendor metadata |
 
-The Linux installed package size was 5.9 MB. The macOS and Windows checks reported the installed-size check as OK.
+The platform matrix establishes reproducible build and installation behavior on the hosted runners. The recorded package-size values above are the measured package snapshot; they should not be interpreted as separately measured identical sizes on every platform.
 
-The separate [Windows binary install run #41151817223](https://github.com/vsimko/corrplot-ng/actions/runs/41151817223) passed. It built a Windows binary package, transferred it to a fresh runner, removed Rust from the restricted `PATH`, installed the binary, and ran the R smoke test successfully.
+## Remaining CRAN condition
 
-## Remaining CRAN conditions
+The current remaining NOTE concerns hidden Cargo vendor metadata in the source package: `.cargo-checksum.json` and `.cargo_vcs_info.json`. The checksum manifests are required for Cargo to verify vendored sources during offline builds; the VCS metadata preserves source provenance. They are intentionally retained and must be explained in any CRAN submission comments. Do not remove them merely to silence the NOTE, because doing so would undermine the offline integrity/provenance workflow.
 
-All three `R CMD check --as-cran` jobs report the same two NOTEs:
+The earlier `R_NamespaceRegistry` compiled-code NOTE was removed by the extendr 0.9.0 update; it is not a current open condition. The previous two-NOTE platform table and the older 0.8.2 package-size measurements are superseded by the PR #184 evidence above.
 
-1. **Hidden files in the source package:** Cargo vendor metadata files `.cargo-checksum.json` and `.cargo_vcs_info.json` are present in the vendored source archive. They are part of the current offline Cargo packaging strategy and need a documented CRAN disposition rather than being removed blindly.
-2. **Compiled-code NOTE:** the generated extendr integration references the non-API R entry point `R_NamespaceRegistry`. This needs review against the pinned extendr version and CRAN policy.
+The CI workflow disables CRAN incoming and remote incoming checks. Therefore these results demonstrate reproducible source builds and package checks on the hosted platform matrix; they do not prove CRAN acceptance. The installed package is 6.0 MB (5.9 MB in `libs`), above rextendr's 5 MB caution, so maintainers must obtain CRAN guidance before production R use.
 
-The CI workflow disables CRAN incoming and remote incoming checks. Therefore these results demonstrate reproducible source builds and package checks on the hosted platform matrix; they do not prove CRAN acceptance. Before a real submission, maintainers must resolve or explicitly justify both NOTEs, verify the minimum Cargo/rustc versions against the oldest supported CRAN build environments, and reassess package-size guidance with current CRAN/rextendr documentation.
+## External questions requiring a maintainer response
+
+No CRAN response or controlled human-effort measurement is recorded yet. The precise outstanding questions are:
+
+1. **Vendor metadata NOTE:** Is retaining `.cargo-checksum.json` for offline Cargo integrity and `.cargo_vcs_info.json` for source provenance acceptable when both are explained in submission comments? If not, what packaging alternative does CRAN recommend that preserves verifiable offline builds?
+2. **Installed package size:** Is a 6.0 MB installed package (5.9 MB in `libs`) acceptable for this use case despite rextendr's 5 MB caution? What evidence or mitigation would CRAN expect?
+3. **Build toolchain:** Is Rust/Cargo 1.78 an acceptable minimum for the intended CRAN build environments, or should the project target a newer/older explicitly supported baseline?
+4. **Submission checks:** Before submission, should the project enable or run any additional incoming/remote checks beyond the current hosted `R CMD check --as-cran` matrix?
+
+Record the date, contact or guidance source, exact package/toolchain snapshot, question, response, and resulting project decision. Until then, the NOTE and package-size disposition remain open; do not claim CRAN approval.
 
 ## CRAN requirements relevant to production use
 
