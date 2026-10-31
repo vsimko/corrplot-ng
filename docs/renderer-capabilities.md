@@ -24,8 +24,9 @@ Current declarations:
 
 The Rust CLI is a matrix-to-SVG application, not a general scene-v1 renderer.
 Its scene-v1 input path extracts labels and cell values and then creates a
-new output scene. Its declaration therefore lists no scene renderer version
-and does not claim to preserve incoming scene layout or annotation metadata.
+new output scene; its scene-json output emits v1. The declaration therefore
+lists schema v1 but does not claim to preserve incoming scene layout or
+annotation metadata.
 Run \`corrplot-ng capabilities\` to print its declaration.
 
 ## Negotiation modes
