@@ -1,0 +1,50 @@
+name: Verify shared Rust core reuse
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/corrplot-core/**"
+      - "tools/corrplot-ng/**"
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/test-shared-rust-core.yml"
+  pull_request:
+    paths:
+      - "crates/corrplot-core/**"
+      - "tools/corrplot-ng/**"
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/test-shared-rust-core.yml"
+  workflow_dispatch:
+
+jobs:
+  cross-platform-reuse:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.4"
+      - name: Test shared core
+        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
+      - name: Test native CLI consumer
+        run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Compile R/rextendr consumer
+        run: cargo check --locked --manifest-path prototypes/rust-rextendr/Cargo.toml
+      - name: Verify both consumers resolve the same local crate
+        shell: bash
+        run: |
+          for manifest in tools/corrplot-ng/Cargo.toml prototypes/rust-rextendr/Cargo.toml; do
+            tree="$(cargo tree --manifest-path "$manifest" -i corrplot-core)"
+            echo "$tree"
+            echo "$tree" | grep -F "corrplot-core v0.1.0"
+            if ! echo "$tree" | grep -Fq 'crates/corrplot-core' && ! echo "$tree" | grep -Fq 'crates\corrplot-core'; then
+              echo "Consumer did not resolve the repository-local core crate" >&2
+              exit 1
+            fi
+          done
+

@@ -21,6 +21,39 @@ The Rust CLI and R/rextendr spike are not yet linked to one library crate. Issue
 
 C++/Rcpp remains useful as an R-only integration comparison and fallback only if Rust's R packaging constraints prove unacceptable. It is not the preferred repository-wide core because it would introduce a second native implementation/integration path for the Rust CLI and future consumers.
 
+## Shared-crate proof: Issue #173
+
+The first real shared-library integration is implemented in
+`crates/corrplot-core`. Its `validate_matrix` operation is consumed directly
+by both:
+
+- `tools/corrplot-ng`, after CSV/JSON parsing and before publication output;
+- `prototypes/rust-rextendr`, before constructing scene-v1 JSON.
+
+Both Cargo manifests use a path dependency to the same crate source and
+version. There is no copied validation implementation in either consumer.
+The core has no third-party dependencies. The CLI therefore retains a
+third-party-dependency-free runtime while sharing application semantics.
+
+The shared operation validates non-empty square dimensions, label uniqueness,
+missing-value representation, finite observed values, and correlation range,
+symmetry, and diagonal rules. Its input is row-major `Option<f64>`: R's
+`NA_REAL` maps to `None`, while an ordinary NaN remains `Some(NaN)` and is
+rejected. Error codes and cell coordinates are stable and zero-based.
+
+The new cross-platform workflow runs the core and CLI test suites and compiles
+the rextendr consumer on Linux, macOS, and Windows. It verifies that both
+consumers resolve `corrplot-core` from the same repository path. A generated
+R package is installed and exercised on Linux, including a valid correlation
+matrix and a non-symmetric matrix rejected by the shared core.
+
+This proves reuse of one compiled operation; it does not prove that the whole
+visualization engine has been migrated or that a production R package is ready
+for CRAN. Oldest-toolchain compatibility, full R CMD check across platforms,
+Windows R-package installation, and production migration remain gated work.
+The renderer-neutral scene-v1 JSON contract remains the cross-language
+interchange boundary.
+
 ## Evidence reviewed
 
 The evaluation issues and merged implementation PRs provide the following evidence:

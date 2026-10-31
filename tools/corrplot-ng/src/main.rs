@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use corrplot_core::{validate_matrix, MatrixKind};
 use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
@@ -234,57 +234,37 @@ pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: c
     }
     let labels: Vec<String> = header[1..].to_vec();
     let n = labels.len();
-    if labels.iter().any(|s| s.trim().is_empty()) { return Err("column labels must not be empty".into()); }
-    let mut seen = HashSet::new();
-    for label in &labels {
-        if !seen.insert(label) { return Err(format!("duplicate column label '{label}'")); }
-    }
     if records.len() != n + 1 {
         return Err(format!("matrix must be square: {} column labels but {} data rows", n, records.len() - 1));
     }
     let mut values = Vec::with_capacity(n);
-    let mut row_seen = HashSet::new();
     for (r, record) in records.iter().skip(1).enumerate() {
         if record.len() != n + 1 {
             return Err(format!("row {} has {} values; expected {n}", r + 1, record.len().saturating_sub(1)));
         }
         let label = record[0].as_str();
-        if label.trim().is_empty() { return Err(format!("row label at row {} must not be empty", r + 1)); }
         if label != labels[r] { return Err(format!("row label '{}' at row {} does not match column label '{}'", label, r + 1, labels[r])); }
-        if !row_seen.insert(label) { return Err(format!("duplicate row label '{label}'")); }
         let mut row = Vec::with_capacity(n);
         for (c, raw) in record.iter().skip(1).enumerate() {
             let value = match raw.trim() {
                 "" | "NA" | "NaN" | "null" => None,
                 text => {
                     let parsed: f64 = text.parse().map_err(|_| format!("invalid number at row {}, column '{}': '{}'", r + 1, labels[c], text))?;
-                    if !parsed.is_finite() { return Err(format!("non-finite value at row {}, column '{}'", r + 1, labels[c])); }
                     Some(parsed)
                 }
             };
-            if kind == Kind::Correlation {
-                if let Some(v) = value {
-                    if !(-1.0..=1.0).contains(&v) { return Err(format!("correlation at row {}, column '{}' is outside [-1, 1]", r + 1, labels[c])); }
-                }
-            }
             row.push(value);
         }
         values.push(row);
     }
-    if kind == Kind::Correlation {
-        for r in 0..n {
-            for c in 0..n {
-                if match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true } {
-                    return Err(format!("correlation matrix is not symmetric at ('{}', '{}')", labels[r], labels[c]));
-                }
-            }
-        }
-        for i in 0..n {
-            if values[i][i].map_or(true, |v| (v - 1.0).abs() > 1e-8) {
-                return Err(format!("correlation diagonal for '{}' must equal 1", labels[i]));
-            }
-        }
-    }
+    let flat_values: Vec<Option<f64>> = values.iter().flat_map(|row| row.iter().copied()).collect();
+    let shared_kind = if kind == Kind::Correlation {
+        MatrixKind::Correlation
+    } else {
+        MatrixKind::GeneralNumeric
+    };
+    validate_matrix(&labels, n, n, &flat_values, shared_kind)
+        .map_err(|error| error.to_string())?;
     Ok(Matrix { labels, values })
 }
 

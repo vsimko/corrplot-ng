@@ -15,7 +15,7 @@ status: current
 
 This document describes the architecture that exists in the repository today and distinguishes it from experiments and planned work. It is not a commitment to a single compiled implementation shared by every language.
 
-The stable interoperability boundary is the language-neutral **scene-v1** contract. The normalized-matrix v1 contract provides a language-neutral representation of normalized matrix input. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration. These contracts allow implementations to exchange data without requiring them to use the same programming language, runtime, or binary.
+The stable interoperability boundary is the language-neutral **scene-v1** contract. The normalized-matrix v1 contract provides a language-neutral representation of normalized matrix input. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration. The shared Rust core proof currently centralizes matrix validation in `crates/corrplot-core`, called by both the standalone CLI and the rextendr spike; scene-v1 remains the language-neutral interchange contract. These contracts allow implementations to exchange data without requiring them to use the same programming language, runtime, or binary.
 
 The production shared-core language decision is deliberately **deferred**. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md) for the rationale and decision record.
 
