@@ -1,3 +1,4 @@
+use corrplot_core::output::{RenderOutput, Renderer};
 use corrplot_core::{validate_matrix, MatrixKind};
 use std::env;
 use std::fs;
@@ -474,7 +475,13 @@ fn run() -> Result<(), String> {
                         publication.kind, publication.labels.len(), publication.labels.len(), publication.ordering, publication.display),
                     "render" => {
                         let content = match opts.format {
-                            Format::Svg => publication.svg(&opts.title),
+                            Format::Svg => match publication::PublicationSvgRenderer.render(
+                                &publication,
+                                &publication.svg_output_options(&opts.title)?,
+                            )? {
+                                RenderOutput::Svg(svg) => svg,
+                                _ => return Err("publication SVG renderer returned a non-SVG output".into()),
+                            },
                             Format::SceneJson => publication.scene_json(&opts.title),
                             Format::NormalizedJson => return Err("normalized-json output is available for direct matrix inputs, not publication configs".into()),
                         };
@@ -696,6 +703,15 @@ mod tests {
         assert!(diagnostics[0].0.contains("\"manifest_index\":2"));
         assert!(output_dir.join("001-basic.svg").exists());
         fs::remove_dir_all(&temp).unwrap();
+    }
+
+    #[test]
+    fn current_matrix_svg_output_is_deterministic_and_escapes_titles() {
+        let matrix = parse_matrix(SAMPLE, Kind::Correlation).unwrap();
+        let rendered = svg(&matrix, "R&D <metrics>", "number", Kind::Correlation);
+        assert!(rendered.starts_with("<svg xmlns=\\"http://www.w3.org/2000/svg\\""));
+        assert!(rendered.contains("<title>R&amp;D &lt;metrics&gt;</title>"));
+        assert_eq!(rendered, svg(&matrix, "R&D <metrics>", "number", Kind::Correlation));
     }
 
     #[test]
