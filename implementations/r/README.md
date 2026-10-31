@@ -47,6 +47,12 @@ does not access a graphics device. Regression tests in
 `add = TRUE` composition, restoration after an error, and the scene path's
 absence of graphics side effects.
 
+## Cluster rectangles
+
+`corrRect()` preserves the legacy index, name, and `namesMat` drawing workflows. Index/name ranges and diagonal square `namesMat` inputs are normalized to the shared scene-v1 cluster-region request shape; arbitrary `namesMat` rectangles remain R-only because they are not diagonal cluster regions. `corrRect.hclust()` creates the same requests from contiguous dendrogram leaf groups. Both functions draw on the active device and never open or close it. Index/name ranges require identical row and column names; `namesMat` can address matrices with distinct row and column labels. The `corrplot_ng()` legacy pass-through retains `addrect`, `rect.col`, and `rect.lwd` unchanged.
+
+See [the adapter design](../../docs/legacy-r-adapter.md) and the `corrRect` / `corrRect.hclust` help pages.
+
 Run checks from this directory:
 
 ```sh
