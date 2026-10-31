@@ -250,6 +250,37 @@
           1
         ]
       }
+    },
+    {
+      "id": "infinity-cell",
+      "expected_error": "must be a finite number or null",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            "Infinity"
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
     }
   ]
 }
