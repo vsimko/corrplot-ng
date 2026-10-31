@@ -88,6 +88,20 @@ class RendererCapabilityTests(unittest.TestCase):
             "renderer.schema_version_unsupported",
         )
 
+    def test_unsupported_cell_method_matches_rust_cli_diagnostic_contract(self):
+        scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
+        scene["cells"][0]["encoding"]["kind"] = "pie"
+
+        with self.assertRaises(RendererCapabilityError) as raised:
+            negotiate_scene_capabilities(scene, capabilities=RUST_CAPABILITIES)
+
+        diagnostic = raised.exception.diagnostics[0]
+        self.assertEqual(diagnostic["code"], "renderer.unsupported_feature")
+        self.assertEqual(diagnostic["severity"], "error")
+        self.assertEqual(diagnostic["stage"], "renderer")
+        self.assertEqual(diagnostic["path"], "method")
+        self.assertEqual(diagnostic["feature"], "pie")
+
     def test_rust_cli_declaration_is_narrow_and_explicit(self):
         self.assertEqual(RUST_CAPABILITIES["cell_methods"], ["circle", "number"])
         self.assertEqual(RUST_CAPABILITIES["negotiation_modes"], ["strict"])
