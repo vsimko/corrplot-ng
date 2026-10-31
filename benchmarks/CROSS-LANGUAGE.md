@@ -51,12 +51,19 @@ CI runs the same workflow on a common Ubuntu runner and uploads fixtures and
 machine-readable results as a 90-day artifact.
 
 The Python reference is projected onto the explicit native `scene-v1` contract
-before fixture export. The Python scene model also exposes renderer-facing
-extensions (for example glyph encodings and typography); these are outside the
-current C++/Rust spike contract and are intentionally excluded from this
-cross-language parity gate. The projection retains schema version, dimensions,
-labels, cell values/geometry, annotation and shared style. Projection tests
-run alongside the Python invalid-input tests in CI.
+before fixture export and during correctness checks. The Python scene model also
+exposes renderer-facing extensions (for example glyph encodings and typography);
+these are outside the current C++/Rust spike contract and are intentionally
+excluded from this cross-language parity gate. The projection retains schema
+version, dimensions, labels, cell values/geometry, annotation and shared style.
+Projection tests run alongside the Python invalid-input tests in CI.
+
+The Python timing still measures construction and JSON encoding of the full
+current Python scene, including those extra renderer-facing fields. Pure R,
+C++/Rcpp and Rust/rextendr currently produce only the smaller scene-v1 contract.
+Consequently, Python timings include additional work and are not a strict
+like-for-like performance comparison until all candidates implement the same
+extended scene model; use these results as prototype-path measurements only.
 
 ## Input validation parity
 
