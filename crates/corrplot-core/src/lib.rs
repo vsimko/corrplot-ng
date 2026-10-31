@@ -9,6 +9,9 @@
 pub mod output;
 pub mod raster;
 
+/// Renderer capability declaration for the typed SVG/RGBA scene backend.
+pub const RENDERER_CAPABILITIES_V1: &str = include_str!("../renderer-capabilities.json");
+
 use std::collections::HashSet;
 use std::fmt;
 
