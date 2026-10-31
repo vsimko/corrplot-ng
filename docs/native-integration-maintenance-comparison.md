@@ -222,6 +222,25 @@ The current CI is not fully symmetric. Before using this report to select a prod
 
 Until these are complete, the evidence supports a limited conclusion: **Rcpp is operationally simpler in the current prototype; Rust has a more thoroughly exercised source/offline and Windows-binary distribution path.** It does not establish the overall production winner.
 
+## Controlled maintainer-time comparison (requires maintainer participation)
+
+The effort ranges above are planning estimates, not measured observations. A controlled comparison is still outstanding and must not be inferred from CI wall-clock times.
+
+Use the same maintainer and the same clean checkout conditions for both prototypes. Run the two candidates in alternating order to reduce order effects, and record active human time separately from unattended CI time.
+
+1. **Small implementation change:** make the same narrowly scoped change in each spike (for example, add one optional argument to the shared scene-v1 builder with matching validation and one test). Start timing when the maintainer begins inspecting the task; stop when the change is committed and the relevant local checks pass.
+2. **Dependency upgrade:** perform one comparable, preselected dependency upgrade in each spike. Record time spent reviewing release notes, changing manifests/lockfiles, regenerating bindings, resolving build failures, updating notices, running checks, and preparing the package evidence.
+3. **Record environment:** capture date, operator, exact commit, R/Rcpp/rextendr versions, compiler, rustc/Cargo versions, operating system, commands, failed attempts, manual steps, and the final CI runs.
+4. **Separate measures:** report active maintainer minutes, unattended CI wall time, number of manual interventions, and number of failed/retried steps. Do not combine these into one elapsed-time figure.
+5. **Repeat or qualify:** repeat each task if practical; otherwise label the result as a single-observation case study and do not generalize it to all future maintenance.
+
+| Task | C++/Rcpp active minutes | Rust/rextendr active minutes | Operator/date | Evidence |
+| --- | ---: | ---: | --- | --- |
+| Same small implementation change | Not measured | Not measured | Requires maintainer | Pending |
+| Comparable dependency upgrade | Not measured | Not measured | Requires maintainer | Pending |
+
+No values should be filled in by an agent without a maintainer actually performing and timing the work. The estimates earlier in this document remain estimates until this experiment is completed.
+
 ## Evidence index
 
 - [C++ spike README](../prototypes/cpp-rcpp/README.md), [DESCRIPTION](../prototypes/cpp-rcpp/DESCRIPTION), [implementation](../prototypes/cpp-rcpp/src/scene_v1.cpp).
