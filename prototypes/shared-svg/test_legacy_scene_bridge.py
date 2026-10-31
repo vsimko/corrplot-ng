@@ -117,6 +117,10 @@ def verify_svg_structure(name: str, config: dict, method: str) -> None:
                     item for item in shapes
                     if item.attrib.get("fill") not in ("#ffffff", "#f2f2f2")
                 ]
+            elif method == "pie":
+                # Full 360-degree sectors are serialized as circles; partial
+                # sectors use paths.
+                shapes += root.findall(f"{namespace}circle")
             assert shapes, f"expected SVG {tag} encoding was not emitted"
 
         assert svg == render_scene_svg(build_scene(case_config)), "SVG output is not deterministic"
