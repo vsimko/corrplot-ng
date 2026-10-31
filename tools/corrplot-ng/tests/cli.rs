@@ -550,7 +550,7 @@ fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
     assert!(json.contains("[0,1]"));
     fs::remove_file(csv).ok();
 
-    let tsv = fixture("normalized-tsv", "A\\tB\n1\\t0\n0\\t1\n");
+    let tsv = fixture("normalized-tsv", "A\tB\n1\t0\n0\t1\n");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["render", "--input"]).arg(&tsv)
         .args(["--kind", "general", "--input-format", "tsv", "--format", "normalized-json"])
