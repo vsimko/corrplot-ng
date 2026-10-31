@@ -10,3 +10,4 @@ crate-type = ["staticlib"]
 
 [dependencies]
 extendr-api = "=0.8.2"
+corrplot-core = { path = "../../crates/corrplot-core" }
