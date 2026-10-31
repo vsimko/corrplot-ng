@@ -19,10 +19,11 @@ A requirement describes an intended outcome; it is not proof that a feature
 is implemented or supported by every runtime.
 
 The project uses versioned, language-neutral contracts to keep matrix and
-scene semantics consistent across implementations. This does **not** require
-all implementations to link to one compiled library. ADR 0001 explicitly
-defers selecting or building a production shared-core language until a
-concrete multi-consumer requirement justifies it.
+scene semantics consistent across implementations. ADR 0001 selects Rust as
+the authoritative implementation for shared correlation and visualization
+semantics, with thin language-specific adapters. This is the accepted target
+architecture; it does not mean the complete shared visualization engine or
+every runtime binding is already implemented.
 
 See [the current architecture](architecture.md),
 [ADR 0001](adr/0001-shared-core-architecture.md),
@@ -96,7 +97,7 @@ a complete language package or proof of shared compiled implementation.
 |---|---|---|
 | R package | Provisional implementation | Default plotting delegates to upstream corrplot. It also provides normalized matrix/file adapters, statistical and palette helpers, and an experimental scene-v1 preparation path. It is not a complete replacement renderer. |
 | Python | Reference/prototype | The shared scene/SVG prototype exercises scene construction and deterministic SVG output. It is not a production package or selected shared core. |
-| Rust | Standalone CLI | Rust stable, edition 2021, is selected for the native CLI. The CLI is a separate executable, not a reusable production library shared with R or other consumers. |
+| Rust shared core and CLI | Partial shared implementation | `crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
 | Rust/rextendr and C++/Rcpp | Evaluation spikes | These experiments inform architecture and packaging decisions. They are not production R backends. |
 | TypeScript / Node.js | Planned | No supported public TypeScript API or Node native binding is currently delivered. |
 | Browser WebAssembly / Canvas | Planned | No production browser WASM or direct Canvas renderer is currently delivered. |
@@ -112,20 +113,31 @@ The current support and test details are maintained in
 - Normalized-matrix v1 and scene-v1 define language-neutral data contracts.
 - A contract consumer may be implemented in a different language without
   sharing a compiled library with the producer.
-- Rust is selected for the standalone CLI only.
-- The production shared-core language remains deferred by ADR 0001.
-- No requirement in this document authorizes migration of the R package to
-  Rust/rextendr or C++/Rcpp.
+- Rust is the selected strategic implementation for shared correlation and
+  visualization semantics, as recorded in ADR 0001.
+- The reusable `crates/corrplot-core` library is used by the standalone CLI
+  and the disposable R/rextendr evaluation adapter for matrix validation.
+  The adapter is not part of the production R package.
+- The current shared core is a partial implementation, not a complete
+  visualization engine. Scene-v1 parsing/building and broader plot semantics
+  remain in progress.
+- The production R package has not migrated to Rust/rextendr. CRAN guidance
+  on the vendor-metadata NOTE and installed package size, plus a controlled
+  human maintainer-time comparison, remain rollout gates tracked in #173.
+  Do not claim CRAN acceptance or authorize a production R migration.
+- C++/Rcpp remains a possible R-only fallback if Rust packaging proves
+  unacceptable; it is not the selected repository-wide shared core.
 - TypeScript, Node native bindings, browser WASM, Canvas, and cross-backend
   parity remain future work with explicit dependencies.
 - Linux distribution repository adoption and DEB/RPM automation remain
   deferred under [issue #99](https://github.com/vsimko/corrplot-ng/issues/99).
 
-A production shared core may be reconsidered only when at least two concrete
-consumers need the same compiled semantics and a working vertical slice
-demonstrates reuse, packaging feasibility, and acceptable maintenance cost.
-Any change requires an explicit ADR update. Contract interoperability alone
-does not satisfy this gate.
+The strategic shared-core choice is already made. Further implementation
+should expand the Rust core behind its stable crate boundary and keep runtime
+adapters thin. Production rollout into the R package remains conditional on
+the external and maintainer evidence listed above. Contract interoperability
+remains a complementary interchange and conformance boundary; it does not
+replace shared Rust execution for common production semantics.
 
 ## Open questions
 
