@@ -53,7 +53,7 @@ The scene mode accepts the adapter-specific annotation option, coefficient/value
 
 ## Graphics-device lifecycle
 
-The legacy adapter treats the active graphics device as caller-owned. It records the active device and writable graphics parameters before delegating to upstream corrplot, then restores the original device selection (if it is still open) and parameters on both success and error. It never opens or closes a device itself. `add = TRUE` remains an upstream overlay operation and draws into the caller's existing plot; it is not silently changed into a new plot. Pixel-identical results across graphics devices are not promised.
+The legacy adapter treats the active graphics device as caller-owned. It records the active device and writable graphics parameters before delegating to upstream corrplot, then restores the original device selection (if it is still open) and presentation parameters on success. Plot geometry (including the user coordinate system and figure region) is intentionally retained after successful drawing so a later `add = TRUE` call can overlay the existing plot correctly. If drawing fails, the complete writable parameter snapshot is restored. The adapter never opens or closes a device itself. `add = TRUE` remains an upstream overlay operation and draws into the caller's existing plot; it is not silently changed into a new plot. Pixel-identical results across graphics devices are not promised.
 
 ## Compatibility guarantees and non-goals
 
