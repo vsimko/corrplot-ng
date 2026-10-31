@@ -91,12 +91,14 @@ corrplot-ng capabilities
 corrplot-ng render --input matrix.csv --output correlation.svg
 ```
 
-The release CI extracts the actual platform archive into an isolated directory,
-then renders a small labelled matrix using only the packaged executable.
-The Linux artifact is also exercised in a minimal Alpine container with
-network access disabled and without Python, R, or Rust installed. This checks
-that runtime behavior does not depend on repository-relative paths or
-build-time tooling.
+The installed-binary CI builds the release executable for Linux, macOS, and
+Windows, copies it into an isolated installation prefix outside the checkout,
+and renders a small labelled matrix from a separate working directory. The
+release workflow also extracts each actual platform archive and smoke-tests the
+packaged executable. The Linux static artifact is additionally exercised in a
+minimal Alpine container with network access disabled and without Python, R,
+or Rust installed. These checks verify that runtime behavior does not depend
+on repository-relative paths or build-time tooling.
 
 ## Supported release artifacts
 
