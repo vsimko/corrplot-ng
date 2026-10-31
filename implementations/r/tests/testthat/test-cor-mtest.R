@@ -10,9 +10,9 @@ test_that("cor.mtest returns symmetric named matrices with legacy diagonal value
     expect_identical(colnames(component), colnames(mat))
     expect_equal(component, t(component))
   }
-  expect_equal(diag(result$p), c(0, 0, 0))
-  expect_equal(diag(result$lowCI), c(1, 1, 1))
-  expect_equal(diag(result$uppCI), c(1, 1, 1))
+  expect_equal(unname(diag(result$p)), c(0, 0, 0))
+  expect_equal(unname(diag(result$lowCI)), c(1, 1, 1))
+  expect_equal(unname(diag(result$uppCI)), c(1, 1, 1))
 })
 
 test_that("Pearson p-values and confidence intervals agree with stats::cor.test", {
@@ -44,7 +44,7 @@ test_that("Spearman and Kendall methods forward arguments and leave CIs missing"
     expect_equal(result$p[1, 2], reference$p.value, info = method)
     expect_true(is.na(result$lowCI[1, 2]), info = method)
     expect_true(is.na(result$uppCI[1, 2]), info = method)
-    expect_equal(diag(result$lowCI), c(1, 1), info = method)
+    expect_equal(unname(diag(result$lowCI)), c(1, 1), info = method)
   }
 })
 
@@ -79,7 +79,7 @@ test_that("constant columns and insufficient complete pairs return missing resul
   expect_true(is.na(result$p["varying", "sparse"]))
   expect_true(is.na(result$lowCI["varying", "sparse"]))
   expect_true(is.na(result$uppCI["varying", "sparse"]))
-  expect_equal(diag(result$p), c(0, 0, 0))
+  expect_equal(unname(diag(result$p)), c(0, 0, 0))
 })
 
 test_that("single-feature inputs retain legacy diagonal conventions", {
