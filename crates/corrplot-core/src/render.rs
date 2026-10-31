@@ -9,7 +9,7 @@ use std::fmt;
 pub const SCENE_SCHEMA_V1: u32 = 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum OutputFormat { Svg, Png, Rgba8 }
+pub enum OutputFormat { Svg, Png, Rgba }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SceneKind { CorrelationPlot, GeneralMatrixPlot }
@@ -312,7 +312,7 @@ fn validate_alpha(request: &RenderRequest) -> Result<(), RenderError> {
             "PNG output uses straight alpha; premultiplied alpha is valid only for raw RGBA buffers",
         ));
     }
-    if request.format == OutputFormat::Rgba8 && request.pixel_format != PixelFormat::Rgba8 {
+    if request.format == OutputFormat::Rgba && request.pixel_format != PixelFormat::Rgba8 {
         return Err(RenderError::new(
             "renderer.invalid_raster_options",
             "raw RGBA output requires the RGBA8 pixel format",
