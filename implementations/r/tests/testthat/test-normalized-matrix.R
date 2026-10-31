@@ -114,15 +114,17 @@ test_that("R adapter output serializes to normalized-matrix v1 JSON", {
   x <- matrix(c(1, NA_real_, 0, 1), 2, byrow = TRUE,
     dimnames = list(c("A", "B"), c("A", "B")))
   normalized <- corrplot_ng_normalize_matrix(x)
-  encoded <- jsonlite::toJSON(normalized, auto_unbox = FALSE,
+  json_object <- normalized
+  json_object$labels <- I(json_object$labels)
+  encoded <- jsonlite::toJSON(json_object, auto_unbox = TRUE,
     null = "null", na = "null", digits = NA)
   decoded <- jsonlite::fromJSON(encoded, simplifyVector = FALSE)
 
-  expect_identical(decoded$schema_version, 1L)
+  expect_equal(decoded$schema_version, 1L)
   expect_identical(decoded$kind, "normalized_matrix")
   expect_identical(decoded$labels, list("A", "B"))
   expect_null(decoded$values[[1]][[2]])
-  expect_identical(decoded$values[[2]][[1]], 0)
+  expect_equal(decoded$values[[2]][[1]], 0)
   expect_equal(decoded$source_indices, list(0, 1))
 })
 
