@@ -1585,6 +1585,28 @@ mod html_table_tests {
 }
 
 #[cfg(test)]
+mod prepared_html_table_tests {
+    use super::*;
+
+    #[test]
+    fn publication_html_table_uses_prepared_order_and_keeps_hidden_triangle_values() {
+        let fixture = include_str!("../../../prototypes/publication-config-v1/examples/basic.json");
+        let config = fixture
+            .replace("\"ordering\": \"original\"", "\"ordering\": \"alphabetical\"")
+            .replace("\"display\": \"full\"", "\"display\": \"upper\"");
+        let path = std::env::temp_dir().join(format!("corrplot-ng-table-{}.json", std::process::id()));
+        std::fs::write(&path, config).unwrap();
+        let publication = Publication::load(path.to_str().unwrap()).unwrap();
+        assert_eq!(publication.order_indices, vec![1, 0, 2]);
+        let html = publication.html_table("Prepared matrix");
+        assert!(html.contains("data-source-index=\"1\">humidity</th>"));
+        assert!(html.contains("data-source-index=\"0\">temperature</th>"));
+        assert_eq!(html.matches("<td ").count(), 9);
+        std::fs::remove_file(path).ok();
+    }
+}
+
+#[cfg(test)]
 mod renderer_output_tests {
     use super::*;
 
