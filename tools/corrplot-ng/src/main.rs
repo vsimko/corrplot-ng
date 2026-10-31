@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use corrplot_core::{validate_matrix, MatrixKind};
 use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
@@ -258,33 +259,21 @@ pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: c
                 "" | "NA" | "NaN" | "null" => None,
                 text => {
                     let parsed: f64 = text.parse().map_err(|_| format!("invalid number at row {}, column '{}': '{}'", r + 1, labels[c], text))?;
-                    if !parsed.is_finite() { return Err(format!("non-finite value at row {}, column '{}'", r + 1, labels[c])); }
                     Some(parsed)
                 }
             };
-            if kind == Kind::Correlation {
-                if let Some(v) = value {
-                    if !(-1.0..=1.0).contains(&v) { return Err(format!("correlation at row {}, column '{}' is outside [-1, 1]", r + 1, labels[c])); }
-                }
-            }
             row.push(value);
         }
         values.push(row);
     }
-    if kind == Kind::Correlation {
-        for r in 0..n {
-            for c in 0..n {
-                if match (values[r][c], values[c][r]) { (Some(a), Some(b)) => (a - b).abs() > 1e-8, (None, None) => false, _ => true } {
-                    return Err(format!("correlation matrix is not symmetric at ('{}', '{}')", labels[r], labels[c]));
-                }
-            }
-        }
-        for i in 0..n {
-            if values[i][i].map_or(true, |v| (v - 1.0).abs() > 1e-8) {
-                return Err(format!("correlation diagonal for '{}' must equal 1", labels[i]));
-            }
-        }
-    }
+    let flat_values: Vec<Option<f64>> = values.iter().flat_map(|row| row.iter().copied()).collect();
+    let shared_kind = if kind == Kind::Correlation {
+        MatrixKind::Correlation
+    } else {
+        MatrixKind::GeneralNumeric
+    };
+    validate_matrix(&labels, n, n, &flat_values, shared_kind)
+        .map_err(|error| error.to_string())?;
     Ok(Matrix { labels, values })
 }
 
