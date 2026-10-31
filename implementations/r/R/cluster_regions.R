@@ -43,6 +43,25 @@
   })
 }
 
+.corrplot_ng_region_request_intervals <- function(requests, labels, source_indices) {
+  intervals <- lapply(requests, function(region) {
+    if (!is.null(region$variables)) {
+      positions <- match(unlist(region$variables, use.names = FALSE), labels)
+    } else {
+      requested_indices <- as.integer(unlist(region$indices, use.names = FALSE)) + 1L
+      positions <- match(requested_indices, source_indices)
+    }
+    if (!length(positions) || anyNA(positions)) {
+      stop("cluster-region request could not be mapped back to the displayed matrix", call. = FALSE)
+    }
+    c(start = min(positions), end = max(positions))
+  })
+  list(
+    starts = vapply(intervals, function(x) x[["start"]], integer(1)),
+    ends = vapply(intervals, function(x) x[["end"]], integer(1))
+  )
+}
+
 .corrplot_ng_validate_intervals <- function(index, n) {
   if (!is.numeric(index) || is.logical(index) || length(index) < 2L ||
       anyNA(index) || any(!is.finite(index)) ||
@@ -223,12 +242,15 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
       stop("row and column names must be identical when index is used", call. = FALSE)
     }
     intervals <- .corrplot_ng_validate_intervals(index, n)
-    .corrplot_ng_region_inputs(
+    requests <- .corrplot_ng_region_inputs(
       intervals$starts, intervals$ends, validated$labels,
       seq_len(n), col, lwd
     )
+    resolved <- .corrplot_ng_region_request_intervals(
+      requests, validated$labels, seq_len(n)
+    )
     .corrplot_ng_draw_index_regions(
-      intervals$starts, intervals$ends, n, validated$type, col, lwd, ...
+      resolved$starts, resolved$ends, n, validated$type, col, lwd, ...
     )
   } else {
     names_matrix <- .corrplot_ng_names_matrix(namesMat)
@@ -278,15 +300,19 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
   if (anyNA(ordered_labels) || anyDuplicated(ordered_labels)) {
     ordered_labels <- NULL
   }
+  requests <- .corrplot_ng_region_inputs(
+    starts, ends, ordered_labels, tree$order, col, lwd
+  )
+  resolved <- .corrplot_ng_region_request_intervals(
+    requests, ordered_labels, tree$order
+  )
   list(
-    starts = starts,
-    ends = ends,
+    starts = resolved$starts,
+    ends = resolved$ends,
     order = as.integer(tree$order),
     labels = ordered_labels,
     style = style,
-    requests = .corrplot_ng_region_inputs(
-      starts, ends, ordered_labels, tree$order, col, lwd
-    )
+    requests = requests
   )
 }
 
