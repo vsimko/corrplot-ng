@@ -52,6 +52,11 @@ if (length(extendr_dependency) != 1L) {
   stop("Could not identify generated extendr-api dependency in ", cargo_manifest)
 }
 cargo_lines[extendr_dependency] <- 'extendr-api = "=0.8.2"'
+cargo_lines <- append(
+  cargo_lines,
+  'corrplot-core = { path = "../../../../../crates/corrplot-core" }',
+  after = extendr_dependency
+)
 writeLines(cargo_lines, cargo_manifest)
 
 # Reuse the reviewed transitive dependency graph from the committed spike
@@ -165,3 +170,11 @@ writeLines(c(
   "  testthat::expect_match(scene, \"schema_version\")",
   "})"
 ), file.path(test_dir, "test-scene-v1.R"))
+
+writeLines(c(
+  "testthat::test_that(\"shared core rejects asymmetric correlations\", {",
+  "  labels <- c(\"a\", \"b\")",
+  "  asymmetric <- matrix(c(1, 0.2, 0.3, 1), nrow = 2)",
+  "  testthat::expect_error(build_scene_json_rust(labels, asymmetric), \"not symmetric\")",
+  "})"
+), file.path(test_dir, "test-shared-core.R"))
