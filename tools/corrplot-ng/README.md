@@ -203,7 +203,7 @@ The native CLI accepts a publication configuration with the following commands:
 
 The configuration loader validates strict object fields, inline or CSV-backed matrices, matrix semantics, missing-value policy, supported plot settings, colors, physical dimensions, typography, and output format. CSV paths are resolved relative to the configuration file. The renderer currently supports correlation/general numeric matrices, circle/number glyphs, full/upper/lower display, and original/alphabetical ordering. Correlation matrices additionally support deterministic AOE and average-linkage hierarchical ordering. The scene-json format emits the renderer-neutral scene-v1 shape, including cell visibility, color, typography, legend, ordering metadata, and general-matrix normalization metadata.
 
-Unsupported v1 semantics are rejected explicitly rather than ignored. This initial native slice does not yet implement color scales, significance overlays, or col_limits; these remain follow-up work.
+Unsupported v1 semantics are rejected explicitly rather than ignored. General numeric matrices now support automatic color limits for inline input and explicit `matrix.col_limits` for inline or CSV-backed input. Explicit limits must be finite, strictly increasing, and cover every observed value; constant automatic ranges are padded deterministically. One-sided values use the sequential YlOrBr palette, while mixed-sign values use the configured negative/neutral/positive diverging colors. CSV-backed general matrices require explicit limits because the config contract validates them before data loading. Custom `colors.scale` definitions and significance overlays remain unsupported by the native CLI.
 
 
 ## Interactive configuration wizard
