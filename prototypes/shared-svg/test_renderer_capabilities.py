@@ -38,6 +38,7 @@ class RendererCapabilityTests(unittest.TestCase):
             render_scene_svg(scene)
         self.assertEqual(raised.exception.diagnostics[0]["code"], "renderer.unsupported_feature")
         self.assertEqual(raised.exception.diagnostics[0]["feature"], "plotmath_labels")
+        self.assertEqual(raised.exception.diagnostics[0]["renderer_version"], "1")
 
     def test_permissive_mode_omits_only_explicitly_optional_plotmath_and_reports_it(self):
         scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
@@ -67,6 +68,18 @@ class RendererCapabilityTests(unittest.TestCase):
         self.assertEqual(len(diagnostics), 2)
         self.assertNotIn("alpha", svg)
         self.assertNotIn("low", svg)
+
+    def test_unknown_scene_schema_version_is_never_optional(self):
+        scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
+        scene["schema_version"] = 2
+        with self.assertRaises(RendererCapabilityError) as raised:
+            render_scene_svg_with_diagnostics(
+                scene, mode="permissive", optional_features=["scene_schema_version"]
+            )
+        self.assertEqual(
+            raised.exception.diagnostics[0]["code"],
+            "renderer.schema_version_unsupported",
+        )
 
     def test_rust_cli_declaration_is_narrow_and_explicit(self):
         self.assertEqual(RUST_CAPABILITIES["cell_methods"], ["circle", "number"])
