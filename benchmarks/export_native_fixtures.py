@@ -13,6 +13,34 @@ from run_shared_core import make_cases
 from scene import build_scene
 
 
+def project_scene_v1(scene: dict) -> dict:
+    """Project the evolving Python scene onto the deliberately smaller native v1 contract.
+
+    The Python scene model also contains renderer-facing fields (glyph encodings,
+    typography, title/description, etc.). The C++ and Rust spikes implement only
+    this stable geometry/data contract, so those later extensions must not make
+    otherwise equivalent native implementations fail the parity gate.
+    """
+    label_fields = ("text", "row_x", "row_y", "column_x", "column_y")
+    cell_fields = ("row", "column", "value", "x", "y", "center_x", "center_y", "size")
+    return {
+        "schema_version": scene["schema_version"],
+        "kind": scene["kind"],
+        "width": scene["width"],
+        "height": scene["height"],
+        "labels": [
+            {field: item[field] for field in label_fields}
+            for item in scene["labels"]
+        ],
+        "cells": [
+            {field: item[field] for field in cell_fields}
+            for item in scene["cells"]
+        ],
+        "annotation": scene["annotation"],
+        "style": scene["style"],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
@@ -29,7 +57,7 @@ def main() -> None:
             "labels": config["labels"],
             "matrix": config["matrix"],
             "annotation": config.get("annotation", ""),
-            "expected_scene": scene,
+            "expected_scene": project_scene_v1(scene),
         })
     payload = {
         "schema_version": 1,

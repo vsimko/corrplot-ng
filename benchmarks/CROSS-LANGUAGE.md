@@ -50,6 +50,40 @@ package compilation and installation; those are separate packaging evidence.
 CI runs the same workflow on a common Ubuntu runner and uploads fixtures and
 machine-readable results as a 90-day artifact.
 
+The Python reference is projected onto the explicit native `scene-v1` contract
+before fixture export and during correctness checks. The Python scene model also
+exposes renderer-facing extensions (for example glyph encodings and typography);
+these are outside the current C++/Rust spike contract and are intentionally
+excluded from this cross-language parity gate. The projection retains schema
+version, dimensions, labels, cell values/geometry, annotation and shared style.
+Projection tests run alongside the Python invalid-input tests in CI.
+
+The Python timing still measures construction and JSON encoding of the full
+current Python scene, including those extra renderer-facing fields. Pure R,
+C++/Rcpp and Rust/rextendr currently produce only the smaller scene-v1 contract.
+Consequently, Python timings include additional work and are not a strict
+like-for-like performance comparison until all candidates implement the same
+extended scene model; use these results as prototype-path measurements only.
+
+## Input validation parity
+
+The R-facing implementations reject non-square/dimension-mismatched matrices,
+correlation values outside [-1, 1], and infinite values. They use the same
+error text for these invalid inputs. Missing R values (`NA`) remain valid and
+serialize as JSON `null`; ordinary finite values preserve row-major cell
+ordering. The Rust binding returns an error through extendr's default
+`result_panic` behavior instead of returning an empty string, matching the
+Rcpp and pure-R error contract. The Python reference rejects the corresponding
+invalid configuration categories with `ValueError`; its wording remains
+Python-specific.
+
+Run the Python negative tests with:
+
+    python -m unittest discover -s benchmarks -p 'test_scene_v1_*.py' -v
+
+The R smoke harness exercises the same negative cases after both native
+packages are installed.
+
 ## Interpretation and limitations
 
 - Correctness is a hard gate; a mismatch stops the run rather than reporting
