@@ -7,6 +7,8 @@ on:
       - "prototypes/cpp-rcpp/**"
       - "prototypes/rust-rextendr/**"
       - ".github/workflows/cross-language-benchmarks.yml"
+  schedule:
+    - cron: "17 3 * * *"
   workflow_dispatch:
     inputs:
       include_stress:
@@ -28,7 +30,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  benchmark-smoke:
+    name: Fast benchmark smoke checks
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test benchmark timing harness
+        run: python -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
+      - name: Test scene-v1 oracle and invalid-input handling
+        run: python -m unittest discover -s benchmarks -p 'test_scene_v1_*.py' -v
+      - name: Run a short shared-core smoke benchmark
+        run: python benchmarks/run_shared_core.py --iterations 3 --output benchmark-results/smoke-results.json
+
   shared-core:
+    if: github.event_name != 'pull_request'
     name: Benchmark the Python shared-core prototype
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -50,6 +70,7 @@ jobs:
           retention-days: 90
 
   shared-core-stress:
+    if: github.event_name != 'pull_request' && inputs.include_stress
     name: Benchmark large shared-core workloads
     if: inputs.include_stress
     needs: shared-core
@@ -71,6 +92,7 @@ jobs:
           retention-days: 90
 
   cross-language:
+    if: github.event_name != 'pull_request'
     name: Compare Python, Pure R, C++/Rcpp and Rust/rextendr
     runs-on: ubuntu-latest
     timeout-minutes: 45
