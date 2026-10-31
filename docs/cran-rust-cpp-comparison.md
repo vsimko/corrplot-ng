@@ -175,14 +175,14 @@ The Ubuntu check reported an installed package size of 5.9 MB. All three platfor
 
 The workflow disables CRAN incoming and remote incoming checks for deterministic CI, so this is not a substitute for a real CRAN submission or remote incoming checks. The 5.9 MB installed-size measurement should be assessed against rextendr's package-size warning; it is not the compressed source-tarball size. The two NOTEs need explicit disposition before a release candidate is considered ready.
 
-### C++/Rcpp cross-platform source-install evidence
+### C++/Rcpp source-package check
 
 The merged PR [#38](https://github.com/vsimko/corrplot-ng/pull/38) added a three-platform smoke matrix. Workflow run [#16](https://github.com/vsimko/corrplot-ng/actions/runs/41061324489) successfully generated Rcpp wrappers, installed the C++/Rcpp prototype from source, installed the Rust/rextendr prototype, and verified semantic parity against all five shared scene-v1 fixtures on Ubuntu, macOS, and Windows.
 
-This validates C++ source installation and behavior on the three hosted operating systems, but it did **not** build a C++ source tarball or run `R CMD check --as-cran` on that tarball. To close that gap, this branch adds `.github/workflows/cpp-rcpp-cran-package.yml`, a dedicated three-platform source-tarball check, and the minimum Rd/testthat/C++11 metadata needed to make the prototype checkable. Its result is pending CI.
+The dedicated source-package workflow added in this PR, [run #2](https://github.com/vsimko/corrplot-ng/actions/runs/41147928422), completed successfully on Ubuntu, macOS, and Windows. On each platform it generated the Rcpp wrappers, built the source tarball, and completed `R CMD check --as-cran`. CRAN incoming and remote incoming checks are disabled in this deterministic CI workflow; this is not a substitute for actual CRAN submission or remote incoming checks.
 
 ### Updated interpretation
 
 - Rust/rextendr: source-tarball build, offline install, R integration, and `R CMD check --as-cran` have run on all three platforms. Status is **PASS WITH NOTES / CONDITIONS**, not a clean pass. Resolve or justify both notes and confirm the installed-size policy interpretation.
-- C++/Rcpp: source install and semantic parity passed on all three platforms. Full source-tarball and `R CMD check --as-cran` evidence is being added by the new workflow; until it completes, the CRAN-check status remains **PENDING**.
+- C++/Rcpp: source installation, semantic parity, source-tarball build, and `R CMD check --as-cran` passed on all three hosted platforms. This closes the prototype's basic CRAN source-package validation gap, but does not establish CRAN acceptance or oldest-toolchain compatibility.
 - Neither prototype is the production R package. These results do not establish CRAN acceptance, binary publication, oldest-toolchain compatibility, or final language choice.
