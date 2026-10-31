@@ -177,6 +177,7 @@ corrplot-ng validate --input matrix.csv
 corrplot-ng inspect --input matrix.csv
 corrplot-ng render --input matrix.csv --output figure.svg
 corrplot-ng render --input matrix.csv --format scene-json --output scene.json
+corrplot-ng render --input matrix.csv --kind general --format normalized-json --output normalized.json
 corrplot-ng render --input matrix.csv --method number --title "My correlations" > figure.svg
 cat matrix.csv | corrplot-ng render --input - > figure.svg
 corrplot-ng render --input scene.json --input-format scene-json --output imported.svg
@@ -185,7 +186,7 @@ corrplot-ng presets
 corrplot-ng version
 ```
 
-Supported render methods are currently `circle` and `number`. The scene-json output follows the current experimental scene-v1 shape. This first CLI slice deliberately does not claim support for the full publication-config v1 document, ordering algorithms, all seven legacy glyphs, incremental rebuilds, or batch rendering; those remain follow-up work against the existing contracts.
+Supported render methods are currently `circle` and `number`. The `normalized-json` output serializes the parsed matrix to the versioned, renderer-independent normalized-matrix v1 contract (including explicit `null` missing cells and zero-based source indices). It reuses the same CSV/TSV/scene-v1 input adapters; use `--kind general` when normalizing a matrix without correlation-specific constraints. The scene-json output follows the current experimental scene-v1 shape. This first CLI slice deliberately does not claim support for the full publication-config v1 document, ordering algorithms, all seven legacy glyphs, incremental rebuilds, or batch rendering; those remain follow-up work against the existing contracts.
 
 ## Dependency policy
 
