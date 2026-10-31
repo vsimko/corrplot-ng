@@ -44,3 +44,25 @@ and its loading/memory boundary are tracked separately in issue #142. Native
 unit tests execute the shared semantic test suite; the WebAssembly CI job also
 compiles those same tests for the target, without claiming a browser runtime
 test before the binding/runtime harness exists.
+
+
+## Direct scene renderers
+
+The typed `raster::Scene` is a renderer-neutral set of logical dimensions,
+cell rectangles/glyphs, and positioned text. Both `raster::SceneSvgRenderer`
+and `raster::RgbaRenderer` consume this same scene; the RGBA path draws pixels
+directly and never serializes or reparses SVG.
+
+The dependency-free RGBA renderer supports circle, square, ellipse, pie,
+number, shade, and color cell primitives, visible/hidden cells, strokes,
+viewport clipping, text annotations, straight alpha compositing, and
+letterboxed scaling. It emits an owned top-left-origin sRGB RGBA8 buffer with
+the stride and optional DPI metadata defined by renderer-output-v1.
+
+The current bitmap text fallback is a built-in 5x7 ASCII font; unsupported
+characters use a visible replacement glyph. It is intentionally not a
+font-engine replacement and does not claim plotmath shaping or font-family
+fidelity. Each render is limited to 128 MiB of pixel storage. PNG encoding is
+not implemented yet; raw RGBA is the initial bitmap output. The same Rust
+source compiles for native and `wasm32-unknown-unknown`; JavaScript exports
+and browser loading remain in #142.
