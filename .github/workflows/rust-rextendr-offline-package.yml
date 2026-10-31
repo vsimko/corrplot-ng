@@ -158,6 +158,9 @@ jobs:
           report("Rust static library build artifacts", list(target_dir.glob("*corrplotngrustspike*")))
           print(f"Installed package path: {package_dir}")
           PY
+      - name: Inspect retained native-library sections and symbols
+        shell: bash
+        run: python3 prototypes/rust-rextendr/inspect-native-library.py
       - name: Build and inspect the actual R source tarball
         shell: bash
         run: |
