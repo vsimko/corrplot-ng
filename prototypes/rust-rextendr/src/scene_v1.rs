@@ -48,7 +48,7 @@ fn build_scene_json_rust(
     let left = 104.0_f64;
     let top = 76.0_f64;
     // extendr exposes the R NA sentinel as an optional value.
-    let na_real_bits = NA_REAL.expect("R NA sentinel is available").to_bits();
+    let na_real_bits = f64::na().to_bits();
     let width = left + n as f64 * cell + 24.0;
     let height = top + n as f64 * cell + 64.0;
 
