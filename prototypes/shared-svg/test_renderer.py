@@ -610,3 +610,20 @@ class PlotSceneTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_missing_cell_annotation_overrides_renderer_fallback_label(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, None], [None, 1.0]],
+        })
+        scene["text_annotations"] = [{
+            "row": 0, "column": 1, "role": "missing", "text": "?",
+            "color": "#663399", "font_size": 13,
+            "font_weight": "bold", "font_style": "normal",
+        }]
+        svg = render_scene_svg(scene)
+        self.assertIn('fill="#663399">?</text>', svg)
+        self.assertIn(">NA</text>", svg)
+        self.assertEqual(svg.count(">?</text>"), 1)
+        self.assertEqual(svg.count(">NA</text>"), 1)
+
