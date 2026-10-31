@@ -6,6 +6,7 @@ This script never edits the generated source package or a release artifact.
 """
 
 from pathlib import Path
+import hashlib
 import platform
 import shutil
 import subprocess
@@ -94,7 +95,16 @@ def exported_symbols(path):
     )
 
 
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 before_size = library.stat().st_size
+before_digest = sha256(library)
 before_exports = exported_symbols(library)
 with tempfile.TemporaryDirectory(prefix="rextendr-strip-") as temporary:
     temporary_dir = Path(temporary)
@@ -131,6 +141,6 @@ with tempfile.TemporaryDirectory(prefix="rextendr-strip-") as temporary:
     finally:
         shutil.copy2(backup, library)
 
-if library.stat().st_size != before_size:
+if sha256(library) != before_digest:
     raise SystemExit("Original installed library was not restored byte-for-byte")
 print("Original installed library restored byte-for-byte.")
