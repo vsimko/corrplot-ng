@@ -110,8 +110,13 @@ def verify_svg_structure(name: str, config: dict, method: str) -> None:
         else:
             tag = shape_tags[method]
             shapes = root.findall(f"{namespace}{tag}")
-            if method in ("square", "color"):
+            if method == "square":
                 shapes = [item for item in shapes if item.attrib.get("stroke") == "none"]
+            elif method == "color":
+                shapes = [
+                    item for item in shapes
+                    if item.attrib.get("fill") not in ("#ffffff", "#f2f2f2")
+                ]
             assert shapes, f"expected SVG {tag} encoding was not emitted"
 
         assert svg == render_scene_svg(build_scene(case_config)), "SVG output is not deterministic"
