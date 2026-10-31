@@ -87,6 +87,20 @@ class DiagnosticContractTests(unittest.TestCase):
         self.assertEqual(list(Draft202012Validator(SCHEMA).iter_errors(diagnostic.to_dict())), [])
         self.assertEqual(json.loads(diagnostic.to_json())["severity"], "warning")
 
+
+    def test_unsupported_cell_method_uses_cli_method_path(self):
+        from diagnostics import scene_error_diagnostic
+
+        diagnostic = scene_error_diagnostic("unsupported cell method 'pie'")
+        self.assertEqual(diagnostic.code, "renderer.unsupported_feature")
+        self.assertEqual(diagnostic.severity, "error")
+        self.assertEqual(diagnostic.stage, "renderer")
+        self.assertEqual(diagnostic.path, "method")
+        self.assertEqual(
+            list(Draft202012Validator(SCHEMA).iter_errors(diagnostic.to_dict())),
+            [],
+        )
+
     def test_renderer_capability_diagnostics_follow_diagnostic_v1(self):
         scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
         scene["labels"][0]["plotmath"] = {"prefix": ":", "source": "alpha"}
