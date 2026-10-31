@@ -9,7 +9,7 @@
 Both candidates implement the same narrow R-callable scene-v1 JSON builder. Both can be generated, compiled, installed, and exercised by the existing cross-language workflow on Ubuntu, macOS, and Windows. That establishes basic integration feasibility, not equal release readiness.
 
 - **C++/Rcpp has the shorter routine package workflow.** Rcpp attributes generate the R/C++ registration wrappers, then ordinary R package installation compiles the C++ source. Its main maintenance cost is keeping generated wrappers in sync and diagnosing the platform's C++ compiler/R toolchain.
-- **Rust/rextendr has more build and distribution machinery.** The current package-generation script creates a temporary R package, pins the generated package to extendr 0.8.2, adapts the lockfile and generated Makevars, and adds R wrappers, help, namespace, and tests. Its dedicated CI also checks offline vendoring, source-tarball contents, dependency licenses, and a Windows binary install without Rust on PATH.
+- **Rust/rextendr has more build and distribution machinery.** The current package-generation script creates a temporary R package, pins the generated package to extendr 0.9.0, adapts the lockfile and generated Makevars, and adds R wrappers, help, namespace, and tests. Its dedicated CI also checks offline vendoring, source-tarball contents, dependency licenses, and a Windows binary install without Rust on PATH.
 - **Current CI investment is asymmetric.** The shared manual cross-language workflow covers both candidates on all three operating systems, but the extra offline-package, dependency-audit, and Windows binary workflows currently cover Rust only. This is evidence of more Rust validation work, not proof that C++ has no corresponding release risks.
 - **Neither spike is production-ready.** Keep both isolated until the same distribution and maintenance acceptance is applied to each.
 
@@ -22,7 +22,7 @@ Both candidates implement the same narrow R-callable scene-v1 JSON builder. Both
 | R package metadata | `prototypes/cpp-rcpp/DESCRIPTION`, Imports/LinkingTo Rcpp | `prototypes/rust-rextendr/DESCRIPTION`, generated package metadata |
 | Binding generator | `Rcpp::compileAttributes()` | `rextendr::use_extendr()` via `prepare-r-package.R` |
 | Native build system | R package build + platform C++ compiler | Cargo build invoked through generated rextendr package |
-| Dependency pinning in spike | R package dependency declaration; R package resolution | Committed `Cargo.lock`; extendr API pinned to `=0.8.2` |
+| Dependency pinning in spike | R package dependency declaration; R package resolution | Committed `Cargo.lock`; extendr API pinned to `=0.9.0` |
 | Package output | Install the spike package directly | Generate disposable `.ci-r-package`, then install it |
 | Scope boundary | Experiment only; no production R package edits | Experiment only; no production R package edits |
 
