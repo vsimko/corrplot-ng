@@ -57,7 +57,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if ("method" %in% unsupported) {
       .corrplot_ng_abort(
         "renderer.unsupported_feature",
-        paste0("the scene renderer does not support cell method ", paste(requested_method, collapse = ", ")),
+        paste0("The scene engine does not support: method (cell method ", paste(requested_method, collapse = ", "), ")"),
         stage = "renderer",
         path = "method"
       )
