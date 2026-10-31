@@ -286,7 +286,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (!is.null(source)) item$plotmath <- list(prefix = prefix, source = source)
     item
   })
-  has_observed_values <- if (is.null(scale$has_observed_values)) TRUE else scale$has_observed_values\n  has_observed_values <- if (is.null(scale$has_observed_values)) TRUE else scale$has_observed_values
+  has_observed_values <- if (is.null(scale$has_observed_values)) TRUE else scale$has_observed_values
   scene <- list(schema_version = 1L,
     kind = if (options$is.corr) "correlation_plot" else "general_matrix_plot",
     matrix_semantics = list(mode = if (options$is.corr) "correlation" else "general_numeric",
