@@ -51,18 +51,18 @@ minimum cell size, the minimum remains authoritative and the canvas expands.
 
 ## Figure-level publication text
 
-Use the optional \`figure_text\` array for visible publication text. Each
-entry has one semantic role: \`title\`, \`subtitle\`, \`caption\`, or
-\`footnote\`. The scene builder orders roles consistently, wraps long and
+Use the optional `figure_text` array for visible publication text. Each
+entry has one semantic role: `title`, `subtitle`, `caption`, or
+`footnote`. The scene builder orders roles consistently, wraps long and
 multi-line text without truncation, and expands the canvas when required.
 The SVG backend escapes XML-sensitive text and preserves Unicode.
 
-Each role may override \`alignment\` (\`left\`, \`center\`, or \`right\`),
-\`font_family\`, \`font_size\`, \`font_weight\`, \`font_style\`, and
-\`spacing_after\`. Defaults are role-specific: title and subtitle are centered
+Each role may override `alignment` (`left`, `center`, or `right`),
+`font_family`, `font_size`, `font_weight`, `font_style`, and
+`spacing_after`. Defaults are role-specific: title and subtitle are centered
 above the matrix; caption and footnote are left-aligned below it.
 
-\`\`\`json
+```json
 {
   "title": "Accessible figure name",
   "description": "A concise description for assistive technology.",
@@ -73,23 +73,23 @@ above the matrix; caption and footnote are left-aligned below it.
     {"role": "footnote", "text": "Synthetic data; values are illustrative."}
   ]
 }
-\`\`\`
+```
 
-The top-level \`title\` and \`description\` remain accessible SVG metadata
-(\`<title>\` and \`<desc>\`); they are not visible figure text. This keeps
+The top-level `title` and `description` remain accessible SVG metadata
+(`<title>` and `<desc>`); they are not visible figure text. This keeps
 screen-reader identification separate from the visible title and caption.
 See [the complete publication example](figure-text-example.json).
 
 ## Cluster-region annotations
 
-The optional \`cluster_regions\` array describes rectangles around groups of
-variables. Each region has a stable \`id\`, a six-digit hex \`color\`, and a
-positive \`line_width\`. Identify members with exactly one of:
+The optional `cluster_regions` array describes rectangles around groups of
+variables. Each region has a stable `id`, a six-digit hex `color`, and a
+positive `line_width`. Identify members with exactly one of:
 
-- \`variables\`: unique variable names;
-- \`indices\`: unique zero-based source indices.
+- `variables`: unique variable names;
+- `indices`: unique zero-based source indices.
 
-When \`variable_order\` is present, its \`labels\` and \`indices\` arrays map
+When `variable_order` is present, its `labels` and `indices` arrays map
 each displayed position back to the stable source variable identity. Regions
 are resolved against that mapping after ordering. A region must occupy a
 contiguous range in the displayed order; unknown or ambiguous members fail
@@ -100,7 +100,7 @@ plus inclusive row/column cell boundaries and renderer-neutral geometry.
 The SVG backend draws the rectangle as an overlay. Geometry is unchanged for
 full, upper, lower, and diagonal-only display layouts.
 
-\`\`\`json
+```json
 {
   "variable_order": {
     "strategy": "hclust",
@@ -111,20 +111,19 @@ full, upper, lower, and diagonal-only display layouts.
     {"id": "cluster-ab", "variables": ["alpha", "beta"], "color": "#123456", "line_width": 2}
   ]
 }
-\`\`\`
+```
 
 Index-based input uses the original source order:
 
-\`\`\`json
+```json
 {
   "cluster_regions": [
     {"id": "cluster-ab", "indices": [0, 1], "color": "#123456"}
   ]
 }
-\`\`\`
+```
 
-The legacy R \`corrRect()\` and \`corrRect.hclust()\` adapters are tracked
-separately; this scene contract contains no R graphics-device behavior.
+The complete [cluster-region fixture](cluster-region-example.json) demonstrates name-based resolution after a reordered leaf order. The legacy R `corrRect()` and `corrRect.hclust()` adapters are tracked separately; this scene contract contains no R graphics-device behavior.
 
 ## Cell encodings
 
