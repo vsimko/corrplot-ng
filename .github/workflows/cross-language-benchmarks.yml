@@ -72,7 +72,6 @@ jobs:
   shared-core-stress:
     if: github.event_name != 'pull_request' && inputs.include_stress
     name: Benchmark large shared-core workloads
-    if: inputs.include_stress
     needs: shared-core
     runs-on: ubuntu-latest
     timeout-minutes: 45
