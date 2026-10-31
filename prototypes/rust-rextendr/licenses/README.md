@@ -1,9 +1,9 @@
 # Third-party license notices
 
 `extendr-MIT.txt` is the MIT license notice from the upstream extendr repository,
-pinned to the `extendr-api-v0.9.0` tag:
+pinned to the upstream `v0.9.0` release:
 
-https://github.com/extendr/extendr/blob/extendr-api-v0.8.2/LICENSE
+https://github.com/extendr/extendr/blob/v0.9.0/LICENSE
 
 It applies to the `extendr-api`, `extendr-ffi`, and `extendr-macros`
 0.9.0 crates used by this isolated rextendr integration experiment. The same
