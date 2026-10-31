@@ -83,7 +83,7 @@ impl Scene {
                 Some(CellGlyph::Ellipse { rx, ry, .. }) if !rx.is_finite() || !ry.is_finite() || *rx < 0.0 || *ry < 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid ellipse radii"))),
                 Some(CellGlyph::Pie { radius, start_radians, end_radians, .. })
-                    if !radius.is_finite() || *radius < 0.0 || !start_radians.is_finite() || !end_radians.is_finite() =>
+                    if !radius.is_finite() || *radius < 0.0 || !start_radians.is_finite() || !end_radians.is_finite() || !(end_radians - start_radians).is_finite() =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid pie geometry"))),
                 Some(CellGlyph::Number { font_size, .. }) if !font_size.is_finite() || *font_size <= 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid number font size"))),
@@ -348,9 +348,12 @@ impl Canvas {
                 if dx * dx + dy * dy > radius * radius { continue; }
                 let angle = dy.atan2(dx);
                 let within = if full { true } else {
-                    let span = (end - start).rem_euclid(std::f64::consts::TAU);
-                    let offset = (angle - start).rem_euclid(std::f64::consts::TAU);
-                    offset <= span
+                    let delta = end - start;
+                    if delta >= 0.0 {
+                        (angle - start).rem_euclid(std::f64::consts::TAU) <= delta.rem_euclid(std::f64::consts::TAU)
+                    } else {
+                        (start - angle).rem_euclid(std::f64::consts::TAU) <= (-delta).rem_euclid(std::f64::consts::TAU)
+                    }
                 };
                 if within { self.blend_pixel(x, y, color); }
             }
@@ -450,8 +453,8 @@ impl Renderer<Scene> for SceneSvgRenderer {
         for cell in &scene.cells {
             if !cell.visible { continue; }
             out.push_str(&format!(
-                "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\" stroke=\"{}\"/>",
-                cell.x, cell.y, cell.size, cell.size, color_hex(cell.fill), color_hex(cell.stroke)
+                "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"{}\" fill-opacity=\"{}\" stroke=\"{}\" stroke-opacity=\"{}\"/>",
+                cell.x, cell.y, cell.size, cell.size, color_hex(cell.fill), alpha(cell.fill), color_hex(cell.stroke), alpha(cell.stroke)
             ));
             let cx = cell.x + cell.size / 2.0;
             let cy = cell.y + cell.size / 2.0;
@@ -505,9 +508,9 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::End => "end",
             };
             out.push_str(&format!(
-                "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\">{}</text>",
+                "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
                 text.x, text.y, anchor, escape_xml(&svg.font_family), text.font_size,
-                color_hex(text.color), escape_xml(&text.text)
+                color_hex(text.color), alpha(text.color), escape_xml(&text.text)
             ));
         }
         out.push_str("</svg>");
