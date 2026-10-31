@@ -22,7 +22,7 @@ pub(crate) struct Matrix {
 pub(crate) enum Kind { Correlation, General }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Format { Svg, SceneJson }
+enum Format { Svg, SceneJson, NormalizedJson }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum InputFormat { Auto, Csv, Tsv, SceneJson }
@@ -57,7 +57,7 @@ COMMANDS:
 RENDER OPTIONS:
   -i, --input PATH       Input CSV/TSV or scene-v1 JSON file; use - for stdin\n      --config PATH      Publication configuration v1 JSON file (render/validate)
   -o, --output PATH      Output file; default is stdout
-      --format FORMAT    svg (default) or scene-json (output format)
+      --format FORMAT    svg (default), scene-json, or normalized-json
       --input-format FMT  auto (default), csv, tsv, or scene-json
       --kind KIND        correlation (default) or general
       --method METHOD    circle (default) or number
@@ -103,7 +103,8 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
             "--format" => format = match value.as_str() {
                 "svg" => Format::Svg,
                 "scene-json" => Format::SceneJson,
-                _ => return Err(format!("unsupported format '{value}' (expected svg or scene-json)")),
+                "normalized-json" => Format::NormalizedJson,
+                _ => return Err(format!("unsupported format '{value}' (expected svg, scene-json, or normalized-json)")),
             },
             "--input-format" => input_format = match value.as_str() {
                 "auto" => InputFormat::Auto,
@@ -248,7 +249,6 @@ pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: c
             }
         }
     }
-    if values.iter().flatten().all(Option::is_none) { return Err("matrix contains no numeric values".into()); }
     Ok(Matrix { labels, values })
 }
 
@@ -266,6 +266,48 @@ fn json_escape(s: &str) -> String {
 }
 
 fn num(v: f64) -> String { if v == 0.0 { "0".into() } else { format!("{v}") } }
+
+fn normalized_matrix_json(matrix: &Matrix, source_format: &str) -> String {
+    let mut out = String::from("{\"schema_version\":1,\"kind\":\"normalized_matrix\",\"labels\":[");
+    for (index, label) in matrix.labels.iter().enumerate() {
+        if index > 0 { out.push(','); }
+        out.push('"');
+        out.push_str(&json_escape(label));
+        out.push('"');
+    }
+    out.push_str("],\"values\":[");
+    for (row_index, row) in matrix.values.iter().enumerate() {
+        if row_index > 0 { out.push(','); }
+        out.push('[');
+        for (column_index, value) in row.iter().enumerate() {
+            if column_index > 0 { out.push(','); }
+            match value {
+                Some(number) => out.push_str(&num(*number)),
+                None => out.push_str("null"),
+            }
+        }
+        out.push(']');
+    }
+    out.push_str(&format!(
+        "],\"source\":{{\"format\":\"{}\",\"row_labels_present\":true,\"column_labels_present\":true}},\"source_indices\":[",
+        source_format
+    ));
+    for index in 0..matrix.labels.len() {
+        if index > 0 { out.push(','); }
+        out.push_str(&index.to_string());
+    }
+    out.push_str("]}");
+    out
+}
+
+fn normalized_source_format(format: InputFormat) -> &'static str {
+    match format {
+        InputFormat::Csv => "csv",
+        InputFormat::Tsv => "tsv",
+        InputFormat::SceneJson => "json",
+        InputFormat::Auto => unreachable!("auto input format is resolved before serialization"),
+    }
+}
 
 fn scene_json(matrix: &Matrix, title: &str, method: &str, kind: Kind) -> String {
     let n = matrix.labels.len();
@@ -402,10 +444,11 @@ fn run() -> Result<(), String> {
                         let content = match opts.format {
                             Format::Svg => publication.svg(&opts.title),
                             Format::SceneJson => publication.scene_json(&opts.title),
+                            Format::NormalizedJson => return Err("normalized-json output is available for direct matrix inputs, not publication configs".into()),
                         };
                         let destination = match opts.format {
                             Format::Svg => opts.output.as_deref().or(Some(publication.output.as_str())),
-                            Format::SceneJson => opts.output.as_deref(),
+                            Format::SceneJson | Format::NormalizedJson => opts.output.as_deref(),
                         };
                         write_output(destination, &content)?;
                     }
@@ -444,6 +487,7 @@ fn run() -> Result<(), String> {
                     let output = match opts.format {
                         Format::Svg => svg(&matrix, &opts.title, &opts.method, kind),
                         Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, kind),
+                        Format::NormalizedJson => normalized_matrix_json(&matrix, normalized_source_format(input_format)),
                     };
                     write_output(opts.output.as_deref(), &output)?;
                 }
