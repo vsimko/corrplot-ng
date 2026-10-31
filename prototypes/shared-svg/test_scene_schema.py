@@ -33,6 +33,20 @@ class SceneSchemaTests(unittest.TestCase):
         )
 
 
+    def test_version_cell_identity_and_missing_values_are_explicit(self):
+        scene = build_scene(self.config)
+        self.assertEqual(scene["schema_version"], 1)
+        n = len(scene["labels"])
+        self.assertEqual(
+            [(cell["row"], cell["column"]) for cell in scene["cells"]],
+            [(row, column) for row in range(n) for column in range(n)],
+        )
+        self.assertTrue(any(cell["value"] is None for cell in scene["cells"]))
+
+        scene["schema_version"] = 2
+        with self.assertRaises(Exception):
+            Draft202012Validator(self.schema).validate(scene)
+
     def test_significance_and_confidence_interval_metadata_match_scene_schema(self):
         scene = build_scene({
             "labels": ["A", "B"],
