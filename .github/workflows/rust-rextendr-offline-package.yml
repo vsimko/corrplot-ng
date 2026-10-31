@@ -123,13 +123,48 @@ jobs:
           PY
           tar -cJf vendor.tar.xz -C .. rust/vendor
           rm -rf .cargo
-      - name: Install generated R package without network access
+      - name: Compare baseline and size-optimized offline R installs
         shell: bash
         env:
           CARGO_NET_OFFLINE: "true"
         run: |
           set -euxo pipefail
-          R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          root = Path.cwd()
+          package = root / "prototypes/rust-rextendr/.ci-r-package"
+          manifest = package / "src/rust/Cargo.toml"
+          makevars = [
+              package / "src/Makevars.in",
+              package / "src/Makevars.win.in",
+          ]
+          optimized_target = (root / "prototypes/rust-rextendr/.ci-rust-target").resolve()
+          baseline_target = (root / "prototypes/rust-rextendr/.ci-rust-target-baseline").resolve()
+          baseline_library = root / "prototypes/rust-rextendr/.ci-baseline-library"
+          backups = {path: path.read_text() for path in [manifest, *makevars] if path.exists()}
+
+          try:
+              lines = backups[manifest].splitlines()
+              if "[profile.release]" in lines:
+                  lines = lines[:lines.index("[profile.release]")]
+              manifest.write_text("\n".join(lines) + "\n")
+              for path in makevars:
+                  if path.exists():
+                      path.write_text(backups[path].replace(
+                          str(optimized_target), str(baseline_target)
+                      ))
+              baseline_library.mkdir(parents=True, exist_ok=True)
+              subprocess.run([
+                  "R", "CMD", "INSTALL", "--library", str(baseline_library), str(package)
+              ], check=True)
+          finally:
+              for path, content in backups.items():
+                  path.write_text(content)
+
+          subprocess.run(["R", "CMD", "INSTALL", str(package)], check=True)
+          PY
       - name: Test Rust function from R
         run: Rscript -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
       - name: Report optimized installed package and native library sizes
@@ -140,11 +175,13 @@ jobs:
           from pathlib import Path
           import subprocess
 
-          package_dir = Path(subprocess.check_output(
+          optimized_package = Path(subprocess.check_output(
               ["Rscript", "-e", "cat(normalizePath(find.package('corrplotngrustspike')))"],
               text=True,
           ).strip())
-          target_dir = Path("prototypes/rust-rextendr/.ci-rust-target/release")
+          baseline_package = Path("prototypes/rust-rextendr/.ci-baseline-library/corrplotngrustspike")
+          optimized_target = Path("prototypes/rust-rextendr/.ci-rust-target/release")
+          baseline_target = Path("prototypes/rust-rextendr/.ci-rust-target-baseline/release")
 
           def report(label, paths):
               paths = [path for path in paths if path.is_file()]
@@ -153,10 +190,14 @@ jobs:
               for path in sorted(paths, key=lambda item: item.stat().st_size, reverse=True):
                   print(f"  {path.name}: {path.stat().st_size:,} bytes")
 
-          report("Installed package", list(package_dir.rglob("*")))
-          report("Installed native libraries", list((package_dir / "libs").rglob("*")))
-          report("Rust static library build artifacts", list(target_dir.glob("*corrplotngrustspike*")))
-          print(f"Installed package path: {package_dir}")
+          report("Baseline installed package", list(baseline_package.rglob("*")))
+          report("Baseline installed native libraries", list((baseline_package / "libs").rglob("*")))
+          report("Optimized installed package", list(optimized_package.rglob("*")))
+          report("Optimized installed native libraries", list((optimized_package / "libs").rglob("*")))
+          report("Baseline Rust static library artifacts", list(baseline_target.glob("*corrplotngrustspike*")))
+          report("Optimized Rust static library artifacts", list(optimized_target.glob("*corrplotngrustspike*")))
+          print(f"Baseline package path: {baseline_package}")
+          print(f"Optimized package path: {optimized_package}")
           PY
       - name: Build and inspect the actual R source tarball
         shell: bash
