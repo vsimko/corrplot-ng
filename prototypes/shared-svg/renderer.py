@@ -225,6 +225,15 @@ def _render_scene_svg_unchecked(scene: dict[str, Any]) -> str:
             f'font-weight="bold" fill="#222222">{html.escape(significance["annotation"])}</text>'
         )
 
+    for region in scene.get("cluster_regions", []):
+        variables = ", ".join(region["variables"])
+        parts.append(
+            f'<rect class="cluster-region" data-region-id="{html.escape(region["id"], quote=True)}" '
+            f'data-variables="{html.escape(variables, quote=True)}" '
+            f'x="{region["x"]:g}" y="{region["y"]:g}" width="{region["width"]:g}" '
+            f'height="{region["height"]:g}" fill="none" stroke="{region["color"]}" '
+            f'stroke-width="{region["line_width"]:g}" stroke-linejoin="miter" pointer-events="none"/>'
+        )
     if scene["annotation"]:
         parts.append(f'<text x="{scene["cells"][0]["x"]:g}" y="{height - 22:g}" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#333333">{html.escape(scene["annotation"])}</text>')
     for block in scene.get("figure_text", []):
