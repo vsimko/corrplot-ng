@@ -83,6 +83,7 @@ def negotiate_scene_capabilities(
             "code": "renderer.optional_feature_omitted" if may_omit else "renderer.unsupported_feature",
             "severity": "warning" if may_omit else "error",
             "renderer": renderer["id"],
+            "renderer_version": renderer["version"],
             "feature": feature,
             "message": message,
         }
