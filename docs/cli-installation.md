@@ -30,7 +30,7 @@ This keeps the installation layout deliberately small:
 | --- | --- | --- |
 | Linux | `~/.local/bin/corrplot-ng` (or `/usr/local/bin` for system-wide installs) | Embedded; none beside the binary |
 | macOS | `~/.local/bin/corrplot-ng` (or `/usr/local/bin`) | Embedded; none beside the binary |
-| Windows | `%LOCALAPPDATA%\\Programs\\corrplot-ng\\corrplot-ng.exe` | Embedded; none beside the binary |
+| Windows | `%LOCALAPPDATA%\Programs\corrplot-ng\corrplot-ng.exe` | Embedded; none beside the binary |
 
 The README, LICENSE, BUILD-INFO.txt, and RELEASE-AUDIT.json are release
 documentation/provenance files. They are not opened by the executable at
@@ -54,7 +54,7 @@ gh release download "cli-v${VERSION}" \
   --pattern "$ASSET" \
   --pattern SHA256SUMS \
   --dir "$tmp"
-(cd "$tmp" && sha256sum -c SHA256SUMS)
+(cd "$tmp" && grep "  $ASSET$" SHA256SUMS | sha256sum -c -)
 tar -xzf "$tmp/$ASSET" -C "$tmp"
 mkdir -p "$HOME/.local/bin"
 install -m 0755 "$tmp/corrplot-ng" "$HOME/.local/bin/corrplot-ng"
@@ -75,9 +75,11 @@ Download `corrplot-ng-windows-x86_64.zip` and `SHA256SUMS` from the matching
 whose filename is `corrplot-ng-windows-x86_64.zip` in `SHA256SUMS`, then:
 
 ```powershell
-$Version = "0.1.0"
 $Archive = "corrplot-ng-windows-x86_64.zip"
-$InstallDir = Join-Path $env:LOCALAPPDATA "Programs\\corrplot-ng"
+$Expected = (((Select-String -Path .\SHA256SUMS -Pattern $Archive).Line -split '\s+')[0]).ToLowerInvariant()
+$Actual = (Get-FileHash $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($Actual -ne $Expected) { throw "SHA-256 checksum mismatch" }
+$InstallDir = Join-Path $env:LOCALAPPDATA "Programs\corrplot-ng"
 $TempDir = Join-Path $env:TEMP "corrplot-ng-install"
 
 Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -87,13 +89,21 @@ Copy-Item (Join-Path $TempDir "corrplot-ng.exe") (Join-Path $InstallDir "corrplo
 & (Join-Path $InstallDir "corrplot-ng.exe") version
 ```
 
-Add `%LOCALAPPDATA%\\Programs\\corrplot-ng` to the user `PATH` once. To
+Add `%LOCALAPPDATA%\Programs\corrplot-ng` to the user `PATH` once. To
 upgrade, verify and extract the new archive, then replace
 `corrplot-ng.exe`. The executable does not need adjacent schemas or presets.
 
 ## Verify an installed binary
 
-Run these commands from a directory outside the repository checkout:
+Run these commands from a directory outside the repository checkout. The input is a labelled CSV matrix:
+
+```csv
+,alpha,beta
+alpha,1,0.5
+beta,0.5,1
+``
+
+Save it as `matrix.csv`, then run:
 
 ```sh
 corrplot-ng version
@@ -102,12 +112,14 @@ corrplot-ng capabilities
 corrplot-ng render --input matrix.csv --output correlation.svg
 ```
 
-The release CI extracts the actual platform archive into an isolated directory,
-then renders a small labelled matrix using only the packaged executable.
-The Linux artifact is also exercised in a minimal Alpine container with
-network access disabled and without Python, R, or Rust installed. This checks
-that runtime behavior does not depend on repository-relative paths or
-build-time tooling.
+The installed-binary CI builds the release executable for Linux, macOS, and
+Windows, copies it into an isolated installation prefix outside the checkout,
+and renders a small labelled matrix from a separate working directory. The
+release workflow also extracts each actual platform archive and smoke-tests the
+packaged executable. The Linux static artifact is additionally exercised in a
+minimal Alpine container with network access disabled and without Python, R,
+or Rust installed. These checks verify that runtime behavior does not depend
+on repository-relative paths or build-time tooling.
 
 ## Supported release artifacts
 
