@@ -9,6 +9,16 @@ from typing import Any
 
 CAPABILITIES_PATH = Path(__file__).with_name("renderer-capabilities.json")
 OMITTABLE_FEATURES = {"plotmath_labels", "legend", "cell_text_annotations", "significance", "confidence_intervals", "figure_text"}
+DIAGNOSTIC_PATHS = {
+    "matrix_kind": "kind",
+    "plotmath_labels": "labels.plotmath",
+    "legend": "legend",
+    "cell_text_annotations": "text_annotations",
+    "significance": "significance",
+    "confidence_intervals": "cells.confidence_interval",
+    "figure_text": "figure_text",
+    "cluster_regions": "cluster_regions",
+}
 PYTHON_SVG_CAPABILITIES = json.loads(CAPABILITIES_PATH.read_text(encoding="utf-8"))
 
 
@@ -91,8 +101,12 @@ def negotiate_scene_capabilities(
             "feature": feature,
             "message": message,
         }
-        if category == "cell_method":
-            diagnostic["path"] = "method"
+        diagnostic["path"] = (
+            "method" if category == "cell_method"
+            else DIAGNOSTIC_PATHS.get(category)
+        )
+        if diagnostic["path"] is None:
+            diagnostic.pop("path")
         diagnostics.append(diagnostic)
         if not may_omit:
             errors.append(diagnostic)
