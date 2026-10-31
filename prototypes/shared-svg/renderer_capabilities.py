@@ -74,12 +74,17 @@ def negotiate_scene_capabilities(
     errors = []
     for category, feature in unsupported:
         may_omit = mode == "permissive" and feature in optional
+        message = (
+            "the SVG renderer does not interpret R plotmath labels; use the R graphics renderer or convert the label explicitly"
+            if feature == "plotmath_labels"
+            else f"renderer {renderer['id']} does not support {category} {feature!r}"
+        )
         diagnostic = {
             "code": "renderer.optional_feature_omitted" if may_omit else "renderer.unsupported_feature",
             "severity": "warning" if may_omit else "error",
             "renderer": renderer["id"],
             "feature": feature,
-            "message": f"renderer {renderer['id']} does not support {category} {feature!r}",
+            "message": message,
         }
         diagnostics.append(diagnostic)
         if not may_omit:
