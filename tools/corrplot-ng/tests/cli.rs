@@ -435,3 +435,102 @@ fn help_documents_all_commands_and_input_format_options() {
         assert!(help.contains(option), "help output is missing {option}");
     }
 }
+
+
+#[test]
+fn publication_general_numeric_config_uses_automatic_limits_and_sequential_palette() {
+    let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(basic).unwrap();
+    let config = source
+        .replace(
+            "\"kind\": \"correlation\", \"method\": \"pearson\", \"missing\": \"preserve\"",
+            "\"kind\": \"general_numeric\", \"missing\": \"preserve\"",
+        )
+        .replace(
+            "[1.0, -0.42, 0.71],\n      [-0.42, 1.0, -0.18],\n      [0.71, -0.18, 1.0]",
+            "[2.0, 4.0, 8.0],\n      [4.0, 5.0, 6.0],\n      [8.0, 6.0, 7.0]",
+        );
+    let config_path = std::env::temp_dir().join(format!("corrplot-ng-general-auto-{}.json", std::process::id()));
+    let svg_path = std::env::temp_dir().join(format!("corrplot-ng-general-auto-{}.svg", std::process::id()));
+    fs::write(&config_path, config).unwrap();
+
+    let validated = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--config"]).arg(&config_path).output().unwrap();
+    assert!(validated.status.success(), "{}", String::from_utf8_lossy(&validated.stderr));
+
+    let rendered = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&svg_path).output().unwrap();
+    assert!(rendered.status.success(), "{}", String::from_utf8_lossy(&rendered.stderr));
+    let svg = fs::read_to_string(&svg_path).unwrap();
+    assert!(svg.contains("fill=\"#ffffe5\""), "sequential low endpoint missing");
+    assert!(svg.contains("fill=\"#662506\""), "sequential high endpoint missing");
+    fs::remove_file(config_path).ok();
+    fs::remove_file(svg_path).ok();
+}
+
+#[test]
+fn publication_general_numeric_config_honors_explicit_limits_and_rejects_outside_values() {
+    let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(basic).unwrap();
+    let general = source
+        .replace(
+            "\"kind\": \"correlation\", \"method\": \"pearson\", \"missing\": \"preserve\"",
+            "\"kind\": \"general_numeric\", \"missing\": \"preserve\", \"col_limits\": [0.0, 10.0]",
+        )
+        .replace(
+            "[1.0, -0.42, 0.71],\n      [-0.42, 1.0, -0.18],\n      [0.71, -0.18, 1.0]",
+            "[2.0, 4.0, 8.0],\n      [4.0, 5.0, 6.0],\n      [8.0, 6.0, 7.0]",
+        );
+    let valid_path = std::env::temp_dir().join(format!("corrplot-ng-general-limits-{}.json", std::process::id()));
+    fs::write(&valid_path, general.clone()).unwrap();
+    let valid = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--config"]).arg(&valid_path)
+        .args(["--format", "scene-json"]).output().unwrap();
+    assert!(valid.status.success(), "{}", String::from_utf8_lossy(&valid.stderr));
+    let scene = String::from_utf8(valid.stdout).unwrap();
+    assert!(scene.contains("\"color_limits\":[0,10]"));
+    assert!(scene.contains("\"color_mapping\":\"sequential\""));
+
+    let outside = general.replace("[0.0, 10.0]", "[3.0, 7.0]");
+    fs::write(&valid_path, outside).unwrap();
+    let invalid = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--config"]).arg(&valid_path).output().unwrap();
+    assert!(!invalid.status.success());
+    assert!(String::from_utf8_lossy(&invalid.stderr).contains("cover every observed"));
+    fs::remove_file(valid_path).ok();
+}
+
+#[test]
+fn publication_general_numeric_csv_requires_and_uses_explicit_limits() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-general-csv-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    fs::write(directory.join("matrix.csv"), ",a,b\na,2,4\nb,4,8\n").unwrap();
+    let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/publication-config-v1/examples/basic.json");
+    let source = fs::read_to_string(basic).unwrap();
+    let general = source
+        .replace(
+            "\"kind\": \"inline_matrix\",\n    \"labels\": [\"temperature\", \"humidity\", \"yield\"],\n    \"values\": [\n      [1.0, -0.42, 0.71],\n      [-0.42, 1.0, -0.18],\n      [0.71, -0.18, 1.0]\n    ]",
+            "\"kind\": \"matrix_csv\", \"path\": \"matrix.csv\", \"delimiter\": \",\" , \"header\": true, \"row_labels\": true",
+        )
+        .replace(
+            "\"kind\": \"correlation\", \"method\": \"pearson\", \"missing\": \"preserve\"",
+            "\"kind\": \"general_numeric\", \"missing\": \"preserve\", \"col_limits\": [2.0, 8.0]",
+        );
+    let config_path = directory.join("figure.json");
+    fs::write(&config_path, general.clone()).unwrap();
+    let valid = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--config"]).arg(&config_path).output().unwrap();
+    assert!(valid.status.success(), "{}", String::from_utf8_lossy(&valid.stderr));
+
+    let without_limits = general.replace(", \"col_limits\": [2.0, 8.0]", "");
+    fs::write(&config_path, without_limits).unwrap();
+    let invalid = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--config"]).arg(&config_path).output().unwrap();
+    assert!(!invalid.status.success());
+    assert!(String::from_utf8_lossy(&invalid.stderr).contains("required for CSV-backed"));
+    fs::remove_dir_all(directory).ok();
+}
