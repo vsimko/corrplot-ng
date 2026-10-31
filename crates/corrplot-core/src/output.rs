@@ -23,7 +23,7 @@ impl OutputFormat {
     }
 }
 
-/// Physical units accepted by the vector SVG output contract.
+/// Length units accepted by the vector SVG output contract.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SvgUnit {
     Pixels,
@@ -66,7 +66,7 @@ impl RgbaColor {
     };
 }
 
-/// Physical SVG page dimensions and output-specific typography/background.
+/// SVG viewport dimensions and output-specific typography/background.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SvgOptions {
     pub width: f64,
@@ -96,7 +96,7 @@ impl SvgOptions {
             || !self.height.is_finite() || self.height <= 0.0
         {
             return Err(OutputValidationError::invalid_options(
-                "SVG width and height must be finite positive physical dimensions",
+                "SVG width and height must be finite positive dimensions in the declared unit",
             ));
         }
         if self.font_family.trim().is_empty()
@@ -277,7 +277,7 @@ impl RenderOutput {
             Self::Svg(svg) if svg.is_empty() => Err(OutputValidationError::invalid_buffer(
                 "SVG output must not be empty",
             )),
-            Self::Png(png) if !png.starts_with(b"\\x89PNG\\r\\n\\x1a\\n") => {
+            Self::Png(png) if !png.starts_with(b"\x89PNG\r\n\x1a\n") => {
                 Err(OutputValidationError::invalid_buffer(
                     "PNG output must contain the PNG signature",
                 ))
@@ -405,11 +405,11 @@ mod tests {
     #[test]
     fn output_variants_report_their_declared_format() {
         assert_eq!(RenderOutput::Svg("<svg/>".into()).format(), OutputFormat::Svg);
-        assert_eq!(RenderOutput::Png(b"\\x89PNG\\r\\n\\x1a\\n".to_vec()).format(), OutputFormat::Png);
+        assert_eq!(RenderOutput::Png(b"\x89PNG\r\n\x1a\n".to_vec()).format(), OutputFormat::Png);
         assert_eq!(OutputOptions::Rgba(RasterOptions::new(2, 2)).format(), OutputFormat::Rgba);
         let requested = OutputOptions::Svg(SvgOptions::new(100.0, 100.0, SvgUnit::Millimeters));
         assert_eq!(
-            RenderOutput::Png(b"\\x89PNG\\r\\n\\x1a\\n".to_vec()).validate_for(&requested).unwrap_err().code,
+            RenderOutput::Png(b"\x89PNG\r\n\x1a\n".to_vec()).validate_for(&requested).unwrap_err().code,
             "renderer.output.format_mismatch"
         );
     }
