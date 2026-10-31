@@ -170,6 +170,8 @@ mod tests {
         store_fingerprint(&output, "abc").unwrap();
         assert!(is_fresh(&output, "abc"));
         assert!(!is_fresh(&output, "different"));
+        fs::write(&output, b"manually changed").unwrap();
+        assert!(!is_fresh(&output, "abc"), "modified output bytes must invalidate the cache");
         fs::remove_file(&output).unwrap();
         assert!(!is_fresh(&output, "abc"));
         fs::remove_dir_all(dir).ok();
