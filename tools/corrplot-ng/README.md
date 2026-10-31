@@ -184,6 +184,7 @@ corrplot-ng render --input scene.json --input-format scene-json --output importe
 cat scene.json | corrplot-ng validate --input - --input-format scene-json
 corrplot-ng presets
 corrplot-ng capabilities
+corrplot-ng render --input matrix.csv --diagnostics json
 corrplot-ng version
 ```
 
