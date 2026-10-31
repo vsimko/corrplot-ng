@@ -128,7 +128,7 @@ def _prepare_figure_text(entries: Any, width: float, default_family: str) -> lis
         if unknown:
             raise ValueError(f"figure_text[{index}] has unknown fields: {', '.join(sorted(unknown))}")
         role = entry.get("role")
-        if role not in _FIGURE_TEXT_ORDER:
+        if not isinstance(role, str) or role not in _FIGURE_TEXT_ORDER:
             raise ValueError(f"figure_text[{index}].role must be title, subtitle, caption, or footnote")
         if role in seen:
             raise ValueError(f"figure_text contains duplicate role {role!r}")
