@@ -47,8 +47,9 @@ def scene_error_diagnostic(message: str) -> Diagnostic:
         return Diagnostic("input.matrix.non_numeric", "error", "input", message, path="matrix")
     if "unsupported cell method" in lowered:
         return Diagnostic("renderer.unsupported_feature", "error", "renderer", message, path="glyph_method")
-    if "scene" in lowered or "annotation" in lowered or "significance" in lowered:
-        return Diagnostic("scene.invalid_content", "error", "scene", message)
+    if "scene" in lowered or "annotation" in lowered or "significance" in lowered or "cluster region" in lowered or "cluster_regions" in lowered:
+        path = "cluster_regions" if "cluster region" in lowered or "cluster_regions" in lowered else None
+        return Diagnostic("scene.invalid_content", "error", "scene", message, path=path)
     return Diagnostic("configuration.invalid_field", "error", "configuration", message)
 
 

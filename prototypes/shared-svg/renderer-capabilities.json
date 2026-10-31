@@ -9,7 +9,7 @@
     "row_labels": true, "column_labels": true, "plotmath_labels": false,
     "missing_cells": true, "cell_text_annotations": true, "significance": true,
     "confidence_intervals": true, "legend": false, "figure_text": true,
-    "accessible_metadata": true
+    "accessible_metadata": true, "cluster_regions": true
   },
   "negotiation_modes": ["strict", "permissive"]
 }
