@@ -1,0 +1,19 @@
+[package]
+name = "corrplot-ng-wasm"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+corrplot-core = { path = "../../crates/corrplot-core" }
+serde = { version = "=1.0.228", features = ["derive"] }
+serde-wasm-bindgen = "=0.6.5"
+wasm-bindgen = "=0.2.105"
+
+[dev-dependencies]
+wasm-bindgen-test = "=0.3.55"
