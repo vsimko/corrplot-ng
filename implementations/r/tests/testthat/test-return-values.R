@@ -1,8 +1,12 @@
 with_return_test_pdf <- function(code) {
   path <- tempfile(fileext = ".pdf")
   grDevices::pdf(path)
+  device <- grDevices::dev.cur()
   on.exit({
-    if (grDevices::dev.cur() > 1L) grDevices::dev.off()
+    open_devices <- grDevices::dev.list()
+    if (!is.null(open_devices) && device %in% open_devices) {
+      grDevices::dev.off(which = device)
+    }
     unlink(path)
   }, add = TRUE)
   force(code)
