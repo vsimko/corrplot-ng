@@ -25,19 +25,19 @@ The repository currently provides:
 - A Python scene/SVG reference prototype.
 - A standalone Rust CLI with its own native build and test workflow.
 
-The Rust toolchain is selected for the standalone CLI. The production shared-core language is deferred by [ADR 0001](adr/0001-shared-core-architecture.md). Rust/rextendr and C++/Rcpp are evaluation spikes. TypeScript, Node native bindings, browser WASM, Canvas, and other renderers are planned, not current production interfaces.
+Rust is the accepted strategic shared-core implementation in [ADR 0001](adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and disposable R/rextendr adapter use the same `crates/corrplot-core` matrix-validation operation. This does not yet constitute a complete shared visualization engine or production R migration. The remaining rollout gates are CRAN guidance and a controlled maintainer-time comparison. C++/Rcpp is only a possible R-specific fallback; TypeScript, Node bindings, browser WASM, Canvas, and other renderers remain planned.
 
 See [the current architecture](architecture.md) for implementation boundaries. See [top-level requirements](requirements.md) for product priorities; requirements are goals and are not proof that a feature is implemented.
 
 ## Documents
 
 - [Top-level requirements](requirements.md): product and engineering requirements, priorities, and acceptance checks.
-- [Current architecture](architecture.md): implemented components, versioned contracts, experimental integrations, and deferred decisions.
+- [Current architecture](architecture.md): implemented components, the selected Rust shared-core direction, versioned contracts, and remaining rollout gates.
+- [Repository layout](repository-layout.md): top-level directory ownership, contract/reference/experiment categories, and shared fixture sources of truth.
 - [ADR 0001: shared-core architecture](adr/0001-shared-core-architecture.md): Rust shared-core decision and the CLI/rextendr reuse proof.
 - [corrplot-core](../crates/corrplot-core/README.md): the dependency-free shared matrix validation library.
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, and current backend limits.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
-- [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md): decision to keep scene-v1 as the interoperability boundary and defer the production shared-core language.
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 - [Testing strategy](testing-strategy.md): current test layers, evidence limits, and CI workflows.
@@ -47,7 +47,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 
 The R package lives in [implementations/r](../implementations/r/README.md). It delegates legacy plotting to upstream `corrplot` by default and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
 
-The standalone Rust CLI lives in [tools/corrplot-ng](../tools/corrplot-ng/README.md). The Python scene/SVG prototype and language-neutral contracts live under [prototypes](../prototypes/shared-svg/README.md). Experimental Rust/rextendr and C++/Rcpp evaluation work must not be described as production backends.
+The shared Rust library lives in [crates/corrplot-core](../crates/corrplot-core/README.md), and the standalone CLI lives in [tools/corrplot-ng](../tools/corrplot-ng/README.md). The `prototypes/` tree currently groups versioned contracts, a Python reference implementation, and disposable language spikes; their different ownership and stability levels are documented in the [repository layout](repository-layout.md). Experimental Rust/rextendr and C++/Rcpp work must not be described as production R backends.
 
 ## Editing guidelines
 
