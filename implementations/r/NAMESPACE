@@ -1,4 +1,5 @@
 export(corrplot_ng)
+export(corrplot_ng_mixed)
 export(colorlegend)
 export(COL1)
 export(COL2)
