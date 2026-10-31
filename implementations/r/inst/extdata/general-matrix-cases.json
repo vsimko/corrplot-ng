@@ -154,6 +154,20 @@
   ],
   "invalid_cases": [
     {
+      "id": "all-missing",
+      "matrix": [
+        [
+          null,
+          null
+        ],
+        [
+          null,
+          null
+        ]
+      ],
+      "error": "no observed values"
+    },
+    {
       "id": "outside-explicit-limits",
       "matrix": [
         [
