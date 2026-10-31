@@ -38,7 +38,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (is.null(arg_names) || anyNA(arg_names) || any(!nzchar(arg_names)) || anyDuplicated(arg_names)) stop("The scene engine requires uniquely named arguments", call. = FALSE)
     supported <- c("annotation", "method", "type", "diag", "is.corr", "col.lim",
       "addCoef.col", "addCoefasPercent", "number.digits", "number.cex",
-      "number.font", "tl.pos", "tl.offset", "tl.srt", "na.label", "na.label.col")
+      "number.font", "tl.pos", "tl.offset", "tl.srt", "na.label", "na.label.col", "figure.text")
     unsupported <- setdiff(arg_names, supported)
     if ("method" %in% arg_names) {
       requested_method <- args$method
@@ -57,7 +57,7 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     addCoef.col = NULL, addCoefasPercent = FALSE, number.digits = NULL,
     number.cex = 1, number.font = 2,
     tl.pos = NULL, tl.offset = 0.4, tl.srt = 90,
-    na.label = "?", na.label.col = "black")
+    na.label = "?", na.label.col = "black", figure.text = list())
   options <- utils::modifyList(defaults, args)
   .corrplot_ng_build_scene_v1(corr, options)
 }
@@ -123,6 +123,80 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   }
 }
 
+
+.corrplot_ng_prepare_figure_text <- function(figure_text, width, matrix_bottom) {
+  roles <- c("title", "subtitle", "caption", "footnote")
+  if (!is.list(figure_text) ||
+      (length(figure_text) > 0L &&
+        (is.null(names(figure_text)) || anyNA(names(figure_text)) ||
+          any(!nzchar(names(figure_text))) || anyDuplicated(names(figure_text))))) {
+    stop("figure.text must be a named list of title, subtitle, caption, and footnote roles", call. = FALSE)
+  }
+  unknown <- setdiff(names(figure_text), roles)
+  if (length(unknown)) {
+    stop("figure.text contains unsupported roles: ", paste(unknown, collapse = ", "), call. = FALSE)
+  }
+  defaults <- list(
+    title = list(font_size = 20, font_weight = "bold", alignment = "center"),
+    subtitle = list(font_size = 15, font_weight = "normal", alignment = "center"),
+    caption = list(font_size = 12, font_weight = "normal", alignment = "left"),
+    footnote = list(font_size = 10, font_weight = "normal", alignment = "left")
+  )
+  blocks <- list()
+  top_height <- 0
+  bottom_height <- 0
+  for (role in roles) {
+    raw <- figure_text[[role]]
+    if (is.null(raw)) next
+    options <- if (is.character(raw) && length(raw) == 1L) list(text = raw) else raw
+    if (!is.list(options) || is.null(options$text) ||
+        length(setdiff(names(options), c("text", "alignment", "font_size", "font_weight")))) {
+      stop("figure.text.", role, " must be a string or a list with text, alignment, font_size, and font_weight", call. = FALSE)
+    }
+    if (!is.character(options$text) || length(options$text) != 1L || is.na(options$text)) {
+      stop("figure.text.", role, ".text must be one non-missing character string", call. = FALSE)
+    }
+    if (!nzchar(options$text)) next
+    defaults_role <- defaults[[role]]
+    font_size <- if (is.null(options$font_size)) defaults_role$font_size else options$font_size
+    if (!is.numeric(font_size) || length(font_size) != 1L || is.na(font_size) ||
+        !is.finite(font_size) || font_size < 6 || font_size > 48) {
+      stop("figure.text.", role, ".font_size must be between 6 and 48", call. = FALSE)
+    }
+    font_weight <- if (is.null(options$font_weight)) defaults_role$font_weight else options$font_weight
+    if (!is.character(font_weight) || length(font_weight) != 1L ||
+        is.na(font_weight) || !font_weight %in% c("normal", "bold")) {
+      stop("figure.text.", role, ".font_weight must be normal or bold", call. = FALSE)
+    }
+    alignment <- if (is.null(options$alignment)) defaults_role$alignment else options$alignment
+    if (!is.character(alignment) || length(alignment) != 1L ||
+        is.na(alignment) || !alignment %in% c("left", "center", "right")) {
+      stop("figure.text.", role, ".alignment must be left, center, or right", call. = FALSE)
+    }
+    chars <- max(1L, floor((width - 48) / (font_size * 0.6)))
+    paragraphs <- strsplit(options$text, "\n", fixed = TRUE)[[1L]]
+    lines <- unlist(lapply(paragraphs, function(paragraph) {
+      wrapped <- strwrap(paragraph, width = chars, simplify = FALSE,
+        break.long.words = TRUE, break.on.hyphens = FALSE)[[1L]]
+      if (!length(wrapped)) "" else wrapped
+    }), use.names = FALSE)
+    line_height <- font_size * 1.2
+    block_height <- length(lines) * line_height + 4
+    is_top <- role %in% c("title", "subtitle")
+    offset <- if (is_top) top_height else bottom_height
+    x <- if (alignment == "center") width / 2 else if (alignment == "left") 24 else width - 24
+    y <- if (is_top) 24 + offset else matrix_bottom + 24 + top_height + offset
+    blocks[[length(blocks) + 1L]] <- list(
+      role = role, text = options$text, lines = as.list(lines), x = x, y = y,
+      alignment = alignment, font_size = as.numeric(font_size),
+      font_weight = font_weight, line_height = line_height
+    )
+    if (is_top) top_height <- top_height + block_height else bottom_height <- bottom_height + block_height
+  }
+  blocks <- blocks[order(match(vapply(blocks, function(item) item$role, character(1)), roles))]
+  list(items = blocks, top_height = top_height, bottom_height = bottom_height)
+}
+
 .corrplot_ng_build_scene_v1 <- function(corr, options = list()) {
   if (!is.matrix(corr) || !is.numeric(corr)) stop("corr must be a numeric matrix for engine = 'scene'", call. = FALSE)
   n <- nrow(corr)
@@ -183,6 +257,12 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   cell_size <- 84
   left_margin <- 104
   top_margin <- 76
+  figure_width <- left_margin + n * cell_size + 24
+  figure_text_layout <- .corrplot_ng_prepare_figure_text(
+    options$figure.text, figure_width, top_margin + n * cell_size
+  )
+  top_margin <- top_margin + figure_text_layout$top_height
+  figure_height <- top_margin + n * cell_size + 64 + figure_text_layout$bottom_height
   cells <- vector("list", n * n)
   text_annotations <- list()
   index <- 1L
@@ -293,11 +373,12 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
       color_limits = scale$limits, color_mapping = scale$mapping,
       palette = scale$palette_name, normalization = scale$normalization,
       has_observed_values = has_observed_values),
-    width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
+    width = figure_width, height = figure_height,
     labels = label_items, cells = cells, annotation = annotation,
     glyph_method = method, text_annotations = text_annotations,
     title = "", description = "",
     style = list(positive_color = "#2166ac", negative_color = "#b2182b", zero_color = "#bdbdbd", missing_fill = "#f2f2f2", grid_color = "#e0e0e0"))
+  if (length(figure_text_layout$items)) scene$figure_text <- figure_text_layout$items
   class(scene) <- c("corrplot_ng_scene", "list")
   scene
 }
