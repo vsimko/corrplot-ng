@@ -81,3 +81,20 @@ test_that("normalized-matrix JSON input round-trips with null and zero distinct"
   expect_identical(normalized$source$format, "json")
   expect_equal(normalized$source_indices, list(0, 1))
 })
+
+test_that("R object and CSV file adapters produce equivalent matrix payloads", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(",A,B,C", "A,1,,0", "B,,1,-0.5", "C,0,-0.5,1"), path)
+  from_file <- corrplot_ng_normalize_file(path)
+
+  from_r <- matrix(
+    c(1, NA_real_, 0, NA_real_, 1, -0.5, 0, -0.5, 1),
+    nrow = 3, byrow = TRUE,
+    dimnames = list(c("A", "B", "C"), c("A", "B", "C"))
+  )
+  from_r <- corrplot_ng_normalize_matrix(from_r)
+
+  expect_identical(from_file$labels, from_r$labels)
+  expect_identical(from_file$values, from_r$values)
+  expect_identical(from_file$source_indices, from_r$source_indices)
+})
