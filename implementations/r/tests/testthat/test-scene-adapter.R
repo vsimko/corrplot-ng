@@ -443,6 +443,6 @@ test_that("figure.text validates role names, alignment, typography, and values",
   expect_error(corrplot_ng(corr, engine = "scene",
     figure.text = list(title = list(text = "x", font_weight = "heavy"))), "font_weight")
   expect_error(corrplot_ng(corr, engine = "scene",
-    figure.text = list(title = 123)), "must be a list")
+    figure.text = list(title = 123)), "must be a string or a list")
 })
 
