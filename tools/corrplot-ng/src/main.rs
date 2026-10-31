@@ -4,13 +4,16 @@ use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::process;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+mod cache;
 mod publication;
 mod wizard;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const RENDERER_CAPABILITIES: &str = include_str!("../renderer-capabilities.json");
+/// Bump when rendering semantics change without a package-version change.
+const RENDERER_CACHE_VERSION: &str = "1";
 const CELL: f64 = 84.0;
 const LEFT: f64 = 104.0;
 const TOP: f64 = 76.0;
@@ -40,6 +43,7 @@ struct Options {
     kind: Kind,
     method: String,
     title: String,
+    incremental: bool,
 }
 
 fn usage() -> &'static str {
@@ -132,10 +136,16 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     let mut kind = Kind::Correlation;
     let mut method = "circle".to_string();
     let mut title = "corrplot-ng".to_string();
+    let mut incremental = false;
     let mut i = 2;
     while i < args.len() {
         let arg = args[i].as_str();
         if arg == "-h" || arg == "--help" { return Err(usage().to_string()); }
+        if arg == "--incremental" {
+            incremental = true;
+            i += 1;
+            continue;
+        }
         if i + 1 >= args.len() { return Err(format!("missing value for {arg}\n\n{}", usage())); }
         let value = args[i + 1].clone();
         match arg {
@@ -173,7 +183,7 @@ fn parse_args(args: &[String]) -> Result<Options, String> {
     }
     Ok(Options {
         input: input.unwrap_or_default(), config,
-        output, format, input_format, kind, method, title,
+        output, format, input_format, kind, method, title, incremental,
     })
 }
 
@@ -440,7 +450,9 @@ fn write_output(path: Option<&str>, content: &str) -> Result<(), String> {
             let mut stdout = io::stdout().lock();
             stdout.write_all(content.as_bytes()).map_err(|e| format!("cannot write stdout: {e}"))
         }
-        Some(path) => fs::write(path, content).map_err(|e| format!("cannot write '{path}': {e}")),
+        Some(path) => cache::write_atomic(Path::new(path), content.as_bytes())
+            .map(|_| ())
+            .map_err(|error| format!("cannot write '{path}': {error}")),
     }
 }
 
@@ -472,7 +484,34 @@ fn run() -> Result<(), String> {
         "render-batch" => run_batch(&args[2..], diagnostics_json)?,
         "render" | "validate" | "inspect" => {
             let opts = parse_args(&args)?;
+            if opts.incremental && args[1] != "render" {
+                return Err("--incremental is available only for render".into());
+            }
             if let Some(config_path) = opts.config.as_deref() {
+                let destination = match opts.format {
+                    Format::Svg => opts.output.as_deref(),
+                    Format::SceneJson | Format::NormalizedJson => opts.output.as_deref(),
+                };
+                let incremental_key = if opts.incremental {
+                    let destination = destination.filter(|path| *path != "-")
+                        .ok_or("--incremental requires a file output path via --output or config output.path")?;
+                    let mut dependencies = vec![PathBuf::from(config_path)];
+                    dependencies.extend(publication::Publication::input_files(config_path)?);
+                    let key = cache::fingerprint(
+                        &dependencies,
+                        &["publication-config-v1", VERSION, RENDERER_CACHE_VERSION,
+                          match opts.format { Format::Svg => "svg", Format::SceneJson => "scene-json", Format::NormalizedJson => "normalized-json" },
+                          &opts.title],
+                    )?;
+                    let output_path = PathBuf::from(destination);
+                    if cache::is_fresh(&output_path, &key) {
+                        eprintln!("unchanged: {}", output_path.display());
+                        return Ok(());
+                    }
+                    Some((output_path, key))
+                } else {
+                    None
+                };
                 let publication = publication::Publication::load(config_path)?;
                 match args[1].as_str() {
                     "validate" => println!("valid: publication-config v1; {} x {} {} matrix; ordering={}; display={}",
@@ -498,13 +537,46 @@ fn run() -> Result<(), String> {
                             Format::Svg => opts.output.as_deref().or(Some(publication.output.as_str())),
                             Format::SceneJson | Format::NormalizedJson => opts.output.as_deref(),
                         };
+                        if opts.incremental && destination.is_none() {
+                            return Err("--incremental requires a file output path via --output or config output.path".into());
+                        }
                         write_output(destination, &content)?;
+                        if let Some((output_path, key)) = incremental_key.as_ref() {
+                            cache::store_fingerprint(output_path, key)?;
+                        }
                     }
                     _ => unreachable!(),
                 }
                 return Ok(());
             }
             if opts.input.is_empty() { return Err(format!("{} requires --input PATH or --config PATH", args[1])); }
+            if opts.incremental && args[1] != "render" {
+                return Err("--incremental is available only for render".into());
+            }
+            let incremental_key = if opts.incremental {
+                if opts.input == "-" {
+                    return Err("--incremental requires a file input; stdin cannot be cached".into());
+                }
+                let destination = opts.output.as_deref().filter(|path| *path != "-")
+                    .ok_or("--incremental requires a file output path via --output")?;
+                let dependencies = vec![PathBuf::from(&opts.input)];
+                let key = cache::fingerprint(
+                    &dependencies,
+                    &["matrix-input", VERSION, RENDERER_CACHE_VERSION,
+                      match opts.format { Format::Svg => "svg", Format::SceneJson => "scene-json", Format::NormalizedJson => "normalized-json" },
+                      match opts.input_format { InputFormat::Auto => "auto", InputFormat::Csv => "csv", InputFormat::Tsv => "tsv", InputFormat::SceneJson => "scene-json" },
+                      match opts.kind { Kind::Correlation => "correlation", Kind::General => "general" },
+                      &opts.method, &opts.title],
+                )?;
+                let output_path = PathBuf::from(destination);
+                if cache::is_fresh(&output_path, &key) {
+                    eprintln!("unchanged: {}", output_path.display());
+                    return Ok(());
+                }
+                Some((output_path, key))
+            } else {
+                None
+            };
             let source = read_input(&opts.input)?;
             let input_format = detect_input_format(&opts.input, &source, opts.input_format);
             let (matrix, kind) = match input_format {
@@ -538,6 +610,9 @@ fn run() -> Result<(), String> {
                         Format::NormalizedJson => normalized_matrix_json(&matrix, normalized_source_format(input_format)),
                     };
                     write_output(opts.output.as_deref(), &output)?;
+                    if let Some((output_path, key)) = incremental_key.as_ref() {
+                        cache::store_fingerprint(output_path, key)?;
+                    }
                 }
                 _ => unreachable!(),
             }
@@ -548,7 +623,7 @@ fn run() -> Result<(), String> {
 }
 
 
-fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, Vec<(String, String)>), String> {
+fn process_batch(manifest_path: &str, output_dir: &str, incremental: bool) -> Result<(Vec<String>, Vec<(String, String)>), String> {
     let manifest = Path::new(manifest_path);
     let base = manifest.parent().unwrap_or_else(|| Path::new("."));
     let source = fs::read_to_string(manifest_path)
@@ -575,10 +650,22 @@ fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, 
         let output_path = Path::new(output_dir).join(format!("{item_index:03}-{safe_stem}.svg"));
         let result = (|| {
             let config_string = config_path.to_string_lossy();
+            let mut dependencies = vec![config_path.clone()];
+            dependencies.extend(publication::Publication::input_files(&config_string)?);
+            let key = cache::fingerprint(
+                &dependencies,
+                &["publication-config-v1", VERSION, RENDERER_CACHE_VERSION, "svg", stem],
+            )?;
+            if incremental && cache::is_fresh(&output_path, &key) {
+                return Ok::<(), String>(());
+            }
             let publication = publication::Publication::load(&config_string)?;
             let svg = publication.svg(stem);
-            fs::write(&output_path, svg)
+            cache::write_atomic(&output_path, svg.as_bytes())
                 .map_err(|error| format!("cannot write output '{}': {error}", output_path.display()))?;
+            if incremental {
+                cache::store_fingerprint(&output_path, &key)?;
+            }
             Ok::<(), String>(())
         })();
 
@@ -609,8 +696,14 @@ fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, 
 fn run_batch(args: &[String], diagnostics_json: bool) -> Result<(), String> {
     let mut manifest = None;
     let mut output_dir = None;
+    let mut incremental = false;
     let mut index = 0;
     while index < args.len() {
+        if args[index] == "--incremental" {
+            incremental = true;
+            index += 1;
+            continue;
+        }
         match args[index].as_str() {
             "--manifest" => {
                 index += 1;
@@ -626,7 +719,7 @@ fn run_batch(args: &[String], diagnostics_json: bool) -> Result<(), String> {
     }
     let manifest = manifest.ok_or("render-batch requires --manifest PATH")?;
     let output_dir = output_dir.ok_or("render-batch requires --output-dir DIR")?;
-    let (successes, diagnostics) = process_batch(&manifest, &output_dir)?;
+    let (successes, diagnostics) = process_batch(&manifest, &output_dir, incremental)?;
 
     if diagnostics_json {
         println!(
