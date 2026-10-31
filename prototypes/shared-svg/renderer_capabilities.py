@@ -8,6 +8,7 @@ from typing import Any
 
 
 CAPABILITIES_PATH = Path(__file__).with_name("renderer-capabilities.json")
+OMITTABLE_FEATURES = {"plotmath_labels", "legend", "cell_text_annotations", "significance", "confidence_intervals", "figure_text"}
 PYTHON_SVG_CAPABILITIES = json.loads(CAPABILITIES_PATH.read_text(encoding="utf-8"))
 
 
@@ -73,7 +74,7 @@ def negotiate_scene_capabilities(
     diagnostics = []
     errors = []
     for category, feature in unsupported:
-        may_omit = mode == "permissive" and feature in optional
+        may_omit = mode == "permissive" and feature in optional and (feature in OMITTABLE_FEATURES or category == "cell_method")
         message = (
             "the SVG renderer does not interpret R plotmath labels; use the R graphics renderer or convert the label explicitly"
             if feature == "plotmath_labels"
@@ -127,6 +128,10 @@ def render_scene_svg_with_diagnostics(
                 cell.pop("confidence_interval", None)
         elif feature == "figure_text":
             prepared.pop("figure_text", None)
+        elif feature in {cell.get("encoding", {}).get("kind") for cell in prepared.get("cells", [])}:
+            for cell in prepared.get("cells", []):
+                if cell.get("encoding", {}).get("kind") == feature:
+                    cell["visible"] = False
 
     from renderer import _render_scene_svg_unchecked
     return _render_scene_svg_unchecked(prepared), diagnostics
