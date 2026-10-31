@@ -8,6 +8,7 @@ mod publication;
 mod wizard;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const RENDERER_CAPABILITIES: &str = include_str!("../renderer-capabilities.json");
 const CELL: f64 = 84.0;
 const LEFT: f64 = 104.0;
 const TOP: f64 = 76.0;
@@ -51,6 +52,7 @@ COMMANDS:
   validate   Validate a labelled matrix without rendering
   inspect    Print detected matrix metadata
   presets    List built-in rendering presets
+  capabilities Print machine-readable renderer capabilities
   version    Print version and build information
   help       Show this help
 
@@ -432,6 +434,7 @@ fn run() -> Result<(), String> {
         "init" => wizard::run(&args[2..])?,
         "version" => println!("corrplot-ng {VERSION} (Rust {})", env!("CARGO_PKG_VERSION")),
         "presets" => println!("default\tCircle glyphs with sign-based colors\nnumber\tNumeric values in cells"),
+        "capabilities" => print!("{RENDERER_CAPABILITIES}"),
         "render" | "validate" | "inspect" => {
             let opts = parse_args(&args)?;
             if let Some(config_path) = opts.config.as_deref() {
@@ -515,6 +518,13 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n";
+
+    #[test]
+    fn exposes_machine_readable_renderer_capabilities() {
+        assert!(RENDERER_CAPABILITIES.contains("\"renderer\""));
+        assert!(RENDERER_CAPABILITIES.contains("\"cell_methods\""));
+        assert!(RENDERER_CAPABILITIES.contains("\"circle\""));
+    }
 
     #[test]
     fn parses_square_correlation_matrix() {

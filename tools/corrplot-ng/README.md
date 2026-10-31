@@ -183,6 +183,7 @@ cat matrix.csv | corrplot-ng render --input - > figure.svg
 corrplot-ng render --input scene.json --input-format scene-json --output imported.svg
 cat scene.json | corrplot-ng validate --input - --input-format scene-json
 corrplot-ng presets
+corrplot-ng capabilities
 corrplot-ng version
 ```
 

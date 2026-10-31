@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://corrplot-ng.invalid/schema/renderer-capabilities-v1.schema.json",
+  "title": "corrplot-ng renderer capabilities v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["capability_schema_version", "renderer", "scene_schema_versions", "output_formats", "matrix_kinds", "cell_methods", "features", "negotiation_modes"],
+  "properties": {
+    "capability_schema_version": {"const": 1},
+    "renderer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "scene_schema_versions": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+    "output_formats": {"type": "array", "uniqueItems": true, "items": {"enum": ["svg", "png", "rgba", "scene-json", "normalized-json"]}},
+    "matrix_kinds": {"type": "array", "uniqueItems": true, "items": {"enum": ["correlation_plot", "general_matrix_plot"]}},
+    "cell_methods": {"type": "array", "uniqueItems": true, "items": {"enum": ["circle", "square", "ellipse", "number", "shade", "color", "pie"]}},
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row_labels", "column_labels", "plotmath_labels", "missing_cells", "cell_text_annotations", "significance", "confidence_intervals", "legend", "figure_text", "accessible_metadata"],
+      "properties": {
+        "row_labels": {"type": "boolean"},
+        "column_labels": {"type": "boolean"},
+        "plotmath_labels": {"type": "boolean"},
+        "missing_cells": {"type": "boolean"},
+        "cell_text_annotations": {"type": "boolean"},
+        "significance": {"type": "boolean"},
+        "confidence_intervals": {"type": "boolean"},
+        "legend": {"type": "boolean"},
+        "figure_text": {"type": "boolean"},
+        "accessible_metadata": {"type": "boolean"}
+      }
+    },
+    "negotiation_modes": {"type": "array", "uniqueItems": true, "minItems": 1, "items": {"enum": ["strict", "permissive"]}}
+  }
+}
