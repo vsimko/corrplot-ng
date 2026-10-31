@@ -19,7 +19,7 @@ test_that("normalization errors expose stable diagnostic-v1 fields", {
 })
 
 test_that("non-finite matrix diagnostics use zero-based cell coordinates", {
-  x <- matrix(c(1, Inf, Inf, 1), nrow = 2)
+  x <- matrix(c(1, 1, Inf, 1), nrow = 2, byrow = TRUE)
   error <- tryCatch(
     corrplot_ng_normalize_matrix(x),
     corrplot_ng_error = function(condition) condition
