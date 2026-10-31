@@ -1311,7 +1311,7 @@ impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
 
     fn render(
         &self,
-        input: &PublicationRenderInput<'_>,
+        input: &PublicationRenderInput<'a>,
         options: &OutputOptions,
     ) -> Result<RenderOutput, Self::Error> {
         options.validate().map_err(|error| error.to_string())?;
