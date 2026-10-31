@@ -167,8 +167,7 @@
     second <- .corrplot_ng_lookup_named_cell(namesMat[i, 3:4], positions, i)
     columns <- sort(as.integer(c(first[["x"]], second[["x"]])))
     rows <- sort(as.integer(n - c(first[["y"]], second[["y"]]) + 1L))
-    if (identical(columns, rows) && columns[[2L]] - columns[[1L]] + 1L ==
-        length(seq.int(columns[[1L]], columns[[2L]]))) {
+    if (identical(columns, rows)) {
       requests <- c(requests, .corrplot_ng_region_inputs(
         starts = columns[[1L]], ends = columns[[2L]],
         labels = matrix_names, source_indices = seq_len(n),
@@ -253,18 +252,7 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
   invisible(corrRes)
 }
 
-#' Add rectangles for hierarchical clusters
-#'
-#' Clusters the input matrix using hclust(as.dist(1 - corr)) and draws one
-#' rectangle for each cut cluster in dendrogram leaf order.
-#'
-#' @param corr Numeric square correlation matrix.
-#' @param k Number of clusters to draw.
-#' @param col R graphics color used for the border.
-#' @param lwd Border line width, between 0.1 and 12.
-#' @param method Hierarchical clustering method supported by corrplot 0.95.
-#' @return Invisibly returns NULL, matching the legacy drawing helper.
-#' @export
+# Resolve hclust cuts into contiguous leaf-order region requests.
 .corrplot_ng_hclust_region_data <- function(
     corr, k, col, lwd, method) {
   if (!is.matrix(corr) || !is.numeric(corr) || nrow(corr) < 2L ||
