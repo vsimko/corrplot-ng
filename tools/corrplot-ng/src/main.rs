@@ -657,6 +657,7 @@ fn process_batch(manifest_path: &str, output_dir: &str, incremental: bool) -> Re
                 &["publication-config-v1", VERSION, RENDERER_CACHE_VERSION, "svg", stem],
             )?;
             if incremental && cache::is_fresh(&output_path, &key) {
+                eprintln!("unchanged: {}", output_path.display());
                 return Ok::<(), String>(());
             }
             let publication = publication::Publication::load(&config_string)?;
