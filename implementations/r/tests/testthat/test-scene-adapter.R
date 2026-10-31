@@ -398,3 +398,51 @@ test_that("missing label options reject invalid values", {
   expect_error(corrplot_ng(diag(2), engine = "scene", na.label.col = "not-a-color"),
     "valid R color")
 })
+
+test_that("figure.text roles are semantic, ordered, and expand scene layout", {
+  corr <- diag(2)
+  dimnames(corr) <- list(c("A", "B"), c("A", "B"))
+  scene <- corrplot_ng(corr, engine = "scene", figure.text = list(
+    title = list(text = "Visible title & scope", font_size = 22),
+    subtitle = "Subtitle\nwith Δ",
+    caption = list(text = "Caption <safe>", alignment = "left"),
+    footnote = list(text = "Source note", font_size = 9)
+  ))
+
+  expect_identical(vapply(scene$figure_text, function(item) item$role, character(1)),
+    c("title", "subtitle", "caption", "footnote"))
+  expect_identical(scene$figure_text[[1]]$text, "Visible title & scope")
+  expect_identical(scene$figure_text[[1]]$font_size, 22)
+  expect_identical(scene$figure_text[[1]]$font_weight, "bold")
+  expect_true(scene$figure_text[[1]]$y < scene$figure_text[[2]]$y)
+  expect_true(scene$figure_text[[2]]$y < scene$labels[[1]]$column_y)
+  expect_true(scene$figure_text[[3]]$y > max(vapply(scene$cells, function(cell) cell$y + cell$size, numeric(1))))
+  expect_gt(scene$height, 76 + 2 * 84 + 64)
+  expect_identical(scene$title, "")
+  expect_identical(scene$description, "")
+})
+
+test_that("figure.text wraps long content and preserves explicit newlines", {
+  corr <- diag(2)
+  long_caption <- paste(rep("A long publication caption with Unicode Δ", 8), collapse = " ")
+  scene <- corrplot_ng(corr, engine = "scene", figure.text = list(
+    caption = long_caption, footnote = "Line one\nLine two"
+  ))
+  expect_gt(length(scene$figure_text[[1]]$lines), 1L)
+  expect_identical(scene$figure_text[[2]]$lines, list("Line one", "Line two"))
+})
+
+test_that("figure.text validates role names, alignment, typography, and values", {
+  corr <- diag(1)
+  expect_error(corrplot_ng(corr, engine = "scene",
+    figure.text = list(unknown = "x")), "unsupported roles")
+  expect_error(corrplot_ng(corr, engine = "scene",
+    figure.text = list(title = list(text = "x", alignment = "diagonal"))), "alignment")
+  expect_error(corrplot_ng(corr, engine = "scene",
+    figure.text = list(title = list(text = "x", font_size = 60))), "font_size")
+  expect_error(corrplot_ng(corr, engine = "scene",
+    figure.text = list(title = list(text = "x", font_weight = "heavy"))), "font_weight")
+  expect_error(corrplot_ng(corr, engine = "scene",
+    figure.text = list(title = 123)), "must be a list")
+})
+
