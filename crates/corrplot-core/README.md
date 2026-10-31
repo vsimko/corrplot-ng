@@ -1,7 +1,6 @@
 # corrplot-core
 
-This internal Rust library is the first shared compiled operation used by
-both the native CLI and the rextendr R-binding spike.
+This internal Rust library owns the reusable matrix-validation and typed-scene rendering operations used by the native CLI, the disposable rextendr R-binding spike, and the experimental Node-API adapter.
 
 ## API boundary
 
@@ -12,13 +11,14 @@ square dimensions, unique labels, finite observed values, and (for
 correlation matrices) range, symmetry, and unit diagonal.
 
 Errors expose stable diagnostic codes and optional zero-based row/column
-coordinates. The crate does not depend on R, extendr, CLI parsing, JSON, or
-any third-party Cargo package. Adapters own parsing and serialization and
-translate R NA to None at the boundary.
+coordinates. The crate does not depend on R, extendr, Node.js, CLI parsing, JSON, or
+runtime-specific host APIs. Adapters own parsing and serialization and
+translate R NA to None at the boundary. Renderer-neutral scene types and
+shared SVG/RGBA rendering algorithms live here; JavaScript, CLI, R, and
+browser-specific package or host integration remain in their adapters.
 
-This is an internal integration proof, not yet the complete production
-visualization engine. Keep renderer and language-specific behavior outside
-this crate.
+The core is still incomplete: it does not yet provide the scene-v1 parser
+or matrix-to-scene builder, and PNG encoding is not implemented.
 
 
 ## Portable targets
