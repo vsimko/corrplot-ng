@@ -1,6 +1,14 @@
 name: Performance benchmarks
 
 on:
+  pull_request:
+    paths:
+      - "benchmarks/**"
+      - "prototypes/shared-svg/**"
+      - "prototypes/cpp-rcpp/**"
+      - "prototypes/rust-rextendr/**"
+      - "docs/scene-v1-cross-language.md"
+      - ".github/workflows/cross-language-benchmarks.yml"
   workflow_dispatch:
     inputs:
       include_stress:
@@ -100,6 +108,8 @@ jobs:
       - name: Install Rust/rextendr candidate
         shell: bash
         run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+      - name: Verify valid parity and invalid-input rejection
+        run: Rscript benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json
       - name: Benchmark Pure R, C++/Rcpp and Rust/rextendr on regular fixtures
         run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
       - name: Upload regular cross-language results
@@ -129,7 +139,7 @@ jobs:
 
   package-smoke:
     name: Build and test native packages (${{ matrix.os }})
-    if: inputs.package_smoke
+    if: github.event_name == 'pull_request' || inputs.package_smoke
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
