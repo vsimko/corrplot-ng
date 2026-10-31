@@ -14,6 +14,25 @@ corrplot_ng() exposes an explicit engine selector:
 
 The scene selector is intentionally explicit. It avoids guessing whether a call can be translated and makes the returned value's type predictable.
 
+## Graphics device ownership and lifecycle
+
+The legacy route forwards plotting arguments, including `add`, directly to
+`corrplot::corrplot()`. The active device and any existing plot window are
+owned by the caller. `add = TRUE` composes into the current plot coordinates;
+the adapter does not open, select, or close devices. `add = FALSE` starts a
+new plot on the current device, not a new device.
+
+The upstream corrplot implementation temporarily sets `par(mar, bg)` and
+restores those values with `on.exit()`, including when drawing raises an
+error. The adapter deliberately does not restore every `par()` value:
+restoring `usr`/plot-window state would break the existing coordinates needed
+for `add = TRUE`. Device closure remains the caller's responsibility.
+
+The R package regression suite covers successful plotting, `add = TRUE`
+composition, restoration after a rendering error, unchanged active-device
+identity, and the scene engine's no-device-side-effect guarantee. See
+`implementations/r/tests/testthat/test-graphics-device.R`.
+
 ## Standalone color legend helper
 
 The R package exports `colorlegend()` as an independently callable base-graphics helper, matching the formal arguments and defaults from corrplot 0.95. It draws on the active graphics device and supports vertical and horizontal bars, normalized tick positions, automatic or explicit tick spans, optional labels, and vertical label alignment. Additional graphical arguments are forwarded to `graphics::text()`.
