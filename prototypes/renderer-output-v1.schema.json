@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://corrplot-ng.invalid/schema/renderer-output-v1.schema.json",
+  "title": "corrplot-ng renderer output request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "format", "size", "background", "pixel_format", "alpha_mode", "negotiation", "required_features", "optional_features"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "format": { "enum": ["svg", "png", "rgba"] },
+    "size": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "scene_units" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "width", "height", "unit"],
+          "properties": {
+            "kind": { "const": "physical" },
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 },
+            "unit": { "enum": ["mm", "in"] },
+            "dpi": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "width", "height"],
+          "properties": {
+            "kind": { "const": "pixels" },
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "background": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "transparent" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "rgba"],
+          "properties": {
+            "kind": { "const": "color" },
+            "rgba": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+            }
+          }
+        }
+      ]
+    },
+    "pixel_format": { "const": "rgba8" },
+    "alpha_mode": { "enum": ["opaque", "straight", "premultiplied"] },
+    "negotiation": { "enum": ["strict", "permissive"] },
+    "required_features": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/feature" }
+    },
+    "optional_features": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/feature" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "format": { "enum": ["png", "rgba"] } }, "required": ["format"] },
+      "then": {
+        "properties": {
+          "size": {
+            "oneOf": [
+              { "type": "object", "required": ["kind"], "properties": { "kind": { "const": "pixels" } } },
+              { "type": "object", "required": ["kind", "dpi"], "properties": { "kind": { "const": "physical" }, "dpi": { "type": "number", "exclusiveMinimum": 0 } } }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "feature": {
+      "enum": [
+        "row_labels", "column_labels", "plotmath_labels", "missing_cells",
+        "cell_text_annotations", "significance", "confidence_intervals",
+        "legend", "figure_text", "accessible_metadata", "cluster_regions"
+      ]
+    }
+  }
+}
