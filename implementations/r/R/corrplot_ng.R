@@ -285,11 +285,13 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     if (!is.null(source)) item$plotmath <- list(prefix = prefix, source = source)
     item
   })
-  has_observed_values <- if (is.null(scale$has_observed_values)) TRUE else scale$has_observed_values\n  scene <- list(schema_version = 1L,
+  has_observed_values <- if (is.null(scale$has_observed_values)) TRUE else scale$has_observed_values\n  has_observed_values <- if (is.null(scale$has_observed_values)) TRUE else scale$has_observed_values
+  scene <- list(schema_version = 1L,
     kind = if (options$is.corr) "correlation_plot" else "general_matrix_plot",
     matrix_semantics = list(mode = if (options$is.corr) "correlation" else "general_numeric",
       color_limits = scale$limits, color_mapping = scale$mapping,
-      palette = scale$palette_name, normalization = scale$normalization),
+      palette = scale$palette_name, normalization = scale$normalization,
+      has_observed_values = has_observed_values),
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,
     glyph_method = method, text_annotations = text_annotations,
