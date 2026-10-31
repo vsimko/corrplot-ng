@@ -85,6 +85,8 @@ jobs:
             any::jsonlite
             any::rextendr
             any::usethis
+      - name: Test Python scene-v1 invalid-input handling
+        run: python -m unittest discover -s benchmarks -p 'test_scene_v1_input_errors.py' -v
       - name: Export regular shared fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
       - name: Benchmark Python reference on regular fixtures
