@@ -57,7 +57,7 @@ flowchart TB
     SC -. future renderer .-> RENDER[Raster / other output adapters]
 ```
 
-Solid edges represent current implementation paths or contract use. Dashed edges represent experiments, future consumers, or planned work; they must not be read as shipped production capabilities. The shared Rust crate currently provides matrix validation; it does not yet implement all scene construction or rendering semantics.
+Solid edges represent current implementation paths or contract use. Dashed edges represent experiments, future consumers, or planned work; they must not be read as shipped production capabilities. The shared Rust crate currently provides matrix validation plus a typed renderer scene with direct SVG and RGBA backends. It does not yet provide the complete scene-v1 parser/builder or all publication semantics.
 
 ## Contracts: stable boundaries, not a shared runtime
 
@@ -103,7 +103,7 @@ The following capabilities are tracked as future work, not as current shipped ar
 - Portable reusable Rust core for native and WebAssembly targets (#140): the same dependency-free crate now forbids unsafe code and is compiled for `wasm32-unknown-unknown` in CI, including its test code and declared MSRV. This is a compile-portability proof, not yet a browser binding or runtime execution test.
 - Native Node.js binding (#141).
 - Browser WebAssembly integration (#142).
-- Renderer-neutral output interface specified in [renderer-output-v1](renderer-output-v1.md) and #153; raster implementation remains #154.
+- Renderer-neutral output interface specified in [renderer-output-v1](renderer-output-v1.md) and #153; the initial typed-scene SVG/RGBA renderer is implemented in #154. PNG encoding and browser/CLI integration remain future work.
 - Direct browser Canvas rendering (#144).
 - Unified TypeScript API with backend selection (#145).
 - Cross-backend parity, visual regression, and performance coverage (#146).
