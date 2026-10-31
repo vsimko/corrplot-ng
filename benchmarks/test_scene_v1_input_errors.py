@@ -25,6 +25,10 @@ class SceneV1InvalidInputTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "matrix values must be finite numbers or null"):
             build_scene({"labels": ["a", "b"], "matrix": [[1.0, math.inf], [math.inf, 1.0]]})
 
+    def test_rejects_nan_instead_of_treating_it_as_missing(self) -> None:
+        with self.assertRaisesRegex(ValueError, "matrix values must be finite numbers or null"):
+            build_scene({"labels": ["a", "b"], "matrix": [[1.0, math.nan], [math.nan, 1.0]]})
+
 
 if __name__ == "__main__":
     unittest.main()
