@@ -9,6 +9,7 @@ This document defines how the legacy R API is introduced to the shared scene mod
 corrplot_ng() exposes an explicit engine selector:
 
 - engine = "legacy" is the default and delegates to corrplot::corrplot(). Existing calls therefore retain the established plotting behavior and graphics-device side effects.
+- `corrplot_ng_mixed()` is the explicit legacy wrapper for `corrplot::corrplot.mixed()`; it preserves the upstream combined return object and remains legacy-only.
 - engine = "scene" validates the currently supported subset and returns a corrplot_ng_scene object conforming to scene-v1. It prepares data; it does not draw a plot or select a glyph renderer.
 - An explicitly requested scene operation never falls back to the legacy engine. Unsupported options produce an actionable error naming the unsupported arguments.
 
