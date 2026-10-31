@@ -489,11 +489,11 @@ fn run() -> Result<(), String> {
             }
             if let Some(config_path) = opts.config.as_deref() {
                 let destination = match opts.format {
-                    Format::Svg => opts.output.as_deref(),
-                    Format::SceneJson | Format::NormalizedJson => opts.output.as_deref(),
+                    Format::Svg => opts.output.clone().or(Some(publication::Publication::configured_output_path(config_path)?)),
+                    Format::SceneJson | Format::NormalizedJson => opts.output.clone(),
                 };
                 let incremental_key = if opts.incremental {
-                    let destination = destination.filter(|path| *path != "-")
+                    let destination = destination.as_deref().filter(|path| *path != "-")
                         .ok_or("--incremental requires a file output path via --output or config output.path")?;
                     let mut dependencies = vec![PathBuf::from(config_path)];
                     dependencies.extend(publication::Publication::input_files(config_path)?);
