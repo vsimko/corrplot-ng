@@ -107,6 +107,8 @@ fn diagnostic_json(message: &str) -> String {
         ("input.matrix.non_finite_value", "input", Some("matrix"))
     } else if lower.contains("square") || lower.contains("dimensions") || lower.contains("matrix size") {
         ("input.matrix.invalid_shape", "input", Some("matrix"))
+    } else if lower.contains("non-numeric") || lower.contains("must be numeric") || lower.contains("numeric value") {
+        ("input.matrix.non_numeric", "input", Some("matrix"))
     } else if lower.contains("label") {
         ("input.matrix.invalid_label", "input", Some("labels"))
     } else if lower.contains("unsupported method") || lower.contains("unsupported feature") {
