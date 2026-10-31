@@ -122,6 +122,11 @@ test_that("corrRect rejects ambiguous inputs, invalid ranges, and unknown variab
     expect_error(corrRect(result, index = c(1, 3), name = c("A", "C")),
       "supply exactly one")
     expect_error(corrRect(result, name = c("A", "Z")), "unique existing")
+    mismatched <- corr
+    colnames(mismatched) <- paste0("col-", colnames(mismatched))
+    mismatched_result <- corrplot_ng(mismatched, tl.pos = "n", cl.pos = "n")
+    expect_error(corrRect(mismatched_result, index = c(1, 3)),
+      "row and column names must be identical")
   })
 })
 
@@ -148,5 +153,5 @@ test_that("corrRect.hclust validates matrices, cluster counts, and methods", {
   expect_error(corrRect.hclust(corrrect_test_matrix(), k = 0), "between 1 and")
   expect_error(corrRect.hclust(corrrect_test_matrix(), k = 5), "between 1 and")
   expect_error(corrRect.hclust(corrrect_test_matrix(), method = "invalid"),
-    "arg should be one of")
+    "should be one of")
 })
