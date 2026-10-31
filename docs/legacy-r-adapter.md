@@ -14,6 +14,15 @@ corrplot_ng() exposes an explicit engine selector:
 
 The scene selector is intentionally explicit. It avoids guessing whether a call can be translated and makes the returned value's type predictable.
 
+## Legacy return values
+
+The legacy adapter preserves upstream return objects and invisibility. See
+[the R return-value contract](legacy-r-return-values.md) for the exact
+`corr`, `corrPos`, and `arg` structures, coordinate mapping, upper/lower
+filtering, and mixed diagonal quirks. The mixed wrapper is exported as
+`corrplot_ng_mixed()`; it remains legacy-only until a mixed scene contract is
+implemented.
+
 ## Graphics device ownership and lifecycle
 
 The legacy route forwards plotting arguments, including `add`, directly to
