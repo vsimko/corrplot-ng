@@ -69,10 +69,10 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
     for (int column = 0; column < n; ++column) {
       const double value = matrix(row, column);
       if (!R_finite(value) && !R_IsNA(value)) {
-        Rcpp::stop("matrix values must be finite or NA");
+        Rcpp::stop("matrix values must be finite, NA, or between -1 and 1");
       }
       if (!R_IsNA(value) && (value < -1.0 || value > 1.0)) {
-        Rcpp::stop("matrix values must be between -1 and 1");
+        Rcpp::stop("matrix values must be finite, NA, or between -1 and 1");
       }
       if (!first) out << ',';
       first = false;
