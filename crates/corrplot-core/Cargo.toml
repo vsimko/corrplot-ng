@@ -1,0 +1,9 @@
+[package]
+name = "corrplot-core"
+version = "0.1.0"
+edition = "2021"
+description = "Shared matrix semantics for corrplot-ng consumers"
+license = "MIT"
+
+[lib]
+path = "src/lib.rs"
