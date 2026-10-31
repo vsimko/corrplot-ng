@@ -859,6 +859,20 @@ mod tests {
     }
 
     #[test]
+    fn html_table_is_an_explicit_render_format() {
+        let args = vec![
+            "corrplot-ng".to_string(),
+            "render".to_string(),
+            "--input".to_string(),
+            "matrix.csv".to_string(),
+            "--format".to_string(),
+            "html-table".to_string(),
+        ];
+        let options = parse_args(&args).unwrap();
+        assert_eq!(options.format, Format::HtmlTable);
+    }
+
+    #[test]
     fn parses_square_correlation_matrix() {
         let m = parse_matrix(SAMPLE, Kind::Correlation).unwrap();
         assert_eq!(m.labels, vec!["alpha", "beta"]);
