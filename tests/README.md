@@ -42,6 +42,24 @@ python -m unittest discover -s tests -v
 
 The fixture integrity tests use only the Python standard library. The shared SVG prototype suite additionally installs `jsonschema` as described in `prototypes/shared-svg/README.md`.
 
+## Normalized matrix input contract
+
+The language-neutral input boundary is defined in
+`prototypes/normalized-matrix-v1/`. Its schema and valid/invalid fixtures
+specify square dimensions, unique Unicode labels, zero-based source-index
+mapping, and `null` missing values. All-missing and constant matrices remain
+valid at normalization time; scene construction decides whether they can be
+rendered.
+
+Run the schema and semantic fixture suite with:
+
+```sh
+python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+```
+
+The suite is part of `Test foundation`. R object and file adapters must
+produce the same representation before any renderer is invoked.
+
 ## SVG artifact validation and interoperability
 
 `scripts/validate_svg.py` validates the repository's supported self-contained SVG subset using only Python's standard library. It checks well-formed XML, the SVG namespace, positive absolute dimensions, a finite positive viewBox, allowed element types, unique IDs, local references, accessibility references, and the absence of scripts, event handlers, external assets, and external CSS URLs.
