@@ -161,6 +161,9 @@ jobs:
       - name: Inspect retained native-library sections and symbols
         shell: bash
         run: python3 prototypes/rust-rextendr/inspect-native-library.py
+      - name: Experimentally strip debug data from a temporary installed library
+        shell: bash
+        run: python3 prototypes/rust-rextendr/experiment-strip-debug.py
       - name: Build and inspect the actual R source tarball
         shell: bash
         run: |
