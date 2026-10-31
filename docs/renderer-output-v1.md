@@ -43,11 +43,11 @@ The current publication SVG path retains its existing physical mm/in sizing, vie
 - Width and height are exact positive output pixel dimensions.
 - dpi is optional density metadata. It does not silently change the requested pixel dimensions.
 - Scale uniformly to fit the scene in the output viewport and center it. Do not crop or distort. Fill unused viewport area with the requested background.
-- Raster dimensions and buffer-size multiplication must be checked before allocation.
-- PNG output is an encoded PNG byte vector. When DPI is supplied, the PNG encoder should write equivalent physical-density metadata.
+- Raster dimensions and buffer-size multiplication are checked before allocation. The initial RGBA renderer enforces a 128 MiB per-render pixel-buffer limit.
+- PNG output, when implemented, is an encoded PNG byte vector. When DPI is supplied, the PNG encoder should write equivalent physical-density metadata. The current renderer provides raw RGBA only.
 - Raw RGBA output owns its byte vector and exposes the row stride. A consumer must not retain a borrowed pointer into Rust or WebAssembly memory.
 
-PNG/RGBA rendering is not implemented by this contract PR. Issue #154 implements it directly from the shared scene; it must not serialize to SVG and parse SVG back into pixels.
+**Raw RGBA rendering is implemented as the initial bitmap backend in #154.** The typed `corrplot_core::raster::Scene` is consumed by both `SceneSvgRenderer` and `RgbaRenderer`; the RGBA path rasterizes directly to pixels and does not serialize/reparse SVG. PNG byte encoding remains a follow-up. The current bitmap text path uses a built-in 5x7 ASCII font with a replacement glyph for unsupported characters; it does not claim full font-family or plotmath shaping.
 
 ## Pixel and alpha contract
 
@@ -105,7 +105,7 @@ Runtime adapters map OutputValidationError to diagnostic-v1 records. Callers bra
 ## Implementation boundaries
 
 - #153 defines this output contract and the Rust output types/trait.
-- #154 implements PNG and RGBA rendering directly from the shared scene.
+- #154 implements direct raw RGBA rendering from the typed shared scene; PNG encoding remains future work.
 - #144 implements direct browser Canvas rendering and the TypeScript host adapter.
 - #140 ensures the shared core and output types compile for native and WASM targets.
 - #141/#142 expose the same core through Node-API and WebAssembly.
