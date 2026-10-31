@@ -20,6 +20,19 @@ R_LEGACY_VISUAL_PATH = (
     / "fixtures"
     / "legacy-visual-cases.json"
 )
+ROOT = Path(__file__).parent.parent
+NORMALIZED_FIXTURE_PAIRS = (
+    (
+        ROOT / "prototypes" / "normalized-matrix-v1" / "fixtures" / "valid-cases.json",
+        ROOT / "implementations" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "valid-cases.json",
+    ),
+    (
+        ROOT / "prototypes" / "normalized-matrix-v1" / "fixtures" / "invalid-cases.json",
+        ROOT / "implementations" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "invalid-cases.json",
+    ),
+)
+GENERAL_MATRIX_PATH = ROOT / "tests" / "fixtures" / "general-matrix-cases.json"
+R_GENERAL_MATRIX_PATH = ROOT / "implementations" / "r" / "inst" / "extdata" / "general-matrix-cases.json"
 EXPECTED_METHODS = {
     "circle",
     "square",
@@ -43,6 +56,24 @@ class FixtureIntegrityTests(unittest.TestCase):
         with R_LEGACY_VISUAL_PATH.open(encoding="utf-8") as r_file:
             r_manifest = json.load(r_file)
         self.assertEqual(r_manifest, source)
+
+    def test_normalized_matrix_package_fixtures_are_exact_copies(self):
+        for canonical, packaged in NORMALIZED_FIXTURE_PAIRS:
+            with self.subTest(fixture=canonical.name):
+                self.assertEqual(packaged.read_bytes(), canonical.read_bytes())
+
+    def test_general_matrix_r_fixture_is_an_explicit_projection(self):
+        """The R package copy intentionally omits the all-missing render case."""
+        with GENERAL_MATRIX_PATH.open(encoding="utf-8") as source_file:
+            source = json.load(source_file)
+        with R_GENERAL_MATRIX_PATH.open(encoding="utf-8") as r_file:
+            packaged = json.load(r_file)
+
+        expected = dict(source)
+        expected["invalid_cases"] = [
+            case for case in source["invalid_cases"] if case["id"] != "all-missing"
+        ]
+        self.assertEqual(packaged, expected)
 
     def test_schema_version_is_supported(self):
         self.assertEqual(self.data.get("schema_version"), 1)
