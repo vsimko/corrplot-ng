@@ -54,9 +54,9 @@ because the renderer cannot safely interpret an unknown contract.
 
 The Python SVG prototype supports all seven cell methods, missing cells,
 cell text annotations, significance annotations, confidence intervals,
-figure-level title/subtitle/caption/footnote text, and accessible title and
-description metadata. It does not interpret R plotmath labels or draw a
-legend. Those features fail in strict mode; permissive mode can omit them
+figure-level title/subtitle/caption/footnote text, cluster-region overlays,
+and accessible title and description metadata. It does not interpret R
+plotmath labels or draw a legend. Those features fail in strict mode; permissive mode can omit them
 only when the caller explicitly marks them optional.
 
 The native Rust CLI supports circle and number cell methods for its matrix
