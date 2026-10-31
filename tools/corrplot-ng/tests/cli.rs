@@ -763,3 +763,22 @@ fn non_square_matrix_cli_diagnostic_matches_r_and_python_contract() {
     assert!(json.contains(r#""path":"matrix""#), "{json}");
     fs::remove_dir_all(directory).ok();
 }
+
+#[test]
+fn non_finite_matrix_cli_diagnostic_preserves_zero_based_cell_coordinates() {
+    let path = fixture("non-finite", ",a,b\na,1,1\nb,inf,1\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["validate", "--input"]).arg(&path)
+        .args(["--diagnostics", "json"])
+        .output().unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let json = String::from_utf8(output.stdout).unwrap();
+    assert!(json.contains(r#""code":"input.matrix.non_finite_value""#), "{json}");
+    assert!(json.contains(r#""severity":"error""#), "{json}");
+    assert!(json.contains(r#""stage":"input""#), "{json}");
+    assert!(json.contains(r#""path":"matrix""#), "{json}");
+    assert!(json.contains(r#""row":1"#), "{json}");
+    assert!(json.contains(r#""column":0"#), "{json}");
+    fs::remove_file(path).ok();
+}

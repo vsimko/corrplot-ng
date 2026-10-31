@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import re
 from typing import Any
 
 
@@ -42,7 +43,10 @@ def scene_error_diagnostic(message: str) -> Diagnostic:
     if "label" in lowered:
         return Diagnostic("input.matrix.invalid_label", "error", "input", message, path="labels")
     if "finite" in lowered or "infinite" in lowered or "nan" in lowered:
-        return Diagnostic("input.matrix.non_finite_value", "error", "input", message, path="matrix")
+        coordinates = re.search(r"row (\d+), column (\d+)", message)
+        row, column = (int(coordinates.group(1)), int(coordinates.group(2))) if coordinates else (None, None)
+        return Diagnostic("input.matrix.non_finite_value", "error", "input", message,
+                          path="matrix", row=row, column=column)
     if "numeric" in lowered or "must be a number" in lowered or "non-numeric" in lowered:
         return Diagnostic("input.matrix.non_numeric", "error", "input", message, path="matrix")
     if "unsupported cell method" in lowered:

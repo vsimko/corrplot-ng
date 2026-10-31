@@ -291,12 +291,14 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("matrix_mode must be correlation or general_numeric")
     if matrix_mode == "general_numeric" and not isinstance(config.get("matrix_semantics"), dict):
         raise ValueError("general_numeric scenes require explicit matrix_semantics")
-    for row in matrix:
-        for value in row:
+    for row_index, row in enumerate(matrix):
+        for column_index, value in enumerate(row):
             if value is None:
                 continue
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value):
-                raise ValueError("matrix values must be finite numbers or null")
+                raise ValueError(
+                    f"matrix values must be finite numbers or null (invalid value at row {row_index}, column {column_index})"
+                )
             if matrix_mode == "correlation" and not -1 <= value <= 1:
                 raise ValueError("correlation values must be null or between -1 and 1")
 
