@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "kind": "normalized_matrix_invalid_cases",
+  "cases": [
+    {
+      "id": "rectangular-matrix",
+      "expected_error": "values[0] must contain exactly 2 columns",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            0,
+            2
+          ],
+          [
+            0,
+            1,
+            0
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "duplicate-labels",
+      "expected_error": "labels must be unique",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "A"
+        ],
+        "values": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "empty-label",
+      "expected_error": "labels[1] must be a non-empty string",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          " "
+        ],
+        "values": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "non-numeric-cell",
+      "expected_error": "must be a finite number or null",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            "bad"
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_data_frame",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "nan-cell",
+      "expected_error": "must be a finite number or null",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            "NaN"
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "source-index-count",
+      "expected_error": "source_indices length must match labels",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "duplicate-source-index",
+      "expected_error": "source_indices must be unique",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "unsupported-source-format",
+      "expected_error": "source.format must be one of",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "parquet",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "infinity-cell",
+      "expected_error": "must be a finite number or null",
+      "input": {
+        "schema_version": 1,
+        "kind": "normalized_matrix",
+        "labels": [
+          "A",
+          "B"
+        ],
+        "values": [
+          [
+            1,
+            "Infinity"
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "source": {
+          "format": "r_matrix",
+          "row_labels_present": true,
+          "column_labels_present": true
+        },
+        "source_indices": [
+          0,
+          1
+        ]
+      }
+    }
+  ]
+}

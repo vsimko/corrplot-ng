@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/prototypes/normalized-matrix-v1/schema.json",
+  "title": "corrplot-ng normalized matrix input v1",
+  "description": "Language-neutral, renderer-independent representation of an already-computed square numeric matrix.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "labels",
+    "values",
+    "source",
+    "source_indices"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "normalized_matrix"
+    },
+    "labels": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "values": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": ["number", "null"]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "row_labels_present",
+        "column_labels_present"
+      ],
+      "properties": {
+        "format": {
+          "enum": [
+            "r_matrix",
+            "r_data_frame",
+            "csv",
+            "tsv",
+            "json",
+            "inline"
+          ]
+        },
+        "row_labels_present": {
+          "type": "boolean"
+        },
+        "column_labels_present": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "source_indices": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional JSON-compatible source metadata. It must not contain renderer-specific objects."
+    }
+  }
+}
