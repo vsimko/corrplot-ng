@@ -627,3 +627,54 @@ if __name__ == "__main__":
         self.assertEqual(svg.count(">?</text>"), 1)
         self.assertEqual(svg.count(">NA</text>"), 1)
 
+
+    def test_figure_text_roles_render_in_order_and_remain_accessible(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, 0.4], [0.4, 1.0]],
+            "title": "Accessible figure title",
+            "description": "Accessible description",
+            "figure_text": {
+                "title": {"text": "Visible title & scope", "font_size": 22},
+                "subtitle": "A second line\nwith Δ and Unicode",
+                "caption": {"text": "Caption <safe>", "alignment": "left"},
+                "footnote": {"text": "Source: study 2026", "font_size": 10},
+            },
+        })
+        self.assertGreater(scene["height"], 76 + 2 * 84 + 64)
+        self.assertEqual([item["role"] for item in scene["figure_text"]],
+                         ["title", "subtitle", "caption", "footnote"])
+        svg = render_scene_svg(scene)
+        self.assertIn("Accessible figure title", svg)
+        self.assertIn("Accessible description", svg)
+        self.assertIn("Visible title &amp; scope", svg)
+        self.assertIn("Caption &lt;safe&gt;", svg)
+        self.assertIn("Δ and Unicode", svg)
+        self.assertLess(svg.index("Visible title"), svg.index("A second line"))
+        self.assertLess(svg.index("A second line"), svg.index("Caption"))
+
+    def test_figure_text_long_lines_wrap_without_truncation(self):
+        long_text = "A publication caption with a very long unbroken sequence " * 5
+        scene = build_scene({
+            "labels": ["A"], "matrix": [[1.0]],
+            "layout": {"width": 180},
+            "figure_text": {"caption": long_text},
+        })
+        caption = scene["figure_text"][0]
+        self.assertGreater(len(caption["lines"]), 1)
+        self.assertEqual("".join(caption["lines"]).replace(" ", ""), long_text.replace(" ", ""))
+        self.assertGreater(scene["height"], 76 + 84 + 64)
+
+    def test_figure_text_roles_validate_alignment_typography_and_shape(self):
+        base = {"labels": ["A"], "matrix": [[1.0]]}
+        for figure_text, message in (
+            ({"title": {"text": "x", "alignment": "diagonal"}}, "alignment"),
+            ({"subtitle": {"text": "x", "font_size": 60}}, "font_size"),
+            ({"caption": {"text": "x", "font_weight": "heavy"}}, "font_weight"),
+            ({"unknown": "x"}, "unsupported roles"),
+            ({"footnote": 123}, "must be a string"),
+        ):
+            with self.subTest(figure_text=figure_text):
+                with self.assertRaisesRegex(ValueError, message):
+                    build_scene({**base, "figure_text": figure_text})
+
