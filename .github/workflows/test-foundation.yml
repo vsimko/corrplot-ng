@@ -39,6 +39,7 @@ jobs:
               - 'prototypes/publication-config-v1/**'
               - 'prototypes/publication-svg-v1/**'
               - 'schemas/**'
+              - 'crates/corrplot-core/renderer-capabilities.json'
               - '**/*.schema.json'
               - '.github/workflows/test-foundation.yml'
 
@@ -60,6 +61,16 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Install scene schema validator
         run: python -m pip install jsonschema
+      - name: Validate shared Rust renderer capability declaration
+        run: |
+          python - <<'PY'
+          import json
+          import jsonschema
+          from pathlib import Path
+          schema = json.loads(Path("prototypes/renderer-capabilities-v1.schema.json").read_text())
+          declaration = json.loads(Path("crates/corrplot-core/renderer-capabilities.json").read_text())
+          jsonschema.validate(declaration, schema)
+          PY
       - name: Validate normalized matrix v1 contract and fixtures
         run: python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
       - name: Run shared SVG prototype tests
