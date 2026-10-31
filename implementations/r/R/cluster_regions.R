@@ -210,7 +210,7 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
   corr <- validated$corr
   n <- nrow(corr)
   if (!is.null(name)) {
-    if (is.null(validated$labels)) {
+    if (is.null(validated$labels) || anyDuplicated(validated$labels)) {
       stop("row and column names must be identical and unique when name is used", call. = FALSE)
     }
     if (!is.character(name) || length(name) < 2L || anyNA(name) ||
@@ -263,10 +263,8 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
 #' @param method Hierarchical clustering method supported by corrplot 0.95.
 #' @return Invisibly returns NULL, matching the legacy drawing helper.
 #' @export
-corrRect.hclust <- function(
-    corr, k = 2, col = "black", lwd = 2,
-    method = c("complete", "ward", "ward.D", "ward.D2", "single",
-               "average", "mcquitty", "median", "centroid")) {
+.corrplot_ng_hclust_region_data <- function(
+    corr, k, col, lwd, method) {
   if (!is.matrix(corr) || !is.numeric(corr) || nrow(corr) < 2L ||
       nrow(corr) != ncol(corr) || anyNA(corr) || any(!is.finite(corr))) {
     stop("corr must be a finite, non-empty square numeric matrix", call. = FALSE)
@@ -284,20 +282,50 @@ corrRect.hclust <- function(
   runs <- rle(as.integer(ordered_clusters))
   ends <- cumsum(runs$lengths)
   starts <- ends - runs$lengths + 1L
-  labels <- rownames(corr)
-  if (is.null(labels)) labels <- as.character(seq_len(n))
-  if (anyNA(labels) || anyDuplicated(labels)) labels <- NULL
-  requests <- .corrplot_ng_region_inputs(
-    starts, ends, labels, tree$order, col, lwd
+  ordered_labels <- rownames(corr)
+  if (is.null(ordered_labels)) ordered_labels <- as.character(seq_len(n))
+  ordered_labels <- ordered_labels[tree$order]
+  if (anyNA(ordered_labels) || anyDuplicated(ordered_labels)) {
+    ordered_labels <- NULL
+  }
+  list(
+    starts = starts,
+    ends = ends,
+    order = as.integer(tree$order),
+    labels = ordered_labels,
+    style = style,
+    requests = .corrplot_ng_region_inputs(
+      starts, ends, ordered_labels, tree$order, col, lwd
+    )
   )
-  for (i in seq_along(requests)) {
+}
+
+#' Add rectangles for hierarchical clusters
+#'
+#' Clusters the input matrix using hclust(as.dist(1 - corr)) and draws one
+#' rectangle for each cut cluster in dendrogram leaf order.
+#'
+#' @param corr Numeric square correlation matrix.
+#' @param k Number of clusters to draw.
+#' @param col R graphics color used for the border.
+#' @param lwd Border line width, between 0.1 and 12.
+#' @param method Hierarchical clustering method supported by corrplot 0.95.
+#' @return Invisibly returns NULL, matching the legacy drawing helper.
+#' @export
+corrRect.hclust <- function(
+    corr, k = 2, col = "black", lwd = 2,
+    method = c("complete", "ward", "ward.D", "ward.D2", "single",
+               "average", "mcquitty", "median", "centroid")) {
+  regions <- .corrplot_ng_hclust_region_data(corr, k, col, lwd, method)
+  n <- nrow(corr)
+  for (i in seq_along(regions$requests)) {
     graphics::rect(
-      starts[[i]] - 0.5,
-      n - ends[[i]] + 0.5,
-      ends[[i]] + 0.5,
-      n - starts[[i]] + 0.5,
+      regions$starts[[i]] - 0.5,
+      n - regions$ends[[i]] + 0.5,
+      regions$ends[[i]] + 0.5,
+      n - regions$starts[[i]] + 0.5,
       border = col,
-      lwd = style$line_width
+      lwd = regions$style$line_width
     )
   }
   invisible(NULL)
