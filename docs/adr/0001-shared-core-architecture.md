@@ -97,12 +97,12 @@ The measured performance difference does not override these operational consider
 - Provides strong typing and a compact, measured scene-v1 implementation.
 
 **Conditions and risks**
-- The current CRAN-style checks report two NOTEs that need resolution or explicit maintainer/CRAN disposition.
-- The oldest supported Cargo/rustc versions and actual CRAN acceptance have not been verified.
+- The current CRAN-style check reports one NOTE for Cargo vendor checksum/provenance metadata. These files are retained for offline integrity and provenance and require an explicit explanation in any CRAN submission comments.
+- Rust 1.78/Cargo 1.78 is the declared and CI-tested minimum for the shared consumers. This does not establish that every older CRAN build image provides it; actual CRAN acceptance remains unproven.
 - The vendoring, lockfile, license inventory, generated rextendr scaffold, and offline archive add ongoing maintenance work.
-- No production Rust library is yet shared between the CLI and R binding; that reuse must be demonstrated before it is counted as a benefit.
+- The CLI and disposable R/rextendr spike now share `corrplot-core`; the remaining operational questions are package footprint, CRAN disposition, and maintainer cost.
 
-**Assessment:** selected as the repository-wide shared-core implementation; production R integration remains gated by CRAN/toolchain and maintenance validation.
+**Assessment:** selected as the repository-wide shared-core implementation. The shared-library proof and tested MSRV are complete; production R integration remains gated by CRAN disposition, package footprint, and maintenance validation.
 
 ### C++ + Rcpp
 
@@ -136,16 +136,43 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 - Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
 - Do not use the prototype benchmark to claim a production performance win.
 
+## Measured release-readiness results
+
+The 2026-10-31 Ubuntu 24.04 / R 4.6.2 / GCC 13.3.0 offline source-package job measured:
+
+| Measurement | Result |
+|---|---:|
+| Compressed R source tarball | 1,314,220 bytes (about 1.25 MiB) |
+| Installed package | 6.0 MB |
+| Installed `libs` directory | 5.9 MB |
+| `R CMD check --as-cran` | 1 NOTE |
+
+The remaining NOTE is limited to Cargo's hidden vendor checksum/provenance
+metadata. The checksum manifests are required for Cargo to verify vendored
+sources during offline builds; the VCS metadata preserves source provenance.
+They are intentionally retained and must be explained in any CRAN submission
+comments. The extendr 0.9.0 upgrade removed the non-API
+`R_NamespaceRegistry` NOTE. Pruning unused vendored test/example/benchmark
+files removed the non-portable-path NOTE.
+
+The compressed source archive is below CRAN's general 10 MB source-package
+guideline, while the installed package exceeds rextendr's 5 MB caution and
+needs explicit CRAN guidance before production R use. These are prototype
+measurements, not CRAN acceptance. The workflow verifies Rust/Cargo 1.78 and
+stable builds on Linux, macOS, and Windows. A controlled measurement of human
+maintainer time against C++/Rcpp has not been run; the existing 1–2 h versus
+2–4 h figures remain planning estimates, not observed effort.
+
 ## Conditions for production rollout
 
-The strategic language decision is Rust. The remaining gate is implementation viability: demonstrate that at least two real consumers (initially the standalone CLI and a disposable R/rextendr binding) link to the same library crate and invoke the same operation. This is an integration and release-readiness gate, not a reconsideration of whether shared semantics should be duplicated.
+The strategic language decision and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern source-package policy, package footprint, and sustainable maintainer workflow.
 
-Before making the shared Rust crate a production dependency:
+Before making the shared Rust crate a production R dependency:
 
-- Resolve or obtain explicit disposition for the two current `R CMD check --as-cran` NOTEs.
-- Verify a conservative minimum Cargo/rustc toolchain against the oldest supported CRAN build environments.
-- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates.
-- Prototype one shared Rust library crate consumed by both the CLI and the R binding; do not count JSON fixture interoperability as compiled-library reuse.
+- Retain the single Cargo vendor metadata NOTE only with an explicit CRAN-comments explanation: `.cargo-checksum.json` is required for offline vendored-source integrity and `.cargo_vcs_info.json` preserves source provenance. Do not delete these files merely to silence `R CMD check`.
+- Keep Rust 1.78/Cargo 1.78 as the declared and CI-tested MSRV, and confirm the intended minimum against the actual CRAN build environment before submission.
+- Record the generated source-tarball and installed-package sizes and assess the installed size against rextendr's 5 MB caution.
+- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates. The controlled elapsed maintainer-time comparison against C++/Rcpp remains unmeasured; current effort ranges are planning estimates only.
 
 If Rust's R packaging or CRAN/toolchain burden cannot be brought within the maintainer budget, keep the Rust core authoritative for CLI and other consumers and evaluate a narrowly scoped R-only C++/Rcpp or pure-R adapter as an explicit exception. Such an exception must conform to the same versioned contracts and shared fixtures; it must not silently redefine common semantics.
 

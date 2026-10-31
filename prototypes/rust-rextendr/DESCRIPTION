@@ -4,4 +4,5 @@ Version: 0.0.0.9000
 Authors@R: person("CI", "Runner", email = "ci@example.invalid", role = c("aut", "cre"))
 Description: Temporary package used to benchmark the Rust scene-v1 builder.
 License: MIT
+SystemRequirements: Cargo (>= 1.78), rustc (>= 1.78)
 Encoding: UTF-8
