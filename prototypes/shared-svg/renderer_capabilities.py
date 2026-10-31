@@ -35,6 +35,8 @@ def _scene_features(scene: dict[str, Any]) -> set[str]:
         features.add("confidence_intervals")
     if scene.get("figure_text"):
         features.add("figure_text")
+    if scene.get("cluster_regions"):
+        features.add("cluster_regions")
     return features
 
 
