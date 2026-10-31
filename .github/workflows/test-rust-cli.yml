@@ -5,6 +5,8 @@ on:
     paths:
       - "tools/corrplot-ng/**"
       - "prototypes/shared-svg/**"
+      - "prototypes/rust-rextendr/**"
+      - "crates/corrplot-core/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
       - ".github/workflows/test-rust-cli.yml"
@@ -32,10 +34,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Verify dependency-free manifest
+      - name: Verify CLI depends only on the local shared core
         shell: bash
         run: |
-          test "$(cargo tree --manifest-path tools/corrplot-ng/Cargo.toml --edges normal | wc -l)" -eq 1
+          tree="$(cargo tree --manifest-path tools/corrplot-ng/Cargo.toml --edges normal)"
+          echo "$tree"
+          echo "$tree" | grep -F "corrplot-core v0.1.0"
+          if echo "$tree" | grep -Eq "registry\\+|git\\+"; then
+            echo "The native CLI must not acquire external runtime dependencies" >&2
+            exit 1
+          fi
+      - name: Test shared matrix core
+        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
       - name: Test
         run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Build release executable
