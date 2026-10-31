@@ -31,6 +31,18 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         '<rect width="100%" height="100%" fill="#ffffff"/>',
     ]
 
+    for item in scene.get("figure_text", []):
+        anchor = {"left": "start", "center": "middle", "right": "end"}[item["alignment"]]
+        tspans = "".join(
+            f'<tspan x="{item["x"]:g}" dy="{0 if index == 0 else item["line_height"]:g}">{html.escape(line)}</tspan>'
+            for index, line in enumerate(item["lines"])
+        )
+        parts.append(
+            f'<text x="{item["x"]:g}" y="{item["y"]:g}" text-anchor="{anchor}" '
+            f'font-family="{family}" font-size="{item["font_size"]:g}" '
+            f'font-weight="{item["font_weight"]}">{tspans}</text>'
+        )
+
     for label in scene["labels"]:
         if label.get("plotmath") is not None:
             raise ValueError(
