@@ -116,6 +116,7 @@ The standalone CLI remains a thin application adapter over the reusable Rust cra
 |---|---|
 | Interoperability | Normalized-matrix v1 and scene-v1 contracts |
 | Scene boundary | Accepted; scene-v1 is language-neutral |
+| Renderer output boundary | Typed renderer request and output contract v1; independent of publication-config |
 | Standalone CLI | Implemented in Rust |
 | Strategic shared-core implementation | Rust (`crates/corrplot-core`); full semantics still in progress |
 | Rust/rextendr and C++/Rcpp | Experimental evaluation spikes |
