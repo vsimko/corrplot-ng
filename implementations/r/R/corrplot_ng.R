@@ -54,6 +54,14 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
         unsupported <- unique(c(unsupported, "method"))
       }
     }
+    if ("method" %in% unsupported) {
+      .corrplot_ng_abort(
+        "renderer.unsupported_feature",
+        paste0("The scene engine does not support: method (cell method ", paste(requested_method, collapse = ", "), ")"),
+        stage = "renderer",
+        path = "method"
+      )
+    }
     if (length(unsupported) > 0L) stop("The scene engine does not support: ", paste(unsupported, collapse = ", "), ". Use engine = 'legacy' for these options.", call. = FALSE)
   }
   defaults <- list(annotation = "", method = "circle", type = "full", diag = TRUE,
