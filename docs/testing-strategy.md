@@ -179,10 +179,10 @@ filters package-related paths. The native CLI matrix is path-filtered and
 keeps the three supported CI operating systems.
 
 Performance measurements are not part of routine pull-request CI. The
-dedicated **Performance benchmarks** workflow is started manually using
-`workflow_dispatch`; its regular benchmark suites run by default, while
-large B03/B04 stress workloads and the three-platform native package smoke
-matrix are separate opt-in inputs. See
+dedicated **Performance benchmarks** workflow runs its regular suites on a
+daily schedule and can also be started manually using `workflow_dispatch`.
+Large B03/B04 stress workloads and the three-platform native package smoke
+matrix are separate opt-in inputs for manual runs. See
 [benchmark operations](../benchmarks/README.md). The native CLI correctness
 workflow does not run a baseline-versus-candidate performance comparison on
 pull requests.
