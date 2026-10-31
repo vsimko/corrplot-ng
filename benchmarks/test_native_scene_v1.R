@@ -57,4 +57,30 @@ for (case in fixture$workloads) {
   }
 }
 
+
+for (case in fixture$invalid_cases) {
+  labels <- unlist(case$labels, use.names = FALSE)
+  matrix <- do.call(rbind, lapply(case$matrix, function(row) {
+    vapply(row, function(value) {
+      if (is.null(value)) NA_real_
+      else if (is.character(value) && identical(value, "NaN")) NaN
+      else as.numeric(value)
+    }, numeric(1))
+  }))
+  for (candidate_name in names(candidates)) {
+    error_message <- tryCatch({
+      candidates[[candidate_name]](labels, matrix, case$annotation)
+      NULL
+    }, error = function(error) conditionMessage(error))
+    if (is.null(error_message)) {
+      stop(case$id, " / ", candidate_name, ": invalid input was accepted")
+    }
+    if (!grepl(case$expected_error_pattern, error_message, ignore.case = TRUE)) {
+      stop(case$id, " / ", candidate_name,
+           ": unexpected diagnostic: ", error_message)
+    }
+    message("PASS ", case$id, " / ", candidate_name, " (rejected)")
+  }
+}
+
 message("All scene-v1 packaging smoke tests passed on ", R.version$platform)
