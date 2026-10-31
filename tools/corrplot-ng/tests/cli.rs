@@ -694,3 +694,51 @@ fn incremental_batch_render_reuses_cached_outputs() {
 
     fs::remove_dir_all(directory).ok();
 }
+
+
+#[test]
+fn batch_diagnostics_json_preserves_partial_success_and_item_context() {
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-batch-diagnostics-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let matrix_path = directory.join("matrix.csv");
+    let valid_config_path = directory.join("valid.json");
+    let invalid_config_path = directory.join("invalid.json");
+    let manifest_path = directory.join("manifest.txt");
+    let output_dir = directory.join("outputs");
+    fs::write(&matrix_path, ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n").unwrap();
+    let valid_config = r##"{
+      "config_version": 1,
+      "input": {"kind":"matrix_csv","path":"matrix.csv","delimiter":",","header":true,"row_labels":true},
+      "matrix": {"kind":"correlation","method":"pearson","missing":"preserve"},
+      "plot": {"method":"circle","display":"full","ordering":"original","show_values":false,
+        "significance":{"enabled":false,"p_values":null,"thresholds":[0.05]}},
+      "colors":{"negative":"#b2182b","neutral":"#f7f7f7","positive":"#2166ac","missing":"#d9d9d9"},
+      "dimensions":{"width":120,"height":100,"unit":"mm"},
+      "typography":{"family":"sans-serif","base_size":9},
+      "output":{"format":"svg","path":"ignored.svg"}
+    }"##;
+    fs::write(&valid_config_path, valid_config).unwrap();
+    fs::write(&invalid_config_path, "{ invalid json").unwrap();
+    fs::write(&manifest_path, "valid.json\ninvalid.json\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render-batch", "--manifest"]).arg(&manifest_path)
+        .args(["--output-dir"]).arg(&output_dir)
+        .args(["--diagnostics", "json"])
+        .output().unwrap();
+
+    assert_eq!(output.status.code(), Some(1));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains(r#""schema_version":1"#));
+    assert!(stdout.contains(r#""successes":[{"input":"valid.json""#));
+    assert!(stdout.contains(r#""output":""#));
+    assert!(stdout.contains(r#""diagnostics":[{"#));
+    assert!(stdout.contains(r#""manifest_index":2"#));
+    assert!(stdout.contains(r#""input":"invalid.json""#));
+    assert!(stdout.contains(r#""severity":"error""#));
+    assert!(output_dir.join("001-valid.svg").exists());
+    assert!(!output_dir.join("002-invalid.svg").exists());
+
+    fs::remove_dir_all(&directory).ok();
+}
+
