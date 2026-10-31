@@ -7,6 +7,7 @@
 //! and `wasm32-unknown-unknown` builds compile this same implementation.
 
 pub mod output;
+pub mod raster;
 
 use std::collections::HashSet;
 use std::fmt;
