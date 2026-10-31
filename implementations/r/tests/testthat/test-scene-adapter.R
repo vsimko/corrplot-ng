@@ -336,3 +336,64 @@ test_that("matrix semantic mode and explicit color limits are validated", {
   expect_error(corrplot_ng(matrix(NA_real_, 2, 2), engine = "scene",
     is.corr = FALSE), "no observed values")
 })
+
+test_that("missing cells receive explicit labels and colors without numeric glyphs", {
+  corr <- matrix(c(1, NA_real_, 0.4, 1), 2, byrow = TRUE,
+    dimnames = list(c("A", "B"), c("A", "B")))
+  scene <- corrplot_ng(corr, engine = "scene")
+  missing <- scene$text_annotations[[2]]
+
+  expect_identical(missing$role, "missing")
+  expect_identical(missing$text, "?")
+  expect_identical(missing$color, "black")
+  expect_identical(scene$cells[[2]]$value, NULL)
+  expect_identical(scene$cells[[2]]$normalized_value, NULL)
+  expect_null(scene$cells[[2]]$color)
+  expect_identical(scene$style$missing_fill, "#f2f2f2")
+})
+
+test_that("missing label text and color are configurable and can be suppressed", {
+  corr <- matrix(c(1, NA_real_, NA_real_, 1), 2, byrow = TRUE)
+  custom <- corrplot_ng(corr, engine = "scene", na.label = "NA",
+    na.label.col = "#663399")
+  missing <- Filter(function(item) item$role == "missing", custom$text_annotations)
+  expect_length(missing, 2L)
+  expect_true(all(vapply(missing, function(item) item$text, character(1)) == "NA"))
+  expect_true(all(vapply(missing, function(item) item$color, character(1)) == "#663399"))
+
+  suppressed <- corrplot_ng(corr, engine = "scene", na.label = "")
+  expect_length(suppressed$text_annotations, 0L)
+  expect_true(all(vapply(suppressed$cells, function(cell) is.null(cell$value), logical(1))))
+})
+
+test_that("missing labels obey triangle and diagonal visibility", {
+  corr <- matrix(c(1, NA_real_, NA_real_, 1), 2, byrow = TRUE)
+  upper <- corrplot_ng(corr, engine = "scene", type = "upper", diag = FALSE)
+  expect_identical(lapply(upper$text_annotations, function(item) c(item$row, item$column)),
+    list(c(0L, 1L)))
+  lower <- corrplot_ng(corr, engine = "scene", type = "lower", diag = FALSE)
+  expect_identical(lapply(lower$text_annotations, function(item) c(item$row, item$column)),
+    list(c(1L, 0L)))
+  hidden <- corrplot_ng(corr, engine = "scene", type = "full", diag = FALSE,
+    na.label = "")
+  expect_length(hidden$text_annotations, 0L)
+})
+
+test_that("all-missing general matrices remain renderable as missing-only scenes", {
+  corr <- matrix(NA_real_, 2, 2, dimnames = list(c("A", "B"), c("A", "B")))
+  scene <- corrplot_ng(corr, engine = "scene", is.corr = FALSE)
+  expect_false(scene$matrix_semantics$has_observed_values)
+  expect_equal(scene$matrix_semantics$color_limits, c(0, 1))
+  expect_identical(scene$matrix_semantics$color_mapping, "sequential")
+  expect_length(Filter(function(item) item$role == "missing", scene$text_annotations), 4L)
+  expect_true(all(vapply(scene$cells, function(cell) is.null(cell$value), logical(1))))
+})
+
+test_that("missing label options reject invalid values", {
+  expect_error(corrplot_ng(diag(2), engine = "scene", na.label = NA_character_),
+    "na.label")
+  expect_error(corrplot_ng(diag(2), engine = "scene", na.label = c("?", "!")),
+    "na.label")
+  expect_error(corrplot_ng(diag(2), engine = "scene", na.label.col = "not-a-color"),
+    "valid R color")
+})
