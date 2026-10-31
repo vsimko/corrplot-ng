@@ -9,7 +9,7 @@
 
 corrplot-ng should preserve the established R `corrplot` interface while enabling a modern API and possible wrappers for R, Python, and TypeScript. Maintainer capacity is limited, so the architecture must minimize duplicated semantics and ongoing release/CI work.
 
-The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-binding spikes, a standalone Rust CLI, and a versioned renderer-neutral scene-v1 contract. The spikes establish that both native integrations can build and run on Windows, macOS, and Linux. They do not yet establish that one compiled core is actually reused by two production consumers.
+The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-binding spikes, a standalone Rust CLI, and a versioned renderer-neutral scene-v1 contract. Both native integrations build across Windows, macOS, and Linux. Merged PR #180 additionally proves that the CLI and rextendr adapter consume one compiled Rust library for matrix validation; this remains a focused integration proof rather than a production R migration.
 
 ## Decision
 
