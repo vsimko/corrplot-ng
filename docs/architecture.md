@@ -1,162 +1,134 @@
 ---
 type: Architecture
-title: Proposed architecture for corrplot-ng
-description: A high-level view of the shared core, language interfaces, rendering backends, and migration support.
+title: Current architecture of corrplot-ng
+description: Implemented components, language-neutral contracts, experimental integrations, and deferred architecture decisions.
 tags:
   - architecture
-  - core
+  - scene-v1
   - interfaces
-status: proposed
+status: current
 ---
 
-# Proposed architecture for corrplot-ng
+# Current architecture of corrplot-ng
 
-## Purpose
+## Purpose and status
 
-This document describes a proposed architecture. It is not a record of implemented software or a final technology decision. Use a small prototype to test the design before committing to it.
+This document describes the architecture that exists in the repository today and distinguishes it from experiments and planned work. It is not a commitment to a single compiled implementation shared by every language.
 
-## Architecture overview
+The stable interoperability boundary is the language-neutral **scene-v1** contract. The normalized-matrix v1 contract provides a language-neutral representation of normalized matrix input. These contracts allow implementations to exchange data without requiring them to use the same programming language, runtime, or binary.
 
-The main design rule is to keep plot meaning and shared visual rules in one language-neutral model. Language interfaces should translate their public APIs into that model. Rendering backends should turn the model into output for each target environment.
+The production shared-core language decision is deliberately **deferred**. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md) for the rationale and decision record.
+
+## Architecture at a glance
 
 ```mermaid
 flowchart TB
-    R[R interface] --> AD[API adapters]
-    PY[Python interface] --> AD
-    TS[TypeScript interface] --> AD
-    LEG[Legacy R API] --> COMP[Compatibility adapter]
-    COMP --> AD
-    AD --> CORE[Shared plot model and core rules]
-    CORE --> VALID[Validation and data preparation]
-    VALID --> LAYOUT[Layout and visual encoding]
-    LAYOUT --> SCENE[Renderer-neutral plot scene]
-    SCENE --> SVG[SVG renderer]
-    SCENE --> GR[Native R graphics adapter]
-    MIG[Legacy-code migration tool] -. suggests new calls .-> LEG
-    MIG -. suggests new calls .-> R
+    subgraph Contracts[Language-neutral contracts]
+      NM[Normalized-matrix v1]
+      SC[Scene-v1]
+    end
+
+    subgraph R[R implementation]
+      RLEG[Legacy corrplot API / compatibility path]
+      RNORM[Normalized-matrix adapter]
+      RSCENE[Experimental scene adapter]
+    end
+
+    subgraph Other[Other implementations and tools]
+      PY[Python shared-scene / SVG reference implementation]
+      CLI[Rust standalone CLI]
+      SPIKES[Rust/rextendr and C++/Rcpp evaluation spikes]
+    end
+
+    RNORM --> NM
+    RSCENE --> SC
+    PY --> SC
+    CLI -->|CLI input/output workflows| SC
+    SPIKES -. evaluation only .-> SC
+
+    SC -. future consumers .-> TS[TypeScript API]
+    TS -. planned .-> NODE[Native Node binding]
+    TS -. planned .-> WASM[Browser WASM]
+    SC -. future renderer .-> SVG[Additional renderers]
+    SC -. future renderer .-> RENDER[Raster / other output adapters]
 ```
 
-The diagram shows logical parts, not a required process or package layout. The final design may combine or split these parts.
+Solid edges represent current implementation paths or contract use. Dashed edges represent experiments, future consumers, or planned work; they must not be read as shipped production capabilities.
 
-## Main components
+## Contracts: stable boundaries, not a shared runtime
 
-### 1. Language interfaces
+### Normalized-matrix v1
 
-Provide a public API that fits each language.
+A language-neutral input contract for normalized matrix data. Language adapters can translate their native input into this representation. The contract is independent of the implementation language that performs validation, layout, or rendering.
 
-- The R interface supports current R users and the legacy compatibility layer.
-- The Python interface follows common Python usage patterns.
-- The TypeScript interface supports JavaScript and web applications.
-- Each interface validates language-specific input and converts it to the shared model.
+### Scene-v1
 
-Interfaces must not define different meanings for the same shared option unless a documented platform limit requires it.
+A language-neutral representation of plot meaning and renderer-neutral scene content. It is the interoperability boundary between producers and consumers. A producer and a renderer may be implemented in different languages and communicate through this contract; they do not need to link to one common native library.
 
-### 2. Legacy R compatibility adapter
+Contract versions and compatibility rules belong to the contract specifications. Runtime and packaging choices belong to the individual implementations.
 
-Map legacy function calls and arguments to the shared model where practical.
+## Implemented components
 
-- Keep the original R package as the behavior reference.
-- Record legacy behavior with tests before replacing code.
-- Preserve argument defaults, ordering, labels, annotations, return behavior, and graphics behavior where required.
-- Report known gaps. Do not claim full compatibility without test evidence.
+### R package
 
-Some legacy behavior may need to remain in the R adapter. In particular, existing R code can draw extra elements on the active graphics device with functions such as `text()`, `segments()`, and `points()`. Returning an SVG string alone does not preserve that workflow. The prototype must test how the R interface can draw the shared plot and still allow subsequent native R drawing.
+The R implementation currently has distinct paths:
 
-### 3. Shared plot model and core rules
+- **Legacy compatibility path:** delegates to the original corrplot behavior by default.
+- **Normalized-matrix path:** adapts normalized matrix input.
+- **Experimental scene path:** produces scene-v1 data; it is not yet a complete replacement renderer and does not imply full rendering parity.
 
-Define the meaning of a plot independently of a particular programming language or renderer.
+The R package therefore remains a compatibility-focused implementation with incremental new contract support, not a finished front end to a production shared native core. See [R implementation notes](../implementations/r/README.md).
 
-The core should own, where practical:
+### Rust standalone CLI
 
-- Input data representation and validation rules.
-- Correlation values and missing-value handling.
-- Mapping values to colors, sizes, shapes, and symbols.
-- Matrix layout and variable ordering.
-- Labels, annotations, legends, and scales.
-- A renderer-neutral description of plot elements and their geometry.
+The standalone command-line tool is implemented in Rust. This is a decision about the CLI implementation and its distribution/toolchain. It does **not** establish Rust as the production shared-core language, nor does it mean that a reusable native library for R, Node.js, and other consumers already exists.
 
-The core should not depend on an interactive user interface or on one output format.
+### Python reference implementation
 
-### 4. Rendering interface and backends
+The Python shared-scene/SVG implementation serves as a reference and prototype for working with the scene representation and SVG output. It is not the selected production shared core.
 
-The rendering interface receives the prepared plot model and sends it to a target backend.
+## Experimental integrations
 
-**Current proposal to test:**
+Rust/rextendr and C++/Rcpp integrations have been used as evaluation spikes. They are not production R backends and should not be presented as supported deployment paths.
 
-- Use a renderer-neutral plot scene as the boundary between shared plot rules and output formats.
-- Test SVG as the primary vector output. It is text-based, portable, and suitable for deterministic structural tests.
-- Keep native R graphics integration as a separate compatibility concern, rather than assuming that SVG output behaves like an active R graphics device.
-- Consider other backends only when a concrete use case justifies them.
+Experiments can inform future decisions, but an experiment does not change the architecture decision unless that decision is explicitly revisited and recorded.
 
-SVG output may be identical when the same scene and serializer are used. Rasterized PNG images may still differ because of fonts, rendering engines, and antialiasing. Tests should compare the scene or normalized SVG exactly where possible, and use image tolerances when comparing raster output.
+## Planned work
 
-### 5. User-defined plot elements
+The following capabilities are tracked as future work, not as current shipped architecture:
 
-The design should support adding user-defined elements without putting language-specific drawing rules into the shared core.
+- TypeScript API and shared cross-runtime architecture (#139).
+- Portable reusable Rust core for native and WebAssembly targets (#140).
+- Native Node.js binding (#141).
+- Browser WebAssembly integration (#142).
+- Renderer-neutral output interface and additional output formats (#143, #153, #154).
+- Direct browser Canvas rendering (#144).
+- Unified TypeScript API with backend selection (#145).
+- Cross-backend parity, visual regression, and performance coverage (#146).
 
-For the new API, consider representing annotations as elements in the shared plot scene before rendering. The scene needs a documented coordinate system and a clear rule for layering elements.
+The standalone CLI should remain distinct from a future reusable native library. Likewise, browser Canvas rendering is a separate adapter from server-side or CLI rendering.
 
-For the legacy R API, test a separate integration path that preserves common drawing operations on the active graphics device. Do not assume that every R graphics operation can be translated automatically to SVG or to another language.
+## Decision boundaries
 
-The prototype should answer these questions:
+| Area | Current position |
+|---|---|
+| Interoperability | Normalized-matrix v1 and scene-v1 contracts |
+| Scene boundary | Accepted; scene-v1 is language-neutral |
+| Standalone CLI | Implemented in Rust |
+| Production shared-core language | Deferred by ADR 0001 |
+| Rust/rextendr and C++/Rcpp | Experimental evaluation spikes |
+| Python shared-scene/SVG | Reference/prototype implementation |
+| R compatibility | Legacy path plus normalized-input and experimental scene paths |
+| TypeScript, Node binding, browser WASM and Canvas | Planned |
 
-- Can the same shared plot scene produce stable SVG output?
-- Can the R adapter draw the plot and still support common follow-up calls such as `text()` and `segments()`?
-- Which legacy drawing behaviors cannot be preserved by the shared scene alone?
+A future shared native core should be considered only when a concrete multi-consumer requirement demonstrates that the benefits outweigh the build, packaging, ABI, and maintenance costs. Any change to the deferred language decision requires a separate evidence-backed ADR update; it must not be introduced implicitly through implementation or documentation.
 
-### 6. Legacy-code migration tool
+## Dependency principles
 
-Help users move from legacy R calls to the new API.
+1. Language-specific APIs and adapters own conversion from native inputs to the versioned language-neutral contracts.
+2. Contract definitions remain independent of a particular implementation language or runtime.
+3. Producers and consumers communicate through explicit, versioned contract data.
+4. Rendering adapters consume scene data and own output-specific behavior.
+5. Experimental bindings and future adapters remain clearly separated from supported implementation paths.
 
-- Start with a small set of common patterns.
-- Show suggested replacements and warnings.
-- Do not silently change code.
-- Identify cases that need manual review.
-
-A migration tool is a helper. It does not replace compatibility support.
-
-## Suggested dependency direction
-
-Use this dependency direction:
-
-1. Language-specific calls enter through an interface or adapter.
-2. The interface creates the shared plot model.
-3. The core validates data and resolves shared visual rules.
-4. The core produces a renderer-neutral plot scene.
-5. A backend renders the scene for the target environment.
-
-The shared core must not call back into language interfaces. This keeps the core easier to test and reuse.
-
-## Technology choice
-
-Rust is a candidate for the shared core, but it is not a final decision.
-
-A small prototype should compare:
-
-- Calling the core from R and at least one other language.
-- Build and installation complexity.
-- Support for required data types.
-- Stable SVG output and native R graphics integration.
-- Testing, debugging, packaging, and long-term maintenance.
-
-Choose the smallest design that meets the top-level requirements. Avoid extra services or runtime layers unless a tested need justifies them.
-
-## Open questions
-
-- Is a renderer-neutral plot scene the right boundary between core rules and rendering?
-- Does SVG meet the initial output needs, and what is the simplest way to support native R graphics?
-- Which legacy behaviors must be reproduced exactly?
-- Which user-defined drawing operations can be represented in the shared scene, and which need a native R path?
-- What is the simplest packaging model for each language?
-- Does Rust provide enough benefit to justify its build and distribution cost?
-
-## Prototype acceptance criteria
-
-The first prototype should:
-
-- Render one representative correlation plot from a language-neutral input.
-- Produce stable SVG from the same input and configuration.
-- Keep layout and visual rules outside language-specific adapters.
-- Demonstrate at least one user-defined annotation.
-- Test whether the R adapter can preserve a common post-plot drawing operation.
-- Document build complexity and any behavior that cannot be preserved.
+This keeps interoperability independent from the unresolved question of whether any particular functionality should eventually be factored into a shared compiled library.
