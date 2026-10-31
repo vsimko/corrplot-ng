@@ -203,3 +203,13 @@ The Linux installed package size was 5.9 MB; the macOS and Windows checks report
 The separate [Rust Windows binary install run #41151817223](https://github.com/vsimko/corrplot-ng/actions/runs/41151817223) also passed: it built the binary package and installed/smoke-tested it on a fresh Windows runner with Rust removed from the restricted `PATH`.
 
 These deterministic CI checks disable CRAN incoming and remote incoming checks. They demonstrate a reproducible prototype source-package path, not CRAN acceptance. The production R package remains independent of Rust.
+
+### Updated Rust/rextendr evidence after extendr 0.9.0 (2026-10-31)
+
+The current generated package pins `extendr-api = "=0.9.0"` and declares Rust/Cargo 1.78. The dedicated CI workflow verifies offline installation and `R CMD check --as-cran` on Ubuntu, macOS, and Windows, as well as Windows binary installation without Rust on the user's PATH.
+
+The Ubuntu 24.04 / R 4.6.2 / GCC 13.3.0 job measured a compressed source tarball of **1,314,220 bytes** and an installed package size of **6.0 MB** (5.9 MB in `libs`). The source archive is below CRAN's general 10 MB guideline; the installed size exceeds rextendr's 5 MB caution and needs explicit CRAN guidance before any production R migration.
+
+The latest Ubuntu `R CMD check --as-cran` result is **1 NOTE**. Extendr 0.9.0 removed the `R_NamespaceRegistry` non-API NOTE, and pruning unused vendored tests/examples/benchmarks removed the non-portable-path NOTE. The remaining NOTE lists Cargo's hidden `.cargo-checksum.json` and `.cargo_vcs_info.json` files. They are retained because the checksum manifest is required for offline Cargo integrity and the VCS metadata preserves source provenance; explain them in any CRAN submission comments. This is not evidence of CRAN acceptance.
+
+Rust/Cargo 1.78 is tested for the core, CLI, and rextendr consumer. Controlled human maintainer time remains unmeasured; existing effort estimates are planning estimates only.
