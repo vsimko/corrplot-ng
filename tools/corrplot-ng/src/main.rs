@@ -551,7 +551,7 @@ fn run() -> Result<(), String> {
 }
 
 
-fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, Vec<String>), String> {
+fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, Vec<(String, String)>), String> {
     let manifest = Path::new(manifest_path);
     let base = manifest.parent().unwrap_or_else(|| Path::new("."));
     let source = fs::read_to_string(manifest_path)
@@ -599,7 +599,7 @@ fn process_batch(manifest_path: &str, output_dir: &str) -> Result<(Vec<String>, 
                     item_index,
                     json_escape(entry)
                 ));
-                diagnostics.push(diagnostic);
+                diagnostics.push((diagnostic, message));
             }
         }
     }
@@ -635,14 +635,14 @@ fn run_batch(args: &[String], diagnostics_json: bool) -> Result<(), String> {
         println!(
             "{{\"schema_version\":1,\"successes\":[{}],\"diagnostics\":[{}]}}",
             successes.join(","),
-            diagnostics.join(",")
+            diagnostics.iter().map(|(diagnostic, _)| diagnostic.as_str()).collect::<Vec<_>>().join(",")
         );
     } else {
         for success in &successes {
             println!("rendered {success}");
         }
-        for diagnostic in &diagnostics {
-            eprintln!("diagnostic {diagnostic}");
+        for (_diagnostic, message) in &diagnostics {
+            eprintln!("error: {message}");
         }
     }
     if !diagnostics.is_empty() {
