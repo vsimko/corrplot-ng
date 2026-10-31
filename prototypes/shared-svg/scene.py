@@ -168,6 +168,75 @@ def _prepare_figure_text(entries: Any, width: float, default_family: str) -> lis
     return sorted(prepared, key=lambda item: _FIGURE_TEXT_ORDER.index(item["role"]))
 
 
+
+def _prepare_cluster_regions(
+    entries: Any,
+    labels: list[str],
+    variable_order: dict[str, Any] | None,
+    left: float,
+    top: float,
+    cell: float,
+) -> list[dict[str, Any]]:
+    if not isinstance(entries, list):
+        raise ValueError("cluster_regions must be a list")
+    display_labels = variable_order["labels"] if variable_order is not None else labels
+    if len(set(display_labels)) != len(display_labels):
+        raise ValueError("cluster_regions require unique variable identities after ordering")
+    prepared = []
+    seen_ids = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise ValueError(f"cluster_regions[{index}] must be an object")
+        allowed = {"id", "variables", "color", "line_width"}
+        unknown = set(entry) - allowed
+        if unknown:
+            raise ValueError(f"cluster_regions[{index}] has unknown fields: {', '.join(sorted(unknown))}")
+        region_id = entry.get("id")
+        if not isinstance(region_id, str) or not region_id.strip():
+            raise ValueError(f"cluster_regions[{index}].id must be a non-empty string")
+        if region_id in seen_ids:
+            raise ValueError(f"cluster_regions contains duplicate id {region_id!r}")
+        seen_ids.add(region_id)
+        variables = entry.get("variables")
+        if (not isinstance(variables, list) or not variables
+            or any(not isinstance(name, str) or not name for name in variables)
+            or len(set(variables)) != len(variables)):
+            raise ValueError(f"cluster_regions[{index}].variables must contain unique non-empty variable names")
+        unknown_variables = [name for name in variables if name not in display_labels]
+        if unknown_variables:
+            raise ValueError(
+                f"cluster region {region_id!r} references unknown variables: {', '.join(unknown_variables)}"
+            )
+        positions = [position for position, name in enumerate(display_labels) if name in set(variables)]
+        start, end = min(positions), max(positions)
+        if positions != list(range(start, end + 1)):
+            raise ValueError(
+                f"cluster region {region_id!r} variables must be contiguous after ordering"
+            )
+        color = entry.get("color", "#000000")
+        if (not isinstance(color, str) or len(color) != 7 or color[0] != "#"
+            or any(char not in "0123456789abcdefABCDEF" for char in color[1:])):
+            raise ValueError(f"cluster_regions[{index}].color must be a six-digit hex color")
+        line_width = _number(entry.get("line_width", 1.5),
+                             f"cluster_regions[{index}].line_width", 0.1, 12)
+        span = (end - start + 1) * cell
+        prepared.append({
+            "id": region_id,
+            "variables": variables,
+            "row_start": start,
+            "row_end": end,
+            "column_start": start,
+            "column_end": end,
+            "x": left + start * cell,
+            "y": top + start * cell,
+            "width": span,
+            "height": span,
+            "color": color,
+            "line_width": line_width,
+        })
+    return prepared
+
+
 def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     """Validate a correlation-plot config and return a deterministic plot scene."""
     if not isinstance(config, dict):
@@ -423,6 +492,10 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 item["p_value"] = p_values[row_index][column_index]
             cells.append(item)
 
+    cluster_regions = _prepare_cluster_regions(
+        config.get("cluster_regions", []), labels, variable_order, left, top, cell
+    )
+
     # Coefficient/value text is semantic scene data, not an SVG-specific detail.
     add_coef_color = config.get("add_coef_color")
     if add_coef_color is not None and (not isinstance(add_coef_color, str) or not add_coef_color.strip()):
@@ -499,6 +572,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         "annotation": annotation,
         "glyph_method": method, "text_annotations": text_annotations,
         "title": title, "description": description,
+        **({"cluster_regions": cluster_regions} if cluster_regions else {}),
         **({"figure_text": figure_text} if figure_text else {}),
         "style": {
             "positive_color": "#2166ac", "negative_color": "#b2182b",
