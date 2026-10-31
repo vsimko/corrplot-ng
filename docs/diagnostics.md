@@ -37,6 +37,9 @@ on \`code\`, \`severity\`, and \`stage\`.
 | \`renderer.unsupported_feature\` | renderer | A renderer cannot preserve a required feature. |
 | \`renderer.optional_feature_omitted\` | renderer | The caller explicitly allowed an unsupported optional feature to be omitted. |
 | \`renderer.schema_version_unsupported\` | renderer | The renderer does not support the scene schema version. |
+| `renderer.output.invalid_options` | renderer | Output dimensions, units, or renderer-specific options are invalid. |
+| `renderer.output.invalid_buffer` | export | An SVG, PNG, or raw pixel output violates its declared buffer contract. |
+| `renderer.output.format_mismatch` | export | A renderer returned a different output format from the requested format. |
 | \`cli.operation.failed\` | input | A CLI failure does not yet have a more specific catalogue entry. |
 
 Add codes when a stable distinction is useful to callers. Do not create a new
