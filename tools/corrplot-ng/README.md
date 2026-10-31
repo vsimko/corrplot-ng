@@ -282,3 +282,25 @@ measurement, not a cross-platform performance guarantee. The CI workflow
 uploads a fresh comparison artifact for each pull-request revision.
 
 Measurement run: https://github.com/vsimko/corrplot-ng/actions/runs/41145752180
+
+
+## SVG export validation
+
+The repository includes a standard-library validator for the supported
+self-contained SVG subset:
+
+```sh
+python scripts/validate_svg.py figure.svg
+```
+
+It checks XML well-formedness, namespace and dimensions, viewBox geometry,
+unique IDs and local references, accessibility references, and rejects
+scripts, event handlers, remote assets, and external CSS dependencies. This
+is test/build tooling only; the native executable has no Python dependency.
+
+CI validates a generated native CLI SVG on Ubuntu and rasterizes the shared
+Python renderer output with librsvg. For a manual LaTeX smoke test, rasterize
+the SVG with `rsvg-convert`, place the resulting `figure.png` beside
+`tests/fixtures/svg-publication-example.tex`, and compile the document with
+`pdflatex`. The supported subset and limitations are documented in
+`tests/README.md`.
