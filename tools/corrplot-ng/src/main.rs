@@ -476,8 +476,11 @@ fn run() -> Result<(), String> {
                     "render" => {
                         let content = match opts.format {
                             Format::Svg => match publication::PublicationSvgRenderer.render(
-                                &publication,
-                                &publication.svg_output_options(&opts.title)?,
+                                &publication::PublicationRenderInput {
+                                    publication: &publication,
+                                    title: &opts.title,
+                                },
+                                &publication.svg_output_options()?,
                             )? {
                                 RenderOutput::Svg(svg) => svg,
                                 _ => return Err("publication SVG renderer returned a non-SVG output".into()),
