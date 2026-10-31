@@ -9,7 +9,7 @@
 Both candidates implement the same narrow R-callable scene-v1 JSON builder. Both can be generated, compiled, installed, and exercised by the existing cross-language workflow on Ubuntu, macOS, and Windows. That establishes basic integration feasibility, not equal release readiness.
 
 - **C++/Rcpp has the shorter routine package workflow.** Rcpp attributes generate the R/C++ registration wrappers, then ordinary R package installation compiles the C++ source. Its main maintenance cost is keeping generated wrappers in sync and diagnosing the platform's C++ compiler/R toolchain.
-- **Rust/rextendr has more build and distribution machinery.** The current package-generation script creates a temporary R package, pins the generated package to extendr 0.8.2, adapts the lockfile and generated Makevars, and adds R wrappers, help, namespace, and tests. Its dedicated CI also checks offline vendoring, source-tarball contents, dependency licenses, and a Windows binary install without Rust on PATH.
+- **Rust/rextendr has more build and distribution machinery.** The current package-generation script creates a temporary R package, pins the generated package to extendr 0.9.0, adapts the lockfile and generated Makevars, and adds R wrappers, help, namespace, and tests. Its dedicated CI also checks offline vendoring, source-tarball contents, dependency licenses, and a Windows binary install without Rust on PATH.
 - **Current CI investment is asymmetric.** The shared manual cross-language workflow covers both candidates on all three operating systems, but the extra offline-package, dependency-audit, and Windows binary workflows currently cover Rust only. This is evidence of more Rust validation work, not proof that C++ has no corresponding release risks.
 - **Neither spike is production-ready.** Keep both isolated until the same distribution and maintenance acceptance is applied to each.
 
@@ -87,7 +87,7 @@ R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
 Rscript -e 'library(corrplotngrustspike); source("prototypes/rust-rextendr/test-r-integration.R")'
 ```
 
-The generator deletes and recreates `.ci-r-package`. It calls `rextendr::use_extendr()`, pins the generated `extendr-api` dependency to 0.8.2, adapts the committed lockfile to the generated package identity, copies the Rust implementation, adjusts generated Makevars/target handling, and creates the R wrapper, namespace export, help page, and testthat smoke test. Do not hand-edit generated files as the source of truth; change the prototype or generator and regenerate.
+The generator deletes and recreates `.ci-r-package`. It calls `rextendr::use_extendr()`, pins the generated `extendr-api` dependency to 0.9.0, adapts the committed lockfile to the generated package identity, copies the Rust implementation, adjusts generated Makevars/target handling, and creates the R wrapper, namespace export, help page, and testthat smoke test. Do not hand-edit generated files as the source of truth; change the prototype or generator and regenerate.
 
 **Additional release-oriented/offline path**
 
@@ -182,6 +182,23 @@ These are planning estimates for one maintainer familiar with R packaging, infer
 
 **Interpretation:** C++/Rcpp currently has lower expected maintenance cost for an R-only native extension. Rust/rextendr has a larger initial and release-validation surface, particularly because CRAN-style source distribution needs a self-contained Cargo dependency strategy. Rust may still be justified if the same core is genuinely reused by non-R consumers; that benefit is not measured by this issue and should not be assumed.
 
+## Observed measurements from the shared-core proof
+
+The PR #180 offline source-package workflow ran on all three operating systems.
+From the completed GitHub Actions job logs, end-to-end job wall times were:
+
+| Platform | Elapsed CI job time |
+|---|---:|
+| Ubuntu | 2 min 33 sec |
+| macOS | 2 min 19 sec |
+| Windows | 3 min 10 sec |
+
+The Linux source tarball measured 1,270,634 bytes and the installed package
+reported 6.0 MB. The Windows source tarball measured 1,260,465 bytes. These
+measurements are for the extendr 0.8.2 baseline before the 0.9.0 upgrade;
+the follow-up 0.9.0 CI run must refresh them before treating them as current.
+CI wall time is not human maintainer effort and does not replace the controlled
+change/upgrade timing experiment below.
 ## Fair comparison gaps and recommended follow-up
 
 The current CI is not fully symmetric. Before using this report to select a production language:
