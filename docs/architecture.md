@@ -1,7 +1,7 @@
 ---
 type: Architecture
 title: Current architecture of corrplot-ng
-description: Implemented components, language-neutral contracts, experimental integrations, and deferred architecture decisions.
+description: Implemented components, language-neutral contracts, the selected Rust shared-core direction, and remaining rollout gates.
 tags:
   - architecture
   - scene-v1
@@ -13,11 +13,11 @@ status: current
 
 ## Purpose and status
 
-This document describes the architecture that exists in the repository today and distinguishes it from experiments and planned work. It is not a commitment to a single compiled implementation shared by every language.
+This document distinguishes the implemented architecture from experiments and planned work. Rust is the accepted strategic shared-core implementation. The production rollout of the Rust core into the R package remains gated by packaging guidance and maintainer-workflow evidence.
 
-The stable interoperability boundary is the language-neutral **scene-v1** contract. The normalized-matrix v1 contract provides a language-neutral representation of normalized matrix input. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration. The shared Rust core proof currently centralizes matrix validation in `crates/corrplot-core`, called by both the standalone CLI and the rextendr spike; scene-v1 remains the language-neutral interchange contract. These contracts allow implementations to exchange data without requiring them to use the same programming language, runtime, or binary.
+The normalized-matrix v1 and **scene-v1** contracts are language-neutral input and interchange/conformance boundaries. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration. The Rust shared core lives in `crates/corrplot-core`. The standalone CLI and disposable R/rextendr adapter both depend on that exact crate and call its matrix-validation API, as demonstrated by merged PR #180. This is the first shared operation, not yet the complete correlation/visualization engine.
 
-The production shared-core language decision is deliberately **deferred**. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md) for the rationale and decision record.
+Rust is the accepted strategic shared-core implementation. The remaining #173 rollout gates are the controlled human maintainer-time comparison and CRAN guidance on the vendor-metadata NOTE and installed package size. No production R migration is authorized by this proof. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md).
 
 ## Architecture at a glance
 
@@ -35,15 +35,19 @@ flowchart TB
     end
 
     subgraph Other[Other implementations and tools]
-      PY[Python shared-scene / SVG reference implementation]
+      CORE[crates/corrplot-core Rust shared library]
       CLI[Rust standalone CLI]
-      SPIKES[Rust/rextendr and C++/Rcpp evaluation spikes]
+      R[Rust/rextendr evaluation adapter]
+      PY[Python scene/SVG reference implementation]
+      SPIKES[C++/Rcpp evaluation spike]
     end
 
     RNORM --> NM
     RSCENE --> SC
+    CORE --> CLI
+    CORE --> R
     PY --> SC
-    CLI -->|CLI input/output workflows| SC
+    CLI -->|scene/config input and SVG output| SC
     SPIKES -. evaluation only .-> SC
 
     SC -. future consumers .-> TS[TypeScript API]
@@ -53,7 +57,7 @@ flowchart TB
     SC -. future renderer .-> RENDER[Raster / other output adapters]
 ```
 
-Solid edges represent current implementation paths or contract use. Dashed edges represent experiments, future consumers, or planned work; they must not be read as shipped production capabilities.
+Solid edges represent current implementation paths or contract use. Dashed edges represent experiments, future consumers, or planned work; they must not be read as shipped production capabilities. The shared Rust crate currently provides matrix validation; it does not yet implement all scene construction or rendering semantics.
 
 ## Contracts: stable boundaries, not a shared runtime
 
@@ -81,7 +85,7 @@ The R package therefore remains a compatibility-focused implementation with incr
 
 ### Rust standalone CLI
 
-The standalone command-line tool is implemented in Rust. This is a decision about the CLI implementation and its distribution/toolchain. It does **not** establish Rust as the production shared-core language, nor does it mean that a reusable native library for R, Node.js, and other consumers already exists.
+The standalone command-line tool is implemented in Rust and consumes `crates/corrplot-core` for matrix validation. The reusable Rust library is the selected strategic shared core. Its current API is deliberately small; the proof does not mean that the full visualization engine or production R binding has shipped.
 
 ### Python reference implementation
 
@@ -89,9 +93,7 @@ The Python shared-scene/SVG implementation serves as a reference and prototype f
 
 ## Experimental integrations
 
-Rust/rextendr and C++/Rcpp integrations have been used as evaluation spikes. They are not production R backends and should not be presented as supported deployment paths.
-
-Experiments can inform future decisions, but an experiment does not change the architecture decision unless that decision is explicitly revisited and recorded.
+The Rust/rextendr integration remains a disposable evaluation adapter that proves the CLI and R can call the same compiled crate. It is not part of the production R package. C++/Rcpp remains an R-only fallback experiment, not a competing shared-core direction. The controlled maintainer-time comparison and CRAN disposition remain open.
 
 ## Planned work
 
@@ -115,13 +117,13 @@ The standalone CLI should remain distinct from a future reusable native library.
 | Interoperability | Normalized-matrix v1 and scene-v1 contracts |
 | Scene boundary | Accepted; scene-v1 is language-neutral |
 | Standalone CLI | Implemented in Rust |
-| Production shared-core language | Deferred by ADR 0001 |
+| Strategic shared-core implementation | Rust (`crates/corrplot-core`); full semantics still in progress |
 | Rust/rextendr and C++/Rcpp | Experimental evaluation spikes |
 | Python shared-scene/SVG | Reference/prototype implementation |
 | R compatibility | Legacy path plus normalized-input and experimental scene paths |
 | TypeScript, Node binding, browser WASM and Canvas | Planned |
 
-A future shared native core should be considered only when a concrete multi-consumer requirement demonstrates that the benefits outweigh the build, packaging, ABI, and maintenance costs. Any change to the deferred language decision requires a separate evidence-backed ADR update; it must not be introduced implicitly through implementation or documentation.
+The Rust shared-core direction is accepted and the initial crate-reuse proof is complete. Production R rollout still requires CRAN guidance and measured maintainer effort. Keep language-specific adapters thin and keep scene-v1 as the versioned interchange/conformance contract.
 
 ## Dependency principles
 
@@ -130,5 +132,7 @@ A future shared native core should be considered only when a concrete multi-cons
 3. Producers and consumers communicate through explicit, versioned contract data.
 4. Rendering adapters consume scene data and own output-specific behavior.
 5. Experimental bindings and future adapters remain clearly separated from supported implementation paths.
+6. Common correlation and visualization semantics belong in the Rust core as they are implemented; do not duplicate them in adapters.
+7. Keep R-specific legacy compatibility and graphics-device behavior in the R adapter.
 
 This keeps interoperability independent from the unresolved question of whether any particular functionality should eventually be factored into a shared compiled library.
