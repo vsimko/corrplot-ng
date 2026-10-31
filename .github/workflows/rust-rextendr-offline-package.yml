@@ -62,6 +62,10 @@ jobs:
           cargo metadata --format-version 1 > /dev/null
           echo "Normal dependency tree for the R integration:"
           cargo tree --locked --edges normal | tee cargo-dependency-tree.txt
+          if grep -q '^corrplot-ng v' cargo-dependency-tree.txt; then
+            echo "The R integration must not depend on the standalone CLI package" >&2
+            exit 1
+          fi
           cargo deny check licenses
           cargo vendor --locked vendor > vendor-config.toml
           mkdir -p .cargo
