@@ -326,14 +326,14 @@ pub struct OutputValidationError {
 }
 
 impl OutputValidationError {
-    fn invalid_options(message: impl Into<String>) -> Self {
+    pub fn invalid_options(message: impl Into<String>) -> Self {
         Self {
             code: "renderer.output.invalid_options",
             message: message.into(),
         }
     }
 
-    fn invalid_buffer(message: impl Into<String>) -> Self {
+    pub fn invalid_buffer(message: impl Into<String>) -> Self {
         Self {
             code: "renderer.output.invalid_buffer",
             message: message.into(),
@@ -343,7 +343,7 @@ impl OutputValidationError {
 
 impl fmt::Display for OutputValidationError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.message)
+        write!(formatter, "{}: {}", self.code, self.message)
     }
 }
 
