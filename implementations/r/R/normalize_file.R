@@ -36,8 +36,9 @@ corrplot_ng_normalize_file <- function(path, format = c("auto", "csv", "tsv", "j
       stop("package 'jsonlite' is required to read normalized-matrix JSON", call. = FALSE)
     }
     input <- jsonlite::fromJSON(path, simplifyVector = FALSE)
-    if (!is.list(input) || !identical(input$schema_version, 1L) &&
-        !identical(input$schema_version, 1) || !identical(input$kind, "normalized_matrix")) {
+    if (!is.list(input) ||
+        !(identical(input$schema_version, 1L) || identical(input$schema_version, 1)) ||
+        !identical(input$kind, "normalized_matrix")) {
       stop("JSON input must be a normalized-matrix v1 object", call. = FALSE)
     }
     labels <- unlist(input$labels, use.names = FALSE)
@@ -63,13 +64,25 @@ corrplot_ng_normalize_file <- function(path, format = c("auto", "csv", "tsv", "j
       }
     }
     dimnames(values) <- list(labels, labels)
-    result <- corrplot_ng_normalize_matrix(values)
-    result$source <- input$source
-    if (!is.list(result$source) || !identical(result$source$format, "json")) {
-      stop("JSON source.format must be 'json'", call. = FALSE)
+    source <- input$source
+    if (!is.list(source) || !identical(source$format, "json") ||
+        !is.logical(source$row_labels_present) || length(source$row_labels_present) != 1L ||
+        !is.logical(source$column_labels_present) || length(source$column_labels_present) != 1L) {
+      stop("JSON source must contain format='json' and logical row/column label flags", call. = FALSE)
     }
+    indices <- unlist(input$source_indices, use.names = FALSE)
+    if (length(indices) != length(labels) || !is.numeric(indices) ||
+        anyNA(indices) || any(!is.finite(indices)) || any(indices < 0) ||
+        any(indices != floor(indices)) || anyDuplicated(indices)) {
+      stop("JSON source_indices must contain one unique non-negative integer per label", call. = FALSE)
+    }
+    if (!is.null(input$metadata) && !is.list(input$metadata)) {
+      stop("JSON metadata must be an object", call. = FALSE)
+    }
+    result <- corrplot_ng_normalize_matrix(values)
+    result$source <- source
     result$source$path <- normalizePath(path, winslash = "/", mustWork = TRUE)
-    if (!is.null(input$source_indices)) result$source_indices <- input$source_indices
+    result$source_indices <- as.list(as.integer(indices))
     if (!is.null(input$metadata)) result$metadata <- input$metadata
     return(result)
   }
