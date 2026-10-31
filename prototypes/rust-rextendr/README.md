@@ -15,7 +15,15 @@ with the Rust stable toolchain, and installs it for the shared benchmark
 harness. Generated package files and Cargo build output are not committed.
 
 This remains an integration proof, not a production R-package migration. It
-demonstrates one compiled validation operation shared with the CLI and a
-Linux generated-package installation smoke test. CRAN readiness, oldest
-supported toolchain validation, and Windows R-package installation remain
-separate release gates.
+demonstrates one compiled validation operation shared with the CLI. CI verifies
+offline source-package installation and `R CMD check --as-cran` on Linux,
+macOS, and Windows, plus Windows binary installation without Rust on PATH.
+Rust/Cargo 1.78 is the declared and CI-tested minimum. One CRAN-style NOTE
+remains for Cargo vendor checksum/provenance metadata required by offline
+builds; actual CRAN acceptance and production R migration remain unproven.
+
+The 2026-10-31 Ubuntu 24.04 / R 4.6.2 run measured a 1,314,220-byte source
+tarball and a 6.0 MB installed package (5.9 MB in `libs`). The installed size
+exceeds rextendr's 5 MB caution and requires CRAN guidance before production
+use. Controlled human maintainer time versus the C++/Rcpp path remains
+unmeasured; existing effort ranges are planning estimates only.
