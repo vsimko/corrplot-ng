@@ -27,6 +27,9 @@ jobs:
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
       CARGO_BUILD_JOBS: 2
+      # Exercise the experimental post-link debug stripping flags on Linux/macOS.
+      # The generator deliberately skips Windows until PE/COFF behavior is validated.
+      CORRPLOT_REXTENDR_STRIP_DEBUG: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
