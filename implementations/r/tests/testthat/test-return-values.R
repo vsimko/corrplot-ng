@@ -63,7 +63,7 @@ test_that("corrPos names and coordinates map to reordered matrix cells", {
       stringsAsFactors = FALSE
     )
     expect_equal(positions, expected)
-    expect_null(rownames(result$corrPos))
+    expect_identical(rownames(result$corrPos), as.character(seq_len(nrow(result$corrPos))))
   })
 })
 
@@ -115,7 +115,7 @@ test_that("corrplot_ng_mixed preserves the combined invisible upstream return ob
   with_return_test_pdf({
     direct <- withVisible(corrplot::corrplot.mixed(
       corr, lower = "number", upper = "circle", diag = "n",
-      tl.pos = "n", cl.pos = "n"
+      tl.pos = "n"
     ))
     adapted <- withVisible(corrplot_ng_mixed(
       corr, lower = "number", upper = "circle", diag = "n",
@@ -137,7 +137,7 @@ test_that("corrplot_ng_mixed preserves legacy duplicate diagonal coordinates", {
   with_return_test_pdf({
     result <- corrplot_ng_mixed(
       corr, lower = "number", upper = "circle", diag = "l",
-      tl.pos = "n", cl.pos = "n"
+      tl.pos = "n"
     )
     expect_equal(nrow(result$corrPos), 12L)
     expect_equal(sum(result$corrPos$x + result$corrPos$y == 4), 6L)
