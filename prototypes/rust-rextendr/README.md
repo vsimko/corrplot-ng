@@ -31,9 +31,10 @@ unmeasured; existing effort ranges are planning estimates only.
 The generated R Cargo package uses a size-oriented release profile
 (`opt-level = "z"`, LTO, one codegen unit, and debuginfo stripping). This
 profile is set in the generated package manifest because Cargo profiles in
-the separate CLI package do not apply to it. CI records the installed package,
-native library, and Rust static-library artifact sizes on Linux, macOS, and
-Windows, and prints the R integration's normal dependency tree. The R
+the separate CLI package do not apply to it. CI installs both the Cargo-default baseline and optimized build into separate
+R libraries and records each installed package, native library, and Rust
+static-library artifact size on Linux, macOS, and Windows. It also prints the
+R integration's normal dependency tree. The R
 integration depends on `corrplot-core` and `extendr-api`; it does not depend
 on or build the CLI package. See
 [`docs/rust-rextendr-size-optimization.md`](../../docs/rust-rextendr-size-optimization.md)
