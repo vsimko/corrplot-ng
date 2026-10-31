@@ -50,7 +50,26 @@ package compilation and installation; those are separate packaging evidence.
 CI runs the same workflow on a common Ubuntu runner and uploads fixtures and
 machine-readable results as a 90-day artifact.
 
-## Input validation parity\n\nThe R-facing implementations reject non-square/dimension-mismatched matrices,\ncorrelation values outside [-1, 1], and infinite values. They use the same\nerror text for these invalid inputs. Missing R values (`NA`) remain valid and\nserialize as JSON `null`; ordinary finite values preserve row-major cell\nordering. The Rust binding returns an error through extendr's default\n`result_panic` behavior instead of returning an empty string, matching the\nRcpp and pure-R error contract. The Python reference rejects the corresponding\ninvalid configuration categories with `ValueError`; its wording remains\nPython-specific.\n\nRun the Python negative tests with:\n\n    python -m unittest discover -s benchmarks -p 'test_scene_v1_input_errors.py' -v\n\nThe R smoke harness exercises the same negative cases after both native\npackages are installed.\n\n## Interpretation and limitations
+## Input validation parity
+
+The R-facing implementations reject non-square/dimension-mismatched matrices,
+correlation values outside [-1, 1], and infinite values. They use the same
+error text for these invalid inputs. Missing R values (`NA`) remain valid and
+serialize as JSON `null`; ordinary finite values preserve row-major cell
+ordering. The Rust binding returns an error through extendr's default
+`result_panic` behavior instead of returning an empty string, matching the
+Rcpp and pure-R error contract. The Python reference rejects the corresponding
+invalid configuration categories with `ValueError`; its wording remains
+Python-specific.
+
+Run the Python negative tests with:
+
+    python -m unittest discover -s benchmarks -p 'test_scene_v1_input_errors.py' -v
+
+The R smoke harness exercises the same negative cases after both native
+packages are installed.
+
+## Interpretation and limitations
 
 - Correctness is a hard gate; a mismatch stops the run rather than reporting
   misleading performance.
