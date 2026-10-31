@@ -35,7 +35,8 @@
         "confidence_intervals": {"type": "boolean"},
         "legend": {"type": "boolean"},
         "figure_text": {"type": "boolean"},
-        "accessible_metadata": {"type": "boolean"}
+        "accessible_metadata": {"type": "boolean"},
+        "cluster_regions": {"type": "boolean"}
       }
     },
     "negotiation_modes": {"type": "array", "uniqueItems": true, "minItems": 1, "items": {"enum": ["strict", "permissive"]}}
