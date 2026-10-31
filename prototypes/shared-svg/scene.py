@@ -295,7 +295,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         for column_index, value in enumerate(row):
             if value is None:
                 continue
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError("matrix values must be numeric numbers or null")
+            if not isfinite(value):
                 raise ValueError(
                     f"matrix values must be finite numbers or null (invalid value at row {row_index}, column {column_index})"
                 )
