@@ -117,7 +117,7 @@ corrplot_ng_normalize_file <- function(path, format = c("auto", "csv", "tsv", "j
       cell <- raw[r, column]
       if (is.na(cell) || cell == "" || cell == "NA" || cell == "null") next
       number <- suppressWarnings(as.numeric(cell))
-      if (is.na(number) && !is.na(cell)) {
+      if (is.na(number) && !is.nan(number)) {
         stop("non-numeric value at row ", r, ", column ", column, ": '", cell, "'", call. = FALSE)
       }
       values[r, column] <- number
