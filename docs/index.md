@@ -37,7 +37,8 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [ADR 0001: shared-core architecture](adr/0001-shared-core-architecture.md): Rust shared-core decision and the CLI/rextendr reuse proof.
 - [ADR 0002: cross-runtime TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md): Node-API and browser-WASM targets, backend selection, API boundaries, compatibility matrix, and memory/error contracts.
 - [corrplot-core](../crates/corrplot-core/README.md): the dependency-free shared matrix validation library.
-- [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, and current backend limits.
+- [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, host targets, and current backend limits.
+- [Renderer output v1](renderer-output-v1.md): shared Rust output types, SVG/PNG/RGBA dimensions and ownership, direct Canvas host integration, and output diagnostics.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.

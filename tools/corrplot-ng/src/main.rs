@@ -1,3 +1,4 @@
+use corrplot_core::output::{RenderOutput, Renderer};
 use corrplot_core::{validate_matrix, MatrixKind};
 use std::env;
 use std::fs;
@@ -89,7 +90,13 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
 
 fn diagnostic_json(message: &str) -> String {
     let lower = message.to_lowercase();
-    let (code, stage, path) = if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
+    let (code, stage, path) = if lower.starts_with("renderer.output.invalid_options:") {
+        ("renderer.output.invalid_options", "renderer", Some("output"))
+    } else if lower.starts_with("renderer.output.invalid_buffer:") {
+        ("renderer.output.invalid_buffer", "export", Some("output"))
+    } else if lower.starts_with("renderer.output.format_mismatch:") {
+        ("renderer.output.format_mismatch", "export", Some("output"))
+    } else if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
         ("input.matrix.non_finite_value", "input", Some("matrix"))
     } else if lower.contains("square") || lower.contains("dimensions") || lower.contains("matrix size") {
         ("input.matrix.invalid_shape", "input", Some("matrix"))
@@ -474,7 +481,16 @@ fn run() -> Result<(), String> {
                         publication.kind, publication.labels.len(), publication.labels.len(), publication.ordering, publication.display),
                     "render" => {
                         let content = match opts.format {
-                            Format::Svg => publication.svg(&opts.title),
+                            Format::Svg => match publication::PublicationSvgRenderer.render(
+                                &publication::PublicationRenderInput {
+                                    publication: &publication,
+                                    title: &opts.title,
+                                },
+                                &publication.svg_output_options()?,
+                            ).map_err(|error| error.to_string())? {
+                                RenderOutput::Svg(svg) => svg,
+                                _ => return Err("publication SVG renderer returned a non-SVG output".into()),
+                            },
                             Format::SceneJson => publication.scene_json(&opts.title),
                             Format::NormalizedJson => return Err("normalized-json output is available for direct matrix inputs, not publication configs".into()),
                         };
@@ -696,6 +712,15 @@ mod tests {
         assert!(diagnostics[0].0.contains("\"manifest_index\":2"));
         assert!(output_dir.join("001-basic.svg").exists());
         fs::remove_dir_all(&temp).unwrap();
+    }
+
+    #[test]
+    fn current_matrix_svg_output_is_deterministic_and_escapes_titles() {
+        let matrix = parse_matrix(SAMPLE, Kind::Correlation).unwrap();
+        let rendered = svg(&matrix, "R&D <metrics>", "number", Kind::Correlation);
+        assert!(rendered.starts_with("<svg xmlns="));
+        assert!(rendered.contains("<title>R&amp;D &lt;metrics&gt;</title>"));
+        assert_eq!(rendered, svg(&matrix, "R&D <metrics>", "number", Kind::Correlation));
     }
 
     #[test]

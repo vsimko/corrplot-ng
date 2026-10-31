@@ -10,12 +10,15 @@ The machine-readable format is defined by
 \`prototypes/renderer-capabilities-v1.schema.json\`. Each declaration records:
 
 - renderer identity and version;
-- supported scene schema versions and output formats;
+- supported scene schema versions and serialized output formats;
+- optional host targets such as browser Canvas 2D, declared separately from serialized formats;
 - supported matrix kinds and cell methods;
 - support for labels, plotmath, missing cells, cell annotations,
   significance, confidence intervals, legends, figure-level text, and
   accessible metadata;
 - supported negotiation modes.
+
+An optional host_targets array identifies host-owned targets that are not serialized files or buffers. The initial values are browser-canvas-2d and browser-offscreen-canvas-2d. A Canvas renderer still uses the same feature flags and strict/permissive negotiation rules; it does not add a second capability model. Existing declarations remain valid when this optional field is absent.
 
 Current declarations:
 
@@ -62,7 +65,9 @@ only when the caller explicitly marks them optional.
 The native Rust CLI supports circle and number cell methods for its matrix
 input and publication-config workflow. Its declaration is intentionally
 narrow. Do not infer feature parity between the Rust CLI and Python SVG
-prototype from their shared use of the word SVG.
+prototype from their shared use of the word SVG. A future browser Canvas
+renderer declares its host target in host_targets; it does not pretend
+that a Canvas context is a PNG or raw RGBA file.
 
 ## Adding a renderer
 

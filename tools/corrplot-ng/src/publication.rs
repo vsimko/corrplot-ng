@@ -1,3 +1,4 @@
+use corrplot_core::output::{OutputOptions, SvgUnit, RenderOutput, Renderer, RgbaColor, SvgOptions};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -751,7 +752,23 @@ impl Publication {
         out
     }
 
+    pub fn svg_output_options(&self) -> Result<OutputOptions, String> {
+        let unit = match self.unit.as_str() {
+            "mm" => SvgUnit::Millimeters,
+            "in" => SvgUnit::Inches,
+            _ => return Err(format!("unsupported SVG physical unit '{}'", self.unit)),
+        };
+        let mut options = SvgOptions::new(self.width, self.height, unit);
+        options.font_family = self.family.clone();
+        options.font_size_pt = self.base_size;
+        Ok(OutputOptions::Svg(options))
+    }
+
     pub fn svg(&self, title: &str) -> String {
+        self.svg_with_background(title, RgbaColor::WHITE)
+    }
+
+    fn svg_with_background(&self, title: &str, background: RgbaColor) -> String {
         // SVG is deliberately a renderer of the canonical renderer-neutral scene.
         // Keep matrix semantics and ordering in scene construction, not here.
         let scene = parse_json(&self.scene_json(title)).expect("scene builder must emit valid JSON");
@@ -774,7 +791,17 @@ impl Publication {
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\">\n<title>{}</title>\n",
             self.width,self.unit,self.height,self.unit,width,height,esc(title_text)
         );
-        out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n");
+        if background == RgbaColor::WHITE {
+            out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n");
+        } else {
+            out.push_str(&format!(
+                "<rect width=\"100%\" height=\"100%\" fill=\"#{:02x}{:02x}{:02x}\" fill-opacity=\"{}\"/>\n",
+                background.red,
+                background.green,
+                background.blue,
+                background.alpha as f64 / 255.0
+            ));
+        }
         out.push_str(&format!(
             "<text x=\"120\" y=\"28\" font-family=\"{}\" font-size=\"{}\" font-weight=\"bold\">{}</text>\n",
             esc(family),font_size*1.5,esc(title_text)
@@ -1265,5 +1292,84 @@ mod scene_input_tests {
         assert!(parse_scene_matrix(&version).unwrap_err().contains("schema_version"));
         let kind = SCENE.replace("correlation_plot", "unknown_plot");
         assert!(parse_scene_matrix(&kind).unwrap_err().contains("unsupported scene.kind"));
+    }
+}
+
+/// Adapter for the existing publication SVG implementation.
+///
+/// The adapter keeps publication semantics in the existing scene builder and
+/// applies output-only settings from the shared renderer contract.
+pub struct PublicationRenderInput<'a> {
+    pub publication: &'a Publication,
+    pub title: &'a str,
+}
+
+pub struct PublicationSvgRenderer;
+
+impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
+    type Error = corrplot_core::output::OutputValidationError;
+
+    fn render(
+        &self,
+        input: &PublicationRenderInput<'a>,
+        options: &OutputOptions,
+    ) -> Result<RenderOutput, Self::Error> {
+        options.validate()?;
+        let OutputOptions::Svg(svg_options) = options else {
+            return Err(corrplot_core::output::OutputValidationError::invalid_options(
+                "publication SVG renderer supports only SVG output",
+            ));
+        };
+        let unit = match svg_options.unit {
+            SvgUnit::Millimeters => "mm",
+            SvgUnit::Inches => "in",
+            SvgUnit::Pixels => {
+                return Err(corrplot_core::output::OutputValidationError::invalid_options(
+                    "publication SVG output requires physical mm or in dimensions",
+                ));
+            }
+        };
+        let mut adapted = input.publication.clone();
+        adapted.width = svg_options.width;
+        adapted.height = svg_options.height;
+        adapted.unit = unit.to_string();
+        adapted.family = svg_options.font_family.clone();
+        adapted.base_size = svg_options.font_size_pt;
+        let output = RenderOutput::Svg(
+            adapted.svg_with_background(input.title, svg_options.background),
+        );
+        output.validate_for(options)?;
+        Ok(output)
+    }
+}
+
+#[cfg(test)]
+mod renderer_output_tests {
+    use super::*;
+
+    #[test]
+    fn publication_svg_renderer_uses_shared_output_contract_without_changing_defaults() {
+        let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        let publication = Publication::load(config.to_str().unwrap()).unwrap();
+        let title = "renderer contract";
+        let expected = publication.svg(title);
+        let input = PublicationRenderInput { publication: &publication, title };
+        let options = publication.svg_output_options().unwrap();
+        let actual = PublicationSvgRenderer.render(&input, &options).unwrap();
+        assert_eq!(actual, RenderOutput::Svg(expected));
+    }
+
+    #[test]
+    fn publication_svg_renderer_rejects_raster_options() {
+        let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        let publication = Publication::load(config.to_str().unwrap()).unwrap();
+        let options = OutputOptions::Png(corrplot_core::output::RasterOptions::new(320, 240));
+        let input = PublicationRenderInput { publication: &publication, title: "raster" };
+        assert_eq!(
+            PublicationSvgRenderer.render(&input, &options).unwrap_err().code,
+            "renderer.output.invalid_options"
+        );
     }
 }

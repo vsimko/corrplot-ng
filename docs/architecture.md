@@ -103,12 +103,12 @@ The following capabilities are tracked as future work, not as current shipped ar
 - Portable reusable Rust core for native and WebAssembly targets (#140).
 - Native Node.js binding (#141).
 - Browser WebAssembly integration (#142).
-- Renderer-neutral output interface and additional output formats (#143, #153, #154).
+- Renderer-neutral output interface specified in [renderer-output-v1](renderer-output-v1.md) and #153; raster implementation remains #154.
 - Direct browser Canvas rendering (#144).
 - Unified TypeScript API with backend selection (#145).
 - Cross-backend parity, visual regression, and performance coverage (#146).
 
-The standalone CLI remains a thin application adapter over the reusable Rust crate. The cross-runtime TypeScript architecture is specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); its Node-API and browser-WASM bindings are not yet implemented. Browser Canvas rendering remains a separate adapter from server-side or CLI rendering.
+The standalone CLI remains a thin application adapter over the reusable Rust crate. The cross-runtime TypeScript architecture is specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); its Node-API and browser-WASM bindings are not yet implemented. The renderer output contract is specified in [renderer-output-v1](renderer-output-v1.md) and represented by types in crates/corrplot-core/src/output.rs. Browser Canvas rendering remains a separate adapter from server-side or CLI rendering.
 
 ## Decision boundaries
 
