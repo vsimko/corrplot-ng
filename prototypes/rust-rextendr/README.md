@@ -39,3 +39,43 @@ prints the R integration's dependency tree. The R integration depends on
 package. See
 [`docs/rust-rextendr-size-optimization.md`](../../docs/rust-rextendr-size-optimization.md)
 for measurements and follow-up analysis.
+
+
+## Native-library symbol and section inspection (2026-10-31)
+
+The offline package workflow now inspects the installed shared library after
+installation and before building the source tarball. This is diagnostic only:
+it does not modify the installed package, compiler flags, Cargo features, or
+release profile.
+
+Observed on the CI runners:
+
+- **Ubuntu:** `corrplotngrustspike.so` is 6,207,880 bytes. GNU `size -A`
+  reports 5,730,418 bytes across sections. The ELF contains substantial
+  non-loadable DWARF/debug sections: `.debug_info` 1,137,254 bytes,
+  `.debug_str` 1,914,653 bytes, `.debug_line` 478,397 bytes,
+  `.debug_ranges` 538,080 bytes, and `.debug_aranges` 31,952 bytes.
+  The `.text` section is 894,192 bytes. GNU `nm` enumerates 3,409 symbols;
+  its largest entries include Rust standard-library backtrace/process
+  functionality and `gimli`/object-reading routines, alongside the package
+  wrappers and `corrplot_core` functions.
+- **Windows:** the installed DLL is 1,164,288 bytes. LLVM objdump reports a
+  `.text` section of 0xD7FB8 bytes and a `.rdata` section of 0x266E8 bytes.
+  The available `llvm-nm` reports no symbols, so symbol-level conclusions
+  cannot be drawn from this build.
+- **macOS:** the installed library is 1,932,808 bytes. Apple `size -m`
+  reports a `__text` section of 788,668 bytes and a `__LINKEDIT` segment
+  of 770,048 bytes. The first inspection attempt used GNU-specific
+  `nm` options unsupported by Apple's tool; the script was adjusted to use
+  Apple's `nm -S` output and sort its size column. That corrected path must
+  be confirmed by the next CI run.
+
+These observations are facts about the current CI artifacts, not proof that
+any particular symbol is unreachable or safe to remove. In particular,
+backtrace and debug-information support may be intentional Rust runtime
+behavior. The Linux DWARF sections are a concrete candidate for a separate,
+controlled packaging experiment: compare stripping debug information from
+the installed shared library while preserving symbols needed for runtime
+behavior and diagnostics, then rerun offline install, R CMD check, and
+cross-platform size measurements. Do not change release flags or strip
+artifacts as part of this diagnostic PR.
