@@ -32,10 +32,10 @@ fn json_number(value: f64) -> String {
 /// Build the renderer-neutral scene-v1 JSON from an R character vector and matrix.
 /// @export
 #[extendr]
-fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str) -> String {
+fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str) -> extendr_api::Result<String> {
     let n = labels.len();
     if n == 0 || matrix.nrows() != n || matrix.ncols() != n {
-        return String::new();
+        return Err(\"labels and matrix dimensions must agree and be non-empty\".into());
     }
 
     let cell = 84.0_f64;
@@ -67,8 +67,9 @@ fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str
     for row in 0..n {
         for column in 0..n {
             let value = matrix[[row, column]];
-            if !value.is_nan() && (!value.is_finite() || value < -1.0 || value > 1.0) {
-                return String::new();
+            let is_missing = value.to_bits() == NA_REAL.to_bits();
+            if !is_missing && (!value.is_finite() || value < -1.0 || value > 1.0) {
+                return Err("matrix values must be finite or between -1 and 1".into());
             }
             if !first { out.push(','); }
             first = false;
@@ -77,7 +78,7 @@ fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str
             out.push_str(",\"column\":");
             out.push_str(&column.to_string());
             out.push_str(",\"value\":");
-            if value.is_nan() { out.push_str("null"); }
+            if is_missing { out.push_str("null"); }
             else { out.push_str(&json_number(value)); }
             out.push_str(",\"x\":");
             out.push_str(&json_number(left + column as f64 * cell));
@@ -93,7 +94,7 @@ fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str
     out.push_str("],\"annotation\":\"");
     out.push_str(&json_escape(annotation));
     out.push_str("\",\"style\":{\"positive_color\":\"#2166ac\",\"negative_color\":\"#b2182b\",\"zero_color\":\"#bdbdbd\",\"missing_fill\":\"#f2f2f2\",\"grid_color\":\"#e0e0e0\"}}");
-    out
+    Ok(out)
 }
 
 #[extendr]
