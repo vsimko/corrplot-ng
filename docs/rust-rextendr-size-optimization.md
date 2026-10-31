@@ -52,14 +52,46 @@ These measurements also show that the earlier 6.0 MB / 5.9 MB figures are
 approximate historical values, not an exact portable baseline. Package size
 depends on OS, toolchain, R version, and target architecture.
 
+## Isolated debug-information stripping experiment
+
+PR #210 completed the platform-specific section and symbol inspection. PR
+#212 then ran an isolated experiment against a temporary copy of the
+installed shared library. It stripped debug-only data, compared exported
+symbols before and after, substituted the copy into the installed package,
+and reran the R integration smoke test. The original library was restored
+byte-for-byte after the experiment.
+
+| Platform | Original library | Temporary stripped copy | Reduction | Exported symbols | R smoke test |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Linux (ELF) | 6,207,880 bytes | 2,098,408 bytes | 4,109,472 bytes (66.2%) | 2,443 preserved | PASS |
+| macOS (Mach-O) | 1,932,808 bytes | 1,792,600 bytes | 140,208 bytes (7.3%) | 2,376 preserved | PASS |
+| Windows (PE/COFF) | 1,164,288 bytes | Not attempted | — | Not verified | Ordinary install/check PASS |
+
+Linux used `objcopy --strip-debug` and compared the dynamic defined-symbol
+set. macOS used Apple `strip -S` and compared externally defined symbols.
+Windows mutation remains intentionally disabled because the available
+tooling has not yet been validated for a reliable debug-only strip and
+matching export-table comparison.
+
+These results show that debug information is a major contributor to the
+Linux installed-library size, while the macOS reduction is modest. They do
+not yet establish that a build-time stripping change is appropriate for
+CRAN: the experiment altered only a temporary installed copy and reran the
+R integration smoke test, not a full source-package check against a
+permanently stripped build. The existing source-package checks still report
+one NOTE for Cargo's hidden vendor checksum files. The installed-size INFO
+and the source-package NOTE are separate issues.
+
 ## Follow-up
 
-The CLI is not being linked into the R package, so removing CLI code is not
-the solution. The next useful investigation is platform-specific symbol and
-section analysis of the installed native library, followed by a measured
-feature-gating experiment only if unused core modules are actually retained.
+The CLI is not linked into the R package, and the size-oriented Cargo release
+profile regressed Linux and macOS. The next engineering experiment should
+evaluate a reproducible post-link debug-strip step in the generated package
+build, with the full offline install, source-tarball inspection, R CMD check,
+exported-symbol comparison, and runtime smoke tests. Windows needs a
+validated PE/COFF approach before a cross-platform change is considered.
 
 Do not remove Cargo checksum/provenance metadata, weaken offline
-verification, or duplicate shared-core logic to reduce package size. The
-source-package vendor NOTE is separate from installed native-library size
-and is not addressed by this audit.
+verification, or duplicate shared-core logic to reduce package size. Obtain
+maintainer/CRAN guidance on the retained vendor metadata NOTE and installed
+package size before any production R migration.
