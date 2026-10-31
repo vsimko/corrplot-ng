@@ -35,8 +35,8 @@ jobs:
           rustup target add x86_64-unknown-linux-musl
       - name: Test and build static executable
         run: |
-          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --release --target x86_64-unknown-linux-musl --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --offline --release --target x86_64-unknown-linux-musl --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Package and smoke-test
         shell: bash
         run: |
@@ -87,9 +87,9 @@ jobs:
         run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
       - name: Test and build both architectures
         run: |
-          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
-          cargo build --locked --release --target x86_64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
-          cargo build --locked --release --target aarch64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target x86_64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target aarch64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Create universal binary and smoke-test
         shell: bash
         run: |
@@ -140,9 +140,9 @@ jobs:
         shell: pwsh
         run: |
           rustup target add x86_64-pc-windows-msvc
-          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
           $env:RUSTFLAGS = "-C target-feature=+crt-static"
-          cargo build --locked --release --target x86_64-pc-windows-msvc --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target x86_64-pc-windows-msvc --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Package and smoke-test
         shell: pwsh
         run: |
