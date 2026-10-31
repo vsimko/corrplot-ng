@@ -8,7 +8,7 @@ This document defines how the legacy R API is introduced to the shared scene mod
 
 corrplot_ng() exposes an explicit engine selector:
 
-- engine = "legacy" is the default and delegates to corrplot::corrplot(). Existing calls therefore retain the established plotting behavior and graphics-device side effects.
+- engine = "legacy" is the default and delegates to corrplot::corrplot(). The adapter draws on the caller's active device, does not open or close devices, and restores writable graphics parameters after successful calls and errors. The upstream `add = TRUE` overlay semantics are retained.
 - engine = "scene" validates the currently supported subset and returns a corrplot_ng_scene object conforming to scene-v1. It prepares data; it does not draw a plot or select a glyph renderer.
 - An explicitly requested scene operation never falls back to the legacy engine. Unsupported options produce an actionable error naming the unsupported arguments.
 
@@ -36,7 +36,7 @@ This helper owns R device drawing only. It does not create or redefine the rende
 | col | Explicit palette assignment | Rejected in scene mode |
 | Labels (tl.*) | Text styling, plotmath parsing, placement and rotation are not represented | Rejected in scene mode |
 | Coefficients and number typography | `addCoef.col`, `addCoefasPercent`, `number.digits`, `number.cex`, and `number.font` map to renderer-neutral cell text annotations; `method = "number"` takes precedence over `addCoef.col` | Supported for circle coefficient overlays and number text; significance/CI remain rejected |
-| add, mar, device state and helper drawing | R graphics-device behavior remains legacy-only | Legacy-only |
+| add, mar, device state and helper drawing | R graphics-device behavior remains legacy-only; calls compose on the active device and restore writable graphics parameters | Legacy-only |
 
 General-matrix mode is selected explicitly with `is.corr = FALSE`. It preserves original cell values and records `matrix_semantics` with the selected mode, resolved color limits, palette family/name, and normalization parameters. One-sided matrices use the legacy `YlOrBr` sequential palette; mixed-sign matrices use `RdBu`. Each observed cell carries its mapped color and visual-only normalized value, leaving `value` unchanged. Automatic general-matrix limits use observed values and exclude the diagonal when `diag = FALSE`; a constant-valued matrix receives finite padding of max(0.5, 5% of the absolute constant). An all-missing general matrix remains a valid missing-only scene. It carries has_observed_values = false and a neutral fallback color domain that must not be presented as observed numeric data. Explicit `col.lim` must be finite, strictly increasing, and cover every observed value. Correlation mode retains its [-1, 1] validation and defaults to [-1, 1].
 
@@ -50,6 +50,10 @@ The scene mode accepts the adapter-specific annotation option, coefficient/value
 4. Add a renderer integration before describing scene mode as a plotting backend.
 5. Expand compatibility fixtures and compare semantic results against the pinned upstream implementation for each newly routed capability.
 6. Keep R graphics-device operations and unsupported options on the legacy path until an equivalent behavior is specified and tested.
+
+## Graphics-device lifecycle
+
+The legacy adapter treats the active graphics device as caller-owned. It records the active device and writable graphics parameters before delegating to upstream corrplot, then restores the original device selection (if it is still open) and parameters on both success and error. It never opens or closes a device itself. `add = TRUE` remains an upstream overlay operation and draws into the caller's existing plot; it is not silently changed into a new plot. Pixel-identical results across graphics devices are not promised.
 
 ## Compatibility guarantees and non-goals
 
