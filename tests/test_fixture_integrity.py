@@ -53,9 +53,7 @@ class FixtureIntegrityTests(unittest.TestCase):
     def test_r_package_manifest_mirrors_shared_legacy_visual_manifest(self):
         with LEGACY_VISUAL_PATH.open(encoding="utf-8") as source_file:
             source = json.load(source_file)
-        with R_LEGACY_VISUAL_PATH.open(encoding="utf-8") as r_file:
-            r_manifest = json.load(r_file)
-        self.assertEqual(r_manifest, source)
+        self.assertEqual(R_LEGACY_VISUAL_PATH.read_bytes(), LEGACY_VISUAL_PATH.read_bytes())
 
     def test_normalized_matrix_package_fixtures_are_exact_copies(self):
         for canonical, packaged in NORMALIZED_FIXTURE_PAIRS:
