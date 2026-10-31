@@ -49,6 +49,24 @@ fn build_scene_json_rust(
     let top = 76.0_f64;
     // extendr exposes the R NA sentinel as an optional value.
     let na_real_bits = f64::na().to_bits();
+    let label_values: Vec<String> = (0..n)
+        .map(|index| labels.elt(index).as_ref().to_string())
+        .collect();
+    let matrix_values: Vec<Vec<Option<f64>>> = (0..n)
+        .map(|row| {
+            (0..n)
+                .map(|column| {
+                    let value = matrix[[row, column]];
+                    if value.to_bits() == na_real_bits { None } else { Some(value) }
+                })
+                .collect()
+        })
+        .collect();
+    corrplot_core::validate_matrix(
+        &label_values,
+        &matrix_values,
+        corrplot_core::MatrixKind::Correlation,
+    )?;
     let width = left + n as f64 * cell + 24.0;
     let height = top + n as f64 * cell + 64.0;
 
@@ -76,9 +94,6 @@ fn build_scene_json_rust(
         for column in 0..n {
             let value = matrix[[row, column]];
             let is_missing = value.to_bits() == na_real_bits;
-            if !is_missing && (!value.is_finite() || value < -1.0 || value > 1.0) {
-                return Err("matrix values must be finite, NA, or between -1 and 1".to_string());
-            }
             if !first { out.push(','); }
             first = false;
             out.push_str("{\"row\":");
