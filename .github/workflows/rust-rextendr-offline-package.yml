@@ -79,9 +79,10 @@ jobs:
           # R CMD build runs the generated clean target, which removes the
           # expanded vendor directory. Preserve it as an archive whose paths
           # restore rust/vendor when rextendr extracts it from src/.
-          # Omit repository-only .github content to avoid hidden-file notes
-          # in R CMD check. Keep Cargo's checksum metadata consistent with
-          # the pruned vendor tree so offline Cargo builds remain verifiable.
+          # Omit repository-only .github content and lazy_static test fixtures:
+          # they are not used by package builds and contain non-portable paths.
+          # Keep Cargo's checksum metadata consistent with the pruned vendor
+          # tree so offline Cargo builds remain verifiable.
           if command -v python3 >/dev/null 2>&1; then PYTHON=python3; else PYTHON=python; fi
           "$PYTHON" - <<'PY'
           import json
@@ -94,10 +95,15 @@ jobs:
               with open(checksum_path, encoding="utf-8") as stream:
                   checksum = json.load(stream)
               entries = checksum.get("files", {})
+              crate_name = os.path.basename(root)
               checksum["files"] = {
                   path: digest
                   for path, digest in entries.items()
                   if not path.startswith(".github/")
+                  and not (
+                      crate_name == "lazy_static"
+                      and path.startswith("tests/")
+                  )
               }
               with open(checksum_path, "w", encoding="utf-8") as stream:
                   json.dump(checksum, stream, separators=(",", ":"))
@@ -108,6 +114,10 @@ jobs:
                   dirs.remove(".github")
                   import shutil
                   shutil.rmtree(os.path.join(root, ".github"))
+              if os.path.basename(root) == "lazy_static" and "tests" in dirs:
+                  dirs.remove("tests")
+                  import shutil
+                  shutil.rmtree(os.path.join(root, "tests"))
           PY
           tar -cJf vendor.tar.xz -C .. rust/vendor
           rm -rf .cargo
