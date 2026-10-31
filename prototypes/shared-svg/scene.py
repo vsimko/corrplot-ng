@@ -245,9 +245,9 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
     figure_text, top_text_height, bottom_text_height = _prepare_figure_text(
-        config.get("figure_text", {}), width, top + top_text_height if "top_text_height" in locals() else top,
+        config.get("figure_text", {}), width, top,
         top + len(labels) * cell,
-    ) if config.get("figure_text") else ([], 0.0, 0.0)
+    )
     top += top_text_height
     height += top_text_height + bottom_text_height
     if figure_text:
