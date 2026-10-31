@@ -65,6 +65,9 @@ RENDER OPTIONS:
       --method METHOD    circle (default) or number
       --title TEXT       Figure title
 
+GLOBAL OPTIONS:
+      --diagnostics json Emit one diagnostic-v1 JSON record on failure
+
 INPUT FORMAT:
   A square labelled matrix. The first row contains an empty corner cell
   followed by column labels; each following row starts with its row label.
@@ -80,6 +83,32 @@ EXIT STATUS:
 fn fail(message: impl AsRef<str>, code: i32) -> ! {
     eprintln!("error: {}", message.as_ref());
     process::exit(code);
+}
+
+fn diagnostic_json(message: &str) -> String {
+    let lower = message.to_lowercase();
+    let (code, stage, path) = if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
+        ("input.matrix.non_finite_value", "input", Some("matrix"))
+    } else if lower.contains("square") || lower.contains("dimensions") || lower.contains("matrix size") {
+        ("input.matrix.invalid_shape", "input", Some("matrix"))
+    } else if lower.contains("non-numeric") || lower.contains("must be numeric") || lower.contains("numeric value") {
+        ("input.matrix.non_numeric", "input", Some("matrix"))
+    } else if lower.contains("label") {
+        ("input.matrix.invalid_label", "input", Some("labels"))
+    } else if lower.contains("unsupported method") || lower.contains("unsupported feature") {
+        ("renderer.unsupported_feature", "renderer", Some("method"))
+    } else if lower.contains("config") || lower.contains("publication") {
+        ("configuration.invalid_field", "configuration", None)
+    } else if lower.contains("scene") {
+        ("scene.invalid_content", "scene", None)
+    } else {
+        ("cli.operation.failed", "input", None)
+    };
+    let path_field = path.map(|value| format!(",\"path\":\"{}\"", value)).unwrap_or_default();
+    format!(
+        "{{\"schema_version\":1,\"code\":\"{}\",\"severity\":\"error\",\"stage\":\"{}\",\"message\":\"{}\"{}}}",
+        code, stage, json_escape(message), path_field
+    )
 }
 
 fn parse_args(args: &[String]) -> Result<Options, String> {
@@ -425,7 +454,20 @@ fn write_output(path: Option<&str>, content: &str) -> Result<(), String> {
 }
 
 fn run() -> Result<(), String> {
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
+    let mut index = 1;
+    while index < args.len() {
+        if args[index] == "--diagnostics" {
+            if index + 1 >= args.len() || args[index + 1] != "json" {
+                return Err("--diagnostics currently accepts only 'json'".into());
+            }
+            args.drain(index..=index + 1);
+        } else if args[index] == "--diagnostics=json" {
+            args.remove(index);
+        } else {
+            index += 1;
+        }
+    }
     if args.len() < 2 || args[1] == "help" || args[1] == "--help" || args[1] == "-h" {
         print!("{}", usage());
         return Ok(());
@@ -504,12 +546,18 @@ fn run() -> Result<(), String> {
 }
 
 fn main() {
+    let diagnostics_json = env::args().any(|arg| arg == "--diagnostics" || arg == "--diagnostics=json");
     if let Err(message) = run() {
         let usage_error = message.contains("requires --input") || message.contains("requires --input PATH or --config PATH") || message.contains("unknown option") ||
             message.contains("unknown command") || message.contains("unsupported format") ||
             message.contains("unsupported matrix kind") || message.contains("unsupported input format") || message.contains("unsupported method") ||
             message.contains("missing value for") || message.contains("unknown init option") || message.contains("requires an interactive terminal");
-        fail(message, if usage_error { 2 } else { 1 });
+        let code = if usage_error { 2 } else { 1 };
+        if diagnostics_json {
+            println!("{}", diagnostic_json(&message));
+            process::exit(code);
+        }
+        fail(message, code);
     }
 }
 
@@ -518,6 +566,16 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n";
+
+    #[test]
+    fn serializes_stable_input_diagnostics_as_json() {
+        let json = diagnostic_json("input must be a non-empty square matrix");
+        assert!(json.contains("\"schema_version\":1"));
+        assert!(json.contains("\"code\":\"input.matrix.invalid_shape\""));
+        assert!(json.contains("\"stage\":\"input\""));
+        let escaped = diagnostic_json("bad \"label\"\nvalue");
+        assert!(escaped.contains("bad \\\"label\\\"\\nvalue"));
+    }
 
     #[test]
     fn exposes_machine_readable_renderer_capabilities() {

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://corrplot-ng.invalid/schema/diagnostic-v1.schema.json",
+  "title": "corrplot-ng diagnostic v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "code", "severity", "stage", "message"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "code": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
+    "severity": {"enum": ["error", "warning", "info"]},
+    "stage": {"enum": ["configuration", "input", "scene", "renderer", "export"]},
+    "message": {"type": "string", "minLength": 1},
+    "path": {"type": "string", "minLength": 1},
+    "row": {"type": "integer", "minimum": 0},
+    "column": {"type": "integer", "minimum": 0},
+    "details": {"type": "object"},
+    "renderer": {"type": "string", "minLength": 1},
+    "renderer_version": {"type": "string", "minLength": 1},
+    "feature": {"type": "string", "minLength": 1}
+  }
+}

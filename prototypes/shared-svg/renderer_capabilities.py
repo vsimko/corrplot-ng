@@ -52,7 +52,7 @@ def negotiate_scene_capabilities(
         raise ValueError(f"renderer {renderer['id']} does not support {mode!r} negotiation")
     if scene.get("schema_version") not in capabilities["scene_schema_versions"]:
         raise RendererCapabilityError([{
-            "code": "renderer.schema_version_unsupported", "severity": "error",
+            "schema_version": 1, "code": "renderer.schema_version_unsupported", "severity": "error", "stage": "renderer",
             "renderer": renderer["id"], "feature": "scene_schema_version",
             "message": f"renderer {renderer['id']} does not support scene schema version {scene.get('schema_version')!r}",
         }])
@@ -81,8 +81,9 @@ def negotiate_scene_capabilities(
             else f"renderer {renderer['id']} does not support {category} {feature!r}"
         )
         diagnostic = {
+            "schema_version": 1,
             "code": "renderer.optional_feature_omitted" if may_omit else "renderer.unsupported_feature",
-            "severity": "warning" if may_omit else "error",
+            "severity": "warning" if may_omit else "error", "stage": "renderer",
             "renderer": renderer["id"],
             "renderer_version": renderer["version"],
             "feature": feature,

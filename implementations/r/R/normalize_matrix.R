@@ -27,7 +27,7 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
   if (is.data.frame(x)) {
     source_format <- "r_data_frame"
     if (nrow(x) < 1L || ncol(x) < 1L) {
-      stop("data frame must have at least one row and one column", call. = FALSE)
+      .corrplot_ng_abort("input.matrix.invalid_shape", "data frame must have at least one row and one column", stage = "input", path = "matrix")
     }
     numeric_columns <- vapply(x, function(column) {
       is.numeric(column)
@@ -38,10 +38,10 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
       if (is.na(column_name) || !nzchar(column_name)) {
         column_name <- paste0("V", column_index)
       }
-      stop(
-        "data frame column '", column_name,
-        "' must contain integer or double values; no coercion is performed",
-        call. = FALSE
+      .corrplot_ng_abort(
+        "input.matrix.non_numeric",
+        paste0("data frame column '", column_name, "' must contain integer or double values; no coercion is performed"),
+        stage = "input", path = paste0("columns.", column_name)
       )
     }
     values <- do.call(cbind, lapply(x, as.numeric))
@@ -58,19 +58,19 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
   } else if (is.matrix(x)) {
     source_format <- "r_matrix"
     if (!is.numeric(x)) {
-      stop("matrix must contain integer or double values", call. = FALSE)
+      .corrplot_ng_abort("input.matrix.non_numeric", "matrix must contain integer or double values", stage = "input", path = "matrix")
     }
     values <- x
     storage.mode(values) <- "double"
     row_labels <- rownames(x)
     column_labels <- colnames(x)
   } else {
-    stop("x must be a numeric matrix or data frame", call. = FALSE)
+    .corrplot_ng_abort("input.matrix.invalid_type", "x must be a numeric matrix or data frame", stage = "input", path = "x")
   }
 
   n <- nrow(values)
   if (n < 1L || ncol(values) != n) {
-    stop("input must be a non-empty square matrix", call. = FALSE)
+    .corrplot_ng_abort("input.matrix.invalid_shape", "input must be a non-empty square matrix", stage = "input", path = "matrix")
   }
 
   validate_axis_labels <- function(labels, axis) {
@@ -78,19 +78,19 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
       return(NULL)
     }
     if (!is.character(labels) || length(labels) != n) {
-      stop(axis, " labels must contain exactly ", n, " character values", call. = FALSE)
+      .corrplot_ng_abort("input.matrix.invalid_label", paste0(axis, " labels must contain exactly ", n, " character values"), stage = "input", path = paste0(axis, "_labels"))
     }
     if (anyNA(labels)) {
       index <- which(is.na(labels))[[1L]]
-      stop(axis, " label at index ", index, " must not be missing", call. = FALSE)
+      .corrplot_ng_abort("input.matrix.invalid_label", paste0(axis, " label at index ", index, " must not be missing"), stage = "input", path = paste0(axis, "_labels"))
     }
     empty <- which(!nzchar(trimws(labels)))
     if (length(empty)) {
-      stop(axis, " label at index ", empty[[1L]], " must not be empty", call. = FALSE)
+      .corrplot_ng_abort("input.matrix.invalid_label", paste0(axis, " label at index ", empty[[1L]], " must not be empty"), stage = "input", path = paste0(axis, "_labels"))
     }
     duplicated <- which(duplicated(labels))
     if (length(duplicated)) {
-      stop(axis, " labels must be unique; duplicate '", labels[[duplicated[[1L]]]], "'", call. = FALSE)
+      .corrplot_ng_abort("input.matrix.invalid_label", paste0(axis, " labels must be unique; duplicate '", labels[[duplicated[[1L]]]], "'"), stage = "input", path = paste0(axis, "_labels"))
     }
     labels
   }
@@ -100,9 +100,10 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
   if (!is.null(row_labels) && !is.null(column_labels) &&
       !identical(row_labels, column_labels)) {
     mismatch <- which(row_labels != column_labels)[[1L]]
-    stop(
-      "row and column labels must match exactly; first mismatch at index ",
-      mismatch, call. = FALSE
+    .corrplot_ng_abort(
+      "input.matrix.invalid_label",
+      paste0("row and column labels must match exactly; first mismatch at index ", mismatch),
+      stage = "input", path = "column_labels"
     )
   }
   labels <- if (!is.null(row_labels)) {
@@ -115,18 +116,22 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
 
   nan_cells <- which(is.nan(values), arr.ind = TRUE)
   if (nrow(nan_cells)) {
-    stop(
-      "matrix value at row ", nan_cells[1L, "row"], ", column ",
-      nan_cells[1L, "col"], " is NaN; use NA for missing values",
-      call. = FALSE
+    .corrplot_ng_abort(
+      "input.matrix.non_finite_value",
+      paste0("matrix value at row ", nan_cells[1L, "row"], ", column ",
+        nan_cells[1L, "col"], " is NaN; use NA for missing values"),
+      stage = "input", path = "matrix",
+      row = nan_cells[1L, "row"] - 1L, column = nan_cells[1L, "col"] - 1L
     )
   }
   infinite_cells <- which(is.infinite(values), arr.ind = TRUE)
   if (nrow(infinite_cells)) {
-    stop(
-      "matrix value at row ", infinite_cells[1L, "row"], ", column ",
-      infinite_cells[1L, "col"], " must be finite",
-      call. = FALSE
+    .corrplot_ng_abort(
+      "input.matrix.non_finite_value",
+      paste0("matrix value at row ", infinite_cells[1L, "row"], ", column ",
+        infinite_cells[1L, "col"], " must be finite"),
+      stage = "input", path = "matrix",
+      row = infinite_cells[1L, "row"] - 1L, column = infinite_cells[1L, "col"] - 1L
     )
   }
 
@@ -135,7 +140,7 @@ corrplot_ng_normalize_matrix <- function(x, metadata = NULL) {
         (length(metadata) > 0L &&
           (is.null(names(metadata)) || anyNA(names(metadata)) ||
             any(!nzchar(names(metadata))) || anyDuplicated(names(metadata))))) {
-      stop("metadata must be a named list with unique non-empty names", call. = FALSE)
+      .corrplot_ng_abort("configuration.invalid_metadata", "metadata must be a named list with unique non-empty names", stage = "configuration", path = "metadata")
     }
   }
 

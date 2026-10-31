@@ -80,3 +80,12 @@ rejected with actionable errors.
 This helper computes statistical metadata only. The plotting scene and
 renderers consume supplied p-value/CI matrices and do not perform statistical
 tests.
+
+## Structured diagnostics
+
+Input validation errors from the normalized-matrix adapter use the
+language-neutral diagnostic-v1 contract. They are signalled as conditions
+with class `corrplot_ng_error`; read the stable code, stage, path, and optional
+zero-based matrix coordinates with `corrplot_ng_diagnostic(condition)`. The
+human-readable message is for display, not programmatic branching. See the
+[diagnostic catalogue](../../docs/diagnostics.md).

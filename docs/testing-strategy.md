@@ -148,6 +148,11 @@ omission returns a structured warning. The native CLI exposes its narrow
 machine-readable declaration through `corrplot-ng capabilities`. See
 [renderer capability negotiation](renderer-capabilities.md).
 
+The diagnostic-v1 schema defines stable codes, severity, stage, and optional
+source locations. Tests check serialized diagnostic fields for representative
+R, Python, renderer, and CLI failures. See the
+[diagnostic catalogue](diagnostics.md).
+
 ### 5. Native Rust CLI
 
 The standalone CLI is tested independently from the Python and R runtimes.

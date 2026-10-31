@@ -253,9 +253,12 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
     return svg
 
 
+from diagnostics import build_scene_with_diagnostics
+
+
 def render_svg(config: dict[str, Any]) -> str:
     """Compatibility convenience wrapper: config -> scene -> SVG."""
-    return render_scene_svg(build_scene(config))
+    return render_scene_svg(build_scene_with_diagnostics(config))
 
 
 def main() -> None:
