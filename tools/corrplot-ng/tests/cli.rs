@@ -431,7 +431,7 @@ fn help_documents_all_commands_and_input_format_options() {
         .arg("--help").output().unwrap();
     assert!(output.status.success());
     let help = String::from_utf8(output.stdout).unwrap();
-    for option in ["render", "validate", "inspect", "presets", "version", "--input-format", "--format"] {
+    for option in ["render", "validate", "inspect", "presets", "version", "--input-format", "--format", "--incremental"] {
         assert!(help.contains(option), "help output is missing {option}");
     }
 }
@@ -573,4 +573,124 @@ fn all_missing_general_matrix_is_preserved_by_normalized_json_output() {
     let json = String::from_utf8(output.stdout).unwrap();
     assert!(json.contains("[[null,null],[null,null]]"));
     fs::remove_file(path).ok();
+}
+
+
+#[test]
+fn incremental_publication_render_skips_unchanged_inputs_and_invalidates_changes() {
+    use std::thread;
+    use std::time::Duration;
+
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-incremental-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let config_path = directory.join("figure.json");
+    let matrix_path = directory.join("matrix.csv");
+    let output_path = directory.join("figure.svg");
+    fs::write(&matrix_path, ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n").unwrap();
+    let config = r##"{
+      "config_version": 1,
+      "input": {"kind":"matrix_csv","path":"matrix.csv","delimiter":",","header":true,"row_labels":true},
+      "matrix": {"kind":"correlation","method":"pearson","missing":"preserve"},
+      "plot": {"method":"circle","display":"full","ordering":"original","show_values":false,
+        "significance":{"enabled":false,"p_values":null,"thresholds":[0.05]}},
+      "colors":{"negative":"#b2182b","neutral":"#f7f7f7","positive":"#2166ac","missing":"#d9d9d9"},
+      "dimensions":{"width":120,"height":100,"unit":"mm"},
+      "typography":{"family":"sans-serif","base_size":9},
+      "output":{"format":"svg","path":"ignored.svg"}
+    }"##;
+    fs::write(&config_path, config).unwrap();
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+
+    let first = Command::new(binary)
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .arg("--incremental")
+        .output().unwrap();
+    assert!(first.status.success(), "{}", String::from_utf8_lossy(&first.stderr));
+    let first_svg = fs::read(&output_path).unwrap();
+    let first_modified = fs::metadata(&output_path).unwrap().modified().unwrap();
+    assert!(output_path.with_file_name("figure.svg.corrplot-cache").exists());
+
+    thread::sleep(Duration::from_millis(40));
+    let unchanged = Command::new(binary)
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .arg("--incremental")
+        .output().unwrap();
+    assert!(unchanged.status.success(), "{}", String::from_utf8_lossy(&unchanged.stderr));
+    assert!(String::from_utf8_lossy(&unchanged.stderr).contains("unchanged:"));
+    assert_eq!(fs::metadata(&output_path).unwrap().modified().unwrap(), first_modified);
+
+    fs::write(&matrix_path, ",alpha,beta\nalpha,1,0.8\nbeta,0.8,1\n").unwrap();
+    let changed_input = Command::new(binary)
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .arg("--incremental")
+        .output().unwrap();
+    assert!(changed_input.status.success(), "{}", String::from_utf8_lossy(&changed_input.stderr));
+    assert!(!String::from_utf8_lossy(&changed_input.stderr).contains("unchanged:"));
+    let changed_svg = fs::read(&output_path).unwrap();
+    assert_ne!(first_svg, changed_svg);
+
+    let changed_config = config.replace("\"show_values\":false", "\"show_values\":true");
+    fs::write(&config_path, changed_config).unwrap();
+    let changed_options = Command::new(binary)
+        .args(["render", "--config"]).arg(&config_path)
+        .args(["--output"]).arg(&output_path)
+        .arg("--incremental")
+        .output().unwrap();
+    assert!(changed_options.status.success(), "{}", String::from_utf8_lossy(&changed_options.stderr));
+    assert!(!String::from_utf8_lossy(&changed_options.stderr).contains("unchanged:"));
+    assert_ne!(changed_svg, fs::read(&output_path).unwrap());
+
+    fs::remove_dir_all(directory).ok();
+}
+
+#[test]
+fn incremental_batch_render_reuses_cached_outputs() {
+    use std::thread;
+    use std::time::Duration;
+
+    let directory = std::env::temp_dir().join(format!("corrplot-ng-incremental-batch-{}", std::process::id()));
+    fs::create_dir_all(&directory).unwrap();
+    let config_path = directory.join("figure.json");
+    let matrix_path = directory.join("matrix.csv");
+    let manifest_path = directory.join("manifest.txt");
+    let output_dir = directory.join("outputs");
+    fs::write(&matrix_path, ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n").unwrap();
+    let config = r##"{
+      "config_version": 1,
+      "input": {"kind":"matrix_csv","path":"matrix.csv","delimiter":",","header":true,"row_labels":true},
+      "matrix": {"kind":"correlation","method":"pearson","missing":"preserve"},
+      "plot": {"method":"circle","display":"full","ordering":"original","show_values":false,
+        "significance":{"enabled":false,"p_values":null,"thresholds":[0.05]}},
+      "colors":{"negative":"#b2182b","neutral":"#f7f7f7","positive":"#2166ac","missing":"#d9d9d9"},
+      "dimensions":{"width":120,"height":100,"unit":"mm"},
+      "typography":{"family":"sans-serif","base_size":9},
+      "output":{"format":"svg","path":"ignored.svg"}
+    }"##;
+    fs::write(&config_path, config).unwrap();
+    fs::write(&manifest_path, "figure.json\n").unwrap();
+    let binary = env!("CARGO_BIN_EXE_corrplot-ng");
+
+    let first = Command::new(binary)
+        .args(["render-batch", "--manifest"]).arg(&manifest_path)
+        .args(["--output-dir"]).arg(&output_dir)
+        .arg("--incremental")
+        .output().unwrap();
+    assert!(first.status.success(), "{}", String::from_utf8_lossy(&first.stderr));
+    let output_path = output_dir.join("001-figure.svg");
+    let modified = fs::metadata(&output_path).unwrap().modified().unwrap();
+
+    thread::sleep(Duration::from_millis(40));
+    let second = Command::new(binary)
+        .args(["render-batch", "--manifest"]).arg(&manifest_path)
+        .args(["--output-dir"]).arg(&output_dir)
+        .arg("--incremental")
+        .output().unwrap();
+    assert!(second.status.success(), "{}", String::from_utf8_lossy(&second.stderr));
+    assert!(String::from_utf8_lossy(&second.stderr).contains("unchanged:"));
+    assert_eq!(fs::metadata(&output_path).unwrap().modified().unwrap(), modified);
+
+    fs::remove_dir_all(directory).ok();
 }
