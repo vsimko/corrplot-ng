@@ -28,7 +28,7 @@ function unwrap(result, field) {
   if (result.diagnostic) {
     throw new CorrplotError(result.diagnostic);
   }
-  return result[field];
+  return field === undefined ? result : result[field];
 }
 
 function validateMatrix(input) {
@@ -43,6 +43,10 @@ function renderSceneSvg(scene, options) {
   return unwrap(native.renderSceneSvg(scene, options), "svg");
 }
 
+function renderSceneRgba(scene, options) {
+  return unwrap(native.renderSceneRgba(scene, options));
+}
+
 function getRendererCapabilities() {
   return JSON.parse(native.getRendererCapabilities());
 }
@@ -51,5 +55,6 @@ module.exports = {
   CorrplotError,
   validateMatrix,
   renderSceneSvg,
+  renderSceneRgba,
   getRendererCapabilities,
 };

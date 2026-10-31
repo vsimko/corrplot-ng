@@ -1,5 +1,6 @@
-use corrplot_core::output::{OutputOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
-use corrplot_core::raster::{CellGlyph, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
+use napi::bindgen_prelude::Buffer;
+use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
+use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
 use napi_derive::napi;
 
@@ -24,6 +25,27 @@ pub struct ValidationResult {
 #[napi(object)]
 pub struct SvgResult {
     pub svg: Option<String>,
+    pub diagnostic: Option<DiagnosticV1>,
+}
+
+#[napi(object)]
+pub struct RgbaOptionsInput {
+    pub width_px: u32,
+    pub height_px: u32,
+    pub dpi: Option<f64>,
+    pub background: RgbaColorInput,
+}
+
+#[napi(object)]
+pub struct RgbaResult {
+    pub width_px: Option<u32>,
+    pub height_px: Option<u32>,
+    pub stride_bytes: Option<u32>,
+    pub pixel_format: Option<String>,
+    pub alpha_mode: Option<String>,
+    pub color_space: Option<String>,
+    pub dpi: Option<f64>,
+    pub pixels: Option<Buffer>,
     pub diagnostic: Option<DiagnosticV1>,
 }
 
@@ -311,4 +333,106 @@ pub fn render_scene_svg_native(input: SceneInput, options: SvgOptionsInput) -> S
 #[napi(js_name = "getRendererCapabilities")]
 pub fn get_renderer_capabilities_native() -> String {
     RENDERER_CAPABILITIES_V1.to_string()
+}
+
+#[napi(js_name = "renderSceneRgba")]
+pub fn render_scene_rgba_native(input: SceneInput, options: RgbaOptionsInput) -> RgbaResult {
+    let scene = match scene(input) {
+        Ok(scene) => scene,
+        Err(diagnostic) => return RgbaResult {
+            width_px: None,
+            height_px: None,
+            stride_bytes: None,
+            pixel_format: None,
+            alpha_mode: None,
+            color_space: None,
+            dpi: None,
+            pixels: None,
+            diagnostic: Some(diagnostic),
+        },
+    };
+    let background = match rgba(options.background, "output.background") {
+        Ok(background) => background,
+        Err(diagnostic) => return RgbaResult {
+            width_px: None,
+            height_px: None,
+            stride_bytes: None,
+            pixel_format: None,
+            alpha_mode: None,
+            color_space: None,
+            dpi: None,
+            pixels: None,
+            diagnostic: Some(diagnostic),
+        },
+    };
+    let raster = RasterOptions {
+        width_px: options.width_px,
+        height_px: options.height_px,
+        dpi: options.dpi,
+        background,
+    };
+
+    match RgbaRenderer.render(&scene, &OutputOptions::Rgba(raster)) {
+        Ok(RenderOutput::Rgba(buffer)) => {
+            let stride_bytes = match u32::try_from(buffer.stride_bytes) {
+                Ok(stride) => stride,
+                Err(_) => return RgbaResult {
+                    width_px: None,
+                    height_px: None,
+                    stride_bytes: None,
+                    pixel_format: None,
+                    alpha_mode: None,
+                    color_space: None,
+                    dpi: None,
+                    pixels: None,
+                    diagnostic: Some(diagnostic(
+                        "renderer.output.invalid_buffer",
+                        "export",
+                        "RGBA stride cannot be represented by the Node.js binding",
+                        Some("output.stride_bytes"),
+                    )),
+                },
+            };
+            RgbaResult {
+                width_px: Some(buffer.width_px),
+                height_px: Some(buffer.height_px),
+                stride_bytes: Some(stride_bytes),
+                pixel_format: Some("rgba8".to_string()),
+                alpha_mode: Some("straight".to_string()),
+                color_space: Some("srgb".to_string()),
+                dpi: buffer.dpi,
+                // Move the Rust-owned allocation into a Node Buffer. No second
+                // pixel-vector copy is made at this ownership boundary.
+                pixels: Some(Buffer::from(buffer.pixels)),
+                diagnostic: None,
+            }
+        }
+        Ok(_) => RgbaResult {
+            width_px: None,
+            height_px: None,
+            stride_bytes: None,
+            pixel_format: None,
+            alpha_mode: None,
+            color_space: None,
+            dpi: None,
+            pixels: None,
+            diagnostic: Some(diagnostic(
+                "renderer.output.format_mismatch",
+                "export",
+                "RGBA renderer returned a non-RGBA output",
+                Some("output"),
+            )),
+        },
+        Err(error) => RgbaResult {
+            width_px: None,
+            height_px: None,
+            stride_bytes: None,
+            pixel_format: None,
+            alpha_mode: None,
+            color_space: None,
+            dpi: None,
+            pixels: None,
+            diagnostic: Some(diagnostic(error.code, "renderer", error.message, Some("output"))),
+        },
+    }
 }
