@@ -7,7 +7,7 @@
 
 ## Context
 
-ADR 0001 selects Rust as the authoritative implementation of shared correlation and visualization semantics. Merged PR #180 proves that the native CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. The crate is currently small and does not yet implement the full scene-construction or rendering pipeline.
+ADR 0001 selects Rust as the authoritative implementation of shared correlation and visualization semantics. Merged PR #180 proves that the native CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. The core now includes typed-scene SVG and direct RGBA renderers, but it does not yet implement the scene-v1 parser or matrix-to-scene builder.
 
 The project intends to expose the same shared implementation to Node.js and browser applications. Those environments have different loading, memory, packaging, and host-integration requirements. They must not acquire separate implementations of matrix validation, ordering, scene construction, or rendering semantics.
 
@@ -28,9 +28,9 @@ This decision defines the cross-runtime boundary. It does not implement Node bin
 The implementation has four layers:
 
 1. **Rust core — `crates/corrplot-core`:** owns common validation, normalization, ordering, scene construction, layout, and shared rendering algorithms as they are implemented. It must remain independent of Node.js, browser DOM APIs, filesystem access, CLI process handling, and graphics-device state.
-2. **Native Node binding — proposed `bindings/node/`:** a thin Node-API (N-API) adapter. Prefer a maintained Rust N-API binding framework. It converts JavaScript inputs to Rust-owned values and maps Rust results and diagnostics to JavaScript.
-3. **Browser WASM binding — proposed `bindings/wasm/`:** a thin `wasm32-unknown-unknown` adapter using `wasm-bindgen` or an equivalent maintained tool. It exposes the same core operations and diagnostic meanings as the native binding.
-4. **TypeScript facade — proposed `packages/typescript/`:** owns the public TypeScript types, runtime entry points, backend selection, and host-specific convenience APIs. It must not reimplement correlation, normalization, ordering, scene construction, or rendering algorithms.
+2. **Native Node binding — `bindings/node/` (initial implementation):** a thin Node-API (N-API) adapter using the Rust `napi` ecosystem. It currently exposes matrix validation, typed-scene SVG/RGBA rendering, renderer capabilities, and diagnostic-v1 mapping. It does not yet expose scene construction or a complete plot-level API.
+3. **Browser WASM binding — planned `bindings/wasm/`:** a thin `wasm32-unknown-unknown` adapter using `wasm-bindgen` or an equivalent maintained tool. It should expose the same core operations and diagnostic meanings as the native binding.
+4. **TypeScript facade — planned `packages/typescript/`:** owns the public TypeScript types, runtime entry points, backend selection, and host-specific convenience APIs. It must not reimplement correlation, normalization, ordering, scene construction, or rendering algorithms.
 
 These paths describe the target package boundary. They are not a request to create empty packages or move existing files in this design issue.
 
@@ -188,5 +188,5 @@ Deferred. They add cross-origin isolation, worker, browser-support, and deployme
 - Node.js and browser users receive one documented TypeScript API and the same semantic behavior.
 - Native and browser deployments require separate binding artifacts but do not maintain separate algorithms.
 - The TypeScript facade and binding packages add build and release work. Keep them thin and test their outputs against the shared Rust fixtures.
-- The current core must grow beyond matrix validation before it can satisfy the complete rendering API. This ADR does not claim that those future operations already exist.
+- The current core has grown beyond matrix validation to typed-scene SVG/RGBA rendering, but still needs a scene-v1 parser and matrix-to-scene builder before it can satisfy the complete plot-level API.
 - Production R adoption remains separately gated by the CRAN and maintainer-workflow conditions in ADR 0001.
