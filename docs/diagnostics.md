@@ -100,12 +100,20 @@ failures to stable codes. Unclassified failures use
 Warnings are distinct from errors. A warning must not turn invalid input
 into accepted input. Permissive renderer negotiation can omit a feature only
 when the caller explicitly marks it optional; each omission returns a
-warning diagnostic.
+warning diagnostic. R callers can distinguish warning and error conditions
+by class and read the same diagnostic-v1 fields with
+`corrplot_ng_diagnostic()`.
 
-The current public CLI processes one matrix/configuration per invocation.
-A multi-file batch API is not yet provided, so batch-level partial-success
-reporting is not claimed. If a batch API is added, it must return successful
-outputs and a separate diagnostic list for each failed item.
+The native CLI supports batch rendering with a UTF-8 line-based manifest.
+Each non-empty line names one publication-config v1 file; relative paths are
+resolved from the manifest directory. The CLI processes each item
+independently, preserves successful SVG outputs, and collects one diagnostic
+for each failed item. It exits with status 1 when any item fails.
+
+With `--diagnostics json`, batch mode emits a JSON report with
+`schema_version`, `successes`, and `diagnostics`. Each diagnostic includes
+the manifest index and input path in `details`. The report does not hide
+successful outputs when another configuration fails.
 
 ## Reporting a bug
 
