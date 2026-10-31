@@ -715,7 +715,7 @@ impl Publication {
         }
         if !legend_entries.is_empty() { out.push(','); }
         out.push_str(&format!(
-            "{{\"kind\":\"missing\",\"label\":\"Missing\",\"color\":\"{}\"}}]}}",
+            "{{\"kind\":\"missing\",\"label\":\"Missing\",\"color\":\"{}\"}}]",
             self.missing
         ));
         out.push_str(&format!(
@@ -1061,6 +1061,94 @@ mod tests {
             assert!((number(required(first_row_second_cell, "value", "cell").unwrap(), "cell.value").unwrap() - 0.71).abs() < 1e-12);
         }
         std::fs::remove_file(path).ok();
+    }
+
+    #[test]
+    fn general_numeric_scale_matches_reference_fixtures() {
+        let fixture = parse_json(include_str!("../../../tests/fixtures/general-matrix-cases.json")).unwrap();
+        let root = object(&fixture, "fixture").unwrap();
+        let cases = array(required(root, "cases", "fixture").unwrap(), "cases").unwrap();
+        for case in cases {
+            let case = object(case, "case").unwrap();
+            let id = string(required(case, "id", "case").unwrap(), "case.id").unwrap();
+            if id == "hidden-diagonal-negative-constant" {
+                continue; // Publication config v1 does not expose diagonal exclusion.
+            }
+            let rows = array(required(case, "matrix", "case").unwrap(), "case.matrix").unwrap();
+            let values: Vec<Vec<Option<f64>>> = rows.iter().map(|row| {
+                array(row, "case.matrix row").unwrap().iter().map(|value| match value {
+                    Json::Null => None,
+                    Json::Number(number) => Some(*number),
+                    _ => panic!("fixture matrix values must be numeric or null"),
+                }).collect()
+            }).collect();
+            let explicit = case.get("col_limits").map(|value| {
+                let limits = array(value, "case.col_limits").unwrap();
+                (number(&limits[0], "lower").unwrap(), number(&limits[1], "upper").unwrap())
+            });
+            let scale = resolve_matrix_scale("general_numeric", "inline_matrix", &values, explicit)
+                .unwrap_or_else(|error| panic!("{id}: {error}"));
+            let expected_limits = array(required(case, "col_limits", "case").unwrap(), "case.col_limits").unwrap();
+            assert!((scale.lower - number(&expected_limits[0], "expected lower").unwrap()).abs() < 1e-12, "{id}: lower limit");
+            assert!((scale.upper - number(&expected_limits[1], "expected upper").unwrap()).abs() < 1e-12, "{id}: upper limit");
+            assert_eq!(scale.mapping, string(required(case, "mapping", "case").unwrap(), "case.mapping").unwrap(), "{id}: mapping");
+            let normalization = object(required(case, "normalization", "case").unwrap(), "case.normalization").unwrap();
+            assert!((scale.intercept - number(required(normalization, "intercept", "normalization").unwrap(), "intercept").unwrap()).abs() < 1e-12, "{id}: intercept");
+            assert!((scale.zoom - number(required(normalization, "zoom", "normalization").unwrap(), "zoom").unwrap()).abs() < 1e-12, "{id}: zoom");
+        }
+    }
+
+    #[test]
+    fn general_numeric_rejects_all_missing_and_values_outside_explicit_limits() {
+        let all_missing = vec![vec![None, None], vec![None, None]];
+        assert!(resolve_matrix_scale("general_numeric", "inline_matrix", &all_missing, None)
+            .unwrap_err().contains("no numeric values"));
+
+        let values = vec![vec![Some(1.0), Some(2.0)], vec![Some(2.0), Some(3.0)]];
+        assert!(resolve_matrix_scale("general_numeric", "inline_matrix", &values, Some((1.5, 2.5)))
+            .unwrap_err().contains("cover every observed"));
+        assert!(resolve_matrix_scale("general_numeric", "inline_matrix", &values, Some((2.0, 2.0)))
+            .unwrap_err().contains("strictly increasing"));
+        assert!(resolve_matrix_scale("correlation", "inline_matrix", &values, Some((0.0, 3.0)))
+            .unwrap_err().contains("only valid for general_numeric"));
+    }
+
+    #[test]
+    fn general_numeric_csv_requires_explicit_limits_and_uses_them_for_palette_family() {
+        let values = vec![vec![Some(1.0), Some(2.0)], vec![Some(2.0), Some(3.0)]];
+        assert!(resolve_matrix_scale("general_numeric", "matrix_csv", &values, None)
+            .unwrap_err().contains("required for CSV-backed"));
+        let scale = resolve_matrix_scale("general_numeric", "matrix_csv", &values, Some((-5.0, 5.0))).unwrap();
+        assert_eq!(scale.mapping, "diverging");
+        assert!((scale.zoom - 0.2).abs() < 1e-12);
+    }
+
+    #[test]
+    fn constant_general_numeric_range_is_padded_and_uses_sequential_palette() {
+        let values = vec![vec![Some(7.0), Some(7.0)], vec![Some(7.0), Some(7.0)]];
+        let scale = resolve_matrix_scale("general_numeric", "inline_matrix", &values, None).unwrap();
+        assert!((scale.lower - 6.5).abs() < 1e-12);
+        assert!((scale.upper - 7.5).abs() < 1e-12);
+        assert_eq!(scale.mapping, "sequential");
+        assert_eq!(sequential_palette_color(0.0), "#ffffe5");
+        assert_eq!(sequential_palette_color(0.5), "#fe9929");
+        assert_eq!(sequential_palette_color(1.0), "#662506");
+    }
+
+    #[test]
+    fn general_numeric_diverging_palette_uses_configured_signed_colors() {
+        assert_eq!(
+            general_numeric_color(-1.0, "diverging", "#b2182b", "#f7f7f7", "#2166ac"),
+            "#b2182b"
+        );
+        assert_eq!(
+            general_numeric_color(0.0, "diverging", "#b2182b", "#f7f7f7", "#2166ac"),
+            "#f7f7f7"
+        );
+        assert_eq!(
+            general_numeric_color(1.0, "diverging", "#b2182b", "#f7f7f7", "#2166ac"),
+            "#2166ac"
+        );
     }
 
 }
