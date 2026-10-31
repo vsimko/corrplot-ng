@@ -6,8 +6,10 @@ The `implementations/` directory currently contains the provisional R package:
 
 Other working components live outside this directory:
 
+- [Native Node.js binding](../bindings/node/README.md) — experimental N-API adapter over the shared Rust core, with matrix validation and typed-scene SVG/RGBA rendering.
+
 - [Standalone Rust CLI](../tools/corrplot-ng/README.md) — a native executable with no Python or R runtime dependency.
 - [Python scene/SVG prototype](../prototypes/shared-svg/README.md) — a reference implementation and architecture experiment, not a production shared core.
 - [Versioned contracts](../prototypes/normalized-matrix-v1/README.md) — language-neutral normalized-matrix input contract; scene-v1 and publication configuration contracts are documented in their respective prototype directories.
 
-Rust is the selected strategic shared-core implementation. The shared library lives in [crates/corrplot-core](../crates/corrplot-core/README.md) and is already used by the standalone CLI and the disposable R/rextendr proof adapter for matrix validation. The R package in this directory has not migrated to that binding. Production rollout remains gated by CRAN guidance and measured maintainer effort; C++/Rcpp is only a possible R-specific fallback. See [ADR 0001](../docs/adr/0001-shared-core-architecture.md) and the [repository layout](../docs/repository-layout.md).
+Rust is the selected strategic shared-core implementation. The shared library lives in [crates/corrplot-core](../crates/corrplot-core/README.md) and is already used by the standalone CLI, the disposable R/rextendr proof adapter, and the experimental Node-API adapter. It currently provides matrix validation and typed-scene SVG/RGBA rendering. The R package in this directory has not migrated to that binding. Production rollout remains gated by CRAN guidance and measured maintainer effort; C++/Rcpp is only a possible R-specific fallback. See [ADR 0001](../docs/adr/0001-shared-core-architecture.md) and the [repository layout](../docs/repository-layout.md).

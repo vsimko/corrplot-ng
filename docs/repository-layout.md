@@ -6,7 +6,8 @@ This document defines where corrplot-ng code, contracts, fixtures, tests, and re
 
 | Path | Ownership and contents |
 | --- | --- |
-| `crates/` | Reusable Rust libraries that own shared implementation semantics. `crates/corrplot-core` is the authoritative Rust shared-core crate. Keep consumer-specific command handling and bindings out of this directory. |
+| `crates/` | Reusable Rust libraries that own shared implementation semantics. `crates/corrplot-core` is the authoritative Rust shared-core crate; it currently provides matrix validation and typed-scene SVG/RGBA rendering. Keep consumer-specific command handling and bindings out of this directory. |
+| `bindings/` | Runtime-specific native/WASM adapters over reusable Rust crates. `bindings/node/` contains the experimental Node-API addon and its JavaScript/TypeScript surface; browser WASM remains future work. |
 | `tools/` | Executable developer and user tools. `tools/corrplot-ng` is the standalone Rust CLI and should remain a thin application adapter over shared crates. |
 | `implementations/` | Language-specific product packages and adapters. The R package owns R APIs, legacy compatibility, graphics-device behavior, and package-specific tests. |
 | `prototypes/` | A transitional home for three distinct asset classes: normative versioned contracts, reference implementations, and disposable experiments. Do not treat every child directory as production code. |
@@ -31,11 +32,11 @@ Future work may move these categories to clearer top-level locations such as `co
 
 ## Rust package boundary
 
-- `crates/corrplot-core/` owns reusable, language-neutral Rust semantics. The crate currently provides the shared matrix-validation operation demonstrated by PR #180; it is not yet the complete visualization engine.
+- `crates/corrplot-core/` owns reusable, language-neutral Rust semantics. It currently provides shared matrix validation plus typed-scene SVG and direct RGBA rendering; the complete scene-v1 parser and matrix-to-scene builder are not yet implemented.
 - `tools/corrplot-ng/` owns CLI parsing, file and process I/O, command orchestration, and executable packaging.
 - `prototypes/rust-rextendr/` owns only the disposable R-binding proof and its generated package workflow.
 - `implementations/r/` owns the production R-facing API and legacy compatibility behavior. Do not migrate it to rextendr as part of a layout cleanup.
-- Future Node and WebAssembly consumers should bind to the reusable crate through thin adapters. They must not copy core algorithms into their language-specific packages.
+- `bindings/node/` is the initial Node-API adapter. It exposes validation and typed-scene SVG/RGBA rendering without duplicating semantics; the complete scene-v1 parser/builder and platform-specific prebuilt publishing remain open. Future browser WebAssembly consumers should use the same crate through a thin adapter. Neither adapter may copy core algorithms.
 
 Rust is the accepted strategic shared-core implementation in ADR 0001. The scene-v1 JSON contract remains the language-neutral interchange and conformance format, not a competing implementation of the shared semantics. Production R rollout still requires CRAN guidance and measured maintainer effort.
 

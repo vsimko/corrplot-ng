@@ -24,8 +24,9 @@ The repository currently provides:
 - Versioned normalized-matrix v1 and scene-v1 contracts.
 - A Python scene/SVG reference prototype.
 - A standalone Rust CLI with its own native build and test workflow.
+- An experimental native Node-API package that exposes shared Rust validation and typed-scene SVG/RGBA rendering; its source-build package layout is tested across the declared Node.js/OS matrix.
 
-Rust is the accepted strategic shared-core implementation in [ADR 0001](adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and disposable R/rextendr adapter use the same `crates/corrplot-core` matrix-validation operation. This does not yet constitute a complete shared visualization engine or production R migration. The remaining rollout gates are CRAN guidance and a controlled maintainer-time comparison. C++/Rcpp is only a possible R-specific fallback; The cross-runtime TypeScript architecture is specified by [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); Node bindings, browser WASM, Canvas, and other renderers remain planned.
+Rust is the accepted strategic shared-core implementation in [ADR 0001](adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and disposable R/rextendr adapter use the same `crates/corrplot-core` matrix-validation operation. This does not yet constitute a complete shared visualization engine or production R migration. The remaining rollout gates are CRAN guidance and a controlled maintainer-time comparison. C++/Rcpp is only a possible R-specific fallback; The cross-runtime TypeScript architecture is specified by [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The initial Node-API binding is implemented in `bindings/node/`; browser WASM, Canvas, the unified TypeScript facade, and broader renderer integration remain planned.
 
 See [the current architecture](architecture.md) for implementation boundaries. See [top-level requirements](requirements.md) for product priorities; requirements are goals and are not proof that a feature is implemented.
 
