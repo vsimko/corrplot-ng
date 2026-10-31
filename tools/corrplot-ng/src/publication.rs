@@ -319,12 +319,132 @@ fn variable_order(
 }
 
 #[derive(Debug, Clone)]
+struct MatrixScale {
+    lower: f64,
+    upper: f64,
+    intercept: f64,
+    zoom: f64,
+    mapping: &'static str,
+}
+
+fn resolve_matrix_scale(
+    kind: &str,
+    input_kind: &str,
+    values: &[Vec<Option<f64>>],
+    explicit: Option<(f64, f64)>,
+) -> Result<MatrixScale, String> {
+    if kind == "correlation" {
+        if explicit.is_some() {
+            return Err("matrix.col_limits is only valid for general_numeric matrices".into());
+        }
+        return Ok(MatrixScale {
+            lower: -1.0, upper: 1.0, intercept: 0.0, zoom: 1.0, mapping: "diverging",
+        });
+    }
+
+    let observed: Vec<f64> = values.iter().flatten().filter_map(|value| *value).collect();
+    if observed.is_empty() {
+        return Err("matrix contains no numeric values; cannot resolve general-matrix color limits".into());
+    }
+    let observed_min = observed.iter().copied().fold(f64::INFINITY, f64::min);
+    let observed_max = observed.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+
+    let (lower, upper) = if let Some((lower, upper)) = explicit {
+        if !lower.is_finite() || !upper.is_finite() || lower >= upper {
+            return Err("matrix.col_limits must contain two finite, strictly increasing values".into());
+        }
+        if observed_min < lower || observed_max > upper {
+            return Err("matrix.col_limits must cover every observed matrix value".into());
+        }
+        (lower, upper)
+    } else {
+        if input_kind == "matrix_csv" {
+            return Err("matrix.col_limits is required for CSV-backed general_numeric input".into());
+        }
+        let mut lower = observed_min;
+        let mut upper = observed_max;
+        if lower == upper {
+            let padding = 0.5_f64.max(lower.abs() * 0.05);
+            lower -= padding;
+            upper += padding;
+        }
+        (lower, upper)
+    };
+
+    // For CSV input the config contract resolves the palette family from the
+    // explicit limits because the config validator does not inspect the file.
+    let mixed_sign = if input_kind == "matrix_csv" && explicit.is_some() {
+        lower < 0.0 && upper > 0.0
+    } else {
+        observed_min < 0.0 && observed_max > 0.0
+    };
+    if mixed_sign {
+        let zoom = 1.0 / lower.abs().max(upper.abs());
+        if !zoom.is_finite() || zoom <= 0.0 {
+            return Err("matrix.col_limits cannot be normalized to a finite diverging scale".into());
+        }
+        Ok(MatrixScale { lower, upper, intercept: 0.0, zoom, mapping: "diverging" })
+    } else {
+        let zoom = 1.0 / (upper - lower);
+        if !zoom.is_finite() || zoom <= 0.0 {
+            return Err("matrix.col_limits cannot be normalized to a finite sequential scale".into());
+        }
+        Ok(MatrixScale { lower, upper, intercept: -lower, zoom, mapping: "sequential" })
+    }
+}
+
+fn interpolate_color(left: &str, right: &str, fraction: f64) -> String {
+    let fraction = fraction.clamp(0.0, 1.0);
+    let mut output = String::from("#");
+    for offset in [1, 3, 5] {
+        let a = u8::from_str_radix(&left[offset..offset + 2], 16).expect("validated color");
+        let b = u8::from_str_radix(&right[offset..offset + 2], 16).expect("validated color");
+        let channel = (a as f64 + (b as f64 - a as f64) * fraction).round() as u8;
+        output.push_str(&format!("{channel:02x}"));
+    }
+    output
+}
+
+fn sequential_palette_color(value: f64) -> String {
+    const YL_OR_BR: [&str; 9] = [
+        "#ffffe5", "#fff7bc", "#fee391", "#fec44f", "#fe9929",
+        "#ec7014", "#cc4c02", "#993404", "#662506",
+    ];
+    let position = value.clamp(0.0, 1.0) * (YL_OR_BR.len() - 1) as f64;
+    let index = position.floor() as usize;
+    if index >= YL_OR_BR.len() - 1 {
+        return YL_OR_BR[YL_OR_BR.len() - 1].to_string();
+    }
+    interpolate_color(YL_OR_BR[index], YL_OR_BR[index + 1], position - index as f64)
+}
+
+fn general_numeric_color(
+    normalized: f64,
+    mapping: &str,
+    negative: &str,
+    neutral: &str,
+    positive: &str,
+) -> String {
+    if mapping == "sequential" {
+        sequential_palette_color(normalized)
+    } else if normalized <= 0.0 {
+        interpolate_color(negative, neutral, normalized + 1.0)
+    } else {
+        interpolate_color(neutral, positive, normalized)
+    }
+}
+
+fn signed_label(value: f64) -> String {
+    if value == 0.0 { "0".to_string() } else { format!("{value:+}") }
+}
+
+#[derive(Debug, Clone)]
 pub struct Publication {
     pub labels: Vec<String>, pub values: Vec<Vec<Option<f64>>>,
     pub original_labels: Vec<String>, pub order_indices: Vec<usize>,
     pub kind: String, pub method: String, pub display: String, pub ordering: String,
     pub show_values: bool, pub negative: String, pub neutral: String, pub positive: String,
-    pub missing: String, pub width: f64, pub height: f64, pub unit: String,
+    pub missing: String, matrix_scale: MatrixScale, pub width: f64, pub height: f64, pub unit: String,
     pub family: String, pub base_size: f64, pub output: String,
 }
 impl Publication {
@@ -339,7 +459,23 @@ impl Publication {
         keys(matrix_cfg, &["kind","method","missing","col_limits"], "matrix")?;
         let kind = string(required(matrix_cfg,"kind","matrix")?, "matrix.kind")?.to_string();
         if kind != "correlation" && kind != "general_numeric" { return Err("matrix.kind must be correlation or general_numeric".into()); }
-        if matrix_cfg.contains_key("col_limits") { return Err("matrix.col_limits is not yet supported by the native CLI".into()); }
+        let explicit_col_limits = if let Some(value) = matrix_cfg.get("col_limits") {
+            if kind != "general_numeric" {
+                return Err("matrix.col_limits is only valid for general_numeric matrices".into());
+            }
+            let limits = array(value, "matrix.col_limits")?;
+            if limits.len() != 2 {
+                return Err("matrix.col_limits must contain exactly two values".into());
+            }
+            let lower = number(&limits[0], "matrix.col_limits[0]")?;
+            let upper = number(&limits[1], "matrix.col_limits[1]")?;
+            if !lower.is_finite() || !upper.is_finite() || lower >= upper {
+                return Err("matrix.col_limits must contain two finite, strictly increasing values".into());
+            }
+            Some((lower, upper))
+        } else {
+            None
+        };
         if kind == "correlation" {
             let method = string(required(matrix_cfg,"method","matrix")?, "matrix.method")?;
             if !["pearson","spearman","kendall"].contains(&method) { return Err("unsupported matrix.method".into()); }
@@ -405,6 +541,7 @@ impl Publication {
             }}
             for i in 0..n { if values[i][i].map_or(true,|v|(v-1.0).abs()>1e-8) { return Err(format!("correlation diagonal for '{}' must equal 1",labels[i])); } }
         }
+        let matrix_scale = resolve_matrix_scale(&kind, input_kind, &values, explicit_col_limits)?;
 
         let plot = object(required(root,"plot","config")?, "plot")?;
         keys(plot,&["method","display","ordering","show_values","significance"],"plot")?;
@@ -463,7 +600,7 @@ impl Publication {
                 .collect();
         }
         Ok(Self { labels, values, original_labels, order_indices, kind, method, display, ordering, show_values, negative, neutral, positive,
-            missing: missing_color, width, height, unit, family, base_size, output: output_path })
+            missing: missing_color, matrix_scale, width, height, unit, family, base_size, output: output_path })
     }
 
     pub fn scene_json(&self, title: &str) -> String {
@@ -489,19 +626,11 @@ impl Publication {
             out
         };
         let fmt = |v: f64| if v == 0.0 { "0".to_string() } else { format!("{v}") };
-        let (lower, upper, intercept, zoom, mapping) = if self.kind == "general_numeric" {
-            let observed: Vec<f64> = self.values.iter().flatten().filter_map(|v| *v).collect();
-            let mut lo = observed.iter().copied().fold(f64::INFINITY, f64::min);
-            let mut hi = observed.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-            if lo == hi { let pad = 0.5_f64.max(lo.abs() * 0.05); lo -= pad; hi += pad; }
-            if lo < 0.0 && hi > 0.0 {
-                (lo, hi, 0.0, 1.0 / lo.abs().max(hi.abs()), "diverging")
-            } else if hi <= 0.0 {
-                (lo, hi, -lo, 1.0 / (hi - lo), "sequential")
-            } else {
-                (lo, hi, -lo, 1.0 / (hi - lo), "sequential")
-            }
-        } else { (-1.0, 1.0, 0.0, 1.0, "diverging") };
+        let lower = self.matrix_scale.lower;
+        let upper = self.matrix_scale.upper;
+        let intercept = self.matrix_scale.intercept;
+        let zoom = self.matrix_scale.zoom;
+        let mapping = self.matrix_scale.mapping;
 
         let mut out = format!(
             "{{\"schema_version\":1,\"kind\":\"{}\",\"width\":{},\"height\":{},\"labels\":[",
@@ -526,7 +655,15 @@ impl Publication {
                 let value = self.values[r][c];
                 let visible = self.display == "full" || (self.display == "upper" && r <= c) || (self.display == "lower" && r >= c);
                 let region = if r == c { "diagonal" } else if r < c { "upper" } else { "lower" };
-                let color = match value { None => &self.missing, Some(v) if v > 0.0 => &self.positive, Some(v) if v < 0.0 => &self.negative, _ => &self.neutral };
+                let color = match value {
+                    None => self.missing.clone(),
+                    Some(v) if self.kind == "general_numeric" => general_numeric_color(
+                        (v + intercept) * zoom, mapping, &self.negative, &self.neutral, &self.positive,
+                    ),
+                    Some(v) if v > 0.0 => self.positive.clone(),
+                    Some(v) if v < 0.0 => self.negative.clone(),
+                    _ => self.neutral.clone(),
+                };
                 let x = left + c as f64 * cell;
                 let y = top + r as f64 * cell;
                 let cx = x + cell / 2.0;
@@ -554,9 +691,32 @@ impl Publication {
             ",\"typography\":{{\"label_font_family\":\"{}\",\"label_font_size\":{},\"label_font_weight\":\"normal\",\"column_label_orientation\":\"vertical\",\"label_collision\":\"preserve\"}}",
             esc(&self.family), fmt(self.base_size)
         ));
+        out.push_str(",\"legend\":[");
+        let mut legend_entries: Vec<(String, String)> = Vec::new();
+        if self.kind == "general_numeric" && mapping == "sequential" {
+            for index in 0..9 {
+                let normalized = index as f64 / 8.0;
+                let value = normalized / zoom - intercept;
+                legend_entries.push((signed_label(value), sequential_palette_color(normalized)));
+            }
+        } else {
+            for (normalized, color) in [(-1.0, &self.negative), (0.0, &self.neutral), (1.0, &self.positive)] {
+                let value = if self.kind == "general_numeric" { normalized / zoom - intercept } else { normalized };
+                let label = if self.kind == "general_numeric" { signed_label(value) } else { fmt(value) };
+                legend_entries.push((label, color.clone()));
+            }
+        }
+        for (index, (label, color)) in legend_entries.iter().enumerate() {
+            if index > 0 { out.push(','); }
+            out.push_str(&format!(
+                "{{\"kind\":\"stop\",\"label\":\"{}\",\"color\":\"{}\"}}",
+                esc(label), color
+            ));
+        }
+        if !legend_entries.is_empty() { out.push(','); }
         out.push_str(&format!(
-            ",\"legend\":[{{\"kind\":\"stop\",\"label\":\"-1\",\"color\":\"{}\"}},{{\"kind\":\"stop\",\"label\":\"0\",\"color\":\"{}\"}},{{\"kind\":\"stop\",\"label\":\"1\",\"color\":\"{}\"}},{{\"kind\":\"missing\",\"label\":\"Missing\",\"color\":\"{}\"}}]",
-            self.negative, self.neutral, self.positive, self.missing
+            "{{\"kind\":\"missing\",\"label\":\"Missing\",\"color\":\"{}\"}}]",
+            self.missing
         ));
         out.push_str(&format!(
             ",\"variable_order\":{{\"strategy\":\"{}\",\"indices\":[",
@@ -901,6 +1061,98 @@ mod tests {
             assert!((number(required(first_row_second_cell, "value", "cell").unwrap(), "cell.value").unwrap() - 0.71).abs() < 1e-12);
         }
         std::fs::remove_file(path).ok();
+    }
+
+    #[test]
+    fn general_numeric_scale_matches_reference_fixtures() {
+        let fixture = parse_json(include_str!("../../../tests/fixtures/general-matrix-cases.json")).unwrap();
+        let root = object(&fixture, "fixture").unwrap();
+        let cases = array(required(root, "cases", "fixture").unwrap(), "cases").unwrap();
+        for case in cases {
+            let case = object(case, "case").unwrap();
+            let id = string(required(case, "id", "case").unwrap(), "case.id").unwrap();
+            if id == "hidden-diagonal-negative-constant" {
+                continue; // Publication config v1 does not expose diagonal exclusion.
+            }
+            let rows = array(required(case, "matrix", "case").unwrap(), "case.matrix").unwrap();
+            let values: Vec<Vec<Option<f64>>> = rows.iter().map(|row| {
+                array(row, "case.matrix row").unwrap().iter().map(|value| match value {
+                    Json::Null => None,
+                    Json::Number(number) => Some(*number),
+                    _ => panic!("fixture matrix values must be numeric or null"),
+                }).collect()
+            }).collect();
+            let explicit = if id == "mixed-sign-custom-limits" {
+                case.get("col_limits").map(|value| {
+                    let limits = array(value, "case.col_limits").unwrap();
+                    (number(&limits[0], "lower").unwrap(), number(&limits[1], "upper").unwrap())
+                })
+            } else {
+                None
+            };
+            let scale = resolve_matrix_scale("general_numeric", "inline_matrix", &values, explicit)
+                .unwrap_or_else(|error| panic!("{id}: {error}"));
+            let expected_limits = array(required(case, "col_limits", "case").unwrap(), "case.col_limits").unwrap();
+            assert!((scale.lower - number(&expected_limits[0], "expected lower").unwrap()).abs() < 1e-12, "{id}: lower limit");
+            assert!((scale.upper - number(&expected_limits[1], "expected upper").unwrap()).abs() < 1e-12, "{id}: upper limit");
+            assert_eq!(scale.mapping, string(required(case, "mapping", "case").unwrap(), "case.mapping").unwrap(), "{id}: mapping");
+            let normalization = object(required(case, "normalization", "case").unwrap(), "case.normalization").unwrap();
+            assert!((scale.intercept - number(required(normalization, "intercept", "normalization").unwrap(), "intercept").unwrap()).abs() < 1e-12, "{id}: intercept");
+            assert!((scale.zoom - number(required(normalization, "zoom", "normalization").unwrap(), "zoom").unwrap()).abs() < 1e-12, "{id}: zoom");
+        }
+    }
+
+    #[test]
+    fn general_numeric_rejects_all_missing_and_values_outside_explicit_limits() {
+        let all_missing = vec![vec![None, None], vec![None, None]];
+        assert!(resolve_matrix_scale("general_numeric", "inline_matrix", &all_missing, None)
+            .unwrap_err().contains("no numeric values"));
+
+        let values = vec![vec![Some(1.0), Some(2.0)], vec![Some(2.0), Some(3.0)]];
+        assert!(resolve_matrix_scale("general_numeric", "inline_matrix", &values, Some((1.5, 2.5)))
+            .unwrap_err().contains("cover every observed"));
+        assert!(resolve_matrix_scale("general_numeric", "inline_matrix", &values, Some((2.0, 2.0)))
+            .unwrap_err().contains("strictly increasing"));
+        assert!(resolve_matrix_scale("correlation", "inline_matrix", &values, Some((0.0, 3.0)))
+            .unwrap_err().contains("only valid for general_numeric"));
+    }
+
+    #[test]
+    fn general_numeric_csv_requires_explicit_limits_and_uses_them_for_palette_family() {
+        let values = vec![vec![Some(1.0), Some(2.0)], vec![Some(2.0), Some(3.0)]];
+        assert!(resolve_matrix_scale("general_numeric", "matrix_csv", &values, None)
+            .unwrap_err().contains("required for CSV-backed"));
+        let scale = resolve_matrix_scale("general_numeric", "matrix_csv", &values, Some((-5.0, 5.0))).unwrap();
+        assert_eq!(scale.mapping, "diverging");
+        assert!((scale.zoom - 0.2).abs() < 1e-12);
+    }
+
+    #[test]
+    fn constant_general_numeric_range_is_padded_and_uses_sequential_palette() {
+        let values = vec![vec![Some(7.0), Some(7.0)], vec![Some(7.0), Some(7.0)]];
+        let scale = resolve_matrix_scale("general_numeric", "inline_matrix", &values, None).unwrap();
+        assert!((scale.lower - 6.5).abs() < 1e-12);
+        assert!((scale.upper - 7.5).abs() < 1e-12);
+        assert_eq!(scale.mapping, "sequential");
+        assert_eq!(sequential_palette_color(0.0), "#ffffe5");
+        assert_eq!(sequential_palette_color(0.5), "#fe9929");
+        assert_eq!(sequential_palette_color(1.0), "#662506");
+    }
+
+    #[test]
+    fn general_numeric_diverging_palette_uses_configured_signed_colors() {
+        assert_eq!(
+            general_numeric_color(-1.0, "diverging", "#b2182b", "#f7f7f7", "#2166ac"),
+            "#b2182b"
+        );
+        assert_eq!(
+            general_numeric_color(0.0, "diverging", "#b2182b", "#f7f7f7", "#2166ac"),
+            "#f7f7f7"
+        );
+        assert_eq!(
+            general_numeric_color(1.0, "diverging", "#b2182b", "#f7f7f7", "#2166ac"),
+            "#2166ac"
+        );
     }
 
 }
