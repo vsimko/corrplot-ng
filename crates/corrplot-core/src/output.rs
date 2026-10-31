@@ -136,14 +136,16 @@ impl RasterOptions {
                 "raster width and height must be greater than zero",
             ));
         }
-        let row_bytes = (self.width_px as usize).checked_mul(4);
-        if row_bytes.is_none()
-            || row_bytes.unwrap().checked_mul(self.height_px as usize).is_none()
-        {
-            return Err(OutputValidationError::invalid_options(
+        let row_bytes = (self.width_px as usize).checked_mul(4).ok_or_else(|| {
+            OutputValidationError::invalid_options(
                 "raster dimensions exceed the addressable buffer size",
-            ));
-        }
+            )
+        })?;
+        row_bytes.checked_mul(self.height_px as usize).ok_or_else(|| {
+            OutputValidationError::invalid_options(
+                "raster dimensions exceed the addressable buffer size",
+            )
+        })?;
         if let Some(dpi) = self.dpi {
             if !dpi.is_finite() || dpi <= 0.0 {
                 return Err(OutputValidationError::invalid_options(
@@ -210,6 +212,7 @@ pub struct RgbaBuffer {
     pub pixel_format: PixelFormat,
     pub alpha_mode: AlphaMode,
     pub color_space: ColorSpace,
+    pub dpi: Option<f64>,
     pub pixels: Vec<u8>,
 }
 
@@ -237,6 +240,13 @@ impl RgbaBuffer {
                 self.pixels.len()
             )));
         }
+        if let Some(dpi) = self.dpi {
+            if !dpi.is_finite() || dpi <= 0.0 {
+                return Err(OutputValidationError::invalid_buffer(
+                    "RGBA DPI metadata must be finite and greater than zero",
+                ));
+            }
+        }
         Ok(())
     }
 }
@@ -263,12 +273,28 @@ impl RenderOutput {
             Self::Svg(svg) if svg.is_empty() => Err(OutputValidationError::invalid_buffer(
                 "SVG output must not be empty",
             )),
-            Self::Png(png) if png.is_empty() => Err(OutputValidationError::invalid_buffer(
-                "PNG output must not be empty",
-            )),
+            Self::Png(png) if !png.starts_with(b"\\x89PNG\\r\\n\\x1a\\n") => {
+                Err(OutputValidationError::invalid_buffer(
+                    "PNG output must contain the PNG signature",
+                ))
+            }
             Self::Rgba(buffer) => buffer.validate(),
             _ => Ok(()),
         }
+    }
+
+    pub fn validate_for(&self, options: &OutputOptions) -> Result<(), OutputValidationError> {
+        if self.format() != options.format() {
+            return Err(OutputValidationError {
+                code: "renderer.output.format_mismatch",
+                message: format!(
+                    "renderer returned {} for requested {} output",
+                    self.format().as_str(),
+                    options.format().as_str()
+                ),
+            });
+        }
+        self.validate()
     }
 }
 
@@ -363,6 +389,7 @@ mod tests {
             pixel_format: PixelFormat::Rgba8,
             alpha_mode: AlphaMode::Straight,
             color_space: ColorSpace::Srgb,
+            dpi: Some(96.0),
             pixels: vec![0; 16],
         };
         assert!(valid.validate().is_ok());
@@ -374,7 +401,12 @@ mod tests {
     #[test]
     fn output_variants_report_their_declared_format() {
         assert_eq!(RenderOutput::Svg("<svg/>".into()).format(), OutputFormat::Svg);
-        assert_eq!(RenderOutput::Png(vec![1]).format(), OutputFormat::Png);
+        assert_eq!(RenderOutput::Png(b"\\x89PNG\\r\\n\\x1a\\n".to_vec()).format(), OutputFormat::Png);
         assert_eq!(OutputOptions::Rgba(RasterOptions::new(2, 2)).format(), OutputFormat::Rgba);
+        let requested = OutputOptions::Svg(SvgOptions::new(100.0, 100.0, PhysicalUnit::Millimeters));
+        assert_eq!(
+            RenderOutput::Png(b"\\x89PNG\\r\\n\\x1a\\n".to_vec()).validate_for(&requested).unwrap_err().code,
+            "renderer.output.format_mismatch"
+        );
     }
 }
