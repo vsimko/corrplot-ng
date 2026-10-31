@@ -2,7 +2,7 @@
 okf_version: "0.2"
 type: Engineering Strategy
 title: Testing strategy
-description: Define the test layers and evidence needed to protect compatibility and shared behavior.
+description: Describe the test layers, current CI checks, and evidence limits for corrplot-ng.
 tags:
   - testing
   - compatibility
@@ -14,124 +14,240 @@ status: active
 
 ## Purpose
 
-Build a test system before the project adds a large amount of implementation code. Protect the original R package and check that future language interfaces use the same rules.
+Protect the behavior that exists today and make the limits of each test
+explicit. The repository has several independent test layers. Passing one
+layer does not prove full compatibility with the original `corrplot`
+package, shared compiled-core parity, or visual equivalence across renderers.
 
-The repository has a provisional R package scaffold under `implementations/r/`. Its `corrplot_ng()` adapter delegates to the original `corrplot` package. The Python fixture checks validate test data only; neither proves that a new implementation is compatible.
+The current implementation includes:
+
+- A provisional R package with a legacy-compatible delegation path and an
+  experimental scene-v1 preparation path.
+- A language-neutral normalized-matrix v1 input contract with R and file
+  adapters.
+- A Python scene/SVG prototype and an R scene-v1 consumer.
+- A standalone Rust CLI that consumes publication configuration and exports
+  SVG without Python or R at runtime.
+- Experimental C++/Rcpp and Rust/rextendr benchmark candidates. These are not
+  production shared-core bindings.
 
 ## Test layers
 
-### 1. Legacy R compatibility
+### 1. Shared fixtures and normalized-matrix v1
 
-Use the original `corrplot` package as the reference for behavior. Until a new engine exists, the provisional R adapter calls that package directly. Keep this status explicit in test reports.
+The general fixtures in `tests/fixtures/correlation-cases.json` describe
+language-neutral matrix cases. The normalized-matrix v1 contract in
+`prototypes/normalized-matrix-v1/` defines the canonical input shape,
+including square dimensions, exact Unicode labels, zero-based source-index
+mapping, and JSON `null` for missing values. Zero remains a numeric value.
 
-The initial visual regression harness is described by `tests/legacy-visual/cases.json`. Its representative cases are based on examples from the original repository:
+The contract suite checks the schema and semantic rules using valid and
+invalid fixtures. The R package tests exercise matrix and file adapters.
+They cover R matrix input and CSV/TSV/normalized-matrix JSON file input,
+including label handling, missing values, and source-index preservation.
+The adapter parity test sends equivalent labelled matrix data through the R
+matrix and CSV adapters and compares normalized representations while
+allowing source provenance to differ.
 
-- `tests/testthat/test-corrplot.R`
-- `vignettes/example-corrplot.R`
-- `vignettes/example-corrplot.mixed.R`
-- `vignettes/corrplot-intro.Rmd`
+Run the contract tests from the repository root:
 
-Each case is rendered twice in the same CI environment: once through `corrplot::corrplot()` and once through `corrplotng::corrplot_ng()`. The resulting PNG pixel arrays are compared exactly. CI installs a pinned commit of the original package so that changes upstream do not silently redefine the reference.
+```sh
+python -m unittest discover -s tests -v
+python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+```
 
-This comparison is intentionally dynamic rather than a collection of checked-in screenshots: the original implementation is the reference renderer, and the adapter is the candidate. When a new renderer replaces the adapter, differences should fail the test and be reviewed. Any accepted visual differences must be documented rather than hidden by automatically regenerating snapshots. Exact pixel comparison is appropriate for the current wrapper because both paths use the same renderer and device; a future cross-renderer comparison may need fixed environments and reviewed tolerances.
+The R adapter tests run through `R CMD check implementations/r`.
 
-The current battery is representative, not exhaustive. Expand it from the original examples over time, especially for public arguments and interactions between options.
+This layer validates already-computed matrices. It does not calculate
+correlations from raw observations and does not test rendering.
 
-Record tests for:
+### 2. R compatibility and statistical helpers
 
-- Public functions and arguments.
-- Default values and argument combinations.
-- Return values and side effects.
-- Errors and warnings.
-- Plot methods: `circle`, `square`, `ellipse`, `number`, `shade`, `color`, and `pie`.
-- Important labels, legends, ordering, and graphical parameters.
-- User drawing after plotting, including common native R graphics operations.
+The default exported `corrplot_ng()` path delegates to the pinned upstream
+`corrplot` package. The R package check verifies package installation and
+its automated tests against the declared legacy reference version
+(`corrplot` 0.95).
 
-Each compatibility case must record the reference package version or commit, input, call, expected result, and verification method. Do not mark a case as verified until an automated test passes.
+The saved-raster regression suite compares 15 selected 900×900 PNG outputs
+with committed reference images. It verifies the R compatibility adapter,
+not the independent Python SVG renderer or a future production engine.
+Pixel equality is meaningful only in the pinned CI graphics environment;
+it is not a cross-platform rendering contract.
 
-### 2. Shared data and mathematical rules
+The R package also tests its experimental scene path, normalized input
+adapters, `cor.mtest()`, and exported palette/color-legend helpers. The
+statistical helper computes pairwise p-values and confidence intervals; it
+does not move statistical calculations into the renderer.
 
-Test input validation and documented rules for:
+The legacy semantic oracle is a separate foundation workflow job. It installs
+the pinned upstream source, exports representative legacy matrix semantics,
+and checks the scene bridge. This is targeted evidence, not exhaustive
+coverage of every public argument or option interaction.
 
-- Matrix dimensions and labels.
-- Symmetry and diagonal values where required.
-- Missing and non-finite values.
-- Values outside the supported range.
-- Variable ordering and subsetting.
-- Empty, one-variable, and large inputs.
+See [the regression test guide](../tests/README.md) for the pinned reference,
+snapshot regeneration procedure, fixture inventory, and platform limitations.
 
-Do not assume that every input must be accepted. Define whether each case is accepted, normalized, or rejected.
+Run the package check from the repository root:
 
-### 3. Shared plot model and language interfaces
+```sh
+R CMD check implementations/r
+```
 
-When the shared model exists, test it independently from rendering. Use the same versioned fixture cases in each language.
+### 3. Scene-v1 contract and renderer-neutral behavior
 
-Compare semantic fields such as variable order, values, visual method, labels, legend settings, and missing-value handling. Define documented exceptions instead of silently allowing language-specific differences.
+The Python scene/SVG prototype has its own tests under
+`prototypes/shared-svg/`. They cover scene construction, validation,
+layout, labels, annotations, missing values, deterministic SVG output, and
+the seven prototype glyph methods. The R scene consumer checks that the R
+adapter can consume and produce the documented scene-v1 representation.
+The legacy-to-scene bridge uses actual matrix output from the pinned legacy
+oracle to check selected semantic edge cases.
 
-### 4. Rendering regression
+Run the Python prototype tests with:
 
-Test plot structure and geometry before relying on image comparison. Add visual snapshots only for stable, meaningful outputs.
+```sh
+python -m pip install jsonschema
+python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+Rscript prototypes/shared-svg/test_r_scene_consumer.R
+```
 
-Avoid comparing raw image bytes across different operating systems or graphics devices unless the environment is fixed. Prefer scene or normalized vector-output comparisons where available, and use reviewed image tolerances when renderers differ.
+These checks establish contract and targeted semantic conformance. They do
+not establish that Python, R, Rust, C++, and future TypeScript/WASM
+implementations share one compiled implementation. Nor do they establish
+complete legacy API compatibility.
 
-### 5. Integration and packaging
+### 4. SVG structure, export, and interoperability
 
-Check package installation, supported runtime versions, language bindings, and supported rendering backends. Add operating systems and version combinations based on the project's declared support policy.
+`scripts/validate_svg.py` checks the supported self-contained SVG subset:
+well-formed XML, namespace and dimensions, viewBox geometry, unique IDs,
+local and accessibility references, and the absence of scripts, event
+handlers, remote assets, and external CSS dependencies.
 
-### 6. Property-based tests
+The foundation workflow validates a generated Python SVG and rasterizes it
+with librsvg. The Rust CLI workflow generates a native SVG artifact and runs
+the same validator on Ubuntu. The broader SVG prototype tests check
+structure, geometry, glyph-specific elements, labels, annotations, and
+deterministic serialization.
 
-Add generated inputs after the main rules are documented. Check invariants such as determinism, symmetric handling, valid ranges, and consistent reordering. Use fixed seeds for reproducible failures.
+Run the validator against an artifact with:
 
-## Test data
+```sh
+python scripts/validate_svg.py figure.svg
+```
 
-Keep shared cases in `tests/fixtures/`. Each case should have:
+A manual LaTeX embedding smoke test is documented in
+[the regression test guide](../tests/README.md). SVG validation checks a
+documented subset; it is not complete SVG 2 conformance and does not promise
+identical rendering in every viewer.
 
-- A stable, unique ID.
-- A small input.
-- Explicit expected properties or an expected result.
-- A short description of the behavior under test.
-- A source reference when it captures legacy behavior.
+### 5. Native Rust CLI
 
-Use JSON for language-neutral numeric fixtures when practical. Represent missing values as JSON `null`; do not use non-standard JSON values such as `NaN` or `Infinity`.
+The standalone CLI is tested independently from the Python and R runtimes.
+Its Cargo manifest has no third-party dependencies. The CLI workflow runs
+locked, offline Rust tests and builds the release executable on Ubuntu,
+macOS, and Windows. On Ubuntu it also renders the example publication
+configuration and validates the resulting SVG.
 
-The initial fixture file is a seed, not a complete compatibility corpus. Expand it with observed behavior from the original R package.
+The release workflow separately builds platform artifacts and runs
+executable smoke checks. Release packaging checks are not the same as the
+routine PR correctness matrix.
 
-## Continuous integration
+Run the local CLI tests and build from the repository root:
 
-Keep pull-request checks fast and correctness-focused. Performance measurements are not part of routine pull-request CI.
+```sh
+cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+```
 
-1. **Pull requests:** run fixture integrity, shared SVG tests, the legacy semantic bridge, and the R package check only when relevant paths change. Workflow concurrency cancels superseded runs for the same PR.
-2. **Pushes to main:** run the same path-filtered correctness checks against the merged state.
-3. **Manual performance workflow:** run the shared-core and cross-language benchmark suites only through `workflow_dispatch`. B03/B04 stress workloads and the three-platform native package smoke matrix are separate opt-in inputs.
+The CLI is a standalone application. Its implementation does not make Rust
+the selected production shared-core language; ADR 0001 defers that decision.
 
-The dedicated workflow is documented in [the benchmark guide](../benchmarks/README.md). Benchmark timing is informational and must never be used as a flaky required PR check. A required correctness check must fail when its tests fail.
+### 6. CI execution policy
 
-## Compatibility status
+Routine pull-request CI is correctness-focused and path-filtered where
+appropriate. Workflow concurrency cancels superseded runs for the same PR.
 
-Track each important behavior in a compatibility ledger:
+| Workflow | Trigger and scope | Main checks |
+| --- | --- | --- |
+| [Test foundation](../.github/workflows/test-foundation.yml) | Pull requests, pushes to `main`, and manual dispatch; foundation paths are filtered | Shared fixture integrity, normalized-matrix contract, Python shared SVG and publication-config/SVG tests, SVG artifact validation, librsvg interoperability, and pinned legacy semantic bridge |
+| [R package checks](../.github/workflows/test-r.yml) | Pull requests, pushes to `main`, and manual dispatch; R package and related paths are filtered | Pinned `corrplot` reference, R scene consumer, and `R CMD check` |
+| [Native Rust CLI](../.github/workflows/test-rust-cli.yml) | Pull requests and pushes to `main` for CLI-relevant paths, plus manual dispatch | Offline Rust tests, release build on Ubuntu/macOS/Windows, and native SVG validation on Ubuntu |
 
-- `verified`: an automated test passes against a named reference.
-- `partial`: only part of the behavior is covered.
+The foundation workflow runs fixture, SVG, and legacy-oracle jobs only when
+the relevant paths change (or on manual dispatch). The R workflow similarly
+filters package-related paths. The native CLI matrix is path-filtered and
+keeps the three supported CI operating systems.
+
+Performance measurements are not part of routine pull-request CI. The
+dedicated **Performance benchmarks** workflow is started manually using
+`workflow_dispatch`; its regular benchmark suites run by default, while
+large B03/B04 stress workloads and the three-platform native package smoke
+matrix are separate opt-in inputs. See
+[benchmark operations](../benchmarks/README.md). The native CLI correctness
+workflow does not run a baseline-versus-candidate performance comparison on
+pull requests.
+
+### 7. Future test extensions
+
+Future TypeScript, Node native bindings, browser WASM, and Canvas work is
+tracked separately under issues #139–#146. These are not current test
+runners or supported production interfaces.
+
+When one of these interfaces is implemented:
+
+- Reuse normalized-matrix and scene-v1 fixtures instead of creating a second
+  definition of matrix or scene semantics.
+- Add a consumer-specific contract test for each supported runtime.
+- Keep contract conformance separate from shared compiled-core parity.
+- Test renderer structure and behavior independently from pixel comparisons.
+- Use reviewed tolerances for cross-renderer visual comparisons; do not
+  weaken semantic assertions to accommodate font or rasterizer differences.
+- Add platform and packaging checks only for platforms the interface claims
+  to support.
+
+Property-based tests may be added when they provide coverage beyond the
+existing deterministic edge-case fixtures. Generated tests must use fixed
+seeds and report reproducible failing inputs.
+
+## Evidence and compatibility claims
+
+Use precise terms when reporting results:
+
+- **Contract conformance:** an implementation accepts and emits the
+  documented versioned data shape and semantics for the tested cases.
+- **Adapter parity:** equivalent inputs through two adapters produce
+  equivalent normalized representations, apart from explicitly
+  source-specific provenance.
+- **Semantic compatibility:** selected behavior matches a named legacy
+  reference for the covered cases.
+- **Structural SVG conformance:** output passes the documented SVG subset
+  validator and structural assertions.
+- **Pixel regression:** output matches saved raster references in the pinned
+  graphics environment.
+- **Shared implementation parity:** multiple interfaces use the same
+  compiled implementation. The current repository does not claim this.
+
+Track compatibility per behavior:
+
+- `verified`: an automated test passes against a named reference or
+  contract for the stated scope.
+- `partial`: only selected inputs or behavior are covered.
 - `changed`: behavior changed intentionally and the change is documented.
 - `untested`: no adequate automated evidence exists.
 
-The ledger should link to the test case and reference version. Test coverage percentage alone is not proof of compatibility.
-
-## Initial implementation plan
-
-1. Keep the fixture-integrity test and CI workflow working.
-2. Run the legacy visual regression battery against a pinned original package.
-3. Expand the battery with representative examples from the original tests and vignettes.
-4. Capture additional semantic and behavioral regression tests.
-5. Add shared-model tests when that model has a defined schema.
-6. Add Python and TypeScript runners only when those interfaces exist.
+The current legacy visual corpus is representative, not exhaustive. Passing
+fixtures or a workflow does not establish full compatibility with the
+original package. Link each compatibility claim to its test and reference
+version. Test coverage percentage alone is not proof of compatibility.
 
 ## Acceptance criteria
 
-- Test fixtures have stable IDs and documented expected properties.
-- CI validates fixture integrity on relevant pull requests.
-- Visual regression cases identify their original source and pinned reference version.
-- Compatibility tests identify the reference version.
-- Claims about supported behavior link to passing tests.
-- Performance benchmarks never run as part of an ordinary pull-request check.
-- Failures are reproducible and explain which rule was broken.
+- Each current test layer is described as implemented, with its evidence and
+  limitations.
+- Planned TypeScript/native/WASM/Canvas work is not described as running.
+- Contract conformance, adapter parity, semantic compatibility, structural
+  SVG conformance, pixel regression, and shared implementation parity are
+  distinct claims.
+- CI triggers and checks agree with the workflow files.
+- Performance benchmarks remain manual and outside ordinary PR checks.
+- The documented commands and links point to existing files and workflows.
