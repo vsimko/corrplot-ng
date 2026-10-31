@@ -99,6 +99,7 @@ jobs:
                   path: digest
                   for path, digest in entries.items()
                   if not path.startswith(pruned_dirs)
+                  and path != ".cargo_vcs_info.json"
               }
               with open(checksum_path, "w", encoding="utf-8") as stream:
                   json.dump(checksum, stream, separators=(",", ":"))
