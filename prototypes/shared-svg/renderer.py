@@ -91,7 +91,20 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         if value is None:
             missing_color = cell.get("color") or style["missing_fill"]
             parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="{missing_color}" stroke="#ffffff"/>')
-            parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
+            missing_annotation = next((item for item in scene.get("text_annotations", [])
+                                       if item.get("role") == "missing"
+                                       and item["row"] == cell["row"]
+                                       and item["column"] == cell["column"]), None)
+            if missing_annotation is None:
+                parts.append(f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#666666">NA</text>')
+            else:
+                parts.append(
+                    f'<text x="{cx:.1f}" y="{cy:.1f}" text-anchor="middle" dominant-baseline="middle" '
+                    f'font-family="{family}" font-size="{missing_annotation["font_size"]:g}" '
+                    f'font-weight="{missing_annotation["font_weight"]}" '
+                    f'font-style="{missing_annotation["font_style"]}" '
+                    f'fill="{html.escape(missing_annotation["color"], quote=True)}">{html.escape(missing_annotation["text"])}</text>'
+                )
             continue
         parts.append(f'<rect x="{x:g}" y="{y:g}" width="{size:g}" height="{size:g}" fill="#ffffff" stroke="{style["grid_color"]}"/>')
         significance = cell.get("significance")
@@ -187,6 +200,8 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
         (item["row"], item["column"]): item for item in scene["cells"] if item.get("visible", True) and not item.get("significance", {}).get("blank", False)
     }
     for label in scene.get("text_annotations", []):
+        if label.get("role") == "missing":
+            continue
         cell = cells_by_position.get((label["row"], label["column"]))
         if cell is None:
             continue
