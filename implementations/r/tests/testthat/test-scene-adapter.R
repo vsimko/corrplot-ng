@@ -341,7 +341,7 @@ test_that("missing cells receive explicit labels and colors without numeric glyp
   corr <- matrix(c(1, NA_real_, 0.4, 1), 2, byrow = TRUE,
     dimnames = list(c("A", "B"), c("A", "B")))
   scene <- corrplot_ng(corr, engine = "scene")
-  missing <- scene$text_annotations[[2]]
+  missing <- scene$text_annotations[[1]]
 
   expect_identical(missing$role, "missing")
   expect_identical(missing$text, "?")
