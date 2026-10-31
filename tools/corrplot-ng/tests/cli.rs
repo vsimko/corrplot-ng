@@ -431,7 +431,7 @@ fn help_documents_all_commands_and_input_format_options() {
         .arg("--help").output().unwrap();
     assert!(output.status.success());
     let help = String::from_utf8(output.stdout).unwrap();
-    for option in ["render", "validate", "inspect", "presets", "version", "--input-format", "--format"] {
+    for option in ["render", "validate", "inspect", "presets", "version", "--input-format", "--format", "--incremental"] {
         assert!(help.contains(option), "help output is missing {option}");
     }
 }
