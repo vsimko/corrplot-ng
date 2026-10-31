@@ -1,93 +1,126 @@
 # ADR 0001: Shared-core architecture for corrplot-ng
 
-- **Status:** Proposed; implementation-language decision deferred
-- **Date:** 2026-10-29
+- **Status:** Accepted — defer production implementation-language selection
+- **Date:** 2026-10-31
 - **Decision owners:** corrplot-ng maintainers
-- **Related:** [Issue #12](https://github.com/vsimko/corrplot-ng/issues/12), [Rust/rextendr spike #13](https://github.com/vsimko/corrplot-ng/pull/13), [C++/Rcpp spike #14](https://github.com/vsimko/corrplot-ng/pull/14)
+- **Related:** [Issue #12](https://github.com/vsimko/corrplot-ng/issues/12), [Rust/rextendr spike #13](https://github.com/vsimko/corrplot-ng/pull/13), [C++/Rcpp spike #14](https://github.com/vsimko/corrplot-ng/pull/14), [language evaluation #116](https://github.com/vsimko/corrplot-ng/issues/116)
 
 ## Context
 
-corrplot-ng should preserve the established R `corrplot` interface while enabling a modern API and wrappers for R, Python, and TypeScript. The project has only a few hours of maintainer time per week, so the architecture must minimize duplicated behavior and ongoing release/CI work.
+corrplot-ng should preserve the established R `corrplot` interface while enabling a modern API and possible wrappers for R, Python, and TypeScript. Maintainer capacity is limited, so the architecture must minimize duplicated semantics and ongoing release/CI work.
 
-The repository already has a Python scene prototype and two minimal R integration experiments: Rust via `rextendr` and C++ via `Rcpp`. Both experiments have passed their current cross-platform CI checks on Windows, macOS, and Linux. These results establish that the basic integrations can work; they do **not** yet establish which option is easier to distribute or maintain. In particular, installation of a built Windows binary without a compiler toolchain and the relevant CRAN distribution requirements remain to be verified.
+The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-binding spikes, a standalone Rust CLI, and a versioned renderer-neutral scene-v1 contract. The spikes establish that both native integrations can build and run on Windows, macOS, and Linux. They do not yet establish that one compiled core is actually reused by two production consumers.
 
 ## Decision
 
-**Adopt a renderer-neutral, language-neutral scene model as the architectural boundary. Do not select a production implementation language yet.**
+**Keep scene-v1 as the language-neutral architectural boundary, but defer selecting or implementing a production shared-core language.**
 
-The scene model should describe the intended visualization, not how a particular language or graphics library draws it. Keep the existing Python prototype as a reference implementation while the contract is clarified. Treat Rust/rextendr and C++/Rcpp as disposable evidence-gathering spikes, not production foundations.
+Do not migrate the legacy R package or turn either native spike into the production core as part of this decision. Keep the Python implementation as the reference producer and retain the Rust/rextendr and C++/Rcpp implementations as disposable evidence-gathering prototypes.
 
-The intended logical layers are:
+The reason for deferral is not that the experiments failed. Both options are technically viable, but they optimize for different deployment goals:
 
-1. **Compatibility and language APIs** — the legacy R API, the new R API, and future Python/TypeScript APIs. The legacy R layer translates existing arguments into the shared model and preserves historical defaults and behavior.
-2. **Visualization model** — validated inputs, normalized configuration, matrix layout, visual encodings, labels, annotations, and a renderer-neutral scene representation.
-3. **Renderers/exporters** — convert the scene to supported output formats or native graphics systems. Rendering-specific details must not leak into the public configuration model.
-4. **Compatibility evidence** — fixtures and regression tests based on the original R package, covering both semantic outputs and rendered results where stable comparison is practical.
+- For an **R-only native extension**, C++/Rcpp currently has the lower CRAN and maintainer burden.
+- For a **single compiled core shared by the R package, standalone CLI, and future language bindings**, Rust is the stronger candidate because the CLI is already Rust. However, the current Rust CLI is a separate Cargo crate and does not yet reuse the rextendr prototype as a shared library. The benefit remains architectural potential, not demonstrated reuse.
 
-These are logical boundaries, not an instruction to create separate repositories or publish separate packages immediately. Keep the implementation in this repository until there is demonstrated value in splitting it.
+The project has not yet established which of those product requirements it needs. Selecting a language before that requirement is concrete would risk committing to extra toolchain and release work without a demonstrated consumer benefit.
 
-## Why defer the implementation-language choice?
+## Evidence reviewed
 
-The current spikes demonstrate basic R integration, but the most consequential constraints are not settled:
+The evaluation issues and merged implementation PRs provide the following evidence:
 
-- Can users install Windows binaries without installing a compiler or language toolchain?
-- What are the current CRAN requirements and practical maintenance costs for each route?
-- How much release automation, generated code, and platform-specific debugging does each approach require?
-- Can the chosen core be reused by Python and TypeScript without maintaining separate implementations of visualization semantics?
+| Area | Evidence | Finding |
+|---|---|---|
+| CRAN source-package policy | [#111 / PR #118](https://github.com/vsimko/corrplot-ng/pull/118), `docs/cran-rust-cpp-comparison.md` | Both approaches are feasible. C++/Rcpp passed three-platform `R CMD check --as-cran`; Rust/rextendr passed offline source-package checks on three platforms but reported two NOTEs (vendor metadata and non-API `R_NamespaceRegistry`). Oldest-toolchain compatibility and actual CRAN acceptance remain unproven. |
+| Maintainer workflow | [#113 / PR #119](https://github.com/vsimko/corrplot-ng/pull/119), `docs/native-integration-maintenance-comparison.md` | C++/Rcpp has the shorter routine and release workflow for an R-only extension. The report's planning estimates are 1–2 h for C++ versus 2–4 h for Rust release-grade validation; these are estimates, not measured timings. |
+| Binary installation | [Rust PR #16](https://github.com/vsimko/corrplot-ng/pull/16), [C++ PR #17](https://github.com/vsimko/corrplot-ng/pull/17) | Both Windows binaries installed and passed smoke tests with the relevant compiler/toolchain removed from the restricted `PATH`. This addresses binary end-user installation, not source-build or CRAN acceptance. |
+| Scene independence | [#115 / PR #121](https://github.com/vsimko/corrplot-ng/pull/121) | Python, R, and the standalone Rust CLI consume the versioned scene-v1 JSON fixture. The Rust CLI validates the data contract independently of R. This demonstrates a language-neutral interchange boundary, not reuse of one compiled native library. |
+| Parity and performance | [#114 / PR #122](https://github.com/vsimko/corrplot-ng/pull/122), [follow-up PR #124](https://github.com/vsimko/corrplot-ng/pull/124), `benchmarks/CROSS-LANGUAGE.md` | Shared fixtures and validation cover row-major cells, missing values, annotations, dimensions, invalid values, and NA-versus-NaN behavior. Existing Linux-only scene-v1 benchmarks show Rust ahead of C++ in the tested workloads, but the gap is implementation- and workload-specific and is not sufficient to select a production language. |
+| Standalone CLI | [#98](https://github.com/vsimko/corrplot-ng/issues/98), [PR #120](https://github.com/vsimko/corrplot-ng/pull/120) | Rust stable, edition 2021, was selected for the standalone CLI. Its dependency-free binary is built and audited separately; this is a useful alignment factor for a future Rust shared core, but it does not by itself prove that the R package should adopt rextendr. |
 
-Choosing based only on a successful smoke test would answer the easiest question rather than the decisive ones.
+### Interpretation
+
+The evidence supports two conditional conclusions, not one universal winner:
+
+1. **C++/Rcpp is the lower-risk choice when the requirement is an in-process R extension.** It follows the established R native-package path, has lower estimated maintainer effort, and its prototype source-package checks completed without the two Rust-specific NOTEs.
+2. **Rust is the more coherent candidate when the requirement is one compiled core shared with the existing Rust CLI and other consumers.** That would avoid maintaining a second native-language implementation, but the current prototypes have not yet demonstrated this shared-library architecture. Rust source-package checks also still need NOTE disposition and older-toolchain/CRAN confirmation.
+
+The measured performance difference does not override these operational considerations. The benchmark covers a small scene-v1 workload set on one Linux runner; it is not a full corrplot workload or a cross-platform performance comparison. The R-independence work proves that the *data contract* can cross language boundaries, not that a Rust or C++ library is already reused by Python or TypeScript.
 
 ## Options considered
 
 ### Rust + rextendr
 
-**Potential advantages:** a strong type system, explicit data modeling, and a plausible route to a shared native core.
+**Strengths**
+- Aligns with the already-selected Rust standalone CLI toolchain.
+- Offers a plausible route to one native core used by the CLI and R binding.
+- Has demonstrated Windows/macOS/Linux source builds, offline vendoring, and Windows binary installation without Rust on the end user's PATH.
+- Provides strong typing and a compact, measured scene-v1 implementation.
 
-**Risks to validate:** Rust toolchain and build integration, generated bindings, Windows binary distribution, CRAN policy and release workflow, and reuse from Python/TypeScript.
+**Conditions and risks**
+- The current CRAN-style checks report two NOTEs that need resolution or explicit maintainer/CRAN disposition.
+- The oldest supported Cargo/rustc versions and actual CRAN acceptance have not been verified.
+- The vendoring, lockfile, license inventory, generated rextendr scaffold, and offline archive add ongoing maintenance work.
+- No production Rust library is yet shared between the CLI and R binding; that reuse must be demonstrated before it is counted as a benefit.
+
+**Assessment:** viable candidate for a future multi-consumer native core; not justified as an immediate R-package migration.
 
 ### C++ + Rcpp
 
-**Potential advantages:** mature R ecosystem integration and familiar R package workflows.
+**Strengths**
+- Mature R integration and the lower incremental CRAN/release risk.
+- Shorter local build, binding-generation, and release workflow for an R-only extension.
+- Three-platform source-tarball checks and Windows binary installation without Rtools on the end user's PATH have been demonstrated.
 
-**Risks to validate:** compiler/toolchain setup, generated registration and binding maintenance, Windows binary distribution, CRAN policy and release workflow, and reuse from Python/TypeScript.
+**Conditions and risks**
+- C++ is not the implementation language of the standalone CLI. Selecting it for the shared core would either require a second native integration in the CLI or a separately designed cross-language ABI.
+- Generated Rcpp wrappers and compiler/R ABI compatibility still require maintenance.
+- The current evidence does not demonstrate a shared C++ core consumed by Python or TypeScript.
+
+**Assessment:** preferred fallback if a concrete requirement calls for an R-only native extension; not selected as the repository-wide shared core.
 
 ### Keep Python as the production core
 
-**Potential advantages:** builds on the existing prototype and avoids choosing a native language prematurely.
-
-**Risks:** R and TypeScript integration and distribution may become awkward; Python could become a required runtime even for users who only need the R package. This remains a useful reference/prototype, not a production commitment.
+Useful as a reference implementation and semantic oracle, but not selected as a production runtime dependency. Requiring Python for users who only need the R package or standalone CLI would add a separate deployment requirement.
 
 ### Separate implementations per language
 
-Rejected for now. It would duplicate visualization semantics, increase regression risk, and exceed the likely maintenance capacity.
+Rejected. Duplicating matrix normalization, ordering, and visualization semantics would increase regression risk and exceed the project's maintenance capacity. Language-specific adapters may remain separate, but they must conform to the same versioned scene contract.
 
-## Consequences
+## Consequences and implementation boundaries
 
-- The scene contract becomes the first stable technical artifact; it is not yet a promised public API.
-- No production core should be implemented in Rust or C++ until the distribution and maintenance checks below are complete.
-- Existing R behavior remains the compatibility reference. New API design must not force a breaking change in the legacy API.
-- A single repository and shared fixtures are preferred initially.
-- CI should test the contract and compatibility fixtures independently from each language binding.
+- Scene-v1 remains the stable experimental interchange boundary. It describes plot meaning and geometry, not a language-specific object graph or renderer API.
+- Keep the Python scene prototype as the reference producer and shared fixtures as the semantic compatibility gate.
+- Keep the Rust/rextendr and C++/Rcpp spikes isolated. Do not add either binding to the production R package yet.
+- Preserve the legacy R API, defaults, return values, graphics-device behavior, and compatibility tests. No breaking migration is implied.
+- Keep the standalone CLI in Rust as already decided in #98. This decision does not require the CLI to depend on the rextendr package.
+- Future Python and TypeScript consumers should read and validate scene-v1 JSON/Schema. They do not need to embed the R binding or inherit the native core language.
+- Do not use the prototype benchmark to claim a production performance win.
 
-## Decision gate: evidence required before choosing Rust or C++
+## Conditions to reopen the language decision
 
-Close the following items before making a production-language decision:
+Reopen this ADR only when a concrete product requirement demonstrates that a compiled shared core is needed by at least two real consumers (for example, the R package and standalone CLI), and the same minimal operation can be exercised through both.
 
-- [ ] Verify installation of a built Windows R binary on a clean environment without Rust, Rtools, or another compiler toolchain.
-- [ ] Check current CRAN requirements and document the release implications for both approaches.
-- [ ] Record local setup, CI complexity, generated files, debugging steps, and maintainer effort for each spike.
-- [ ] Demonstrate that the scene contract can be consumed independently of the R binding.
-- [ ] Compare both approaches against the same minimal end-to-end example and compatibility expectations.
-- [ ] Write a short recommendation with evidence, trade-offs, and a rollback path.
+Before adopting Rust for that role:
 
-If neither native approach meets the distribution and maintenance constraints, defer the choice rather than expanding either spike.
+- Resolve or obtain explicit disposition for the two current `R CMD check --as-cran` NOTEs.
+- Verify a conservative minimum Cargo/rustc toolchain against the oldest supported CRAN build environments.
+- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates.
+- Prototype one shared Rust library crate consumed by both the CLI and the R binding; do not count JSON fixture interoperability as compiled-library reuse.
 
-## Next implementation step
+If the requirement is R-only, compare the cost of C++/Rcpp against keeping the behavior in R before adding a native layer. Any future implementation must pass the same scene-v1 conformance fixtures and legacy compatibility tests.
 
-Define a small, versioned scene-model contract using the existing Python prototype and one representative correlation-matrix example. It should cover the minimum information needed to express matrix dimensions/order, cell values, visual encoding, labels, and annotations. Add fixtures and tests before implementing additional rendering features.
+## Rollback and exit strategy
 
-Then run the same example through the R-facing prototype and one non-R consumer. Keep this vertical slice deliberately small; do not implement all corrplot features or migrate the legacy package as part of the experiment.
+No production package depends on either spike, so deferral has no migration cost. When a future implementation is attempted:
+
+1. Keep the language-specific implementation behind the existing scene-v1 and R adapter boundaries.
+2. Require semantic parity and legacy compatibility before switching the default path.
+3. Retain the previous implementation until the new path passes supported-platform package checks and binary/source installation tests.
+4. If Rust's CRAN/toolchain conditions cannot be met within the maintainer budget, remove the rextendr binding from the production path and evaluate the lower-burden C++/Rcpp or pure-R path. The scene-v1 schema and fixtures remain unchanged.
+5. If C++ cannot serve the required non-R consumers without a second implementation, do not force it into the shared-core role; retain the language-neutral interchange boundary and revisit the architecture.
 
 ## Revisit when
 
-Revisit this ADR after the Windows binary-install test, CRAN review, and matched end-to-end comparison are complete, or if a concrete requirement makes one implementation path clearly unsuitable.
+- A second production consumer needs the same visualization semantics and a shared compiled library would materially remove duplicated work.
+- CRAN toolchain policy, Rcpp/rextendr maintenance costs, or binary distribution constraints change.
+- A full compatibility and performance comparison exists for representative corrplot workloads rather than only the current scene-v1 prototype.
