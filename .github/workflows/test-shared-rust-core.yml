@@ -42,6 +42,10 @@ jobs:
             tree="$(cargo tree --manifest-path "$manifest" -i corrplot-core)"
             echo "$tree"
             echo "$tree" | grep -F "corrplot-core v0.1.0"
+            if ! echo "$tree" | grep -Fq 'crates/corrplot-core' && ! echo "$tree" | grep -Fq 'crates\corrplot-core'; then
+              echo "Consumer did not resolve the repository-local core crate" >&2
+              exit 1
+            fi
           done
 
   rextendr-package-install:
