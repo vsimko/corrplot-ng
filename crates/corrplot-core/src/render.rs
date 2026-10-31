@@ -345,7 +345,7 @@ fn validate_alpha(request: &RenderRequest) -> Result<(), RenderError> {
 mod tests {
     use super::*;
 
-    const FORMATS: &[OutputFormat] = &[OutputFormat::Svg, OutputFormat::Png, OutputFormat::Rgba8];
+    const FORMATS: &[OutputFormat] = &[OutputFormat::Svg, OutputFormat::Png, OutputFormat::Rgba];
     const KINDS: &[SceneKind] = &[SceneKind::CorrelationPlot, SceneKind::GeneralMatrixPlot];
     const METHODS: &[&str] = &["circle", "number"];
     const FEATURES: &[SceneFeature] = &[
@@ -401,6 +401,20 @@ mod tests {
     }
 
     #[test]
+    fn rejects_a_requested_feature_absent_from_the_scene() {
+        let scene = SceneDocument::new(
+            "{}", SCENE_SCHEMA_V1, SceneKind::CorrelationPlot, 1.0, 1.0,
+            &["circle"], &[],
+        ).unwrap();
+        let mut request = RenderRequest::default();
+        request.required_features.push(SceneFeature::Legend);
+        assert_eq!(
+            validate_render_request(&CAPS, &scene, &request).unwrap_err().code,
+            "renderer.scene_feature_missing"
+        );
+    }
+
+    #[test]
     fn rejects_unknown_scene_versions_and_unsupported_cell_methods() {
         let future = SceneDocument::new(
             "{}", 2, SceneKind::CorrelationPlot, 1.0, 1.0, &["circle"], &[],
@@ -440,7 +454,7 @@ mod tests {
     #[test]
     fn physical_raster_dimensions_require_positive_dpi() {
         let mut request = RenderRequest::default();
-        request.format = OutputFormat::Rgba8;
+        request.format = OutputFormat::Rgba;
         request.size = OutputSize::Physical {
             width: 120.0, height: 80.0, unit: PhysicalUnit::Millimeter, dpi: Some(300.0),
         };
