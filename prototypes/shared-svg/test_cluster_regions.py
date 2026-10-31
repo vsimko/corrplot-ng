@@ -26,6 +26,12 @@ def base_config():
 
 
 class ClusterRegionTests(unittest.TestCase):
+    def test_renderer_neutral_cluster_region_fixture_matches_schema(self):
+        fixture = json.loads((HERE / "cluster-region-example.json").read_text(encoding="utf-8"))
+        scene = build_scene(fixture)
+        self.assertEqual(scene["cluster_regions"][0]["variables"], ["alpha", "beta"])
+        self.assertEqual(list(Draft202012Validator(SCHEMA).iter_errors(scene)), [])
+
     def test_name_based_region_resolves_to_inclusive_cell_boundaries(self):
         config = base_config()
         config["cluster_regions"] = [{
