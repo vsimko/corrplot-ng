@@ -63,14 +63,10 @@
   corr <- corrRes$corr
   row_names <- rownames(corr)
   column_names <- colnames(corr)
-  if (!is.null(row_names) && !is.null(column_names) &&
-      !identical(row_names, column_names)) {
-    labels <- NULL
-  } else if (!is.null(row_names) && !is.null(column_names)) {
-    labels <- row_names
-  } else {
-    labels <- NULL
-  }
+  axis_names_compatible <- (is.null(row_names) && is.null(column_names)) ||
+    (!is.null(row_names) && !is.null(column_names) &&
+      identical(row_names, column_names))
+  labels <- if (axis_names_compatible && !is.null(row_names)) row_names else NULL
   type <- corrRes$arg$type
   if (is.null(type)) type <- "full"
   if (!is.character(type) || length(type) != 1L || is.na(type) ||
@@ -83,7 +79,10 @@
        !all(c("xName", "yName", "x", "y") %in% names(positions)))) {
     stop("corrRes$corrPos must contain xName, yName, x, and y columns for namesMat", call. = FALSE)
   }
-  list(corr = corr, labels = labels, type = type, positions = positions)
+  list(
+    corr = corr, labels = labels, type = type, positions = positions,
+    axis_names_compatible = axis_names_compatible
+  )
 }
 
 .corrplot_ng_draw_index_regions <- function(starts, ends, n, type, col, lwd, ...) {
@@ -189,8 +188,8 @@
 #' @param corrRes Invisible result returned by corrplot_ng() or corrplot_ng_mixed().
 #' @param index Increasing one-based boundaries; each adjacent pair defines
 #'   one inclusive cluster range.
-#' @param name Increasing or unordered variable names defining the same
-#'   boundary ranges as index.
+#' @param name Ordered variable names defining the same boundary ranges as
+#'   index.
 #' @param namesMat A four-element character vector or a matrix with columns
 #'   xleft, ybottom, xright, and ytop, resolved through corrRes$corrPos.
 #' @param col R graphics color used for the border.
@@ -221,6 +220,9 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
     index <- match(name, validated$labels)
   }
   if (!is.null(index)) {
+    if (!validated$axis_names_compatible) {
+      stop("row and column names must be identical when index is used", call. = FALSE)
+    }
     intervals <- .corrplot_ng_validate_intervals(index, n)
     .corrplot_ng_region_inputs(
       intervals$starts, intervals$ends, validated$labels,
