@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 from math import ceil, cos, isfinite, radians, sin
+import textwrap
 
 LABEL_FONT_SIZE = 13
 LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6  # Backwards-compatible estimate used by the legacy bridge.
@@ -103,6 +104,69 @@ def _cell_encoding(cell: dict[str, Any], method: str, style: dict[str, str]) -> 
     return encoding
 
 
+
+def _prepare_figure_text(
+    figure_text: Any, width: float, matrix_top: float, matrix_bottom: float
+) -> tuple[list[dict[str, Any]], float, float]:
+    if not isinstance(figure_text, dict):
+        raise ValueError("figure_text must be an object keyed by title, subtitle, caption, and footnote")
+    unknown = set(figure_text) - {"title", "subtitle", "caption", "footnote"}
+    if unknown:
+        raise ValueError(f"figure_text contains unsupported roles: {', '.join(sorted(unknown))}")
+
+    defaults = {
+        "title": (20.0, "bold", "center"),
+        "subtitle": (15.0, "normal", "center"),
+        "caption": (12.0, "normal", "left"),
+        "footnote": (10.0, "normal", "left"),
+    }
+    prepared: list[dict[str, Any]] = []
+    top_height = 0.0
+    bottom_height = 0.0
+    max_chars = max(1, int((width - 48) / (LABEL_CHAR_WIDTH)))
+    for role in ("title", "subtitle", "caption", "footnote"):
+        raw = figure_text.get(role)
+        if raw is None:
+            continue
+        options = {"text": raw} if isinstance(raw, str) else raw
+        if not isinstance(options, dict) or set(options) - {"text", "alignment", "font_size", "font_weight"}:
+            raise ValueError(f"figure_text.{role} must be a string or an object with text, alignment, font_size, and font_weight")
+        text = options.get("text")
+        if not isinstance(text, str):
+            raise ValueError(f"figure_text.{role}.text must be a string")
+        if text == "":
+            continue
+        default_size, default_weight, default_alignment = defaults[role]
+        font_size = _number(options.get("font_size", default_size), f"figure_text.{role}.font_size", 6, 48)
+        font_weight = options.get("font_weight", default_weight)
+        if font_weight not in ("normal", "bold"):
+            raise ValueError(f"figure_text.{role}.font_weight must be normal or bold")
+        alignment = options.get("alignment", default_alignment)
+        if alignment not in ("left", "center", "right"):
+            raise ValueError(f"figure_text.{role}.alignment must be left, center, or right")
+        chars = max(1, int((width - 48) / (font_size * 0.6)))
+        lines: list[str] = []
+        for paragraph in text.split("\n"):
+            wrapped = textwrap.wrap(paragraph, width=chars, break_long_words=True, break_on_hyphens=False)
+            lines.extend(wrapped or [""])
+        line_height = font_size * 1.2
+        gap = 4.0
+        block_height = len(lines) * line_height + gap
+        is_top = role in ("title", "subtitle")
+        y = 24.0 + top_height if is_top else matrix_bottom + 24.0 + bottom_height
+        x = width / 2 if alignment == "center" else (24.0 if alignment == "left" else width - 24.0)
+        prepared.append({
+            "role": role, "text": text, "lines": lines, "x": x, "y": y,
+            "alignment": alignment, "font_size": font_size,
+            "font_weight": font_weight, "line_height": line_height,
+        })
+        if is_top:
+            top_height += block_height
+        else:
+            bottom_height += block_height
+    return prepared, top_height, bottom_height
+
+
 def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     """Validate a correlation-plot config and return a deterministic plot scene."""
     if not isinstance(config, dict):
@@ -180,6 +244,16 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     top = max(76, int((max_label_width if orientation == "vertical" else horizontal_lines * font_size * 1.1) + 32))
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
+    figure_text, top_text_height, bottom_text_height = _prepare_figure_text(
+        config.get("figure_text", {}), width, top + top_text_height if "top_text_height" in locals() else top,
+        top + len(labels) * cell,
+    ) if config.get("figure_text") else ([], 0.0, 0.0)
+    top += top_text_height
+    height += top_text_height + bottom_text_height
+    if figure_text:
+        for item in figure_text:
+            if item["role"] in ("caption", "footnote"):
+                item["y"] += top_text_height
 
     matrix_values = matrix
     p_values = config.get("p_values")
@@ -513,6 +587,8 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             "column_label_orientation": orientation,
             "label_collision": collision,
         }
+    if figure_text:
+        scene["figure_text"] = figure_text
     if legend is not None:
         scene["legend"] = legend
     if variable_order is not None:
