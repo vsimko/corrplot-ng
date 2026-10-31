@@ -28,14 +28,14 @@ exceeds rextendr's 5 MB caution and requires CRAN guidance before production
 use. Controlled human maintainer time versus the C++/Rcpp path remains
 unmeasured; existing effort ranges are planning estimates only.
 
-The generated R Cargo package uses a size-oriented release profile
-(`opt-level = "z"`, LTO, one codegen unit, and debuginfo stripping). This
-profile is set in the generated package manifest because Cargo profiles in
-the separate CLI package do not apply to it. CI installs both the Cargo-default baseline and optimized build into separate
-R libraries and records each installed package, native library, and Rust
-static-library artifact size on Linux, macOS, and Windows. It also prints the
-R integration's normal dependency tree. The R
-integration depends on `corrplot-core` and `extendr-api`; it does not depend
-on or build the CLI package. See
+The generated R Cargo package uses Cargo's standard release profile. A
+controlled CI experiment compared it with a size-oriented profile
+(`opt-level = "z"`, one codegen unit, and debuginfo stripping). That candidate
+increased installed size on Linux and macOS and was therefore rejected; it
+slightly reduced size on Windows. CI reports installed package, native
+library, and Rust static-library artifact sizes on all three platforms and
+prints the R integration's dependency tree. The R integration depends on
+`corrplot-core` and `extendr-api`; it does not depend on or build the CLI
+package. See
 [`docs/rust-rextendr-size-optimization.md`](../../docs/rust-rextendr-size-optimization.md)
-for the rationale and measurement limits.
+for measurements and follow-up analysis.
