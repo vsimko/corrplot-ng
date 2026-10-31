@@ -2,9 +2,12 @@ Package: corrplotng
 Title: Next Generation Correlation Plots
 Version: 0.0.0.9000
 Authors@R: person("corrplot-ng contributors", role = c("aut", "cre"), email = "maintainers@example.invalid")
-Description: A provisional R interface for the corrplot-ng project. The current
-    implementation delegates plotting to the original corrplot package to
-    establish a compatibility test harness before a new implementation exists.
+Description: An experimental R adapter for corrplot-ng. It retains a
+    legacy-compatible plotting path through the upstream corrplot package and
+    provides an experimental scene-v1 preparation path, normalized matrix and
+    file input adapters, pairwise correlation testing, and palette/color-legend
+    helpers. The scene path prepares renderer-neutral data; it is not a complete
+    plotting renderer.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
