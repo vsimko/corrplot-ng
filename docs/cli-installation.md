@@ -95,7 +95,15 @@ upgrade, verify and extract the new archive, then replace
 
 ## Verify an installed binary
 
-Run these commands from a directory outside the repository checkout:
+Run these commands from a directory outside the repository checkout. The input is a labelled CSV matrix:
+
+```csv
+,alpha,beta
+alpha,1,0.5
+beta,0.5,1
+``
+
+Save it as `matrix.csv`, then run:
 
 ```sh
 corrplot-ng version
