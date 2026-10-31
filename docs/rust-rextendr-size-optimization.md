@@ -63,11 +63,13 @@ run:
 - Rust static-library build artifact bytes;
 - the generated R package's normal dependency tree.
 
-These CI results are the authoritative post-change measurements. They must be
-compared on the same OS, R version, and architecture; the historical 6.0 MB
-figure is not a cross-platform baseline. Do not claim a size reduction until
-the new workflow has completed and the before/after measurements are
-comparable.
+The workflow now builds and installs both the unmodified Cargo release
+defaults and the size-oriented profile on the same runner, using separate
+Cargo target directories and R library directories. These same-run results
+are the authoritative comparison for each OS. The historical 6.0 MB figure
+is useful context but is not a substitute for this controlled baseline. Do
+not claim a size reduction until the new workflow has completed and the
+before/after measurements are comparable.
 
 ## Follow-up decision rule
 
