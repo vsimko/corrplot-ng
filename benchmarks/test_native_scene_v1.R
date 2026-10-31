@@ -91,6 +91,12 @@ invalid_cases <- list(
     labels = c("a", "b"),
     matrix = matrix(c(1, Inf, Inf, 1), nrow = 2L),
     message = "matrix values must be finite, NA, or between -1 and 1"
+  ),
+  list(
+    name = "nan-is-not-missing",
+    labels = c("a", "b"),
+    matrix = matrix(c(1, NaN, NaN, 1), nrow = 2L),
+    message = "matrix values must be finite, NA, or between -1 and 1"
   )
 )
 
