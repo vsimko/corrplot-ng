@@ -8,6 +8,7 @@ mod publication;
 mod wizard;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const RENDERER_CAPABILITIES: &str = include_str!("../renderer-capabilities.json");
 const CELL: f64 = 84.0;
 const LEFT: f64 = 104.0;
 const TOP: f64 = 76.0;
@@ -515,6 +516,13 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n";
+
+    #[test]
+    fn exposes_machine_readable_renderer_capabilities() {
+        assert!(RENDERER_CAPABILITIES.contains("\\\"renderer\\\""));
+        assert!(RENDERER_CAPABILITIES.contains("\\\"cell_methods\\\""));
+        assert!(RENDERER_CAPABILITIES.contains("\\\"circle\\\""));
+    }
 
     #[test]
     fn parses_square_correlation_matrix() {
