@@ -57,3 +57,16 @@ test_that("warning conditions expose the same diagnostic-v1 contract", {
   expect_equal(diagnostic$stage, "configuration")
   expect_equal(diagnostic$path, "legacy_option")
 })
+
+test_that("non-square matrices share the diagnostic-v1 validation contract", {
+  error <- tryCatch(
+    corrplot_ng_normalize_matrix(matrix(c(1, 0.5), nrow = 2, ncol = 1)),
+    corrplot_ng_error = function(condition) condition
+  )
+  diagnostic <- corrplot_ng_diagnostic(error)
+  expect_equal(diagnostic$schema_version, 1L)
+  expect_equal(diagnostic$code, "input.matrix.invalid_shape")
+  expect_equal(diagnostic$severity, "error")
+  expect_equal(diagnostic$stage, "input")
+  expect_equal(diagnostic$path, "matrix")
+})
