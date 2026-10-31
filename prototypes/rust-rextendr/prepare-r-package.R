@@ -51,7 +51,7 @@ extendr_dependency <- grep("^extendr-api[[:space:]]*=", cargo_lines)
 if (length(extendr_dependency) != 1L) {
   stop("Could not identify generated extendr-api dependency in ", cargo_manifest)
 }
-cargo_lines[extendr_dependency] <- 'extendr-api = "=0.8.2"'
+cargo_lines[extendr_dependency] <- 'extendr-api = "=0.9.0"'
 core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-core" }'
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
