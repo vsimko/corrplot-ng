@@ -100,7 +100,7 @@ The Rust/rextendr integration remains a disposable evaluation adapter that prove
 The following capabilities are tracked as future work, not as current shipped architecture:
 
 - Cross-runtime Rust and TypeScript architecture (specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); #139).
-- Portable reusable Rust core for native and WebAssembly targets (#140).
+- Portable reusable Rust core for native and WebAssembly targets (#140): the same dependency-free crate now forbids unsafe code and is compiled for `wasm32-unknown-unknown` in CI, including its test code and declared MSRV. This is a compile-portability proof, not yet a browser binding or runtime execution test.
 - Native Node.js binding (#141).
 - Browser WebAssembly integration (#142).
 - Renderer-neutral output interface specified in [renderer-output-v1](renderer-output-v1.md) and #153; raster implementation remains #154.
@@ -124,7 +124,7 @@ The standalone CLI remains a thin application adapter over the reusable Rust cra
 | Cross-runtime TypeScript architecture | Specified by ADR 0002; implementation planned |
 | Node binding, browser WASM and Canvas | Planned |
 
-The Rust shared-core direction and cross-runtime boundary are accepted. PR #180 proves initial crate reuse for matrix validation; the complete shared visualization engine and Node/WASM bindings remain future implementation work. Production R rollout still requires CRAN guidance and measured maintainer effort. Keep language-specific adapters thin and keep scene-v1 as the versioned interchange/conformance contract.
+The Rust shared-core direction and cross-runtime boundary are accepted. PR #180 proves initial crate reuse for matrix validation. The core's native/WebAssembly compile portability is now checked from the same source; the complete shared visualization engine and Node/WASM bindings remain future implementation work. Production R rollout still requires CRAN guidance and measured maintainer effort. Keep language-specific adapters thin and keep scene-v1 as the versioned interchange/conformance contract.
 
 ## Dependency principles
 

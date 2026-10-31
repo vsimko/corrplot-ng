@@ -49,17 +49,34 @@ jobs:
           done
 
 
+  wasm32-portability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Compile shared core and its tests for WebAssembly
+        run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
+      - name: Build shared core for WebAssembly
+        run: cargo build --locked --offline --lib --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
+      - name: Run shared semantic tests on native target
+        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
 
   minimum-supported-toolchain:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.78.0
+        with:
+          targets: wasm32-unknown-unknown
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: "4.4"
       - name: Test shared core at the declared MSRV
         run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
+      - name: Check shared core for WebAssembly at the declared MSRV
+        run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
       - name: Test CLI consumer at the declared MSRV
         run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Compile rextendr consumer at the declared MSRV
