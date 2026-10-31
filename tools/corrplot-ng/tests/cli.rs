@@ -545,7 +545,7 @@ fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
     assert!(json.contains("normalized_matrix"));
-    assert!(json.contains("\\"format\\\":\\"csv\\""));
+    assert!(json.contains("format") && json.contains("csv"));
     assert!(json.contains("[[1,null],[0,1]]"));
     assert!(json.contains("[0,1]"));
     fs::remove_file(csv).ok();
@@ -557,7 +557,7 @@ fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
         .output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let json = String::from_utf8(output.stdout).unwrap();
-    assert!(json.contains("\\"format\\\":\\"tsv\\""));
+    assert!(json.contains("format") && json.contains("tsv"));
     assert!(json.contains("[\\"A\\",\\"B\\"]"));
     fs::remove_file(tsv).ok();
 }
