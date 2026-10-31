@@ -18,7 +18,7 @@ def validate_normalized_matrix(value: Any) -> None:
     unknown = sorted(value.keys() - allowed)
     if unknown:
         raise ValueError(f"unknown top-level fields: {', '.join(unknown)}")
-    if value["schema_version"] != 1:
+    if type(value["schema_version"]) is not int or value["schema_version"] != 1:
         raise ValueError("schema_version must be 1")
     if value["kind"] != "normalized_matrix":
         raise ValueError("kind must be 'normalized_matrix'")
@@ -57,7 +57,7 @@ def validate_normalized_matrix(value: Any) -> None:
     source_unknown = sorted(source.keys() - (source_required | {"path"}))
     if source_unknown:
         raise ValueError(f"unknown source fields: {', '.join(source_unknown)}")
-    if source["format"] not in SOURCE_FORMATS:
+    if not isinstance(source["format"], str) or source["format"] not in SOURCE_FORMATS:
         raise ValueError(f"source.format must be one of {', '.join(sorted(SOURCE_FORMATS))}")
     for field in ("row_labels_present", "column_labels_present"):
         if not isinstance(source[field], bool):
