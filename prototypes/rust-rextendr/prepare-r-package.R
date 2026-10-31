@@ -62,44 +62,8 @@ if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
 }
 
-# The generated R package is its own Cargo package, so release settings from
-# the CLI manifest do not apply here. Optimize this static library for the
-# installed R artifact rather than for CLI execution speed.
-profile_header <- match("[profile.release]", cargo_lines, nomatch = 0L)
-if (profile_header == 0L) {
-  cargo_lines <- c(
-    cargo_lines,
-    "",
-    "[profile.release]",
-    'opt-level = "z"',
-    "lto = false",
-    "codegen-units = 1",
-    'strip = "debuginfo"'
-  )
-} else {
-  next_section <- which(seq_along(cargo_lines) > profile_header &
-                        grepl("^\\[", cargo_lines))[1]
-  profile_end <- if (is.na(next_section)) length(cargo_lines) else next_section - 1L
-  profile_keys <- c(
-    'opt-level = "z"',
-    "lto = true",
-    "codegen-units = 1",
-    'strip = "debuginfo"'
-  )
-  for (entry in profile_keys) {
-    key <- sub("[[:space:]]*=.*$", "", entry)
-    key_pattern <- paste0("^", key, "[[:space:]]*=")
-    existing <- which(seq_along(cargo_lines) > profile_header &
-                      seq_along(cargo_lines) <= profile_end &
-                      grepl(key_pattern, cargo_lines))
-    if (length(existing)) {
-      cargo_lines[existing[[1]]] <- entry
-    } else {
-      cargo_lines <- append(cargo_lines, entry, after = profile_end)
-      profile_end <- profile_end + 1L
-    }
-  }
-}
+# Keep Cargo's standard release profile until a size reduction is
+# demonstrated across supported platforms. See the controlled CI comparison.
 writeLines(cargo_lines, cargo_manifest)
 
 # Reuse the reviewed transitive dependency graph from the committed spike
