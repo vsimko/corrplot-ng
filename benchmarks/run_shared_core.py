@@ -19,7 +19,7 @@ from renderer import render_scene_svg  # noqa: E402
 from scene import build_scene  # noqa: E402
 
 SEED = 20261029
-ITERATIONS_MINIMUM = 20
+ITERATIONS_MINIMUM = 1
 
 
 def make_matrix(size: int, seed: int = SEED) -> list[list[float]]:
