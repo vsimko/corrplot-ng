@@ -186,6 +186,34 @@ mod tests {
     }
 
     #[test]
+    fn rejects_asymmetric_values_and_missing_pairs() {
+        let values = [Some(1.0), Some(0.2), Some(0.3), Some(1.0)];
+        assert_eq!(
+            validate_matrix(&labels(), 2, 2, &values, MatrixKind::Correlation).unwrap_err().code,
+            "input.matrix.not_symmetric"
+        );
+        let missing = [Some(1.0), None, Some(0.3), Some(1.0)];
+        assert_eq!(
+            validate_matrix(&labels(), 2, 2, &missing, MatrixKind::Correlation).unwrap_err().code,
+            "input.matrix.not_symmetric"
+        );
+    }
+
+    #[test]
+    fn rejects_nan_and_invalid_correlation_diagonal() {
+        let nan = [Some(1.0), Some(f64::NAN), Some(f64::NAN), Some(1.0)];
+        assert_eq!(
+            validate_matrix(&labels(), 2, 2, &nan, MatrixKind::Correlation).unwrap_err().code,
+            "input.matrix.non_finite_value"
+        );
+        let diagonal = [Some(0.9), Some(0.2), Some(0.2), Some(1.0)];
+        assert_eq!(
+            validate_matrix(&labels(), 2, 2, &diagonal, MatrixKind::Correlation).unwrap_err().code,
+            "input.matrix.invalid_diagonal"
+        );
+    }
+
+    #[test]
     fn correlation_rules_are_shared_but_general_numeric_is_not_overconstrained() {
         let values = [Some(1.0), Some(1.5), Some(0.2), Some(1.0)];
         assert_eq!(
