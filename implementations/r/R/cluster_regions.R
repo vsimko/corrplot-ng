@@ -286,7 +286,7 @@ corrRect <- function(corrRes = NULL, index = NULL, name = NULL,
       !is.finite(k) || k != as.integer(k) || k < 1L || k > n) {
     stop("k must be one integer between 1 and nrow(corr)", call. = FALSE)
   }
-  method <- match.arg(method)
+  method <- match.arg(method, c("complete", "ward", "ward.D", "ward.D2", "single", "average", "mcquitty", "median", "centroid"))
   style <- .corrplot_ng_region_style(col, lwd)
   tree <- stats::hclust(stats::as.dist(1 - corr), method = method)
   clusters <- stats::cutree(tree, k = as.integer(k))
