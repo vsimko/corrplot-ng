@@ -34,6 +34,7 @@ class NormalizedMatrixV1Tests(unittest.TestCase):
             "duplicate-labels",
             "non-numeric-cell",
             "nan-cell",
+            "infinity-cell",
             "duplicate-source-index",
             "unsupported-source-format",
         ):
