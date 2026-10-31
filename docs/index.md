@@ -40,7 +40,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, host targets, and current backend limits.
 - [Renderer output v1](renderer-output-v1.md): shared Rust output types, SVG/PNG/RGBA dimensions and ownership, direct Canvas host integration, and output diagnostics.
 - [Legacy R adapter design](legacy-r-adapter.md): explicit legacy/scene routing and the supported R input slice.
-- [Legacy R return values](legacy-r-return-values.md): invisible corrplot/corrplot.mixed results, reordered matrix names, plotted cell coordinates, and mixed diagonal behavior.
+- [Legacy R return values](legacy-r-return-values.md): invisible corrplot/corrplot.mixed results, reordered matrix names, plotted cell coordinates, and mixed diagonal behavior.\n- [Legacy R adapter design](legacy-r-adapter.md): includes `corrRect()` and `corrRect.hclust()` cluster-region compatibility and graphics-device ownership.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
