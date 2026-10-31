@@ -162,9 +162,9 @@ and disposable R/rextendr adapter call its matrix-validation operation.
 This is a real but deliberately small compiled-library reuse proof; the core
 does not yet implement the complete visualization pipeline.
 
-The related future-work track is:
+The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The remaining implementation track is:
 
-- [#139 — Cross-runtime Rust and TypeScript architecture](https://github.com/vsimko/corrplot-ng/issues/139).
+- [#139 — Cross-runtime Rust and TypeScript architecture](https://github.com/vsimko/corrplot-ng/issues/139) — architecture decision recorded in ADR 0002.
 - [#140 — Portable Rust core for native and WebAssembly](https://github.com/vsimko/corrplot-ng/issues/140).
 - [#141 — Node.js native binding](https://github.com/vsimko/corrplot-ng/issues/141).
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142).
