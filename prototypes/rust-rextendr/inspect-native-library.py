@@ -5,7 +5,6 @@ from pathlib import Path
 import platform
 import shutil
 import subprocess
-import sys
 
 
 package_dir = Path(
@@ -31,7 +30,7 @@ if not libraries:
 system = platform.system()
 if system == "Darwin":
     section_commands = [["size", "-m"]]
-    symbol_commands = [["nm", "-S", "-size-sort", "-C"]]
+    symbol_commands = [["nm", "-S"]]
 elif system == "Windows":
     section_commands = [["llvm-objdump", "-h"], ["objdump", "-h"]]
     symbol_commands = [
@@ -59,6 +58,17 @@ def report(label, commands, library, limit):
         if completed.returncode == 0 and completed.stdout.strip():
             lines = completed.stdout.rstrip().splitlines()
             print(f"--- {label}: {' '.join(command)} ({len(lines)} lines) ---")
+            if system == "Darwin" and label == "Largest retained symbols":
+                # Apple nm prints address, size, type, and name with -S.
+                sized = []
+                for line in lines:
+                    fields = line.split(maxsplit=3)
+                    if len(fields) == 4:
+                        try:
+                            sized.append((int(fields[1], 16), line))
+                        except ValueError:
+                            pass
+                lines = [line for _, line in sorted(sized)]
             selected = lines[-limit:] if label == "Largest retained symbols" else lines[:limit]
             print("\n".join(selected))
             if len(lines) > limit:
