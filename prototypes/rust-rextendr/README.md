@@ -14,5 +14,8 @@ CI generates a disposable R package with `prepare-r-package.R`, compiles it
 with the Rust stable toolchain, and installs it for the shared benchmark
 harness. Generated package files and Cargo build output are not committed.
 
-This remains an experiment. It does not select Rust for production, establish
-clean Windows binary-install readiness, or change the legacy R package.
+This remains an integration proof, not a production R-package migration. It
+demonstrates one compiled validation operation shared with the CLI and a
+Linux generated-package installation smoke test. CRAN readiness, oldest
+supported toolchain validation, and Windows R-package installation remain
+separate release gates.
