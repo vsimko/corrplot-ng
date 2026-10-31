@@ -67,6 +67,15 @@ same_json_scene <- function(value, expected) {
   same_scene(fromJSON(value, simplifyVector = FALSE), expected)
 }
 
+package_artifact_sizes <- function(package) {
+  package_root <- system.file(package = package)
+  libs_dir <- file.path(package_root, "libs")
+  files <- list.files(libs_dir, full.names = TRUE)
+  if (!length(files)) return(list(total_bytes = 0, files = list()))
+  sizes <- file.info(files)$size
+  list(total_bytes = sum(sizes), files = as.list(setNames(as.numeric(sizes), basename(files))))
+}
+
 fixture <- fromJSON(fixtures_path, simplifyVector = FALSE)
 results <- list()
 for (case in fixture$workloads) {
@@ -137,7 +146,15 @@ payload <- list(
     rustc = system2("rustc", "--version", stdout = TRUE),
     rcpp_version = as.character(packageVersion("Rcpp")),
     rextendr_version = as.character(packageVersion("rextendr")),
-    jsonlite_version = as.character(packageVersion("jsonlite"))
+    jsonlite_version = as.character(packageVersion("jsonlite")),
+    native_package_sizes = list(
+      cpp_rcpp = package_artifact_sizes("corrplotngcppspike"),
+      rust_rextendr = package_artifact_sizes("corrplotngrustspike")
+    )
+  ),
+  memory_measurement = list(
+    status = "not measured per candidate",
+    reason = "All implementations run in one R process; process RSS cannot be attributed reliably to an individual native candidate."
   ),
   results = results
 )
