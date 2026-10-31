@@ -103,6 +103,30 @@ cleanup_idx <- cleanup_candidates[vapply(makevars[cleanup_candidates], function(
 if (length(cleanup_idx) != 1L) stop("Could not identify target cleanup in ", makevars_file)
 makevars[cleanup_idx] <- gsub("@CLEAN_TARGET@", "", makevars[cleanup_idx], fixed = TRUE)
 makevars[cleanup_idx] <- gsub("$(TARGET_DIR)", "", makevars[cleanup_idx], fixed = TRUE)
+# Experimental build-time stripping is opt-in. The CI workflow enables it
+# for Linux/macOS to validate the linker-level equivalent of the temporary
+# copy experiment. Keep the default generated package unchanged.
+strip_debug <- identical(
+  tolower(Sys.getenv("CORRPLOT_REXTENDR_STRIP_DEBUG", "false")),
+  "true"
+)
+if (strip_debug) {
+  system_name <- Sys.info()[["sysname"]]
+  strip_flag <- switch(
+    system_name,
+    Linux = "-Wl,--strip-debug",
+    Darwin = "-Wl,-S",
+    NULL
+  )
+  if (is.null(strip_flag)) {
+    message("Skipping linker debug stripping on ", system_name,
+            "; no validated linker flag is configured")
+  } else {
+    makevars <- c(makevars, paste("PKG_LIBS +=", strip_flag))
+    message("Experimental linker debug stripping enabled: ", strip_flag)
+  }
+}
+
 writeLines(makevars, makevars_file)
 
 rust_dir <- file.path(pkg_dir, "src", "rust", "src")
