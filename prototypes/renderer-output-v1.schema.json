@@ -91,6 +91,14 @@
           }
         }
       }
+    },
+    {
+      "if": { "properties": { "format": { "const": "png" } }, "required": ["format"] },
+      "then": { "properties": { "alpha_mode": { "enum": ["opaque", "straight"] } } }
+    },
+    {
+      "if": { "properties": { "background": { "properties": { "kind": { "const": "transparent" } }, "required": ["kind"] } }, "required": ["background"] },
+      "then": { "properties": { "alpha_mode": { "enum": ["straight", "premultiplied"] } } }
     }
   ],
   "$defs": {
