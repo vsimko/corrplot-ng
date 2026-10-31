@@ -16,6 +16,15 @@ This directory is the root of the provisional R package.
 
 See [the adapter design](../../docs/legacy-r-adapter.md) for argument mapping, current limitations, and the migration sequence.
 
+## Legacy return values
+
+The legacy `corrplot_ng()` and `corrplot_ng_mixed()` wrappers return the
+upstream invisible objects unchanged. The main result contains the reordered
+`corr` matrix, the `corrPos` cell-position data frame, and minimal `arg`
+metadata; the mixed result contains `corr` and combined `corrPos` only. See
+[the return-value contract](../../docs/legacy-r-return-values.md) for
+coordinate conventions and preserved diagonal behavior.
+
 ## Graphics device ownership and composition
 
 The legacy path is a thin delegation to `corrplot::corrplot`. The caller owns
