@@ -752,14 +752,13 @@ impl Publication {
         out
     }
 
-    pub fn svg_output_options(&self, title: &str) -> Result<OutputOptions, String> {
+    pub fn svg_output_options(&self) -> Result<OutputOptions, String> {
         let unit = match self.unit.as_str() {
             "mm" => SvgUnit::Millimeters,
             "in" => SvgUnit::Inches,
             _ => return Err(format!("unsupported SVG physical unit '{}'", self.unit)),
         };
         let mut options = SvgOptions::new(self.width, self.height, unit);
-        options.title = title.to_string();
         options.font_family = self.family.clone();
         options.font_size_pt = self.base_size;
         Ok(OutputOptions::Svg(options))
@@ -1300,14 +1299,19 @@ mod scene_input_tests {
 ///
 /// The adapter keeps publication semantics in the existing scene builder and
 /// applies output-only settings from the shared renderer contract.
+pub struct PublicationRenderInput<'a> {
+    pub publication: &'a Publication,
+    pub title: &'a str,
+}
+
 pub struct PublicationSvgRenderer;
 
-impl Renderer<Publication> for PublicationSvgRenderer {
+impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
     type Error = String;
 
     fn render(
         &self,
-        publication: &Publication,
+        input: &PublicationRenderInput<'_>,
         options: &OutputOptions,
     ) -> Result<RenderOutput, Self::Error> {
         options.validate().map_err(|error| error.to_string())?;
@@ -1321,14 +1325,14 @@ impl Renderer<Publication> for PublicationSvgRenderer {
                 return Err("publication SVG output requires physical mm or in dimensions".into());
             }
         };
-        let mut adapted = publication.clone();
+        let mut adapted = input.publication.clone();
         adapted.width = svg_options.width;
         adapted.height = svg_options.height;
         adapted.unit = unit.to_string();
         adapted.family = svg_options.font_family.clone();
         adapted.base_size = svg_options.font_size_pt;
         let output = RenderOutput::Svg(
-            adapted.svg_with_background(&svg_options.title, svg_options.background),
+            adapted.svg_with_background(input.title, svg_options.background),
         );
         output.validate_for(options).map_err(|error| error.to_string())?;
         Ok(output)
@@ -1346,8 +1350,9 @@ mod renderer_output_tests {
         let publication = Publication::load(config.to_str().unwrap()).unwrap();
         let title = "renderer contract";
         let expected = publication.svg(title);
-        let options = publication.svg_output_options(title).unwrap();
-        let actual = PublicationSvgRenderer.render(&publication, &options).unwrap();
+        let input = PublicationRenderInput { publication: &publication, title };
+        let options = publication.svg_output_options().unwrap();
+        let actual = PublicationSvgRenderer.render(&input, &options).unwrap();
         assert_eq!(actual, RenderOutput::Svg(expected));
     }
 
@@ -1357,6 +1362,7 @@ mod renderer_output_tests {
             .join("../../prototypes/publication-config-v1/examples/basic.json");
         let publication = Publication::load(config.to_str().unwrap()).unwrap();
         let options = OutputOptions::Png(corrplot_core::output::RasterOptions::new(320, 240));
-        assert!(PublicationSvgRenderer.render(&publication, &options).unwrap_err().contains("only SVG"));
+        let input = PublicationRenderInput { publication: &publication, title: "raster" };
+        assert!(PublicationSvgRenderer.render(&input, &options).unwrap_err().contains("only SVG"));
     }
 }
