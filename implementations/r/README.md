@@ -62,3 +62,24 @@ normalized labels; if neither is labelled, `V1` through `Vn` are generated.
 Missing values stay `NULL`, numeric zero stays zero, and source format/path
 are retained as provenance. This is a normalization adapter only; it does not
 calculate correlations or render plots.
+
+
+
+## Pairwise correlation testing helper
+
+The exported `cor.mtest(mat, ...)` helper computes pairwise p-values and
+confidence intervals with `stats::cor.test()`. Rows are observations and
+columns are features; additional test arguments such as `method`,
+`alternative`, `exact`, `continuity`, and `conf.level` are forwarded.
+
+The returned `p`, `lowCI`, and `uppCI` matrices are symmetric and retain
+feature names. The diagonal uses corrplot 0.95 conventions (p = 0 and CI
+limits = 1). Pairwise complete observations are used independently for each
+pair. Pairs with fewer than three complete observations or a constant feature
+return missing results; off-diagonal confidence limits remain missing for
+methods that do not provide them. Non-numeric columns and infinite values are
+rejected with actionable errors.
+
+This helper computes statistical metadata only. The plotting scene and
+renderers consume supplied p-value/CI matrices and do not perform statistical
+tests.
