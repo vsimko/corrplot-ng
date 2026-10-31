@@ -33,6 +33,7 @@ on \`code\`, \`severity\`, and \`stage\`.
 | \`input.matrix.non_finite_value\` | input | A matrix cell contains NaN or an infinite value. Row and column are supplied when known. |
 | \`configuration.invalid_field\` | configuration | A configuration field has an invalid value or type. |
 | \`configuration.invalid_metadata\` | configuration | Source metadata is not a named, unique list. |
+| `configuration.option.deprecated` | configuration | A deprecated compatibility option was used; the replacement is identified in the message and path. |
 | \`scene.invalid_content\` | scene | Scene content does not meet the scene contract. |
 | \`renderer.unsupported_feature\` | renderer | A renderer cannot preserve a required feature. |
 | \`renderer.optional_feature_omitted\` | renderer | The caller explicitly allowed an unsupported optional feature to be omitted. |

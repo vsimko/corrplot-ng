@@ -33,3 +33,27 @@ test_that("non-finite matrix diagnostics use zero-based cell coordinates", {
 test_that("diagnostic reader ignores unrelated conditions", {
   expect_null(corrplot_ng_diagnostic(simpleError("ordinary error")))
 })
+
+test_that("warning conditions expose the same diagnostic-v1 contract", {
+  captured <- NULL
+  withCallingHandlers(
+    .corrplot_ng_warn(
+      "configuration.option.deprecated",
+      "The legacy option is deprecated; use the replacement option.",
+      "configuration",
+      path = "legacy_option"
+    ),
+    warning = function(condition) {
+      captured <<- condition
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_s3_class(captured, "corrplot_ng_warning")
+  diagnostic <- corrplot_ng_diagnostic(captured)
+  expect_equal(diagnostic$schema_version, 1L)
+  expect_equal(diagnostic$code, "configuration.option.deprecated")
+  expect_equal(diagnostic$severity, "warning")
+  expect_equal(diagnostic$stage, "configuration")
+  expect_equal(diagnostic$path, "legacy_option")
+})

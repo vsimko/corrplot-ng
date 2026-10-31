@@ -5,7 +5,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from diagnostics import DiagnosticError, build_scene_with_diagnostics
+from diagnostics import Diagnostic, DiagnosticError, build_scene_with_diagnostics
 from renderer_capabilities import RendererCapabilityError, negotiate_scene_capabilities
 from scene import build_scene
 
@@ -33,6 +33,17 @@ class DiagnosticContractTests(unittest.TestCase):
                 "matrix": [[1.0, 0.2], [0.2, 1.0]],
             })
         self.assertEqual(raised.exception.diagnostic.code, "input.matrix.invalid_label")
+
+    def test_deprecation_warning_record_follows_diagnostic_v1(self):
+        diagnostic = Diagnostic(
+            "configuration.option.deprecated",
+            "warning",
+            "configuration",
+            "The legacy option is deprecated; use the replacement option.",
+            path="legacy_option",
+        )
+        self.assertEqual(list(Draft202012Validator(SCHEMA).iter_errors(diagnostic.to_dict())), [])
+        self.assertEqual(json.loads(diagnostic.to_json())["severity"], "warning")
 
     def test_renderer_capability_diagnostics_follow_diagnostic_v1(self):
         scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
