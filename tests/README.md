@@ -42,6 +42,28 @@ python -m unittest discover -s tests -v
 
 The fixture integrity tests use only the Python standard library. The shared SVG prototype suite additionally installs `jsonschema` as described in `prototypes/shared-svg/README.md`.
 
+## SVG artifact validation and interoperability
+
+`scripts/validate_svg.py` validates the repository's supported self-contained SVG subset using only Python's standard library. It checks well-formed XML, the SVG namespace, positive absolute dimensions, a finite positive viewBox, allowed element types, unique IDs, local references, accessibility references, and the absence of scripts, event handlers, external assets, and external CSS URLs.
+
+Run it against an exported artifact:
+
+```sh
+python scripts/validate_svg.py figures/correlation.svg
+```
+
+CI validates both the shared Python SVG prototype and a native Rust CLI export. The `svg-interoperability` job also rasterizes the Python SVG with `rsvg-convert` (librsvg), so XML parsing is not the only acceptance check.
+
+A manual LaTeX embedding smoke test can be run with librsvg and a TeX installation:
+
+```sh
+rsvg-convert --format png --output figure.png figures/correlation.svg
+cp tests/fixtures/svg-publication-example.tex paper.tex
+pdflatex -interaction=nonstopmode -halt-on-error paper.tex
+```
+
+Run the commands from a directory containing both `paper.tex` and `figure.png`. The LaTeX fixture uses the standard `graphicx` package. The validator intentionally checks a documented subset, not complete SVG 2 conformance or identical rendering across every editor.
+
 ## Shared fixtures and unsupported behavior
 
 `tests/fixtures/correlation-cases.json` contains language-neutral correlation matrices. `tests/legacy-visual/cases.json` records the pinned visual case inventory. Use JSON `null` for missing values, explicit labels/dimensions, stable case IDs, and documented expected properties.
