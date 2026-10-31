@@ -1432,10 +1432,6 @@ mod scene_input_tests {
     }
 }
 
-/// Adapter for the existing publication SVG implementation.
-///
-/// The adapter keeps publication semantics in the existing scene builder and
-/// applies output-only settings from the shared renderer contract.
 /// Build an accessible HTML table without depending on SVG markup or plot glyphs.
 pub fn matrix_html_table(
     labels: &[String],
@@ -1500,6 +1496,10 @@ pub fn matrix_html_table(
     html
 }
 
+/// Adapter for the existing publication SVG implementation.
+///
+/// The adapter keeps publication semantics in the existing scene builder and
+/// applies output-only settings from the shared renderer contract.
 pub struct PublicationRenderInput<'a> {
     pub publication: &'a Publication,
     pub title: &'a str,
