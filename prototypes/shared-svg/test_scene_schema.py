@@ -121,3 +121,16 @@ class SceneSchemaTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_missing_cell_text_annotation_role_matches_scene_schema(self):
+        scene = build_scene({
+            "labels": ["A", "B"],
+            "matrix": [[1.0, None], [None, 1.0]],
+        })
+        scene["text_annotations"] = [{
+            "row": 0, "column": 1, "role": "missing", "text": "?",
+            "color": "black", "font_size": 13,
+            "font_weight": "bold", "font_style": "normal",
+        }]
+        self.assertEqual(list(Draft202012Validator(self.schema).iter_errors(scene)), [])
+

@@ -26,7 +26,7 @@ This helper owns R device drawing only. It does not create or redefine the rende
 |---|---|---|
 | corr | Numeric square matrix; finite values; correlation mode additionally requires [-1, 1] | Supported |
 | rownames(corr) / colnames(corr) | One ordered labels vector; both sets must match when both are present | Supported |
-| Missing matrix values | Cell value: null; never coerced to zero | Supported |
+| Missing matrix values | Cell value: null; never coerced to zero; visible label/color map to a missing-role text annotation | Supported in scene mode for the default question mark and configurable label/color |
 | annotation (corrplot-ng adapter option) | Scene-level plain-text annotation | Supported |
 | method | No glyph/method field in scene-v1 | Rejected in scene mode |
 | type, diag | Per-cell `visible` and `region` metadata; hidden cells retain identity and geometry | Supported |
@@ -38,7 +38,7 @@ This helper owns R device drawing only. It does not create or redefine the rende
 | Coefficients and number typography | `addCoef.col`, `addCoefasPercent`, `number.digits`, `number.cex`, and `number.font` map to renderer-neutral cell text annotations; `method = "number"` takes precedence over `addCoef.col` | Supported for circle coefficient overlays and number text; significance/CI remain rejected |
 | add, mar, device state and helper drawing | R graphics-device behavior remains legacy-only | Legacy-only |
 
-General-matrix mode is selected explicitly with `is.corr = FALSE`. It preserves original cell values and records `matrix_semantics` with the selected mode, resolved color limits, palette family/name, and normalization parameters. One-sided matrices use the legacy `YlOrBr` sequential palette; mixed-sign matrices use `RdBu`. Each observed cell carries its mapped color and visual-only normalized value, leaving `value` unchanged. Automatic general-matrix limits use observed values and exclude the diagonal when `diag = FALSE`; a constant-valued matrix receives finite padding of max(0.5, 5% of the absolute constant). An all-missing matrix is rejected because no automatic domain can be resolved. Explicit `col.lim` must be finite, strictly increasing, and cover every observed value. Correlation mode retains its [-1, 1] validation and defaults to [-1, 1].
+General-matrix mode is selected explicitly with `is.corr = FALSE`. It preserves original cell values and records `matrix_semantics` with the selected mode, resolved color limits, palette family/name, and normalization parameters. One-sided matrices use the legacy `YlOrBr` sequential palette; mixed-sign matrices use `RdBu`. Each observed cell carries its mapped color and visual-only normalized value, leaving `value` unchanged. Automatic general-matrix limits use observed values and exclude the diagonal when `diag = FALSE`; a constant-valued matrix receives finite padding of max(0.5, 5% of the absolute constant). An all-missing general matrix remains a valid missing-only scene. It carries has_observed_values = false and a neutral fallback color domain that must not be presented as observed numeric data. Explicit `col.lim` must be finite, strictly increasing, and cover every observed value. Correlation mode retains its [-1, 1] validation and defaults to [-1, 1].
 
 The scene mode accepts the adapter-specific annotation option, coefficient/value text options, explicit matrix semantic mode and color limits, and the `method`, `type`, and `diag` subset described above. The adapter returns renderer-neutral mapped cell metadata but does not itself invoke an SVG or graphics-device renderer. Other arguments are rejected rather than ignored.
 
@@ -57,3 +57,22 @@ The scene mode accepts the adapter-specific annotation option, coefficient/value
 - Scene mode fails closed when it receives unsupported arguments; it does not silently drop options or silently switch engines.
 - This slice does not claim visual parity, full API compatibility, or a production renderer.
 - No legacy function is removed or redefined, and this work does not decide the production implementation language.
+
+
+## Missing-cell presentation
+
+Scene mode supports the legacy-compatible `na.label` and `na.label.col`
+options. The default label is `?` and the default color is `black`; setting
+`na.label = ""` suppresses the text while retaining the missing-cell fill.
+Missing text is represented by a renderer-neutral text annotation with role
+`missing`, keyed to the same row/column coordinates as its null-valued cell.
+It is independent of circle/number glyphs and respects triangle and diagonal
+visibility. Numeric coefficient/value annotations are never generated for
+missing cells.
+
+The default legacy engine continues to delegate all seven glyph methods and
+these options directly to corrplot 0.95. Scene mode currently supports circle
+and number glyphs only; missing-cell styling is shared across those supported
+methods. An all-missing general matrix is represented as a missing-only scene
+with `matrix_semantics.has_observed_values = false`; the fallback domain is
+not evidence of observed numeric values.

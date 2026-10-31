@@ -50,3 +50,20 @@ test_that("the adapter forwards common plotting arguments", {
     }
   )
 })
+
+test_that("legacy missing-cell labels remain compatible across all seven glyph methods", {
+  corr <- matrix(c(1, NA_real_, 0.6, 1), 2, byrow = TRUE,
+    dimnames = list(c("A", "B"), c("A", "B")))
+  for (method in c("circle", "square", "ellipse", "number", "shade", "color", "pie")) {
+    path <- tempfile(fileext = ".pdf")
+    grDevices::pdf(path)
+    tryCatch(
+      expect_no_error(corrplot_ng(corr, method = method, na.label = "NA",
+        na.label.col = "purple", tl.pos = "n", cl.pos = "n")),
+      finally = {
+        grDevices::dev.off()
+        unlink(path)
+      }
+    )
+  }
+})

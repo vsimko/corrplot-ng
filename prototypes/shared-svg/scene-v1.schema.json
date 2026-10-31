@@ -419,7 +419,8 @@
           "role": {
             "enum": [
               "coefficient",
-              "value"
+              "value",
+              "missing"
             ]
           },
           "text": {
@@ -538,6 +539,10 @@
           "type": "string",
           "minLength": 1,
           "description": "Selected legacy-compatible palette name, such as YlOrBr or RdBu."
+        },
+        "has_observed_values": {
+          "type": "boolean",
+          "description": "False when every matrix cell is missing; the numeric color domain is only a neutral fallback."
         }
       }
     }
