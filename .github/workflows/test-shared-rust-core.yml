@@ -1,0 +1,71 @@
+name: Verify shared Rust core reuse
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/corrplot-core/**"
+      - "tools/corrplot-ng/**"
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/test-shared-rust-core.yml"
+  pull_request:
+    paths:
+      - "crates/corrplot-core/**"
+      - "tools/corrplot-ng/**"
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/test-shared-rust-core.yml"
+  workflow_dispatch:
+
+jobs:
+  cross-platform-reuse:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: \${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test shared core
+        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
+      - name: Test native CLI consumer
+        run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+      - name: Compile R/rextendr consumer
+        run: cargo check --locked --manifest-path prototypes/rust-rextendr/Cargo.toml
+      - name: Verify both consumers resolve the same local crate
+        shell: bash
+        run: |
+          for manifest in tools/corrplot-ng/Cargo.toml prototypes/rust-rextendr/Cargo.toml; do
+            tree="$(cargo tree --manifest-path "$manifest" -i corrplot-core)"
+            echo "$tree"
+            echo "$tree" | grep -F "corrplot-core v0.1.0"
+            echo "$tree" | grep -F "crates/corrplot-core"
+          done
+
+  rextendr-package-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.4"
+      - name: Install rextendr build dependency
+        run: Rscript -e 'install.packages(c("rextendr", "testthat"), repos = "https://cloud.r-project.org")'
+      - name: Generate disposable R package
+        run: Rscript prototypes/rust-rextendr/prepare-r-package.R prototypes/rust-rextendr
+      - name: Install generated package
+        run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+      - name: Exercise shared validation through the R binding
+        run: |
+          Rscript -e '
+            library(corrplotngrustspike)
+            labels <- c("a", "b")
+            good <- matrix(c(1, 0.2, 0.2, 1), nrow = 2)
+            scene <- build_scene_json_rust(labels, good, "shared-core-smoke")
+            stopifnot(grepl("schema_version", scene, fixed = TRUE))
+            bad <- matrix(c(1, 0.2, 0.5, 1), nrow = 2)
+            err <- tryCatch(build_scene_json_rust(labels, bad), error = identity)
+            stopifnot(inherits(err, "error"))
+            stopifnot(grepl("not symmetric", conditionMessage(err), fixed = TRUE))
+          '
