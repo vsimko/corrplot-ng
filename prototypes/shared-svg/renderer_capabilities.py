@@ -91,6 +91,8 @@ def negotiate_scene_capabilities(
             "feature": feature,
             "message": message,
         }
+        if category == "cell_method":
+            diagnostic["path"] = "method"
         diagnostics.append(diagnostic)
         if not may_omit:
             errors.append(diagnostic)
