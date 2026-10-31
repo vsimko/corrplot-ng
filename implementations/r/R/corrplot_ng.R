@@ -31,7 +31,9 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   args <- list(...)
   if (identical(engine, "legacy")) {
     if ("annotation" %in% names(args)) stop("annotation is a scene-v1 option; use engine = 'scene'", call. = FALSE)
-    return(do.call(corrplot::corrplot, c(list(corr = corr), args)))
+    return(.corrplot_ng_with_graphics_state(
+      do.call(corrplot::corrplot, c(list(corr = corr), args))
+    ))
   }
   if (length(args) > 0L) {
     arg_names <- names(args)
