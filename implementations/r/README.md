@@ -9,10 +9,10 @@ This directory is the root of the provisional R package.
 
 ## Adapter status
 
-corrplot_ng() has two explicit paths:
+`corrplot_ng()` has two explicit paths:
 
-- The default engine = "legacy" delegates to the original corrplot package and preserves its plotting behavior.
-- Experimental engine = "scene" converts a supported square correlation matrix into a renderer-neutral scene-v1 object. It does not draw a plot yet. Unsupported plotting arguments are rejected instead of being ignored.
+- The default `engine = "legacy"` delegates to the original corrplot package and preserves its plotting behavior.
+- Experimental `engine = "scene"` converts a supported square correlation matrix into a renderer-neutral scene-v1 object. It prepares scene data; it does not draw a plot yet. Unsupported plotting arguments are rejected instead of being ignored.
 
 See [the adapter design](../../docs/legacy-r-adapter.md) for argument mapping, current limitations, and the migration sequence.
 
@@ -27,7 +27,6 @@ From the repository root, use:
 ```sh
 R CMD check implementations/r
 ```
-
 
 ## Normalized matrix input adapter
 
@@ -46,10 +45,10 @@ normalized-matrix v1 object defined in
   all-missing matrix can be rendered is decided by the later scene stage.
 - Source indices are zero-based and preserve the original row/column order.
 
-This helper does not calculate correlations and does not change the behavior
-of `corrplot_ng()`. The file adapter and integration into the scene pipeline
-are tracked separately in issues #132 and #68.
-
+This helper does not calculate correlations. The file adapter emits the same
+normalized-matrix v1 contract, with source format/path retained as provenance.
+It remains a separate input helper; it does not implicitly feed the scene
+engine or render plots.
 
 ### File input adapter
 
@@ -62,8 +61,6 @@ normalized labels; if neither is labelled, `V1` through `Vn` are generated.
 Missing values stay `NULL`, numeric zero stays zero, and source format/path
 are retained as provenance. This is a normalization adapter only; it does not
 calculate correlations or render plots.
-
-
 
 ## Pairwise correlation testing helper
 
