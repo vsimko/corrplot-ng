@@ -534,3 +534,43 @@ fn publication_general_numeric_csv_requires_and_uses_explicit_limits() {
     assert!(String::from_utf8_lossy(&invalid.stderr).contains("required for CSV-backed"));
     fs::remove_dir_all(directory).ok();
 }
+
+#[test]
+fn csv_and_tsv_inputs_can_emit_normalized_matrix_v1_json() {
+    let csv = fixture("normalized-csv", ",A,B\nA,1,\nB,0,1\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&csv)
+        .args(["--kind", "general", "--format", "normalized-json"])
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let json = String::from_utf8(output.stdout).unwrap();
+    assert!(json.contains("\\\"kind\\\":\\\"normalized_matrix\\\""));
+    assert!(json.contains("\\\"format\\\":\\\"csv\\\""));
+    assert!(json.contains("\\\"values\\\":[[1,null],[0,1]]"));
+    assert!(json.contains("\\\"source_indices\\\":[0,1]"));
+    fs::remove_file(csv).ok();
+
+    let tsv = fixture("normalized-tsv", "A\\tB\n1\\t0\n0\\t1\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&tsv)
+        .args(["--kind", "general", "--input-format", "tsv", "--format", "normalized-json"])
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let json = String::from_utf8(output.stdout).unwrap();
+    assert!(json.contains("\\\"format\\\":\\\"tsv\\\""));
+    assert!(json.contains("\\\"labels\\\":[\\\"A\\\",\\\"B\\\"]"));
+    fs::remove_file(tsv).ok();
+}
+
+#[test]
+fn all_missing_general_matrix_is_preserved_by_normalized_json_output() {
+    let path = fixture("all-missing-normalized", ",A,B\nA,NA,null\nB,,NA\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&path)
+        .args(["--kind", "general", "--format", "normalized-json"])
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let json = String::from_utf8(output.stdout).unwrap();
+    assert!(json.contains("\\\"values\\\":[[null,null],[null,null]]"));
+    fs::remove_file(path).ok();
+}
