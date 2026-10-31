@@ -14,6 +14,8 @@ on:
     branches: [main]
     paths:
       - "tools/corrplot-ng/**"
+      - "crates/corrplot-core/**"
+      - "prototypes/rust-rextendr/**"
       - "prototypes/shared-svg/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
