@@ -265,3 +265,5 @@ mod tests {
         assert_eq!(error.code, "input.matrix.invalid_shape");
     }
 }
+
+pub mod render;
