@@ -150,10 +150,10 @@ test_that("coefficient annotation fixtures match pinned corrplot 0.95 semantics"
 
 test_that("coefficient labels are opt-in and missing values stay unformatted", {
   corr <- matrix(c(1, NA_real_, -0.25, 0), 2, byrow = TRUE)
-  scene <- corrplot_ng(corr, engine = "scene")
+  scene <- corrplot_ng(corr, engine = "scene", na.label = "")
   expect_length(scene$text_annotations, 0L)
 
-  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black")
+  scene <- corrplot_ng(corr, engine = "scene", addCoef.col = "black", na.label = "")
   expect_identical(
     vapply(scene$text_annotations, `[[`, character(1), "text"),
     c("1.00", "-0.25", "0.00")
