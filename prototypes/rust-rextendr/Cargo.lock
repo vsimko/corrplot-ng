@@ -3,9 +3,14 @@
 version = 4
 
 [[package]]
+name = "corrplot-core"
+version = "0.1.0"
+
+[[package]]
 name = "corrplotng_rust_spike"
 version = "0.1.0"
 dependencies = [
+ "corrplot-core",
  "extendr-api",
 ]
 
