@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import json
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from renderer import render_scene_svg
 from scene import LABEL_CHAR_WIDTH, LABEL_GAP, build_scene
 
 
@@ -60,6 +62,72 @@ def verify_case(name: str, config: dict) -> None:
     )
 
 
+def verify_svg_structure(name: str, config: dict, method: str) -> None:
+    """Classify SVG markup/layout failures separately from semantic failures."""
+    case_config = {**config, "method": method}
+    try:
+        scene = build_scene(case_config)
+        svg = render_scene_svg(scene)
+        root = ET.fromstring(svg)
+        namespace = "{http://www.w3.org/2000/svg}"
+        labels = config["labels"]
+        expected_cells = len(labels) * len(labels)
+        missing_count = sum(value is None for row in config["matrix"] for value in row)
+
+        assert root.tag == f"{namespace}svg", "root element is not SVG"
+        assert root.attrib.get("role") == "img", "SVG accessibility role is missing"
+        assert float(root.attrib["width"]) == scene["width"], "SVG width differs from scene"
+        assert float(root.attrib["height"]) == scene["height"], "SVG height differs from scene"
+        assert len(scene["cells"]) == expected_cells, "scene cell count differs from matrix dimensions"
+        assert all(
+            cell.get("encoding", {}).get("kind") == method
+            for cell in scene["cells"] if cell["value"] is not None
+        ), "one or more cells have the wrong glyph encoding"
+
+        missing_nodes = [
+            node for node in root.findall(f"{namespace}text") if node.text == "NA"
+        ]
+        assert len(missing_nodes) == missing_count, "SVG missing-cell labels differ from matrix missingness"
+
+        annotation_nodes = [
+            node for node in root.findall(f"{namespace}text")
+            if node.text == config.get("annotation", "")
+        ]
+        assert len(annotation_nodes) == 1, "figure annotation is missing or duplicated"
+        assert abs(float(annotation_nodes[0].attrib["y"]) - (scene["height"] - 22)) < 1e-9, (
+            "figure annotation is not placed in the reserved footer"
+        )
+
+        shape_tags = {
+            "circle": "circle", "square": "rect", "ellipse": "ellipse",
+            "shade": "line", "color": "rect", "pie": "path",
+        }
+        if method == "number":
+            assert scene.get("text_annotations"), "number method has no value annotations"
+            assert all(item["role"] == "value" for item in scene["text_annotations"]), (
+                "number method emitted non-value annotations"
+            )
+        else:
+            tag = shape_tags[method]
+            shapes = root.findall(f"{namespace}{tag}")
+            if method == "square":
+                shapes = [item for item in shapes if item.attrib.get("stroke") == "none"]
+            elif method == "color":
+                shapes = [
+                    item for item in shapes
+                    if item.attrib.get("fill") not in ("#ffffff", "#f2f2f2")
+                ]
+            elif method == "pie":
+                # Full 360-degree sectors are serialized as circles; partial
+                # sectors use paths.
+                shapes += root.findall(f"{namespace}circle")
+            assert shapes, f"expected SVG {tag} encoding was not emitted"
+
+        assert svg == render_scene_svg(build_scene(case_config)), "SVG output is not deterministic"
+    except (AssertionError, KeyError, ValueError, ET.ParseError) as error:
+        raise AssertionError(f"STRUCTURAL SVG failure for legacy case {name!r}, method {method!r}: {error}") from error
+
+
 def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: test_legacy_scene_bridge.py LEGACY_INPUT.json")
@@ -77,10 +145,19 @@ def main() -> None:
     }
     assert set(cases) == expected_cases
 
+    methods = ("circle", "square", "ellipse", "number", "shade", "color", "pie")
     for name, config in cases.items():
-        verify_case(name, config)
+        try:
+            verify_case(name, config)
+        except AssertionError as error:
+            raise AssertionError(f"SEMANTIC compatibility failure for legacy case {name!r}: {error}") from error
+        for method in methods:
+            verify_svg_structure(name, config, method)
 
-    print(f"Legacy-to-scene bridge passed for {len(cases)} matrix cases")
+    print(
+        f"Semantic bridge passed for {len(cases)} legacy matrices; "
+        f"SVG structure passed for {len(cases) * len(methods)} case/method combinations"
+    )
 
 
 if __name__ == "__main__":
