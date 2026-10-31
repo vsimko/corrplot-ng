@@ -179,7 +179,7 @@ core authoritative for the CLI and future consumers and assess a narrowly
 scoped R adapter exception. Do not fork common semantics silently. Continue
 to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
-**Measurable outcomes if the gate is approved:**
+**Measurable outcomes after the integration proof:**
 
 - One architecture decision records runtime boundaries, backend selection,
   portability constraints, and rejected alternatives.
