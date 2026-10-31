@@ -1,0 +1,15 @@
+{
+  "capability_schema_version": 1,
+  "renderer": {"id": "rust-cli-svg", "name": "Standalone Rust CLI SVG renderer", "version": "0.1"},
+  "scene_schema_versions": [],
+  "output_formats": ["svg", "scene-json", "normalized-json"],
+  "matrix_kinds": ["correlation_plot", "general_matrix_plot"],
+  "cell_methods": ["circle", "number"],
+  "features": {
+    "row_labels": true, "column_labels": true, "plotmath_labels": false,
+    "missing_cells": true, "cell_text_annotations": false, "significance": false,
+    "confidence_intervals": false, "legend": false, "figure_text": false,
+    "accessible_metadata": true
+  },
+  "negotiation_modes": ["strict"]
+}
