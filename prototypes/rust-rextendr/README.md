@@ -79,3 +79,32 @@ the installed shared library while preserving symbols needed for runtime
 behavior and diagnostics, then rerun offline install, R CMD check, and
 cross-platform size measurements. Do not change release flags or strip
 artifacts as part of this diagnostic PR.
+
+
+## Isolated debug-information stripping experiment
+
+The offline package workflow now runs
+[`experiment-strip-debug.py`](experiment-strip-debug.py) against the
+installed library only after the ordinary install and R smoke test succeed.
+It creates a temporary copy, strips debug-only information from that copy,
+compares the exported symbol names before and after, temporarily substitutes
+the copy into the installed package, and reruns the R integration smoke test.
+A `finally` block restores the original installed library byte-for-byte.
+The generated source package, Cargo release profile, and production artifacts
+are never modified.
+
+- **Linux:** uses `objcopy --strip-debug` (or `llvm-objcopy`) and compares
+  the ELF dynamic defined-symbol set using `nm -D --defined-only`.
+- **macOS:** uses Apple `strip -S` and compares externally defined symbols
+  using `nm -gU`.
+- **Windows:** explicitly skips mutation for now. The current runner tooling
+  has not yet been validated for a reliable PE/COFF debug-only strip plus
+  matching export-table comparison; the ordinary Windows install and smoke
+  tests still run.
+
+The experiment fails if the exported symbol set changes or the post-strip R
+smoke test fails. CI logs report the before/after native-library byte counts.
+A smaller file alone is not sufficient evidence for a production change:
+the source-tarball build and `R CMD check` continue after the experiment,
+and the result must be reviewed across platforms before proposing any
+production packaging modification.
