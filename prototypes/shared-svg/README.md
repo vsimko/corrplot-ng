@@ -80,6 +80,52 @@ The top-level \`title\` and \`description\` remain accessible SVG metadata
 screen-reader identification separate from the visible title and caption.
 See [the complete publication example](figure-text-example.json).
 
+## Cluster-region annotations
+
+The optional \`cluster_regions\` array describes rectangles around groups of
+variables. Each region has a stable \`id\`, a six-digit hex \`color\`, and a
+positive \`line_width\`. Identify members with exactly one of:
+
+- \`variables\`: unique variable names;
+- \`indices\`: unique zero-based source indices.
+
+When \`variable_order\` is present, its \`labels\` and \`indices\` arrays map
+each displayed position back to the stable source variable identity. Regions
+are resolved against that mapping after ordering. A region must occupy a
+contiguous range in the displayed order; unknown or ambiguous members fail
+validation instead of producing a misleading rectangle.
+
+The resulting scene stores both stable variable names and source indices,
+plus inclusive row/column cell boundaries and renderer-neutral geometry.
+The SVG backend draws the rectangle as an overlay. Geometry is unchanged for
+full, upper, lower, and diagonal-only display layouts.
+
+\`\`\`json
+{
+  "variable_order": {
+    "strategy": "hclust",
+    "indices": [2, 0, 1],
+    "labels": ["gamma", "alpha", "beta"]
+  },
+  "cluster_regions": [
+    {"id": "cluster-ab", "variables": ["alpha", "beta"], "color": "#123456", "line_width": 2}
+  ]
+}
+\`\`\`
+
+Index-based input uses the original source order:
+
+\`\`\`json
+{
+  "cluster_regions": [
+    {"id": "cluster-ab", "indices": [0, 1], "color": "#123456"}
+  ]
+}
+\`\`\`
+
+The legacy R \`corrRect()\` and \`corrRect.hclust()\` adapters are tracked
+separately; this scene contract contains no R graphics-device behavior.
+
 ## Cell encodings
 
 The scene and SVG backend support all seven publication methods:
