@@ -297,7 +297,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
                 continue
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value):
                 raise ValueError(
-                    f"matrix value at row {row_index}, column {column_index} must be finite or null"
+                    f"matrix values must be finite numbers or null (invalid value at row {row_index}, column {column_index})"
                 )
             if matrix_mode == "correlation" and not -1 <= value <= 1:
                 raise ValueError("correlation values must be null or between -1 and 1")
