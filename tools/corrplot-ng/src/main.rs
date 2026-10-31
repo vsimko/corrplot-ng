@@ -844,15 +844,15 @@ mod tests {
 
     #[test]
     fn html_table_format_preserves_zero_missingness_and_source_indices() {
-        let matrix = parse_matrix(",alpha,beta\nalpha,1,NA\nbeta,0,1\n", Kind::Correlation).unwrap();
+        let matrix = parse_matrix(",alpha,beta\nalpha,1,NA\nbeta,0,1\n", Kind::General).unwrap();
         let html = publication::matrix_html_table(
             &matrix.labels,
             &matrix.values,
             &[0, 1],
             "Accessible values",
-            "correlation",
+            "general_numeric",
         );
-        assert!(html.contains("<caption>Correlation matrix values</caption>"));
+        assert!(html.contains("<caption>General numeric matrix values</caption>"));
         assert!(html.contains("data-missing=\"true\">Missing</td>"));
         assert!(html.contains("data-value=\"0\">0</td>"));
         assert_eq!(html.matches("<td ").count(), 4);
