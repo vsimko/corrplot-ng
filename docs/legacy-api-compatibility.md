@@ -16,8 +16,8 @@ This is a compatibility baseline, not a promise that every legacy option belongs
 | `cor.mtest()` | Pairwise p-values and confidence intervals | R/statistics adapter; not renderer functionality |
 | `colorlegend()` | Standalone color legend drawing | R-adapter drawing helper; shared legend semantics need specification |
 | `COL1()`, `COL2()` | Sequential and diverging palettes | Contract extension for portable palette definitions |
-| `corrRect()` | Add rectangles using indices or names | R graphics adapter; annotation semantics could be shared |
-| `corrRect.hclust()` | Add rectangles from hierarchical clusters | Split: clustering/permutation semantics vs R drawing helper |
+| `corrRect()` | Add rectangles using indices, names, or `namesMat` cell pairs | R graphics adapter; diagonal cluster ranges map to shared cluster-region requests |
+| `corrRect.hclust()` | Add rectangles from hierarchical clusters | R clustering/drawing adapter; leaf groups map to shared cluster-region requests |
 
 The provisional package exposes `corrplot_ng()` and `corrplot_ng_mixed()` as thin legacy wrappers for the two plotting entry points. Their R-specific return objects are specified in [legacy R return values](legacy-r-return-values.md). The complete formal signatures, defaults, and accepted values are in the JSON inventory. In particular, `corrplot()` has a broad surface: seven glyph methods, three matrix display types, five ordering choices, label and legend controls, coefficient annotations, significance handling, confidence intervals, missing-value labels, and general-matrix support.
 
