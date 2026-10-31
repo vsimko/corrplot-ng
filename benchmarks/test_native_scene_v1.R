@@ -6,6 +6,12 @@ suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(corrplotngcppspike))
 suppressPackageStartupMessages(library(corrplotngrustspike))
 source("benchmarks/scene_v1_reference.R")
+for (package in c("corrplotngcppspike", "corrplotngrustspike")) {
+  package_root <- system.file(package = package)
+  library_files <- list.files(file.path(package_root, "libs"), full.names = TRUE)
+  package_bytes <- if (length(library_files)) sum(file.info(library_files)$size) else 0
+  message("PACKAGE_SIZE ", package, " ", package_bytes, " bytes")
+}
 
 same_scene <- function(value, expected) {
   comparison <- all.equal(value, expected, tolerance = 1e-12,
