@@ -514,7 +514,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
             cells.append(item)
 
     cluster_regions = _prepare_cluster_regions(
-        config.get("cluster_regions", []), labels, variable_order, left, top, cell
+        config.get("cluster_regions", []), label_texts, variable_order, left, top, cell
     )
 
     # Coefficient/value text is semantic scene data, not an SVG-specific detail.
