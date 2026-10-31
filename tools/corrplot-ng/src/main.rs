@@ -85,22 +85,6 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
     process::exit(code);
 }
 
-fn json_escape(value: &str) -> String {
-    let mut escaped = String::new();
-    for ch in value.chars() {
-        match ch {
-            '"' => escaped.push_str("\\\""),
-            '\\' => escaped.push_str("\\\\"),
-            '\n' => escaped.push_str("\\n"),
-            '\r' => escaped.push_str("\\r"),
-            '\t' => escaped.push_str("\\t"),
-            ch if ch.is_control() => escaped.push_str(&format!("\\u{:04x}", ch as u32)),
-            ch => escaped.push(ch),
-        }
-    }
-    escaped
-}
-
 fn diagnostic_json(message: &str) -> String {
     let lower = message.to_lowercase();
     let (code, stage, path) = if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
