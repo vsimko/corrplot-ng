@@ -31,6 +31,13 @@ class RendererCapabilityTests(unittest.TestCase):
         for declaration in (PYTHON_SVG_CAPABILITIES, RUST_CAPABILITIES):
             self.assertEqual(list(validator.iter_errors(declaration)), [])
 
+    def test_capability_schema_separates_browser_canvas_host_targets_from_file_formats(self):
+        declaration = dict(PYTHON_SVG_CAPABILITIES)
+        declaration["host_targets"] = ["browser-canvas-2d", "browser-offscreen-canvas-2d"]
+        validator = Draft202012Validator(CAPABILITY_SCHEMA)
+        self.assertEqual(list(validator.iter_errors(declaration)), [])
+        self.assertNotIn("canvas", declaration["output_formats"])
+
     def test_strict_mode_rejects_unsupported_plotmath_before_rendering(self):
         scene = build_scene({"labels": ["A"], "matrix": [[1.0]]})
         scene["labels"][0]["plotmath"] = {"prefix": ":", "source": "alpha"}
