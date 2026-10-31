@@ -57,6 +57,34 @@ Rust/Cargo versions, license, and runtime assumptions. The release workflow
 also runs the compiled executable's help/version smoke tests; the Linux static
 binary is additionally executed inside a minimal container without Python.
 
+Each platform archive also contains `RELEASE-AUDIT.json`. It records the
+executable size, version-command startup latency (30 samples, median and p95),
+runtime link inspection, and peak child-process RSS where the host standard
+library exposes it. Windows RSS is explicitly marked unavailable rather than
+inferred. The audit script is build-time tooling only; it is not a runtime
+dependency and is never launched by the native executable.
+
+
+### Toolchain audit snapshot
+
+The PR release-build run on 2026-10-31 produced the following measurements.
+Startup is the median and p95 of 30 launches of `corrplot-ng version`;
+RSS is the maximum resident set size across those child processes where
+available.
+
+| Target | Binary size | Startup median / p95 | Peak child RSS | Runtime linkage |
+| --- | ---: | ---: | ---: | --- |
+| Linux x86_64 musl | 664,288 B | 0.202 / 0.241 ms | 14.3 MiB | Static; no dynamic libraries |
+| macOS universal | 1,058,816 B | 3.614 / 4.281 ms | 1.4 MiB | macOS `libSystem` only |
+| Windows x86_64 MSVC | 519,168 B | 5.823 / 6.352 ms | Not measured | Static MSVC CRT; Windows system DLLs |
+
+These are measurements from the corresponding GitHub-hosted runners, not
+portable performance guarantees. Windows peak RSS is deliberately reported
+as unavailable because the standard-library measurement used by the audit
+script is not supported there. Cross-target build and smoke-test feasibility
+was verified for all three platform packages.
+
+
 A manual run of **Release native CLI** in GitHub Actions builds and stores
 workflow artifacts but does not publish a GitHub release. Publishing is
 triggered only by a matching `cli-vX.Y.Z` tag. DEB/RPM and distribution

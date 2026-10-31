@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/corrplot-ng/**"
+      - "benchmarks/cli_release_audit.py"
       - ".github/workflows/release-rust-cli.yml"
   push:
     tags:
@@ -34,8 +35,8 @@ jobs:
           rustup target add x86_64-unknown-linux-musl
       - name: Test and build static executable
         run: |
-          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --release --target x86_64-unknown-linux-musl --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --offline --release --target x86_64-unknown-linux-musl --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Package and smoke-test
         shell: bash
         run: |
@@ -50,14 +51,16 @@ jobs:
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
+          audit: RELEASE-AUDIT.json
           runtime: statically linked musl; no Python or R runtime
           EOF
           file dist/corrplot-ng
           file dist/corrplot-ng | grep -Eqi 'static(-pie)?(ally)? linked'
           ./dist/corrplot-ng --help >/dev/null
           ./dist/corrplot-ng version
+          python3 benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target x86_64-unknown-linux-musl --output dist/RELEASE-AUDIT.json
           docker run --rm --network none -v "$PWD/dist:/release:ro" alpine:3.21 /release/corrplot-ng --help >/dev/null
-          tar -C dist -czf corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt
+          tar -C dist -czf corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt RELEASE-AUDIT.json
       - uses: actions/upload-artifact@v4
         with:
           name: release-linux-x86_64-musl
@@ -84,9 +87,9 @@ jobs:
         run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
       - name: Test and build both architectures
         run: |
-          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
-          cargo build --locked --release --target x86_64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
-          cargo build --locked --release --target aarch64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target x86_64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target aarch64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Create universal binary and smoke-test
         shell: bash
         run: |
@@ -105,12 +108,14 @@ jobs:
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
+          audit: RELEASE-AUDIT.json
           runtime: macOS system libraries only; no Python or R runtime
           EOF
           lipo -info dist/corrplot-ng
           ./dist/corrplot-ng --help >/dev/null
           ./dist/corrplot-ng version
-          tar -C dist -czf corrplot-ng-macos-universal.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt
+          python3 benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target universal-apple-darwin --output dist/RELEASE-AUDIT.json
+          tar -C dist -czf corrplot-ng-macos-universal.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt RELEASE-AUDIT.json
       - uses: actions/upload-artifact@v4
         with:
           name: release-macos-universal
@@ -135,9 +140,9 @@ jobs:
         shell: pwsh
         run: |
           rustup target add x86_64-pc-windows-msvc
-          cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
           $env:RUSTFLAGS = "-C target-feature=+crt-static"
-          cargo build --locked --release --target x86_64-pc-windows-msvc --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target x86_64-pc-windows-msvc --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Package and smoke-test
         shell: pwsh
         run: |
@@ -152,11 +157,13 @@ jobs:
           rustc: $(rustc --version)
           cargo: $(cargo --version)
           license: MIT
+          audit: RELEASE-AUDIT.json
           runtime: statically linked MSVC CRT; no Python or R runtime
           "@ | Set-Content -Encoding utf8NoBOM dist/BUILD-INFO.txt
           & dist/corrplot-ng.exe --help | Out-Null
           & dist/corrplot-ng.exe version
-          Compress-Archive -Path dist/corrplot-ng.exe, dist/README.md, dist/LICENSE, dist/BUILD-INFO.txt -DestinationPath corrplot-ng-windows-x86_64.zip
+          python benchmarks/cli_release_audit.py --binary dist/corrplot-ng.exe --target x86_64-pc-windows-msvc --output dist/RELEASE-AUDIT.json
+          Compress-Archive -Path dist/corrplot-ng.exe, dist/README.md, dist/LICENSE, dist/BUILD-INFO.txt, dist/RELEASE-AUDIT.json -DestinationPath corrplot-ng-windows-x86_64.zip
       - uses: actions/upload-artifact@v4
         with:
           name: release-windows-x86_64
