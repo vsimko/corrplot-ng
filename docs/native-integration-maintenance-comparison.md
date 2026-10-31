@@ -199,6 +199,16 @@ measurements are for the extendr 0.8.2 baseline before the 0.9.0 upgrade;
 the follow-up 0.9.0 CI run must refresh them before treating them as current.
 CI wall time is not human maintainer effort and does not replace the controlled
 change/upgrade timing experiment below.
+## Updated Rust/rextendr package measurements (2026-10-31)
+
+The extendr 0.9.0 / Rust 1.78 offline workflow measured the generated package on Ubuntu 24.04 with R 4.6.2 and GCC 13.3.0:
+
+- Compressed source tarball: **1,314,220 bytes** (about 1.25 MiB).
+- Installed package: **6.0 MB**, including **5.9 MB** in `libs`.
+- `R CMD check --as-cran`: **1 NOTE**, for Cargo checksum/provenance metadata intentionally retained for offline integrity and source provenance.
+
+The 6.0 MB installed size exceeds rextendr's 5 MB caution, so obtain CRAN guidance before production use. The source archive remains below the general 10 MB guideline. Rust/Cargo 1.78 is declared and CI-tested; stable CI exercises Linux, macOS, and Windows. Human maintainer effort has not been measured; the estimates above remain planning estimates, not observations. CI wall-clock duration is not a substitute for maintainer time.
+
 ## Fair comparison gaps and recommended follow-up
 
 The current CI is not fully symmetric. Before using this report to select a production language:
@@ -219,4 +229,4 @@ Until these are complete, the evidence supports a limited conclusion: **Rcpp is 
 - [Shared cross-language workflow](../.github/workflows/cross-language-benchmarks.yml).
 - [Rust offline package workflow](../.github/workflows/rust-rextendr-offline-package.yml), [dependency audit workflow](../.github/workflows/rust-cran-dependency-audit.yml), [Windows binary workflow](../.github/workflows/test-rust-windows-binary.yml).
 - [CRAN Rust readiness review](cran-rust-readiness.md) and [dependency audit results](cran-rust-dependency-audit-results.md).
-- [ADR 0001](adr/0001-shared-core-architecture.md), which defers the production implementation-language choice.
+- [ADR 0001](adr/0001-shared-core-architecture.md), which selects Rust as the shared-core target while keeping production R migration gated by release evidence.
