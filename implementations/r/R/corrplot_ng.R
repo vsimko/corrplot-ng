@@ -31,6 +31,10 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   args <- list(...)
   if (identical(engine, "legacy")) {
     if ("annotation" %in% names(args)) stop("annotation is a scene-v1 option; use engine = 'scene'", call. = FALSE)
+    # Keep the legacy delegation direct. Upstream corrplot owns temporary
+    # par(mar, bg) restoration and add=TRUE coordinate semantics; this adapter
+    # must not open/close devices or restore all par() values (which would
+    # reset the active plot window and break base-graphics composition).
     return(do.call(corrplot::corrplot, c(list(corr = corr), args)))
   }
   if (length(args) > 0L) {
