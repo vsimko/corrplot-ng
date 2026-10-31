@@ -1,3 +1,9 @@
+use corrplot_core::render::{
+    validate_render_request, AlphaMode, Background, NegotiationMode, OutputFormat,
+    OutputSize, PhysicalUnit, RenderError, RenderRequest, RenderedArtifact,
+    Renderer, RendererCapabilities, RgbaColor, SceneDocument, SceneFeature, SceneKind,
+    SCENE_SCHEMA_V1,
+};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -752,9 +758,68 @@ impl Publication {
     }
 
     pub fn svg(&self, title: &str) -> String {
+        let scene_json = self.scene_json(title);
+        let parsed = parse_json(&scene_json).expect("scene builder must emit valid JSON");
+        let root = object(&parsed, "scene").expect("scene root must be an object");
+        let schema_version = number(required(root, "schema_version", "scene").expect("scene version"), "scene.schema_version")
+            .expect("scene version must be numeric") as u32;
+        let kind = match string(required(root, "kind", "scene").expect("scene kind"), "scene.kind")
+            .expect("scene kind must be a string") {
+            "correlation_plot" => SceneKind::CorrelationPlot,
+            "general_matrix_plot" => SceneKind::GeneralMatrixPlot,
+            _ => unreachable!("scene builder emits a supported kind"),
+        };
+        let logical_width = number(required(root, "width", "scene").expect("scene width"), "scene.width")
+            .expect("scene width must be numeric");
+        let logical_height = number(required(root, "height", "scene").expect("scene height"), "scene.height")
+            .expect("scene height must be numeric");
+        let cell_methods = [self.method.as_str()];
+        let scene = SceneDocument::new(
+            &scene_json, schema_version, kind, logical_width, logical_height, &cell_methods,
+        ).expect("scene builder emits valid logical dimensions");
+
+        let unit = match self.unit.as_str() {
+            "mm" => PhysicalUnit::Millimeter,
+            "in" => PhysicalUnit::Inch,
+            _ => unreachable!("publication config validates physical units"),
+        };
+        let mut request = RenderRequest {
+            format: OutputFormat::Svg,
+            size: OutputSize::Physical {
+                width: self.width, height: self.height, unit, dpi: None,
+            },
+            background: Background::Color(RgbaColor::WHITE),
+            pixel_format: corrplot_core::render::PixelFormat::Rgba8,
+            alpha_mode: AlphaMode::Straight,
+            negotiation: NegotiationMode::Strict,
+            required_features: vec![
+                SceneFeature::RowLabels,
+                SceneFeature::ColumnLabels,
+                SceneFeature::MissingCells,
+                SceneFeature::AccessibleMetadata,
+            ],
+            optional_features: Vec::new(),
+        };
+        if self.method == "number" || self.show_values {
+            request.required_features.push(SceneFeature::CellTextAnnotations);
+        }
+        PublicationSvgRenderer { publication: self }
+            .render(&scene, &request)
+            .expect("the publication SVG renderer supports the generated scene")
+            .content
+    }
+
+    fn svg_from_scene_json(
+        &self,
+        scene_json: &str,
+        output_width: f64,
+        output_height: f64,
+        output_unit: &str,
+        background: Background,
+    ) -> String {
         // SVG is deliberately a renderer of the canonical renderer-neutral scene.
         // Keep matrix semantics and ordering in scene construction, not here.
-        let scene = parse_json(&self.scene_json(title)).expect("scene builder must emit valid JSON");
+        let scene = parse_json(scene_json).expect("scene builder must emit valid JSON");
         let root = match scene { Json::Object(ref o) => o, _ => unreachable!() };
         let get = scene_get;
         let num = scene_num;
@@ -772,9 +837,23 @@ impl Publication {
         let font_size = num(get(typography,"label_font_size"));
         let mut out = format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\">\n<title>{}</title>\n",
-            self.width,self.unit,self.height,self.unit,width,height,esc(title_text)
+            output_width,output_unit,output_height,output_unit,width,height,esc(title_text)
         );
-        out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n");
+        match background {
+            Background::Transparent => {}
+            Background::Color(color) if color == RgbaColor::WHITE => {
+                out.push_str("<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\\n");
+            }
+            Background::Color(color) => {
+                let fill = format!("#{:02x}{:02x}{:02x}", color.red, color.green, color.blue);
+                if color.alpha == 255 {
+                    out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"{fill}\"/>\\n"));
+                } else {
+                    let opacity = color.alpha as f64 / 255.0;
+                    out.push_str(&format!("<rect width=\"100%\" height=\"100%\" fill=\"{fill}\" fill-opacity=\"{opacity}\"/>\\n"));
+                }
+            }
+        }
         out.push_str(&format!(
             "<text x=\"120\" y=\"28\" font-family=\"{}\" font-size=\"{}\" font-weight=\"bold\">{}</text>\n",
             esc(family),font_size*1.5,esc(title_text)
@@ -1265,5 +1344,63 @@ mod scene_input_tests {
         assert!(parse_scene_matrix(&version).unwrap_err().contains("schema_version"));
         let kind = SCENE.replace("correlation_plot", "unknown_plot");
         assert!(parse_scene_matrix(&kind).unwrap_err().contains("unsupported scene.kind"));
+    }
+}
+
+const PUBLICATION_SVG_CAPABILITIES: RendererCapabilities = RendererCapabilities {
+    renderer_id: "rust-cli-svg",
+    renderer_version: env!("CARGO_PKG_VERSION"),
+    scene_schema_versions: &[SCENE_SCHEMA_V1],
+    output_formats: &[OutputFormat::Svg],
+    matrix_kinds: &[SceneKind::CorrelationPlot, SceneKind::GeneralMatrixPlot],
+    cell_methods: &["circle", "number"],
+    features: &[
+        SceneFeature::RowLabels,
+        SceneFeature::ColumnLabels,
+        SceneFeature::MissingCells,
+        SceneFeature::CellTextAnnotations,
+        SceneFeature::AccessibleMetadata,
+    ],
+    negotiation_modes: &[NegotiationMode::Strict],
+};
+
+struct PublicationSvgRenderer<'a> {
+    publication: &'a Publication,
+}
+
+impl<'a, 'scene> Renderer<SceneDocument<'scene>> for PublicationSvgRenderer<'a> {
+    type Output = String;
+
+    fn capabilities(&self) -> &'static RendererCapabilities {
+        &PUBLICATION_SVG_CAPABILITIES
+    }
+
+    fn render(
+        &self,
+        scene: &SceneDocument<'scene>,
+        request: &RenderRequest,
+    ) -> Result<RenderedArtifact<Self::Output>, RenderError> {
+        let report = validate_render_request(self.capabilities(), scene, request)?;
+        let (width, height, unit) = match request.size {
+            OutputSize::SceneUnits => {
+                let (width, height) = scene.logical_size();
+                (width, height, "px")
+            }
+            OutputSize::Pixels { width, height } => (width as f64, height as f64, "px"),
+            OutputSize::Physical { width, height, unit, .. } => {
+                (width, height, unit.suffix())
+            }
+        };
+        let content = self.publication.svg_from_scene_json(
+            scene.json(), width, height, unit, request.background,
+        );
+        Ok(RenderedArtifact {
+            format: request.format,
+            size: request.size,
+            renderer_id: self.capabilities().renderer_id,
+            renderer_version: self.capabilities().renderer_version,
+            omitted_features: report.omitted_features,
+            content,
+        })
     }
 }
