@@ -2,11 +2,25 @@
 
 const native = require("./index.node");
 
+function normalizeDiagnostic(diagnostic) {
+  return {
+    schema_version: diagnostic.schemaVersion,
+    code: diagnostic.code,
+    severity: diagnostic.severity,
+    stage: diagnostic.stage,
+    message: diagnostic.message,
+    ...(diagnostic.path === undefined ? {} : { path: diagnostic.path }),
+    ...(diagnostic.row === undefined ? {} : { row: diagnostic.row }),
+    ...(diagnostic.column === undefined ? {} : { column: diagnostic.column }),
+  };
+}
+
 class CorrplotError extends Error {
   constructor(diagnostic) {
-    super(diagnostic.message);
+    const normalized = normalizeDiagnostic(diagnostic);
+    super(normalized.message);
     this.name = "CorrplotError";
-    this.diagnostic = diagnostic;
+    this.diagnostic = normalized;
   }
 }
 
