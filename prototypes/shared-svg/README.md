@@ -8,6 +8,7 @@ Run from the repository root:
 
 ```sh
 python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json
+python prototypes/shared-svg/renderer.py prototypes/shared-svg/figure-text-example.json
 python -m pip install jsonschema
 python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
 Rscript prototypes/shared-svg/test_r_scene_consumer.R
@@ -47,6 +48,37 @@ labels avoid neighboring columns by construction and can also be truncated. Font
 so output should be visually reviewed with the target font when labels contain
 unusually wide glyphs. If requested dimensions cannot fit the matrix at the
 minimum cell size, the minimum remains authoritative and the canvas expands.
+
+## Figure-level publication text
+
+Use the optional \`figure_text\` array for visible publication text. Each
+entry has one semantic role: \`title\`, \`subtitle\`, \`caption\`, or
+\`footnote\`. The scene builder orders roles consistently, wraps long and
+multi-line text without truncation, and expands the canvas when required.
+The SVG backend escapes XML-sensitive text and preserves Unicode.
+
+Each role may override \`alignment\` (\`left\`, \`center\`, or \`right\`),
+\`font_family\`, \`font_size\`, \`font_weight\`, \`font_style\`, and
+\`spacing_after\`. Defaults are role-specific: title and subtitle are centered
+above the matrix; caption and footnote are left-aligned below it.
+
+\`\`\`json
+{
+  "title": "Accessible figure name",
+  "description": "A concise description for assistive technology.",
+  "figure_text": [
+    {"role": "title", "text": "Treatment response correlations"},
+    {"role": "subtitle", "text": "Pearson correlations across study groups"},
+    {"role": "caption", "text": "Figure 2. Pairwise correlations."},
+    {"role": "footnote", "text": "Synthetic data; values are illustrative."}
+  ]
+}
+\`\`\`
+
+The top-level \`title\` and \`description\` remain accessible SVG metadata
+(\`<title>\` and \`<desc>\`); they are not visible figure text. This keeps
+screen-reader identification separate from the visible title and caption.
+See [the complete publication example](figure-text-example.json).
 
 ## Cell encodings
 
@@ -89,4 +121,4 @@ The R graphics integration question remains open and needs a separate R-based ex
 
 ## Accessible SVG metadata
 
-The input may provide a figure-level `title` and concise `description`. The scene always carries both fields; omitted values default to `Correlation matrix` and an empty description. The SVG backend emits a referenced `<title>` and, when a non-empty description is supplied, a referenced `<desc>`. The root SVG uses `role="img"`, `aria-labelledby`, and (when applicable) `aria-describedby`. Metadata is XML-escaped and does not change the visible plot. These labels improve figure identification but do not make a dense correlation matrix fully accessible; provide an accompanying data table when users need to inspect individual values.
+The input may provide an accessible `title` and concise `description`; the scene always carries both fields. The SVG backend emits a referenced `<title>` and, when a non-empty description is supplied, a referenced `<desc>`. Visible title, subtitle, caption, and footnote content is carried separately in `figure_text`. The root SVG uses `role="img"`, `aria-labelledby`, and (when applicable) `aria-describedby`. Metadata and visible text are XML-escaped. These labels improve figure identification but do not make a dense correlation matrix fully accessible; provide an accompanying data table when users need to inspect individual values.
