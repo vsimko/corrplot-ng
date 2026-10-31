@@ -61,6 +61,9 @@ core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-cor
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
 }
+
+# Keep Cargo's standard release profile until a size reduction is
+# demonstrated across supported platforms. See the controlled CI comparison.
 writeLines(cargo_lines, cargo_manifest)
 
 # Reuse the reviewed transitive dependency graph from the committed spike

@@ -27,3 +27,15 @@ tarball and a 6.0 MB installed package (5.9 MB in `libs`). The installed size
 exceeds rextendr's 5 MB caution and requires CRAN guidance before production
 use. Controlled human maintainer time versus the C++/Rcpp path remains
 unmeasured; existing effort ranges are planning estimates only.
+
+The generated R Cargo package uses Cargo's standard release profile. A
+controlled CI experiment compared it with a size-oriented profile
+(`opt-level = "z"`, one codegen unit, and debuginfo stripping). That candidate
+increased installed size on Linux and macOS and was therefore rejected; it
+slightly reduced size on Windows. CI reports installed package, native
+library, and Rust static-library artifact sizes on all three platforms and
+prints the R integration's dependency tree. The R integration depends on
+`corrplot-core` and `extendr-api`; it does not depend on or build the CLI
+package. See
+[`docs/rust-rextendr-size-optimization.md`](../../docs/rust-rextendr-size-optimization.md)
+for measurements and follow-up analysis.
