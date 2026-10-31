@@ -78,7 +78,7 @@ if (profile_header == 0L) {
   )
 } else {
   next_section <- which(seq_along(cargo_lines) > profile_header &
-                        grepl("^\\\\[", cargo_lines))[1]
+                        grepl("^\\[", cargo_lines))[1]
   profile_end <- if (is.na(next_section)) length(cargo_lines) else next_section - 1L
   profile_keys <- c(
     'opt-level = "z"',
