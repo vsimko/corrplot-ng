@@ -3,7 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, ValidationError
 
 from scene import build_scene
 
@@ -44,7 +44,7 @@ class SceneSchemaTests(unittest.TestCase):
         self.assertTrue(any(cell["value"] is None for cell in scene["cells"]))
 
         scene["schema_version"] = 2
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             Draft202012Validator(self.schema).validate(scene)
 
     def test_significance_and_confidence_interval_metadata_match_scene_schema(self):
