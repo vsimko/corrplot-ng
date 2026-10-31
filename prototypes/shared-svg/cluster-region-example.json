@@ -1,0 +1,21 @@
+{
+  "labels": ["gamma", "alpha", "beta"],
+  "matrix": [
+    [1.0, 0.1, 0.3],
+    [0.1, 1.0, 0.4],
+    [0.3, 0.4, 1.0]
+  ],
+  "variable_order": {
+    "strategy": "hclust",
+    "indices": [2, 0, 1],
+    "labels": ["gamma", "alpha", "beta"]
+  },
+  "cluster_regions": [
+    {
+      "id": "cluster-ab",
+      "variables": ["alpha", "beta"],
+      "color": "#123456",
+      "line_width": 2
+    }
+  ]
+}
