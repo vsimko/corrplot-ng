@@ -207,7 +207,11 @@ struct Canvas {
 
 impl Canvas {
     fn point(&self, x: f64, y: f64) -> (f64, f64) {
-        (self.offset_x + x * self.scale, self.offset_y + y * self.scale)
+        let bound = (self.width.max(self.height) as f64 * 4.0 + 10.0).max(10.0);
+        (
+            (self.offset_x + x * self.scale).clamp(-bound, bound),
+            (self.offset_y + y * self.scale).clamp(-bound, bound),
+        )
     }
 
     fn fill(&mut self, color: RgbaColor) {
