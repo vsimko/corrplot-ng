@@ -2,6 +2,7 @@
 name = "corrplotng_rust_spike"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.78"
 publish = false
 
 [lib]
@@ -9,5 +10,5 @@ name = "corrplotngrustspike"
 crate-type = ["staticlib"]
 
 [dependencies]
-extendr-api = "=0.8.2"
+extendr-api = "=0.9.0"
 corrplot-core = { path = "../../crates/corrplot-core" }

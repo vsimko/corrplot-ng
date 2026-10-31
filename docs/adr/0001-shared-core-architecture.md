@@ -9,7 +9,7 @@
 
 corrplot-ng should preserve the established R `corrplot` interface while enabling a modern API and possible wrappers for R, Python, and TypeScript. Maintainer capacity is limited, so the architecture must minimize duplicated semantics and ongoing release/CI work.
 
-The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-binding spikes, a standalone Rust CLI, and a versioned renderer-neutral scene-v1 contract. The spikes establish that both native integrations can build and run on Windows, macOS, and Linux. They do not yet establish that one compiled core is actually reused by two production consumers.
+The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-binding spikes, a standalone Rust CLI, and a versioned renderer-neutral scene-v1 contract. Both native integrations build across Windows, macOS, and Linux. Merged PR #180 additionally proves that the CLI and rextendr adapter consume one compiled Rust library for matrix validation; this remains a focused integration proof rather than a production R migration.
 
 ## Decision
 
@@ -17,50 +17,63 @@ The repository has a Python scene reference, Rust/rextendr and C++/Rcpp R-bindin
 
 This is the project's target architecture, not a claim that the shared library is already implemented. The existing Rust CLI makes Rust the coherent core language across native CLI, R, Node, and WebAssembly consumers. The reason is broader than raw speed: one implementation is maintained and tested once, consumers receive the same semantic behavior, fixes apply consistently, and performance-critical algorithms do not need to be reimplemented in each language.
 
-The Rust CLI and R/rextendr spike are not yet linked to one library crate. Issue #173 therefore proves the smallest real shared-crate integration and its packaging/maintenance feasibility; it no longer asks whether duplicated implementations are a desirable long-term architecture. Do not migrate the legacy R package until the proof and release gates pass.
+The Rust CLI and R/rextendr spike now call the same local `corrplot-core` library for matrix validation, as demonstrated by merged PR #180. Issue #173 continues to track the remaining source-package, toolchain, distribution, and maintenance evidence; this focused proof does not authorize migration of the production R package.
 
 C++/Rcpp remains useful as an R-only integration comparison and fallback only if Rust's R packaging constraints prove unacceptable. It is not the preferred repository-wide core because it would introduce a second native implementation/integration path for the Rust CLI and future consumers.
 
 ## Shared-crate proof: Issue #173
 
-The first real shared-library integration is implemented in
-`crates/corrplot-core`. Its `validate_matrix` operation is consumed directly
-by both:
+Merged PR #180 extracts validate_matrix into the dependency-free
+crates/corrplot-core library. Both the native CLI and the disposable
+R/rextendr adapter call this exact path dependency; neither consumer keeps a
+parallel implementation of the shared validation operation.
 
-- `tools/corrplot-ng`, after CSV/JSON parsing and before publication output;
-- `prototypes/rust-rextendr`, before constructing scene-v1 JSON.
+The operation validates non-empty square dimensions, unique non-empty labels,
+finite observed values, and correlation range, symmetry, and unit diagonal.
+Its row-major Option<f64> input distinguishes explicit missing values from
+ordinary NaN. The R adapter maps NA_REAL to None; NaN remains an observed
+non-finite value and is rejected. Errors expose stable codes and zero-based
+cell coordinates.
 
-Both Cargo manifests use a path dependency to the same crate source and
-version. There is no copied validation implementation in either consumer.
-The core has no third-party dependencies. The CLI therefore retains a
-third-party-dependency-free runtime while sharing application semantics.
+The CLI and R consumers passed shared-core tests/build checks on Linux, macOS,
+and Windows. The generated R package also passed offline installation,
+binding smoke tests, source-tarball inspection, and R CMD check --as-cran
+on all three operating systems. The Windows binary-install test passed with
+Rust removed from the user's PATH.
 
-The shared operation validates non-empty square dimensions, label uniqueness,
-missing-value representation, finite observed values, and correlation range,
-symmetry, and diagonal rules. Its input is row-major `Option<f64>`: R's
-`NA_REAL` maps to `None`, while an ordinary NaN remains `Some(NaN)` and is
-rejected. Error codes and cell coordinates are stable and zero-based.
+The R integration is pinned to extendr-api 0.9.0. Upstream removed its
+R_NamespaceRegistry binding in that release, resolving the corresponding
+non-API call NOTE from 0.8.2. See the
+[extendr 0.9.0 changelog](https://github.com/extendr/extendr/blob/main/CHANGELOG.md)
+and [upstream change #1069](https://github.com/extendr/extendr/pull/1069).
 
-The new cross-platform workflow runs the core and CLI test suites and compiles
-the rextendr consumer on Linux, macOS, and Windows. It verifies that both
-consumers resolve `corrplot-core` from the same repository path. A generated
-R package is installed and exercised on Linux, including a valid correlation
-matrix and a non-symmetric matrix rejected by the shared core.
+The one remaining R CMD check --as-cran NOTE reports hidden Cargo vendor
+metadata (.cargo-checksum.json and .cargo_vcs_info.json) inside the vendored
+crate sources. The checksum manifests are retained to preserve Cargo's
+integrity checks for reproducible offline source builds. This NOTE is
+explicitly accepted for the isolated spike; it is not a claim of CRAN
+acceptance. The source archive and installed-package sizes are measured in
+the CI evidence recorded with issue #173.
 
-This proves reuse of one compiled operation; it does not prove that the whole
-visualization engine has been migrated or that a production R package is ready
-for CRAN. Oldest-toolchain compatibility, full R CMD check across platforms,
-Windows R-package installation, and production migration remain gated work.
-The renderer-neutral scene-v1 JSON contract remains the cross-language
-interchange boundary.
+The manifests declare Rust 1.78 as the minimum supported version. Cargo 1.78
+is the minimum as well because the committed lockfiles use format version 4;
+the selected extendr release itself requires Rust 1.77. A dedicated CI job
+tests the core, CLI, and R consumer on Rust/Cargo 1.78.
 
+This is proof of one real shared compiled operation and its packaging
+feasibility, not migration of the full visualization engine or production R
+package. The renderer-neutral scene-v1 JSON contract remains the
+cross-language interchange boundary. A controlled comparison of actual
+maintainer elapsed time against the C++/Rcpp-only path has not yet been run;
+the existing 1–2 h versus 2–4 h figures remain planning estimates, not
+measured effort.
 ## Evidence reviewed
 
 The evaluation issues and merged implementation PRs provide the following evidence:
 
 | Area | Evidence | Finding |
 |---|---|---|
-| CRAN source-package policy | [#111 / PR #118](https://github.com/vsimko/corrplot-ng/pull/118), `docs/cran-rust-cpp-comparison.md` | Both approaches are feasible. C++/Rcpp passed three-platform `R CMD check --as-cran`; Rust/rextendr passed offline source-package checks on three platforms but reported two NOTEs (vendor metadata and non-API `R_NamespaceRegistry`). Oldest-toolchain compatibility and actual CRAN acceptance remain unproven. |
+| CRAN source-package policy | [#111 / PR #118](https://github.com/vsimko/corrplot-ng/pull/118), `docs/cran-rust-cpp-comparison.md` | Both approaches are feasible. C++/Rcpp passed three-platform `R CMD check --as-cran`. Rust/rextendr 0.9.0 passed offline source-package checks on three platforms with one documented NOTE for Cargo vendor metadata; the earlier `R_NamespaceRegistry` NOTE was removed by the upstream 0.9.0 fix. Rust 1.78/Cargo 1.78 is declared and covered by CI. Actual CRAN acceptance remains unproven. |
 | Maintainer workflow | [#113 / PR #119](https://github.com/vsimko/corrplot-ng/pull/119), `docs/native-integration-maintenance-comparison.md` | C++/Rcpp has the shorter routine and release workflow for an R-only extension. The report's planning estimates are 1–2 h for C++ versus 2–4 h for Rust release-grade validation; these are estimates, not measured timings. |
 | Binary installation | [Rust PR #16](https://github.com/vsimko/corrplot-ng/pull/16), [C++ PR #17](https://github.com/vsimko/corrplot-ng/pull/17) | Both Windows binaries installed and passed smoke tests with the relevant compiler/toolchain removed from the restricted `PATH`. This addresses binary end-user installation, not source-build or CRAN acceptance. |
 | Scene independence | [#115 / PR #121](https://github.com/vsimko/corrplot-ng/pull/121) | Python, R, and the standalone Rust CLI consume the versioned scene-v1 JSON fixture. The Rust CLI validates the data contract independently of R. This demonstrates a language-neutral interchange boundary, not reuse of one compiled native library. |

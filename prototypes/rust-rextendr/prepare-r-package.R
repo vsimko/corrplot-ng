@@ -44,14 +44,14 @@ setwd(pkg_dir)
 rextendr::use_extendr(path = ".", quiet = TRUE, overwrite = TRUE)
 
 # Keep the generated package aligned with the audited and vendored extendr
-# 0.8.2 license notice. rextendr may otherwise scaffold the latest 0.9.x API.
+# 0.9.0 API and license notice. Pinning avoids scaffold-version drift.
 cargo_manifest <- file.path(pkg_dir, "src", "rust", "Cargo.toml")
 cargo_lines <- readLines(cargo_manifest, warn = FALSE)
 extendr_dependency <- grep("^extendr-api[[:space:]]*=", cargo_lines)
 if (length(extendr_dependency) != 1L) {
   stop("Could not identify generated extendr-api dependency in ", cargo_manifest)
 }
-cargo_lines[extendr_dependency] <- 'extendr-api = "=0.8.2"'
+cargo_lines[extendr_dependency] <- 'extendr-api = "=0.9.0"'
 core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-core" }'
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
