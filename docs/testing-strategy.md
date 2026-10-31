@@ -140,6 +140,14 @@ A manual LaTeX embedding smoke test is documented in
 documented subset; it is not complete SVG 2 conformance and does not promise
 identical rendering in every viewer.
 
+Renderer capability declarations are checked against
+`prototypes/renderer-capabilities-v1.schema.json`. The shared-SVG prototype
+tests strict rejection of unsupported required features and permissive
+omission only when the caller explicitly marks a feature optional. Each
+omission returns a structured warning. The native CLI exposes its narrow
+machine-readable declaration through `corrplot-ng capabilities`. See
+[renderer capability negotiation](renderer-capabilities.md).
+
 ### 5. Native Rust CLI
 
 The standalone CLI is tested independently from the Python and R runtimes.
