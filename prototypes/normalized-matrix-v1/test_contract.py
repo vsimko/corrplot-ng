@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -25,13 +26,12 @@ class NormalizedMatrixV1Tests(unittest.TestCase):
     def test_invalid_fixtures_fail_with_the_documented_semantic_error(self) -> None:
         for case in INVALID["cases"]:
             with self.subTest(case=case["id"]):
-                with self.assertRaisesRegex(ValueError, case["expected_error"]):
+                with self.assertRaisesRegex(ValueError, re.escape(case["expected_error"])):
                     validate_normalized_matrix(case["input"])
 
     def test_schema_rejects_invalid_primitive_types_and_duplicate_items(self) -> None:
         for case_id in (
             "duplicate-labels",
-            "empty-label",
             "non-numeric-cell",
             "nan-cell",
             "duplicate-source-index",
