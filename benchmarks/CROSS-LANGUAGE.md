@@ -70,7 +70,8 @@ extended scene model; use these results as prototype-path measurements only.
 The R-facing implementations reject non-square/dimension-mismatched matrices,
 correlation values outside [-1, 1], and infinite values. They use the same
 error text for these invalid inputs. Missing R values (`NA`) remain valid and
-serialize as JSON `null`; ordinary finite values preserve row-major cell
+serialize as JSON `null`; ordinary `NaN` values are rejected rather than being
+silently treated as missing. Ordinary finite values preserve row-major cell
 ordering. The Rust binding returns an error through extendr's default
 `result_panic` behavior instead of returning an empty string, matching the
 Rcpp and pure-R error contract. The Python reference rejects the corresponding

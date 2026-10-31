@@ -10,7 +10,7 @@ build_scene_v1_r <- function(labels, matrix, annotation = "") {
   if (!is.character(annotation) || length(annotation) != 1L || is.na(annotation)) {
     stop("annotation must be one non-missing string")
   }
-  if (any(!is.na(matrix) & (!is.finite(matrix) | matrix < -1 | matrix > 1))) {
+  if (any(is.nan(matrix)) || any(!is.na(matrix) & (!is.finite(matrix) | matrix < -1 | matrix > 1))) {
     stop("matrix values must be finite, NA, or between -1 and 1")
   }
 
