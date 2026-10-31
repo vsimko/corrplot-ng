@@ -52,7 +52,7 @@ jobs:
           license_dir=prototypes/rust-rextendr/.ci-r-package/inst/licenses
           test -s "$license_dir/extendr-MIT.txt"
           grep -q "Copyright (c) 2021 The Extendr contributors" "$license_dir/extendr-MIT.txt"
-          grep -q "extendr-api-v0.8.2" "$license_dir/README.md"
+          grep -q "extendr-api-v0.9.0" "$license_dir/README.md"
       - name: Resolve, audit, and vendor dependencies of the generated package
         shell: bash
         run: |
