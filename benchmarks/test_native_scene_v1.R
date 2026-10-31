@@ -57,4 +57,50 @@ for (case in fixture$workloads) {
   }
 }
 
-message("All scene-v1 packaging smoke tests passed on ", R.version$platform)
+# Invalid inputs must fail consistently across all R-facing implementations.
+# The messages are part of this narrow prototype contract, not a general R API.
+expect_rejection <- function(candidate_name, candidate, labels, matrix, pattern) {
+  error_message <- tryCatch({
+    candidate(labels, matrix, "")
+    NA_character_
+  }, error = function(error) conditionMessage(error))
+  if (is.na(error_message)) {
+    stop(candidate_name, ": invalid input was accepted")
+  }
+  if (!grepl(pattern, error_message, fixed = TRUE)) {
+    stop(candidate_name, ": unexpected error message: ", error_message)
+  }
+  message("PASS invalid input / ", candidate_name, " / ", pattern)
+}
+
+invalid_cases <- list(
+  list(
+    name = "dimensions",
+    labels = c("a", "b"),
+    matrix = matrix(1, nrow = 1L, ncol = 2L),
+    message = "labels and matrix dimensions must agree and be non-empty"
+  ),
+  list(
+    name = "range",
+    labels = c("a", "b"),
+    matrix = matrix(c(1, 1.1, 1.1, 1), nrow = 2L),
+    message = "matrix values must be finite, NA, or between -1 and 1"
+  ),
+  list(
+    name = "non-finite",
+    labels = c("a", "b"),
+    matrix = matrix(c(1, Inf, Inf, 1), nrow = 2L),
+    message = "matrix values must be finite, NA, or between -1 and 1"
+  )
+)
+
+for (invalid in invalid_cases) {
+  for (candidate_name in names(candidates)) {
+    expect_rejection(
+      candidate_name, candidates[[candidate_name]],
+      invalid$labels, invalid$matrix, invalid$message
+    )
+  }
+}
+
+message("All scene-v1 parity and invalid-input tests passed on ", R.version$platform)
