@@ -52,6 +52,10 @@ if (length(extendr_dependency) != 1L) {
   stop("Could not identify generated extendr-api dependency in ", cargo_manifest)
 }
 cargo_lines[extendr_dependency] <- 'extendr-api = "=0.8.2"'
+core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-core" }'
+if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
+  cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
+}
 writeLines(cargo_lines, cargo_manifest)
 
 # Reuse the reviewed transitive dependency graph from the committed spike
