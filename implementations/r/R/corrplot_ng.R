@@ -56,7 +56,8 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
     is.corr = TRUE, col.lim = NULL,
     addCoef.col = NULL, addCoefasPercent = FALSE, number.digits = NULL,
     number.cex = 1, number.font = 2,
-    tl.pos = NULL, tl.offset = 0.4, tl.srt = 90,\n    na.label = "?", na.label.col = "black")
+    tl.pos = NULL, tl.offset = 0.4, tl.srt = 90,
+    na.label = "?", na.label.col = "black")
   options <- utils::modifyList(defaults, args)
   .corrplot_ng_build_scene_v1(corr, options)
 }
