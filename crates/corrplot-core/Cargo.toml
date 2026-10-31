@@ -2,6 +2,7 @@
 name = "corrplot-core"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.78"
 license = "MIT"
 description = "Shared matrix validation primitives for corrplot-ng"
 
