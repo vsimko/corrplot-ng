@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "corrplot-core"
+version = "0.1.0"
+
+[[package]]
 name = "corrplot-ng"
 version = "0.1.0"
+dependencies = [
+ "corrplot-core",
+]
