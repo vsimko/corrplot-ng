@@ -51,7 +51,7 @@ flowchart TB
     SPIKES -. evaluation only .-> SC
 
     SC -. future consumers .-> TS[TypeScript API]
-    TS -. planned .-> NODE[Native Node binding]
+    TS --> NODE[Native Node binding (partial)]
     TS -. planned .-> WASM[Browser WASM]
     SC -. future renderer .-> SVG[Additional renderers]
     SC -. future renderer .-> RENDER[Raster / other output adapters]
@@ -101,14 +101,14 @@ The following capabilities are tracked as future work, not as current shipped ar
 
 - Cross-runtime Rust and TypeScript architecture (specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); #139).
 - Portable reusable Rust core for native and WebAssembly targets (#140): the same dependency-free crate now forbids unsafe code and is compiled for `wasm32-unknown-unknown` in CI, including its test code and declared MSRV. This is a compile-portability proof, not yet a browser binding or runtime execution test.
-- Native Node.js binding (#141).
+- Native Node.js binding (#141): a first N-API slice is implemented in `bindings/node/`, including matrix validation and typed-scene SVG/RGBA rendering. The package source-build and clean-tarball smoke test run on Node.js 22/24/26 across Linux, macOS, and Windows; prebuilt npm publishing and full scene construction remain open.
 - Browser WebAssembly integration (#142).
 - Renderer-neutral output interface specified in [renderer-output-v1](renderer-output-v1.md) and #153; the initial typed-scene SVG/RGBA renderer is implemented in #154. PNG encoding and browser/CLI integration remain future work.
 - Direct browser Canvas rendering (#144).
 - Unified TypeScript API with backend selection (#145).
 - Cross-backend parity, visual regression, and performance coverage (#146).
 
-The standalone CLI remains a thin application adapter over the reusable Rust crate. The cross-runtime TypeScript architecture is specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); its Node-API and browser-WASM bindings are not yet implemented. The renderer output contract is specified in [renderer-output-v1](renderer-output-v1.md) and represented by types in crates/corrplot-core/src/output.rs. Browser Canvas rendering remains a separate adapter from server-side or CLI rendering.
+The standalone CLI remains a thin application adapter over the reusable Rust crate. The cross-runtime TypeScript architecture is specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The Node-API adapter has an initial implementation; browser-WASM bindings and the unified facade remain planned. The renderer output contract is specified in [renderer-output-v1](renderer-output-v1.md) and represented by types in crates/corrplot-core/src/output.rs. Browser Canvas rendering remains a separate adapter from server-side or CLI rendering.
 
 ## Decision boundaries
 
@@ -122,7 +122,8 @@ The standalone CLI remains a thin application adapter over the reusable Rust cra
 | Python shared-scene/SVG | Reference/prototype implementation |
 | R compatibility | Legacy path plus normalized-input and experimental scene paths |
 | Cross-runtime TypeScript architecture | Specified by ADR 0002; implementation planned |
-| Node binding, browser WASM and Canvas | Planned |
+| Native Node binding | Initial N-API adapter implemented; full scene construction, prebuilt distribution, and unified facade remain open |
+| Browser WASM and Canvas | Planned |
 
 The Rust shared-core direction and cross-runtime boundary are accepted. PR #180 proves initial crate reuse for matrix validation. The core's native/WebAssembly compile portability is now checked from the same source; the complete shared visualization engine and Node/WASM bindings remain future implementation work. Production R rollout still requires CRAN guidance and measured maintainer effort. Keep language-specific adapters thin and keep scene-v1 as the versioned interchange/conformance contract.
 
