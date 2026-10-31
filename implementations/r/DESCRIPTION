@@ -12,7 +12,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports:
-    corrplot,
+    corrplot (>= 0.95),
     utils
 Suggests:
     jsonlite,
