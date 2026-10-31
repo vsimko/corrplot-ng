@@ -123,6 +123,23 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 - Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
 - Do not use the prototype benchmark to claim a production performance win.
 
+## Measured release-readiness results
+
+The current disposable R/rextendr source package was measured by the Ubuntu 24.04 CI job with R 4.6.2 and GCC 13.3.0:
+
+| Measurement | Result |
+|---|---:|
+| Compressed R source tarball | 1,314,420 bytes (about 1.25 MiB) |
+| Installed package | 6.0 MB |
+| Installed `libs` directory | 5.9 MB |
+| `R CMD check --as-cran` | 1 NOTE |
+
+The single remaining NOTE is limited to Cargo's hidden vendor metadata (`.cargo-checksum.json` and `.cargo_vcs_info.json`). The checksum files are required for Cargo to verify vendored sources during offline builds; the VCS files preserve source provenance. They are intentionally retained and must be explained in any CRAN submission comments. Upgrading to extendr-api 0.9.0 removed the non-API `R_NamespaceRegistry` NOTE. Pruning unused `lazy_static/tests` fixtures removed the non-portable-path NOTE.
+
+The shared consumers declare Rust 1.78/Cargo 1.78. CI compiles the core, CLI, and R/rextendr consumer on Rust 1.78; the stable cross-platform matrix covers Ubuntu, macOS, and Windows. The tested native prerequisites are a C toolchain plus R development headers on Linux, Xcode Command Line Tools on macOS, and Rtools/MSVC on Windows. The Windows binary-install workflow verifies that end users can install the built package without Rust on PATH.
+
+The source-package workflow is now reproducible and documented, but controlled elapsed maintainer effort versus the C++/Rcpp adapter has not been measured. Existing time estimates are planning estimates, not observed timings.
+
 ## Conditions for production rollout
 
 The strategic language decision is Rust. The shared-library integration gate is satisfied: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. The remaining gates concern source-package policy, minimum toolchain, package footprint, and maintainer cost.
