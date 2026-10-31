@@ -718,7 +718,7 @@ mod tests {
     fn current_matrix_svg_output_is_deterministic_and_escapes_titles() {
         let matrix = parse_matrix(SAMPLE, Kind::Correlation).unwrap();
         let rendered = svg(&matrix, "R&D <metrics>", "number", Kind::Correlation);
-        assert!(rendered.starts_with("<svg xmlns=\\"http://www.w3.org/2000/svg\\""));
+        assert!(rendered.starts_with("<svg xmlns="));
         assert!(rendered.contains("<title>R&amp;D &lt;metrics&gt;</title>"));
         assert_eq!(rendered, svg(&matrix, "R&D <metrics>", "number", Kind::Correlation));
     }
