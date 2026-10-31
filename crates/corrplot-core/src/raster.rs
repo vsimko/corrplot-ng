@@ -660,6 +660,15 @@ mod tests {
         );
     }
 
+
+    #[test]
+    fn renderer_capability_declaration_matches_the_core_backends() {
+        let capabilities = crate::RENDERER_CAPABILITIES_V1;
+        assert!(capabilities.contains("\"id\": \"rust-core-scene\""));
+        assert!(capabilities.contains("\"output_formats\": [\"svg\", \"rgba\"]"));
+        assert!(capabilities.contains("\"plotmath_labels\": false"));
+    }
+
     #[test]
     fn rejects_svg_options_and_invalid_scene_geometry() {
         let scene = sample_scene();
