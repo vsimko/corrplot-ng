@@ -799,7 +799,7 @@ impl Publication {
                 background.red,
                 background.green,
                 background.blue,
-                num(background.alpha as f64 / 255.0)
+                background.alpha as f64 / 255.0
             ));
         }
         out.push_str(&format!(
