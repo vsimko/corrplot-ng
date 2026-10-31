@@ -39,6 +39,8 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [corrplot-core](../crates/corrplot-core/README.md): the dependency-free shared matrix validation library.
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, host targets, and current backend limits.
 - [Renderer output v1](renderer-output-v1.md): shared Rust output types, SVG/PNG/RGBA dimensions and ownership, direct Canvas host integration, and output diagnostics.
+- [Legacy R adapter design](legacy-r-adapter.md): explicit legacy/scene routing and the supported R input slice.
+- [Legacy R return values](legacy-r-return-values.md): invisible corrplot/corrplot.mixed results, reordered matrix names, plotted cell coordinates, and mixed diagonal behavior.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
@@ -47,7 +49,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Shared-core benchmark plan](shared-core-benchmark-plan.md): benchmark scope, correctness gates, measurement protocol, and decision criteria.
 - [Benchmark operations](../benchmarks/README.md): how to run the shared-core, cross-language, stress, and package-smoke workflows.
 
-The R package lives in [implementations/r](../implementations/r/README.md). It delegates legacy plotting to upstream `corrplot` by default and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
+The R package lives in [implementations/r](../implementations/r/README.md). It delegates legacy plotting to upstream `corrplot` by default, exposes a mixed legacy wrapper, and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
 
 The shared Rust library lives in [crates/corrplot-core](../crates/corrplot-core/README.md), and the standalone CLI lives in [tools/corrplot-ng](../tools/corrplot-ng/README.md). The `prototypes/` tree currently groups versioned contracts, a Python reference implementation, and disposable language spikes; their different ownership and stability levels are documented in the [repository layout](repository-layout.md). Experimental Rust/rextendr and C++/Rcpp work must not be described as production R backends.
 

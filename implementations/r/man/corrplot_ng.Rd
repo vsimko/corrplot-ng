@@ -11,7 +11,7 @@ corrplot_ng(corr, ..., engine = c("legacy", "scene"))
 \item{engine}{Rendering path: \code{"legacy"} (default) or experimental \code{"scene"} (returns a scene-v1 object without drawing).}
 }
 \value{
-For \code{engine = "legacy"}, the result returned by \code{corrplot::corrplot()}. For \code{engine = "scene"}, a \code{corrplot_ng_scene} list conforming to scene-v1.
+For \code{engine = "legacy"}, the invisible upstream list with \code{corr}, \code{corrPos}, and \code{arg} fields. The \code{corrPos} data frame contains reordered variable names and one-based plotted cell coordinates. See \code{docs/legacy-r-return-values.md} for the exact R-specific contract. For \code{engine = "scene"}, a visible \code{corrplot_ng_scene} list conforming to scene-v1.
 }
 \description{
 The default legacy engine delegates to the original \pkg{corrplot} implementation. The experimental scene engine prepares the supported matrix-and-label subset as a renderer-neutral scene-v1 object; it does not draw on an R graphics device.
