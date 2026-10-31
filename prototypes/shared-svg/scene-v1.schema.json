@@ -166,44 +166,141 @@
           "encoding": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["kind", "magnitude", "sign", "color"],
+            "required": [
+              "kind",
+              "magnitude",
+              "sign",
+              "color"
+            ],
             "properties": {
-              "kind": {"enum": ["circle", "square", "ellipse", "number", "shade", "color", "pie"]},
-              "magnitude": {"type": "number", "minimum": 0, "maximum": 1},
-              "sign": {"enum": [-1, 0, 1]},
-              "color": {"$ref": "#/$defs/color"},
-              "radius": {"type": "number", "minimum": 0},
-              "x": {"type": "number"},
-              "y": {"type": "number"},
-              "width": {"type": "number", "minimum": 0},
-              "height": {"type": "number", "minimum": 0},
-              "center_x": {"type": "number"},
-              "center_y": {"type": "number"},
-              "rx": {"type": "number", "minimum": 0},
-              "ry": {"type": "number", "minimum": 0},
-              "rotation": {"type": "number"},
-              "fill_opacity": {"type": "number", "minimum": 0, "maximum": 1},
-              "fill": {"$ref": "#/$defs/color"},
+              "kind": {
+                "enum": [
+                  "circle",
+                  "square",
+                  "ellipse",
+                  "number",
+                  "shade",
+                  "color",
+                  "pie"
+                ]
+              },
+              "magnitude": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "sign": {
+                "enum": [
+                  -1,
+                  0,
+                  1
+                ]
+              },
+              "color": {
+                "$ref": "#/$defs/color"
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number",
+                "minimum": 0
+              },
+              "height": {
+                "type": "number",
+                "minimum": 0
+              },
+              "center_x": {
+                "type": "number"
+              },
+              "center_y": {
+                "type": "number"
+              },
+              "rx": {
+                "type": "number",
+                "minimum": 0
+              },
+              "ry": {
+                "type": "number",
+                "minimum": 0
+              },
+              "rotation": {
+                "type": "number"
+              },
+              "fill_opacity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "fill": {
+                "$ref": "#/$defs/color"
+              },
               "line": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["x1", "y1", "x2", "y2", "stroke_width", "stroke_opacity"],
+                "required": [
+                  "x1",
+                  "y1",
+                  "x2",
+                  "y2",
+                  "stroke_width",
+                  "stroke_opacity"
+                ],
                 "properties": {
-                  "x1": {"type": "number"},
-                  "y1": {"type": "number"},
-                  "x2": {"type": "number"},
-                  "y2": {"type": "number"},
-                  "stroke_width": {"type": "number", "minimum": 0},
-                  "stroke_opacity": {"type": "number", "minimum": 0, "maximum": 1}
+                  "x1": {
+                    "type": "number"
+                  },
+                  "y1": {
+                    "type": "number"
+                  },
+                  "x2": {
+                    "type": "number"
+                  },
+                  "y2": {
+                    "type": "number"
+                  },
+                  "stroke_width": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stroke_opacity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
                 }
               },
-              "full_circle": {"type": "boolean"},
-              "large_arc": {"type": "boolean"},
-              "sweep_flag": {"enum": [0, 1]},
-              "start_x": {"type": "number"},
-              "start_y": {"type": "number"},
-              "end_x": {"type": "number"},
-              "end_y": {"type": "number"}
+              "full_circle": {
+                "type": "boolean"
+              },
+              "large_arc": {
+                "type": "boolean"
+              },
+              "sweep_flag": {
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              "start_x": {
+                "type": "number"
+              },
+              "start_y": {
+                "type": "number"
+              },
+              "end_x": {
+                "type": "number"
+              },
+              "end_y": {
+                "type": "number"
+              }
             }
           },
           "method": {
@@ -225,34 +322,93 @@
             ]
           },
           "p_value": {
-            "type": ["number", "null"],
+            "type": [
+              "number",
+              "null"
+            ],
             "minimum": 0,
             "maximum": 1
           },
           "significance": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["p_value", "status", "annotation", "blank"],
+            "required": [
+              "p_value",
+              "status",
+              "annotation",
+              "blank"
+            ],
             "properties": {
-              "p_value": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-              "status": {"enum": ["unknown", "significant", "not_significant"]},
-              "annotation": {"type": ["string", "null"]},
-              "blank": {"type": "boolean"}
+              "p_value": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "status": {
+                "enum": [
+                  "unknown",
+                  "significant",
+                  "not_significant"
+                ]
+              },
+              "annotation": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "blank": {
+                "type": "boolean"
+              }
             }
           },
           "confidence_interval": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["lower", "upper", "x1", "x2", "y", "cap_height", "stroke_width", "color"],
+            "required": [
+              "lower",
+              "upper",
+              "x1",
+              "x2",
+              "y",
+              "cap_height",
+              "stroke_width",
+              "color"
+            ],
             "properties": {
-              "lower": {"type": "number", "minimum": -1, "maximum": 1},
-              "upper": {"type": "number", "minimum": -1, "maximum": 1},
-              "x1": {"type": "number"},
-              "x2": {"type": "number"},
-              "y": {"type": "number"},
-              "cap_height": {"type": "number", "minimum": 0},
-              "stroke_width": {"type": "number", "minimum": 0},
-              "color": {"$ref": "#/$defs/color"}
+              "lower": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
+              "upper": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
+              "x1": {
+                "type": "number"
+              },
+              "x2": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "cap_height": {
+                "type": "number",
+                "minimum": 0
+              },
+              "stroke_width": {
+                "type": "number",
+                "minimum": 0
+              },
+              "color": {
+                "$ref": "#/$defs/color"
+              }
             }
           },
           "normalized_value": {
@@ -374,11 +530,34 @@
     "significance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mode", "thresholds", "symbol"],
+      "required": [
+        "mode",
+        "thresholds",
+        "symbol"
+      ],
       "properties": {
-        "mode": {"enum": ["pch", "p-value", "blank", "stars"]},
-        "thresholds": {"type": "array", "minItems": 1, "items": {"type": "number", "minimum": 0, "maximum": 1}},
-        "symbol": {"type": "string", "minLength": 1, "maxLength": 8}
+        "mode": {
+          "enum": [
+            "pch",
+            "p-value",
+            "blank",
+            "stars"
+          ]
+        },
+        "thresholds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8
+        }
       }
     },
     "glyph_method": {
@@ -543,6 +722,73 @@
         "has_observed_values": {
           "type": "boolean",
           "description": "False when every matrix cell is missing; the numeric color domain is only a neutral fallback."
+        }
+      }
+    },
+    "figure_text": {
+      "type": "array",
+      "description": "Visible figure-level text roles; separate from accessible title and description metadata.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "text",
+          "lines",
+          "x",
+          "y",
+          "alignment",
+          "font_size",
+          "font_weight",
+          "line_height"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "title",
+              "subtitle",
+              "caption",
+              "footnote"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "alignment": {
+            "enum": [
+              "left",
+              "center",
+              "right"
+            ]
+          },
+          "font_size": {
+            "type": "number",
+            "minimum": 6,
+            "maximum": 48
+          },
+          "font_weight": {
+            "enum": [
+              "normal",
+              "bold"
+            ]
+          },
+          "line_height": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
         }
       }
     }
