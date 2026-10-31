@@ -1,7 +1,7 @@
 ---
 type: Architecture
 title: Current architecture of corrplot-ng
-description: Implemented components, language-neutral contracts, experimental integrations, and deferred architecture decisions.
+description: Implemented components, language-neutral contracts, the selected Rust shared-core boundary, and remaining rollout gates.
 tags:
   - architecture
   - scene-v1
@@ -13,11 +13,11 @@ status: current
 
 ## Purpose and status
 
-This document describes the architecture that exists in the repository today and distinguishes it from experiments and planned work. It is not a commitment to a single compiled implementation shared by every language.
+This document describes the architecture that exists in the repository today and distinguishes it from experiments and planned work. Rust is the selected implementation for shared semantics; the current compiled-library proof is deliberately narrow and does not claim a complete production visualization engine.
 
-The stable interoperability boundary is the language-neutral **scene-v1** contract. The normalized-matrix v1 contract provides a language-neutral representation of normalized matrix input. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration. The shared Rust core proof currently centralizes matrix validation in `crates/corrplot-core`, called by both the standalone CLI and the rextendr spike; scene-v1 remains the language-neutral interchange contract. These contracts allow implementations to exchange data without requiring them to use the same programming language, runtime, or binary.
+The stable interoperability boundary is the language-neutral **scene-v1** contract. The normalized-matrix v1 contract provides a language-neutral representation of normalized matrix input. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration. Separately, `crates/corrplot-core` provides the first shared compiled operation: matrix validation called by both the standalone CLI and the disposable R/rextendr adapter. Scene-v1 remains the language-neutral interchange contract; it complements rather than replaces compiled-library reuse.
 
-The production shared-core language decision is deliberately **deferred**. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md) for the rationale and decision record.
+Rust is the selected shared-core implementation under [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md). The current crate proof covers matrix validation only. Expanding it to production scene construction/rendering and migrating the R package remain gated by portability, package, CRAN, and maintenance evidence.
 
 ## Architecture at a glance
 
@@ -34,17 +34,24 @@ flowchart TB
       RSCENE[Experimental scene adapter]
     end
 
+    subgraph RustCore[Selected Rust shared core]
+      CORE[corrplot-core: matrix validation]
+    end
+
     subgraph Other[Other implementations and tools]
-      PY[Python shared-scene / SVG reference implementation]
-      CLI[Rust standalone CLI]
-      SPIKES[Rust/rextendr and C++/Rcpp evaluation spikes]
+      PY[Python scene/SVG reference]
+      CLI[Rust standalone CLI adapter]
+      REXT[Rust/rextendr evaluation adapter]
+      CPP[C++/Rcpp evaluation spike]
     end
 
     RNORM --> NM
     RSCENE --> SC
     PY --> SC
+    CLI --> CORE
+    REXT --> CORE
     CLI -->|CLI input/output workflows| SC
-    SPIKES -. evaluation only .-> SC
+    CPP -. evaluation only .-> SC
 
     SC -. future consumers .-> TS[TypeScript API]
     TS -. planned .-> NODE[Native Node binding]
@@ -53,9 +60,9 @@ flowchart TB
     SC -. future renderer .-> RENDER[Raster / other output adapters]
 ```
 
-Solid edges represent current implementation paths or contract use. Dashed edges represent experiments, future consumers, or planned work; they must not be read as shipped production capabilities.
+Solid edges represent current implementation paths or contract use. The R/rextendr adapter is an isolated package experiment that calls the shared Rust validation crate; it is not a production R backend. Dashed edges represent future consumers or planned work.
 
-## Contracts: stable boundaries, not a shared runtime
+## Contracts and shared library: complementary boundaries
 
 ### Normalized-matrix v1
 
@@ -63,7 +70,7 @@ A language-neutral input contract for normalized matrix data. Language adapters 
 
 ### Scene-v1
 
-A language-neutral representation of plot meaning and renderer-neutral scene content. It is the interoperability boundary between producers and consumers. A producer and a renderer may be implemented in different languages and communicate through this contract; they do not need to link to one common native library.
+A language-neutral representation of plot meaning and renderer-neutral scene content. It is the interoperability boundary between producers and consumers. A producer and a renderer may be implemented in different languages and communicate through this contract. This data interchange is independent of the compiled Rust library, which centralizes shared semantic operations where a consumer can link to it.
 
 Contract versions and compatibility rules belong to the contract specifications. Runtime and packaging choices belong to the individual implementations.
 
@@ -81,7 +88,7 @@ The R package therefore remains a compatibility-focused implementation with incr
 
 ### Rust standalone CLI
 
-The standalone command-line tool is implemented in Rust. This is a decision about the CLI implementation and its distribution/toolchain. It does **not** establish Rust as the production shared-core language, nor does it mean that a reusable native library for R, Node.js, and other consumers already exists.
+The standalone command-line tool is implemented in Rust and calls `crates/corrplot-core` for matrix validation. The library is also consumed by the disposable R/rextendr adapter. This proves one shared compiled operation; the crate does not yet contain the full visualization engine, and the production R package has not migrated to it.
 
 ### Python reference implementation
 
@@ -89,9 +96,9 @@ The Python shared-scene/SVG implementation serves as a reference and prototype f
 
 ## Experimental integrations
 
-Rust/rextendr and C++/Rcpp integrations have been used as evaluation spikes. They are not production R backends and should not be presented as supported deployment paths.
+The Rust/rextendr integration remains a disposable package experiment, although it now calls the same `corrplot-core` validation function as the CLI. C++/Rcpp remains a separate R-only comparison spike. Neither is a production R backend or a supported deployment path.
 
-Experiments can inform future decisions, but an experiment does not change the architecture decision unless that decision is explicitly revisited and recorded.
+Experiments provide packaging and maintenance evidence. They do not authorize migration of the production R package unless the rollout gates in ADR 0001 are met.
 
 ## Planned work
 
@@ -115,13 +122,15 @@ The standalone CLI should remain distinct from a future reusable native library.
 | Interoperability | Normalized-matrix v1 and scene-v1 contracts |
 | Scene boundary | Accepted; scene-v1 is language-neutral |
 | Standalone CLI | Implemented in Rust |
-| Production shared-core language | Deferred by ADR 0001 |
+| Shared-core implementation language | Rust selected by ADR 0001 |
+| Reusable compiled operation | Matrix validation in `crates/corrplot-core`, consumed by CLI and rextendr spike |
+| Production R migration | Not done; gated by CRAN and maintenance evidence |
 | Rust/rextendr and C++/Rcpp | Experimental evaluation spikes |
 | Python shared-scene/SVG | Reference/prototype implementation |
 | R compatibility | Legacy path plus normalized-input and experimental scene paths |
 | TypeScript, Node binding, browser WASM and Canvas | Planned |
 
-A future shared native core should be considered only when a concrete multi-consumer requirement demonstrates that the benefits outweigh the build, packaging, ABI, and maintenance costs. Any change to the deferred language decision requires a separate evidence-backed ADR update; it must not be introduced implicitly through implementation or documentation.
+The first shared native operation is implemented. Expanding the crate beyond matrix validation and migrating the production R package require explicit API, portability, packaging, CRAN, and maintenance evidence. Any change to the selected Rust architecture requires a separate evidence-backed ADR update; it must not be introduced implicitly through implementation or documentation.
 
 ## Dependency principles
 
@@ -131,4 +140,4 @@ A future shared native core should be considered only when a concrete multi-cons
 4. Rendering adapters consume scene data and own output-specific behavior.
 5. Experimental bindings and future adapters remain clearly separated from supported implementation paths.
 
-This keeps interoperability independent from the unresolved question of whether any particular functionality should eventually be factored into a shared compiled library.
+This keeps language-neutral interchange separate from the shared compiled implementation: adapters may exchange scene-v1 data even when they cannot link to the Rust library, while consumers that can link to it reuse the same semantic implementation.
