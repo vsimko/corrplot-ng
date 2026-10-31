@@ -40,6 +40,68 @@ The SVG prototype does not evaluate or typeset R plotmath expressions. It raises
 
 Version 1 remains an experimental subset. Ordering metadata, significance modes/markers, and correlation confidence intervals are represented. Arbitrary positioned annotations, full label typography, accessibility metadata, and native R graphics-device behavior remain outside this contract. The seven cell encodings are supported by the scene and SVG prototype; renderers must reject unknown methods rather than silently substituting another glyph. Coefficient/value text typography is limited to the explicit fields above. The optional legend is a semantic scene capability; individual renderers remain responsible for layout and clipping.
 
+## Current consumers and future bindings
+
+The current prototype demonstrates that scene-v1 is a data boundary rather
+than an R object model:
+
+| Consumer | Role | Evidence |
+| --- | --- | --- |
+| Python shared-SVG prototype | Produces canonical scene-v1 JSON and validates it against the JSON Schema | `prototypes/shared-svg/scene.py`, `test_scene_schema.py` |
+| Rust native CLI | Non-R consumer; imports the canonical fixture's matrix identity and values, then validates and re-emits them in its own output format | `tools/corrplot-ng/tests/cli.rs`, `tools/corrplot-ng/src/publication.rs` |
+| R scene smoke test | Reads the canonical JSON fixture through the R JSON consumer path | `prototypes/shared-svg/test_r_scene_consumer.R` |
+
+The Rust CLI importer is deliberately a matrix consumer, not a second scene
+renderer: it reads `kind`, `labels`, and `cells`, preserves missing values,
+and ignores canvas geometry and presentation metadata. Its tests exercise the
+same checked-in `scene-v1.example.json` fixture used by the Python schema
+tests. This proves that a non-R consumer can parse and validate the shared
+contract without depending on R bindings or implementation-specific objects.
+
+### Version and compatibility rules
+
+- A consumer must require `schema_version` and reject versions it does not
+  support. The current Rust importer accepts exactly version 1 and tests that
+  version 2 is rejected.
+- Consumers must reject unknown `kind` values. Correlation and general-matrix
+  semantics are distinct; a consumer must not infer one from the value range.
+- Cell identity is zero-based and row-major. Consumers must use each cell's
+  explicit `row` and `column` indices rather than relying on incidental JSON
+  key order or re-associating cells by position.
+- JSON `null` means missing. It must remain missing through decoding,
+  validation, and re-encoding; it must never become zero or a non-finite number.
+- The v1 schema is closed to undeclared properties. Additions must be made to
+  the schema and shared fixture together. Structural or semantic changes that
+  cannot be consumed compatibly require a new `schema_version`.
+- Optional fields may be ignored only when the consuming operation does not
+  require their semantics. A renderer that does not support a requested glyph
+  method or plotmath capability must return an explicit unsupported-capability
+  diagnostic rather than silently substituting a different representation.
+- `plotmath` is plain metadata (`prefix` plus unevaluated `source` string),
+  not an R expression object, HTML, or executable markup. Non-R consumers must
+  not evaluate it as code.
+
+### Requirements for future Python and TypeScript consumers
+
+No packaged Python or TypeScript consumer is defined by this prototype yet.
+Future bindings should follow the schema and fixture rather than create a
+language-specific scene model:
+
+- Python should decode JSON `null` as `None`, retain the explicit row/column
+  indices, validate against the published schema, and expose unsupported
+  optional capabilities as explicit errors. The current Python module is a
+  reference producer, not a stable installed API.
+- TypeScript should model cell values as `number | null`, constrain `kind` to
+  the two declared variants, use zero-based numeric indices, and validate
+  incoming documents against the same JSON Schema. DOM, SVG, React, or R-specific
+  types belong in adapters, not in the shared contract.
+- Both should consume the shared canonical fixture in tests and include
+  compatibility tests for unsupported schema versions, unknown kinds,
+  missing cells, and optional capabilities they do not implement.
+- Neither binding should duplicate matrix preparation, ordering, or value
+  normalization rules. Those semantics belong to the producer of the prepared
+  scene; consumers interpret the resulting versioned data.
+
 ## Compatibility and evolution
 
 Keep the legacy R API as the behavioral reference. Before using this contract beyond the prototype, validate it against representative legacy cases and decide how version negotiation and optional capabilities should work. Do not add renderer-specific fields to this scene merely to simplify one backend; propose a versioned semantic field instead.
