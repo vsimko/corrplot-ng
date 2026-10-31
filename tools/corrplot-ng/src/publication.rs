@@ -1307,22 +1307,26 @@ pub struct PublicationRenderInput<'a> {
 pub struct PublicationSvgRenderer;
 
 impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
-    type Error = String;
+    type Error = corrplot_core::output::OutputValidationError;
 
     fn render(
         &self,
         input: &PublicationRenderInput<'a>,
         options: &OutputOptions,
     ) -> Result<RenderOutput, Self::Error> {
-        options.validate().map_err(|error| error.to_string())?;
+        options.validate()?;
         let OutputOptions::Svg(svg_options) = options else {
-            return Err("publication SVG renderer supports only SVG output".into());
+            return Err(corrplot_core::output::OutputValidationError::invalid_options(
+                "publication SVG renderer supports only SVG output",
+            ));
         };
         let unit = match svg_options.unit {
             SvgUnit::Millimeters => "mm",
             SvgUnit::Inches => "in",
             SvgUnit::Pixels => {
-                return Err("publication SVG output requires physical mm or in dimensions".into());
+                return Err(corrplot_core::output::OutputValidationError::invalid_options(
+                    "publication SVG output requires physical mm or in dimensions",
+                ));
             }
         };
         let mut adapted = input.publication.clone();
@@ -1334,7 +1338,7 @@ impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
         let output = RenderOutput::Svg(
             adapted.svg_with_background(input.title, svg_options.background),
         );
-        output.validate_for(options).map_err(|error| error.to_string())?;
+        output.validate_for(options)?;
         Ok(output)
     }
 }
@@ -1363,6 +1367,9 @@ mod renderer_output_tests {
         let publication = Publication::load(config.to_str().unwrap()).unwrap();
         let options = OutputOptions::Png(corrplot_core::output::RasterOptions::new(320, 240));
         let input = PublicationRenderInput { publication: &publication, title: "raster" };
-        assert!(PublicationSvgRenderer.render(&input, &options).unwrap_err().contains("only SVG"));
+        assert_eq!(
+            PublicationSvgRenderer.render(&input, &options).unwrap_err().code,
+            "renderer.output.invalid_options"
+        );
     }
 }
