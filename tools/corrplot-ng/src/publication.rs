@@ -1,4 +1,4 @@
-use corrplot_core::output::{OutputOptions, PhysicalUnit, RenderOutput, Renderer, RgbaColor, SvgOptions};
+use corrplot_core::output::{OutputOptions, SvgUnit, RenderOutput, Renderer, RgbaColor, SvgOptions};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -754,8 +754,8 @@ impl Publication {
 
     pub fn svg_output_options(&self, title: &str) -> Result<OutputOptions, String> {
         let unit = match self.unit.as_str() {
-            "mm" => PhysicalUnit::Millimeters,
-            "in" => PhysicalUnit::Inches,
+            "mm" => SvgUnit::Millimeters,
+            "in" => SvgUnit::Inches,
             _ => return Err(format!("unsupported SVG physical unit '{}'", self.unit)),
         };
         let mut options = SvgOptions::new(self.width, self.height, unit);
@@ -1315,9 +1315,9 @@ impl Renderer<Publication> for PublicationSvgRenderer {
             return Err("publication SVG renderer supports only SVG output".into());
         };
         let unit = match svg_options.unit {
-            PhysicalUnit::Millimeters => "mm",
-            PhysicalUnit::Inches => "in",
-            PhysicalUnit::Pixels => {
+            SvgUnit::Millimeters => "mm",
+            SvgUnit::Inches => "in",
+            SvgUnit::Pixels => {
                 return Err("publication SVG output requires physical mm or in dimensions".into());
             }
         };
