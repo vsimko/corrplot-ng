@@ -14,6 +14,8 @@ CI generates a disposable R package with `prepare-r-package.R`, compiles it
 with the Rust stable toolchain, and installs it for the shared benchmark
 harness. Generated package files and Cargo build output are not committed.
 
+The generated binding pins extendr-api 0.9.0. The shared Rust consumers declare Rust/Cargo 1.78 as the tested minimum; CI verifies that toolchain in addition to the stable three-platform matrix.
+
 This remains an integration proof, not a production R-package migration. It
 demonstrates one compiled validation operation shared with the CLI and a
 Linux generated-package installation smoke test. CRAN readiness, oldest
