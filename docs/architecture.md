@@ -67,7 +67,7 @@ A language-neutral input contract for normalized matrix data. Language adapters 
 
 ### Scene-v1
 
-A language-neutral representation of plot meaning and renderer-neutral scene content. It is the interoperability boundary between producers and consumers. A producer and a renderer may be implemented in different languages and communicate through this contract; they do not need to link to one common native library.
+A language-neutral representation of plot meaning and renderer-neutral scene content. It is the interoperability boundary between producers and consumers. Producers and renderers may exchange this contract across language boundaries. However, for shared semantic operations in this project, each production consumer must call the same Rust core rather than maintain an independent implementation.
 
 Contract versions and compatibility rules belong to the contract specifications. Runtime and packaging choices belong to the individual implementations.
 
