@@ -1,0 +1,26 @@
+{
+  "capability_schema_version": 1,
+  "renderer": {
+    "id": "rust-core-scene",
+    "name": "Shared Rust typed-scene SVG and RGBA renderer",
+    "version": "0.1"
+  },
+  "scene_schema_versions": [1],
+  "output_formats": ["svg", "rgba"],
+  "matrix_kinds": ["correlation_plot", "general_matrix_plot"],
+  "cell_methods": ["circle", "square", "ellipse", "number", "shade", "color", "pie"],
+  "features": {
+    "row_labels": true,
+    "column_labels": true,
+    "plotmath_labels": false,
+    "missing_cells": true,
+    "cell_text_annotations": true,
+    "significance": false,
+    "confidence_intervals": false,
+    "legend": false,
+    "figure_text": false,
+    "accessible_metadata": false,
+    "cluster_regions": false
+  },
+  "negotiation_modes": ["strict"]
+}

@@ -132,7 +132,7 @@ impl RasterOptions {
         }
     }
 
-    fn validate(self) -> Result<(), OutputValidationError> {
+    pub(crate) fn validate(self) -> Result<(), OutputValidationError> {
         if self.width_px == 0 || self.height_px == 0 {
             return Err(OutputValidationError::invalid_options(
                 "raster width and height must be greater than zero",

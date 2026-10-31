@@ -1,4 +1,5 @@
 use corrplot_core::output::{OutputOptions, SvgUnit, RenderOutput, Renderer, RgbaColor, SvgOptions};
+use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneText, TextAnchor};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -752,6 +753,98 @@ impl Publication {
         out
     }
 
+    /// Build the renderer-neutral scene consumed by the direct RGBA backend.
+    ///
+    /// Geometry, visibility, colors, and glyph sizing use the same publication
+    /// inputs as scene-v1 serialization and the SVG renderer.
+    pub fn raster_scene(&self, title: &str) -> Scene {
+        let n = self.labels.len();
+        let cell_size = 64.0;
+        let left = 120.0;
+        let top = 76.0;
+        let width = left + n as f64 * cell_size + 24.0;
+        let height = top + n as f64 * cell_size + 32.0;
+        let color = |hex: &str| -> RgbaColor {
+            let value = hex.strip_prefix('#').unwrap_or(hex);
+            RgbaColor {
+                red: u8::from_str_radix(&value[0..2], 16).unwrap_or(0),
+                green: u8::from_str_radix(&value[2..4], 16).unwrap_or(0),
+                blue: u8::from_str_radix(&value[4..6], 16).unwrap_or(0),
+                alpha: 255,
+            }
+        };
+        let black = color("#000000");
+        let white = color("#ffffff");
+        let grid = color("#e0e0e0");
+        let mut texts = Vec::new();
+        texts.push(SceneText {
+            text: title.to_owned(), x: 120.0, y: 28.0,
+            font_size: self.base_size * 1.5, color: black, anchor: TextAnchor::Start,
+        });
+        for (index, label) in self.labels.iter().enumerate() {
+            let center_y = top + index as f64 * cell_size + cell_size / 2.0;
+            let center_x = left + index as f64 * cell_size + cell_size / 2.0;
+            texts.push(SceneText {
+                text: label.clone(), x: left - 12.0, y: center_y,
+                font_size: self.base_size, color: black, anchor: TextAnchor::End,
+            });
+            texts.push(SceneText {
+                text: label.clone(), x: center_x, y: top - 12.0,
+                font_size: self.base_size, color: black, anchor: TextAnchor::Middle,
+            });
+        }
+        let mut cells = Vec::with_capacity(n * n);
+        for row in 0..n {
+            for column in 0..n {
+                let value = self.values[row][column];
+                let visible = self.display == "full"
+                    || (self.display == "upper" && row <= column)
+                    || (self.display == "lower" && row >= column);
+                let cell_color = match value {
+                    None => color(&self.missing),
+                    Some(value) if self.kind == "general_numeric" => color(&general_numeric_color(
+                        (value + self.matrix_scale.intercept) * self.matrix_scale.zoom,
+                        self.matrix_scale.mapping,
+                        &self.negative, &self.neutral, &self.positive,
+                    )),
+                    Some(value) if value > 0.0 => color(&self.positive),
+                    Some(value) if value < 0.0 => color(&self.negative),
+                    _ => color(&self.neutral),
+                };
+                let x = left + column as f64 * cell_size;
+                let y = top + row as f64 * cell_size;
+                let center_x = x + cell_size / 2.0;
+                let center_y = y + cell_size / 2.0;
+                let glyph = match value {
+                    Some(value) if self.method != "number" => {
+                        let normalized = if self.kind == "general_numeric" {
+                            (value + self.matrix_scale.intercept) * self.matrix_scale.zoom
+                        } else {
+                            value.abs()
+                        };
+                        Some(CellGlyph::Circle {
+                            radius: normalized.abs().min(1.0) * 27.0 + 2.0,
+                            color: cell_color,
+                        })
+                    }
+                    _ => None,
+                };
+                cells.push(SceneCell {
+                    x, y, size: cell_size, visible, fill: cell_color, stroke: grid, glyph,
+                });
+                if let Some(value) = value {
+                    if visible && (self.method == "number" || self.show_values) {
+                        texts.push(SceneText {
+                            text: format!("{value}"), x: center_x, y: center_y - self.base_size / 2.0,
+                            font_size: self.base_size, color: white, anchor: TextAnchor::Middle,
+                        });
+                    }
+                }
+            }
+        }
+        Scene { width, height, cells, texts }
+    }
+
     pub fn svg_output_options(&self) -> Result<OutputOptions, String> {
         let unit = match self.unit.as_str() {
             "mm" => SvgUnit::Millimeters,
@@ -1304,6 +1397,22 @@ pub struct PublicationRenderInput<'a> {
     pub title: &'a str,
 }
 
+pub struct PublicationRgbaRenderer;
+
+impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationRgbaRenderer {
+    type Error = corrplot_core::output::OutputValidationError;
+
+    fn render(
+        &self,
+        input: &PublicationRenderInput<'a>,
+        options: &OutputOptions,
+    ) -> Result<RenderOutput, Self::Error> {
+        options.validate()?;
+        let scene = input.publication.raster_scene(input.title);
+        RgbaRenderer.render(&scene, options)
+    }
+}
+
 pub struct PublicationSvgRenderer;
 
 impl<'a> Renderer<PublicationRenderInput<'a>> for PublicationSvgRenderer {
@@ -1358,6 +1467,20 @@ mod renderer_output_tests {
         let options = publication.svg_output_options().unwrap();
         let actual = PublicationSvgRenderer.render(&input, &options).unwrap();
         assert_eq!(actual, RenderOutput::Svg(expected));
+    }
+
+    #[test]
+    fn publication_rgba_renderer_renders_the_prepared_scene_directly() {
+        let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../prototypes/publication-config-v1/examples/basic.json");
+        let publication = Publication::load(config.to_str().unwrap()).unwrap();
+        let input = PublicationRenderInput { publication: &publication, title: "raster test" };
+        let options = OutputOptions::Rgba(corrplot_core::output::RasterOptions::new(640, 480));
+        let output = PublicationRgbaRenderer.render(&input, &options).unwrap();
+        let RenderOutput::Rgba(buffer) = output else { panic!("expected RGBA output") };
+        assert_eq!((buffer.width_px, buffer.height_px), (640, 480));
+        assert_eq!(buffer.stride_bytes, 640 * 4);
+        assert!(buffer.pixels.chunks_exact(4).any(|pixel| pixel != [255, 255, 255, 255]));
     }
 
     #[test]
