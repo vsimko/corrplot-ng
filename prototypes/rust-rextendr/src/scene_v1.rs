@@ -29,13 +29,19 @@ fn json_number(value: f64) -> String {
     if out == "-0" { "0".to_string() } else { out }
 }
 
-/// Build the renderer-neutral scene-v1 JSON from an R character vector and matrix.
+/// Build renderer-neutral scene-v1 JSON from an R character vector and matrix.
+/// Invalid dimensions or matrix values raise an R error, matching the R and
+/// Rcpp implementations rather than returning an ambiguous empty string.
 /// @export
 #[extendr]
-fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str) -> String {
+fn build_scene_json_rust(
+    labels: Strings,
+    matrix: RMatrix<f64>,
+    annotation: &str,
+) -> std::result::Result<String, String> {
     let n = labels.len();
     if n == 0 || matrix.nrows() != n || matrix.ncols() != n {
-        return String::new();
+        return Err("labels and matrix dimensions must agree and be non-empty".to_string());
     }
 
     let cell = 84.0_f64;
@@ -68,7 +74,7 @@ fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str
         for column in 0..n {
             let value = matrix[[row, column]];
             if !value.is_nan() && (!value.is_finite() || value < -1.0 || value > 1.0) {
-                return String::new();
+                return Err("matrix values must be finite, NA, or between -1 and 1".to_string());
             }
             if !first { out.push(','); }
             first = false;
@@ -93,7 +99,7 @@ fn build_scene_json_rust(labels: Strings, matrix: RMatrix<f64>, annotation: &str
     out.push_str("],\"annotation\":\"");
     out.push_str(&json_escape(annotation));
     out.push_str("\",\"style\":{\"positive_color\":\"#2166ac\",\"negative_color\":\"#b2182b\",\"zero_color\":\"#bdbdbd\",\"missing_fill\":\"#f2f2f2\",\"grid_color\":\"#e0e0e0\"}}");
-    out
+    Ok(out)
 }
 
 #[extendr]
