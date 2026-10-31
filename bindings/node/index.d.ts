@@ -72,10 +72,30 @@ export interface SvgOptionsInput {
   background: RgbaColorInput;
 }
 
+export interface RgbaOptionsInput {
+  widthPx: number;
+  heightPx: number;
+  dpi?: number;
+  background: RgbaColorInput;
+}
+
+export interface RgbaOutput {
+  widthPx: number;
+  heightPx: number;
+  strideBytes: number;
+  pixelFormat: "rgba8";
+  alphaMode: "straight";
+  colorSpace: "srgb";
+  dpi?: number;
+  /** Owned pixel bytes; returned as a Node Buffer (a Uint8Array subclass). */
+  pixels: Uint8Array;
+}
+
 export class CorrplotError extends Error {
   readonly diagnostic: DiagnosticV1;
 }
 
 export function validateMatrix(input: MatrixInput): true;
 export function renderSceneSvg(scene: SceneInput, options: SvgOptionsInput): string;
+export function renderSceneRgba(scene: SceneInput, options: RgbaOptionsInput): RgbaOutput;
 export function getRendererCapabilities(): unknown;
