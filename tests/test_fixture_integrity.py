@@ -20,6 +20,25 @@ R_LEGACY_VISUAL_PATH = (
     / "fixtures"
     / "legacy-visual-cases.json"
 )
+REPOSITORY_ROOT = Path(__file__).parent.parent
+PACKAGE_FIXTURE_COPIES = (
+    (
+        "prototypes/normalized-matrix-v1/fixtures/valid-cases.json",
+        "implementations/r/inst/extdata/normalized-matrix-v1/valid-cases.json",
+    ),
+    (
+        "prototypes/normalized-matrix-v1/fixtures/invalid-cases.json",
+        "implementations/r/inst/extdata/normalized-matrix-v1/invalid-cases.json",
+    ),
+    (
+        "tests/fixtures/general-matrix-cases.json",
+        "implementations/r/inst/extdata/general-matrix-cases.json",
+    ),
+    (
+        "tests/legacy-visual/cases.json",
+        "implementations/r/tests/testthat/fixtures/legacy-visual-cases.json",
+    ),
+)
 EXPECTED_METHODS = {
     "circle",
     "square",
@@ -37,12 +56,30 @@ class FixtureIntegrityTests(unittest.TestCase):
         with FIXTURE_PATH.open(encoding="utf-8") as fixture_file:
             cls.data = json.load(fixture_file)
 
-    def test_r_package_manifest_mirrors_shared_legacy_visual_manifest(self):
-        with LEGACY_VISUAL_PATH.open(encoding="utf-8") as source_file:
-            source = json.load(source_file)
-        with R_LEGACY_VISUAL_PATH.open(encoding="utf-8") as r_file:
-            r_manifest = json.load(r_file)
-        self.assertEqual(r_manifest, source)
+    def test_r_package_fixture_copies_match_canonical_sources(self):
+        for canonical, packaged in PACKAGE_FIXTURE_COPIES:
+            with self.subTest(canonical=canonical, packaged=packaged):
+                self.assertEqual(
+                    (REPOSITORY_ROOT / canonical).read_bytes(),
+                    (REPOSITORY_ROOT / packaged).read_bytes(),
+                    f"R package fixture copy is stale: {packaged}; update it from {canonical}",
+                )
+
+    def test_renderer_capability_manifests_are_intentionally_backend_specific(self):
+        python_path = REPOSITORY_ROOT / "prototypes/shared-svg/renderer-capabilities.json"
+        cli_path = REPOSITORY_ROOT / "tools/corrplot-ng/renderer-capabilities.json"
+        with python_path.open(encoding="utf-8") as stream:
+            python_manifest = json.load(stream)
+        with cli_path.open(encoding="utf-8") as stream:
+            cli_manifest = json.load(stream)
+
+        self.assertEqual(python_manifest["capability_schema_version"], 1)
+        self.assertEqual(cli_manifest["capability_schema_version"], 1)
+        self.assertEqual(python_manifest["renderer"]["id"], "python-svg-prototype")
+        self.assertEqual(cli_manifest["renderer"]["id"], "rust-cli-svg")
+        self.assertNotEqual(python_manifest["renderer"]["id"], cli_manifest["renderer"]["id"])
+        self.assertNotEqual(python_manifest["cell_methods"], cli_manifest["cell_methods"])
+        self.assertNotEqual(python_manifest["features"], cli_manifest["features"])
 
     def test_schema_version_is_supported(self):
         self.assertEqual(self.data.get("schema_version"), 1)
