@@ -376,10 +376,11 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "variables", "row_start", "row_end", "column_start", "column_end", "x", "y", "width", "height", "color", "line_width"],
+        "required": ["id", "variables", "source_indices", "row_start", "row_end", "column_start", "column_end", "x", "y", "width", "height", "color", "line_width"],
         "properties": {
           "id": {"type": "string", "minLength": 1},
           "variables": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "source_indices": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
           "row_start": {"type": "integer", "minimum": 0},
           "row_end": {"type": "integer", "minimum": 0},
           "column_start": {"type": "integer", "minimum": 0},
