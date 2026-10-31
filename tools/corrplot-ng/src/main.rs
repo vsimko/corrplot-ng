@@ -90,7 +90,13 @@ fn fail(message: impl AsRef<str>, code: i32) -> ! {
 
 fn diagnostic_json(message: &str) -> String {
     let lower = message.to_lowercase();
-    let (code, stage, path) = if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
+    let (code, stage, path) = if lower.starts_with("renderer.output.invalid_options:") {
+        ("renderer.output.invalid_options", "renderer", Some("output"))
+    } else if lower.starts_with("renderer.output.invalid_buffer:") {
+        ("renderer.output.invalid_buffer", "export", Some("output"))
+    } else if lower.starts_with("renderer.output.format_mismatch:") {
+        ("renderer.output.format_mismatch", "export", Some("output"))
+    } else if lower.contains("non-finite") || lower.contains("must be finite") || lower.contains("nan") {
         ("input.matrix.non_finite_value", "input", Some("matrix"))
     } else if lower.contains("square") || lower.contains("dimensions") || lower.contains("matrix size") {
         ("input.matrix.invalid_shape", "input", Some("matrix"))
@@ -481,7 +487,7 @@ fn run() -> Result<(), String> {
                                     title: &opts.title,
                                 },
                                 &publication.svg_output_options()?,
-                            )? {
+                            ).map_err(|error| error.to_string())? {
                                 RenderOutput::Svg(svg) => svg,
                                 _ => return Err("publication SVG renderer returned a non-SVG output".into()),
                             },
