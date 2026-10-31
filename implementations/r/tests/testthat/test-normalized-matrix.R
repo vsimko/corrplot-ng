@@ -123,7 +123,7 @@ test_that("R adapter output serializes to normalized-matrix v1 JSON", {
   expect_identical(decoded$labels, list("A", "B"))
   expect_null(decoded$values[[1]][[2]])
   expect_identical(decoded$values[[2]][[1]], 0)
-  expect_identical(decoded$source_indices, list(0L, 1L))
+  expect_equal(decoded$source_indices, list(0, 1))
 })
 
 test_that("R adapter output matches shared normalized-matrix v1 fixtures", {
