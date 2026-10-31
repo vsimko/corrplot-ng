@@ -43,6 +43,8 @@ def scene_error_diagnostic(message: str) -> Diagnostic:
         return Diagnostic("input.matrix.invalid_label", "error", "input", message, path="labels")
     if "finite" in lowered or "infinite" in lowered or "nan" in lowered:
         return Diagnostic("input.matrix.non_finite_value", "error", "input", message, path="matrix")
+    if "numeric" in lowered or "must be a number" in lowered or "non-numeric" in lowered:
+        return Diagnostic("input.matrix.non_numeric", "error", "input", message, path="matrix")
     if "unsupported cell method" in lowered:
         return Diagnostic("renderer.unsupported_feature", "error", "renderer", message, path="glyph_method")
     if "scene" in lowered or "annotation" in lowered or "significance" in lowered:
