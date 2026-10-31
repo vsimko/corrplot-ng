@@ -16,6 +16,28 @@ This directory is the root of the provisional R package.
 
 See [the adapter design](../../docs/legacy-r-adapter.md) for argument mapping, current limitations, and the migration sequence.
 
+## Graphics device ownership and composition
+
+The legacy path is a thin delegation to `corrplot::corrplot`. The caller owns
+the active graphics device: `corrplot_ng()` does not open, select, or close
+devices. With the default `add = FALSE`, the upstream function creates its
+plot on the current device. With `add = TRUE`, it draws into the current
+plot window and preserves that window's user coordinates so base-graphics
+layers can be composed before or after the corrplot.
+
+The upstream implementation temporarily changes `par(mar, bg)` and restores
+those parameters with `on.exit()` on both successful and failed rendering.
+The adapter deliberately does not snapshot and restore every graphics
+parameter: doing so would restore plot coordinates and invalidate the
+existing plot window used by `add = TRUE`. The adapter also does not call
+`dev.off()`; closing a device is always the caller's responsibility.
+
+The experimental `engine = "scene"` path only prepares a scene-v1 object and
+does not access a graphics device. Regression tests in
+`tests/testthat/test-graphics-device.R` cover current-device ownership,
+`add = TRUE` composition, restoration after an error, and the scene path's
+absence of graphics side effects.
+
 Run checks from this directory:
 
 ```sh
