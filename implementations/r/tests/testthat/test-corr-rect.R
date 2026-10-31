@@ -143,6 +143,7 @@ test_that("corrRect.hclust maps leaf-order clusters to shared region declaration
       unlist(lapply(cluster_data$requests, function(region) region$variables)),
       rownames(corr)[tree$order]
     )
+    graphics::plot(1:4, 1:4, type = "n")
     expect_no_error(corrRect.hclust(corr, k = 2, col = "blue", method = "complete"))
     expect_no_error(corrRect.hclust(corr, k = 1))
   })
