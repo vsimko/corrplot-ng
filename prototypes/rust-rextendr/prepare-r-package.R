@@ -122,7 +122,13 @@ if (strip_debug) {
     message("Skipping linker debug stripping on ", system_name,
             "; no validated linker flag is configured")
   } else {
-    makevars <- c(makevars, paste("PKG_LIBS +=", strip_flag))
+    pkg_libs_idx <- grep("^PKG_LIBS[[:space:]]*=", makevars)
+    if (length(pkg_libs_idx) != 1L) {
+      stop("Could not identify the generated PKG_LIBS assignment in ", makevars_file)
+    }
+    # Extend the existing portable assignment rather than using GNU make's
+    # non-portable += operator, which triggers R CMD check warnings.
+    makevars[pkg_libs_idx] <- paste(makevars[pkg_libs_idx], strip_flag)
     message("Experimental linker debug stripping enabled: ", strip_flag)
   }
 }
