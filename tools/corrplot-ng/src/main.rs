@@ -650,22 +650,28 @@ fn process_batch(manifest_path: &str, output_dir: &str, incremental: bool) -> Re
         let output_path = Path::new(output_dir).join(format!("{item_index:03}-{safe_stem}.svg"));
         let result = (|| {
             let config_string = config_path.to_string_lossy();
-            let mut dependencies = vec![config_path.clone()];
-            dependencies.extend(publication::Publication::input_files(&config_string)?);
-            let key = cache::fingerprint(
-                &dependencies,
-                &["publication-config-v1", VERSION, RENDERER_CACHE_VERSION, "svg", stem],
-            )?;
-            if incremental && cache::is_fresh(&output_path, &key) {
-                eprintln!("unchanged: {}", output_path.display());
-                return Ok::<(), String>(());
+            let key = if incremental {
+                let mut dependencies = vec![config_path.clone()];
+                dependencies.extend(publication::Publication::input_files(&config_string)?);
+                Some(cache::fingerprint(
+                    &dependencies,
+                    &["publication-config-v1", VERSION, RENDERER_CACHE_VERSION, "svg", stem],
+                )?)
+            } else {
+                None
+            };
+            if let Some(key) = key.as_deref() {
+                if cache::is_fresh(&output_path, key) {
+                    eprintln!("unchanged: {}", output_path.display());
+                    return Ok::<(), String>(());
+                }
             }
             let publication = publication::Publication::load(&config_string)?;
             let svg = publication.svg(stem);
             cache::write_atomic(&output_path, svg.as_bytes())
                 .map_err(|error| format!("cannot write output '{}': {error}", output_path.display()))?;
-            if incremental {
-                cache::store_fingerprint(&output_path, &key)?;
+            if let Some(key) = key.as_deref() {
+                cache::store_fingerprint(&output_path, key)?;
             }
             Ok::<(), String>(())
         })();
