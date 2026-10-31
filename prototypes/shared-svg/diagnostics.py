@@ -50,7 +50,7 @@ def scene_error_diagnostic(message: str) -> Diagnostic:
     if "numeric" in lowered or "must be a number" in lowered or "non-numeric" in lowered:
         return Diagnostic("input.matrix.non_numeric", "error", "input", message, path="matrix")
     if "unsupported cell method" in lowered:
-        return Diagnostic("renderer.unsupported_feature", "error", "renderer", message, path="glyph_method")
+        return Diagnostic("renderer.unsupported_feature", "error", "renderer", message, path="method")
     if "scene" in lowered or "annotation" in lowered or "significance" in lowered or "cluster region" in lowered or "cluster_regions" in lowered:
         path = "cluster_regions" if "cluster region" in lowered or "cluster_regions" in lowered else None
         return Diagnostic("scene.invalid_content", "error", "scene", message, path=path)
