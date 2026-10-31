@@ -72,7 +72,7 @@ if (profile_header == 0L) {
     "",
     "[profile.release]",
     'opt-level = "z"',
-    "lto = true",
+    "lto = false",
     "codegen-units = 1",
     'strip = "debuginfo"'
   )
