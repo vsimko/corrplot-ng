@@ -132,8 +132,8 @@ pub fn validate_matrix_native(input: MatrixInput) -> ValidationResult {
             return ValidationResult {
                 valid: false,
                 diagnostic: Some(diagnostic(
-                    "input.matrix.invalid_kind",
-                    "input",
+                    "configuration.invalid_field",
+                    "configuration",
                     format!("unsupported matrix kind '{other}'"),
                     Some("kind"),
                 )),
