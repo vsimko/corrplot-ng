@@ -31,9 +31,9 @@ jobs:
         run: |
           test "$(cargo tree --manifest-path tools/corrplot-ng/Cargo.toml --edges normal | wc -l)" -eq 1
       - name: Test
-        run: cargo test --locked --manifest-path tools/corrplot-ng/Cargo.toml
+        run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Build release executable
-        run: cargo build --locked --release --manifest-path tools/corrplot-ng/Cargo.toml
+        run: cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
 
   performance-comparison:
     name: Compare CLI performance with PR base
