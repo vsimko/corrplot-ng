@@ -1,4 +1,6 @@
-//! Shared matrix validation used by the native CLI and the R/rextendr adapter.
+//! Shared matrix validation and renderer output contracts used by native and WebAssembly consumers.
+
+pub mod output;
 
 use std::collections::HashSet;
 use std::fmt;
