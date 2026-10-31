@@ -29,7 +29,7 @@ flowchart TB
     end
 
     subgraph R[R implementation]
-      RLEG[Legacy corrplot compatibility path]
+      RLEG[Legacy corrplot API / compatibility path]
       RNORM[Normalized-matrix adapter]
       RSCENE[Experimental scene adapter]
     end
@@ -40,7 +40,6 @@ flowchart TB
       SPIKES[Rust/rextendr and C++/Rcpp evaluation spikes]
     end
 
-    RLEG -->|legacy behavior| R
     RNORM --> NM
     RSCENE --> SC
     PY --> SC
