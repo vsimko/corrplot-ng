@@ -86,6 +86,8 @@ jobs:
         run: R CMD INSTALL /tmp/corrplot-legacy.tar.gz
       - name: Install JSON bridge dependency
         run: Rscript -e 'install.packages("jsonlite", repos = "https://cloud.r-project.org")'
+      - name: Verify R scene-v1 consumer
+        run: Rscript prototypes/shared-svg/test_r_scene_consumer.R
       - name: Verify legacy semantic oracle and export scene input
         run: Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R
       - name: Set up Python
