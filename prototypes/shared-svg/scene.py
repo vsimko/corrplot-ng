@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 from math import ceil, cos, isfinite, radians, sin
+import textwrap
 
 LABEL_FONT_SIZE = 13
 LABEL_CHAR_WIDTH = LABEL_FONT_SIZE * 0.6  # Backwards-compatible estimate used by the legacy bridge.
@@ -103,6 +104,70 @@ def _cell_encoding(cell: dict[str, Any], method: str, style: dict[str, str]) -> 
     return encoding
 
 
+
+_FIGURE_TEXT_ORDER = ("title", "subtitle", "caption", "footnote")
+_FIGURE_TEXT_DEFAULTS = {
+    "title": {"alignment": "center", "font_size": 20, "font_weight": "bold"},
+    "subtitle": {"alignment": "center", "font_size": 14, "font_weight": "normal"},
+    "caption": {"alignment": "left", "font_size": 11, "font_weight": "normal"},
+    "footnote": {"alignment": "left", "font_size": 10, "font_weight": "normal"},
+}
+
+
+def _prepare_figure_text(entries: Any, width: float, default_family: str) -> list[dict[str, Any]]:
+    if not isinstance(entries, list):
+        raise ValueError("figure_text must be a list of role objects")
+    prepared = []
+    seen = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise ValueError(f"figure_text[{index}] must be an object")
+        allowed = {"role", "text", "alignment", "font_family", "font_size",
+                   "font_weight", "font_style", "spacing_after"}
+        unknown = set(entry) - allowed
+        if unknown:
+            raise ValueError(f"figure_text[{index}] has unknown fields: {', '.join(sorted(unknown))}")
+        role = entry.get("role")
+        if not isinstance(role, str) or role not in _FIGURE_TEXT_ORDER:
+            raise ValueError(f"figure_text[{index}].role must be title, subtitle, caption, or footnote")
+        if role in seen:
+            raise ValueError(f"figure_text contains duplicate role {role!r}")
+        seen.add(role)
+        text = entry.get("text")
+        if not isinstance(text, str):
+            raise ValueError(f"figure_text[{index}].text must be a string")
+        if not text:
+            continue
+        defaults = _FIGURE_TEXT_DEFAULTS[role]
+        alignment = entry.get("alignment", defaults["alignment"])
+        if alignment not in ("left", "center", "right"):
+            raise ValueError(f"figure_text[{index}].alignment must be left, center, or right")
+        family = entry.get("font_family", default_family)
+        if not isinstance(family, str) or not family.strip():
+            raise ValueError(f"figure_text[{index}].font_family must be a non-empty string")
+        size = _number(entry.get("font_size", defaults["font_size"]),
+                       f"figure_text[{index}].font_size", 6, 48)
+        weight = entry.get("font_weight", defaults["font_weight"])
+        if weight not in ("normal", "bold"):
+            raise ValueError(f"figure_text[{index}].font_weight must be normal or bold")
+        style = entry.get("font_style", "normal")
+        if style not in ("normal", "italic"):
+            raise ValueError(f"figure_text[{index}].font_style must be normal or italic")
+        spacing = _number(entry.get("spacing_after", 6), f"figure_text[{index}].spacing_after", 0, 100)
+        max_chars = max(1, int((width - 48) / (size * 0.6)))
+        lines = []
+        for paragraph in text.split("\n"):
+            lines.extend(textwrap.wrap(paragraph, width=max_chars, break_long_words=True,
+                                       break_on_hyphens=False) or [""])
+        prepared.append({
+            "role": role, "text": text, "lines": lines, "alignment": alignment,
+            "font_family": family, "font_size": size, "font_weight": weight,
+            "font_style": style, "line_height": size * 1.25,
+            "spacing_after": spacing,
+        })
+    return sorted(prepared, key=lambda item: _FIGURE_TEXT_ORDER.index(item["role"]))
+
+
 def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     """Validate a correlation-plot config and return a deterministic plot scene."""
     if not isinstance(config, dict):
@@ -180,6 +245,28 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
     top = max(76, int((max_label_width if orientation == "vertical" else horizontal_lines * font_size * 1.1) + 32))
     width = max(left + len(labels) * cell + 24, _number(layout.get("width", left + len(labels) * cell + 24), "width", 120))
     height = max(top + len(labels) * cell + 64, _number(layout.get("height", top + len(labels) * cell + 64), "height", 120))
+
+    figure_text = _prepare_figure_text(config.get("figure_text", []), width, font_family)
+    top_roles = [item for item in figure_text if item["role"] in ("title", "subtitle")]
+    bottom_roles = [item for item in figure_text if item["role"] in ("caption", "footnote")]
+    top_cursor = 12.0
+    for item in top_roles:
+        item["x"] = {"left": 24.0, "center": width / 2, "right": width - 24.0}[item["alignment"]]
+        item["y"] = top_cursor + item["font_size"]
+        top_cursor += len(item["lines"]) * item["line_height"] + item["spacing_after"]
+    top_extra = top_cursor + 8.0 if top_roles else 0.0
+    top += top_extra
+    plot_bottom = top + len(labels) * cell
+    bottom_cursor = plot_bottom + 24.0
+    for item in bottom_roles:
+        item["x"] = {"left": 24.0, "center": width / 2, "right": width - 24.0}[item["alignment"]]
+        item["y"] = bottom_cursor + item["font_size"]
+        bottom_cursor += len(item["lines"]) * item["line_height"] + item["spacing_after"]
+    if bottom_roles:
+        height = max(height + top_extra + bottom_cursor - (plot_bottom + 24.0),
+                     bottom_cursor + 16.0)
+    elif top_roles:
+        height += top_extra
 
     matrix_values = matrix
     p_values = config.get("p_values")
@@ -412,6 +499,7 @@ def build_scene(config: dict[str, Any]) -> dict[str, Any]:
         "annotation": annotation,
         "glyph_method": method, "text_annotations": text_annotations,
         "title": title, "description": description,
+        **({"figure_text": figure_text} if figure_text else {}),
         "style": {
             "positive_color": "#2166ac", "negative_color": "#b2182b",
             "zero_color": "#bdbdbd", "missing_fill": "#f2f2f2",

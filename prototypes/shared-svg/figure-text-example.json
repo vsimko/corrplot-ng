@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "labels": ["Treatment A", "Treatment B", "Control"],
+  "matrix": [
+    [1.0, 0.72, -0.18],
+    [0.72, 1.0, 0.31],
+    [-0.18, 0.31, 1.0]
+  ],
+  "title": "Accessible correlation figure",
+  "description": "Correlation matrix for three treatment groups. Positive values are blue and negative values are red.",
+  "figure_text": [
+    {
+      "role": "title",
+      "text": "Treatment response correlations",
+      "font_size": 22,
+      "font_weight": "bold"
+    },
+    {
+      "role": "subtitle",
+      "text": "Pearson correlation coefficients across the study groups",
+      "font_size": 14
+    },
+    {
+      "role": "caption",
+      "text": "Figure 2. Pairwise correlations among the treatment and control groups.",
+      "font_size": 11
+    },
+    {
+      "role": "footnote",
+      "text": "Synthetic example data. Missing values, when present, are displayed as NA.",
+      "font_size": 10,
+      "font_style": "italic"
+    }
+  ]
+}

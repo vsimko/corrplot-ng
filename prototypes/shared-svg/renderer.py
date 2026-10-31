@@ -227,6 +227,19 @@ def render_scene_svg(scene: dict[str, Any]) -> str:
 
     if scene["annotation"]:
         parts.append(f'<text x="{scene["cells"][0]["x"]:g}" y="{height - 22:g}" font-family="{family}" font-size="{min(font_size, 12):g}" fill="#333333">{html.escape(scene["annotation"])}</text>')
+    for block in scene.get("figure_text", []):
+        family = html.escape(block["font_family"], quote=True)
+        anchor = {"left": "start", "center": "middle", "right": "end"}[block["alignment"]]
+        spans = "".join(
+            f'<tspan x="{block["x"]:g}" dy="{0 if index == 0 else block["line_height"]:g}">{html.escape(line, quote=False)}</tspan>'
+            for index, line in enumerate(block["lines"])
+        )
+        parts.append(
+            f'<text x="{block["x"]:g}" y="{block["y"]:g}" text-anchor="{anchor}" '
+            f'font-family="{family}" font-size="{block["font_size"]:g}" '
+            f'font-weight="{block["font_weight"]}" font-style="{block["font_style"]}">{spans}</text>'
+        )
+
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
