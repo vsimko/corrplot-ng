@@ -110,3 +110,17 @@ test_that("invalid inputs and cor.test failures have actionable errors", {
   expect_error(cor.mtest(mat, method = "unsupported"),
     "cor.test failed for features 'alpha' and 'beta'")
 })
+
+test_that("ordinary Pearson results match the pinned corrplot 0.95 helper", {
+  skip_if_not("cor.mtest" %in% getNamespaceExports("corrplot"))
+  mat <- cbind(
+    A = c(1, 2, 4, 3, 7, 6, 8, 9),
+    B = c(2, 1, 3, 5, 4, 8, 7, 10),
+    C = c(8, 7, 5, 6, 2, 3, 1, 0)
+  )
+  actual <- cor.mtest(mat, method = "pearson", conf.level = 0.9)
+  reference <- corrplot::cor.mtest(mat, method = "pearson", conf.level = 0.9)
+  expect_equal(actual$p, reference$p)
+  expect_equal(actual$lowCI, reference$lowCI)
+  expect_equal(actual$uppCI, reference$uppCI)
+})
