@@ -804,6 +804,7 @@ mod tests {
         let (successes, diagnostics) = process_batch(
             manifest.to_str().unwrap(),
             output_dir.to_str().unwrap(),
+            false,
         ).unwrap();
 
         assert_eq!(successes.len(), 1);
