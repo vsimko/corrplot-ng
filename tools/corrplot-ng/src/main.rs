@@ -691,6 +691,33 @@ mod tests {
     }
 
     #[test]
+    fn batch_render_keeps_successes_and_reports_each_independent_failure() {
+        let temp = env::temp_dir().join(format!("corrplot-ng-batch-{}", process::id()));
+        let _ = fs::remove_dir_all(&temp);
+        fs::create_dir_all(&temp).unwrap();
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let valid_config = repo_root.join("prototypes/publication-config-v1/examples/basic.json");
+        let manifest = temp.join("manifest.txt");
+        fs::write(
+            &manifest,
+            format!("{}\nmissing-one.json\nmissing-two.json\n", valid_config.display()),
+        ).unwrap();
+        let output_dir = temp.join("out");
+
+        let (successes, diagnostics) = process_batch(
+            manifest.to_str().unwrap(),
+            output_dir.to_str().unwrap(),
+        ).unwrap();
+
+        assert_eq!(successes.len(), 1);
+        assert_eq!(diagnostics.len(), 2);
+        assert!(diagnostics[0].0.contains("\"code\":\"configuration.invalid_field\""));
+        assert!(diagnostics[0].0.contains("\"manifest_index\":2"));
+        assert!(output_dir.join("001-basic.svg").exists());
+        fs::remove_dir_all(&temp).unwrap();
+    }
+
+    #[test]
     fn parses_square_correlation_matrix() {
         let m = parse_matrix(SAMPLE, Kind::Correlation).unwrap();
         assert_eq!(m.labels, vec!["alpha", "beta"]);
