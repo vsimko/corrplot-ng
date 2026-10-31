@@ -489,7 +489,7 @@ fn run() -> Result<(), String> {
             }
             if let Some(config_path) = opts.config.as_deref() {
                 let destination = match opts.format {
-                    Format::Svg => opts.output.clone().or(Some(publication::Publication::configured_output_path(config_path)?)),
+                    Format::Svg => opts.output.clone().or(Some(publication::Publication::configured_output_path(config_path)?.to_string_lossy().into_owned())),
                     Format::SceneJson | Format::NormalizedJson => opts.output.clone(),
                 };
                 let incremental_key = if opts.incremental {
