@@ -31,7 +31,7 @@ if not libraries:
 system = platform.system()
 if system == "Darwin":
     section_commands = [["size", "-m"]]
-    symbol_commands = [["nm", "-S", "-s", "-C"]]
+    symbol_commands = [["nm", "-S", "-size-sort", "-C"]]
 elif system == "Windows":
     section_commands = [["llvm-objdump", "-h"], ["objdump", "-h"]]
     symbol_commands = [
