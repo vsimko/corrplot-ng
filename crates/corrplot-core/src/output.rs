@@ -206,7 +206,7 @@ pub enum ColorSpace {
 ///
 /// Rows may include padding. stride_bytes is the distance between row starts;
 /// pixels must contain exactly stride_bytes * height_px bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RgbaBuffer {
     pub width_px: u32,
     pub height_px: u32,
@@ -254,7 +254,7 @@ impl RgbaBuffer {
 }
 
 /// Renderer output. Pixel buffers and encoded bytes are owned by the caller.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum RenderOutput {
     Svg(String),
     Png(Vec<u8>),
