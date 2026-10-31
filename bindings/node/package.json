@@ -7,11 +7,11 @@
   "files": ["index.js", "index.d.ts", "index.node", "README.md"],
   "scripts": {
     "build": "node scripts/build-native.mjs",
-    "test": "npm run build && node --test",
+    "test": "npm run build && node --test && node scripts/test-pack.mjs",
     "prepack": "npm run build"
   },
   "engines": {
-    "node": ">=24"
+    "node": "^22 || ^24 || ^26"
   },
   "license": "MIT"
 }
