@@ -197,9 +197,9 @@ pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: c
     if !header[0].trim().is_empty() && header[0].trim() != "label" {
         return Err("first header cell must be empty or 'label'".into());
     }
-    let labels: Vec<String> = header[1..].iter().map(|s| s.trim().to_string()).collect();
+    let labels: Vec<String> = header[1..].to_vec();
     let n = labels.len();
-    if labels.iter().any(|s| s.is_empty()) { return Err("column labels must not be empty".into()); }
+    if labels.iter().any(|s| s.trim().is_empty()) { return Err("column labels must not be empty".into()); }
     let mut seen = HashSet::new();
     for label in &labels {
         if !seen.insert(label) { return Err(format!("duplicate column label '{label}'")); }
@@ -213,7 +213,8 @@ pub(crate) fn parse_matrix_with_delimiter(source: &str, kind: Kind, delimiter: c
         if record.len() != n + 1 {
             return Err(format!("row {} has {} values; expected {n}", r + 1, record.len().saturating_sub(1)));
         }
-        let label = record[0].trim();
+        let label = record[0].as_str();
+        if label.trim().is_empty() { return Err(format!("row label at row {} must not be empty", r + 1)); }
         if label != labels[r] { return Err(format!("row label '{}' at row {} does not match column label '{}'", label, r + 1, labels[r])); }
         if !row_seen.insert(label) { return Err(format!("duplicate row label '{label}'")); }
         let mut row = Vec::with_capacity(n);
