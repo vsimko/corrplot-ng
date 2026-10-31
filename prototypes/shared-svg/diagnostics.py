@@ -43,7 +43,7 @@ def scene_error_diagnostic(message: str) -> Diagnostic:
     if "label" in lowered:
         return Diagnostic("input.matrix.invalid_label", "error", "input", message, path="labels")
     if "finite" in lowered or "infinite" in lowered or "nan" in lowered:
-        coordinates = re.search(r"row (\\d+), column (\\d+)", message)
+        coordinates = re.search(r"row (\d+), column (\d+)", message)
         row, column = (int(coordinates.group(1)), int(coordinates.group(2))) if coordinates else (None, None)
         return Diagnostic("input.matrix.non_finite_value", "error", "input", message,
                           path="matrix", row=row, column=column)
