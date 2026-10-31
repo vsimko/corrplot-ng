@@ -66,6 +66,25 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   .corrplot_ng_build_scene_v1(corr, options)
 }
 
+#' Mixed legacy corrplot adapter
+#'
+#' Delegates to corrplot.mixed and preserves its invisible return object.
+#' The mixed scene engine is not implemented; use engine = "legacy".
+#'
+#' @param corr A correlation matrix accepted by corrplot::corrplot.mixed().
+#' @param ... Arguments forwarded unchanged to corrplot::corrplot.mixed().
+#' @param engine Only "legacy" is currently supported.
+#' @return The invisible list returned by corrplot::corrplot.mixed(), containing
+#'   the reordered correlation matrix and combined cell-position data frame.
+#' @export
+corrplot_ng_mixed <- function(corr, ..., engine = "legacy") {
+  if (!is.character(engine) || length(engine) != 1L || is.na(engine) ||
+      !identical(engine, "legacy")) {
+    stop("corrplot_ng_mixed() currently supports only engine = 'legacy'", call. = FALSE)
+  }
+  return(do.call(corrplot::corrplot.mixed, c(list(corr = corr), list(...))))
+}
+
 .corrplot_ng_resolve_matrix_scale <- function(corr, is_corr, col_lim, show_diagonal) {
   observed <- !is.na(corr)
   values <- as.numeric(corr[observed])
