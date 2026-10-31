@@ -24,7 +24,10 @@ git push origin cli-v0.1.0
 ```
 
 Each GitHub release contains one archive per supported platform, a
-`SHA256SUMS` file, and a `BUILD-INFO.txt` inside each archive.
+`SHA256SUMS` file, and a `BUILD-INFO.txt` inside each archive. Release builds
+use the pinned Rust 1.99.1 toolchain; the workflow records the exact compiler
+and Cargo versions in each archive. CI extracts each completed archive and
+runs the packaged executable's help/version smoke tests before publishing.
 
 | Asset | Target | Runtime requirements |
 | --- | --- | --- |
