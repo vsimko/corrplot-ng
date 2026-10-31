@@ -13,6 +13,8 @@ on:
     paths:
       - "tools/corrplot-ng/**"
       - "prototypes/shared-svg/**"
+      - "prototypes/publication-config-v1/**"
+      - "scripts/validate_svg.py"
       - ".github/workflows/test-rust-cli.yml"
   workflow_dispatch:
 
