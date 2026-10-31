@@ -66,8 +66,10 @@ component boundaries are described in [the architecture document](architecture.m
 and [ADR 0001](adr/0001-shared-core-architecture.md).
 
 These capabilities are not equivalent to full legacy API compatibility,
-a shared compiled library, or identical rendering across every backend.
-Those claims require separate evidence.
+a complete shared visualization engine, or identical rendering across every
+backend. PR #180 proves one shared compiled operation (matrix validation)
+for the CLI and disposable R/rextendr adapter. Remaining core operations and
+runtime bindings require separate evidence.
 
 ## Roadmap phases
 
@@ -144,7 +146,7 @@ the issue is deliberately reactivated.
 
 ### Phase 3 — Establish the shared Rust core
 
-**Status:** Strategic architecture selected; production rollout gated by a focused integration proof.
+**Status:** Strategic architecture selected; initial CLI/R crate-reuse proof complete; portable core and runtime bindings remain.
 
 The target is one authoritative Rust implementation of shared correlation,
 validation, scene construction, layout, and other common visualization
@@ -155,34 +157,42 @@ logic in one place.
 
 Rust is selected as the shared-core language because the standalone CLI is
 already Rust and the same source can serve native and WebAssembly targets.
-The decision is architectural; the current CLI and R/rextendr prototype are
-still separate crates and do not yet demonstrate compiled-library reuse.
+Merged PR #180 extracted `crates/corrplot-core` and proved that both the CLI
+and disposable R/rextendr adapter call its matrix-validation operation.
+This is a real but deliberately small compiled-library reuse proof; the core
+does not yet implement the complete visualization pipeline.
 
-The related future-work track is:
+The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The remaining implementation track is:
 
-- [#139 — Cross-runtime Rust and TypeScript architecture](https://github.com/vsimko/corrplot-ng/issues/139).
+- [#139 — Cross-runtime Rust and TypeScript architecture](https://github.com/vsimko/corrplot-ng/issues/139) — architecture decision recorded in ADR 0002.
 - [#140 — Portable Rust core for native and WebAssembly](https://github.com/vsimko/corrplot-ng/issues/140).
 - [#141 — Node.js native binding](https://github.com/vsimko/corrplot-ng/issues/141).
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142).
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145).
 
-**Implementation gate:** prove the selected architecture with the smallest
-meaningful shared operation, initially through the Rust CLI and a disposable
-R/rextendr binding. Both must depend on the exact same reusable library crate
-and call its implementation; shared JSON fixtures alone are not proof.
-Record build/dependency evidence and compare actual ABI, packaging, release,
-CRAN/toolchain, and maintenance costs. This gate validates safe rollout; it
-does not reopen the strategic choice in favor of independent implementations.
+**Completed integration gate:** the CLI and disposable R/rextendr adapter
+depend on the exact same reusable crate and call its matrix-validation API.
+PR #184 records Rust/Cargo 1.78, extendr 0.9.0, three-platform offline
+package checks, and measured source/installed package sizes. This proof does
+not establish a complete visualization engine or CRAN acceptance.
+
+**Remaining rollout gates:** obtain CRAN guidance on the vendor metadata
+NOTE and installed package size, and measure actual human maintainer effort
+against the R-only C++/Rcpp path. These gates apply to production R adoption;
+they must not block independent Node/WASM architecture and portability work.
+
+**Next implementation gate:** extend the same crate with portable shared
+semantics and build it for native and WASM targets. Bindings must call that
+same crate; shared JSON fixtures alone are not proof.
 
 If the R integration cannot meet its packaging constraints, keep the Rust
 core authoritative for the CLI and future consumers and assess a narrowly
 scoped R adapter exception. Do not fork common semantics silently. Continue
 to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
-**Measurable outcomes after the integration proof:**
+**Measurable outcomes for the remaining core/runtime work:**
 
-- One architecture decision records runtime boundaries, backend selection,
-  portability constraints, and rejected alternatives.
+- [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md) records runtime boundaries, backend selection, portability constraints, and rejected alternatives.
 - The same semantic core builds for the approved native and WASM targets.
 - At least two real consumers exercise the same operation and shared fixtures.
 - Packaging and clean-environment installation work on the declared support
@@ -246,10 +256,11 @@ prerequisite for the current contract, R adapter, or CLI work.
   deliberate reactivation.
 - Do not duplicate correlation or scene semantics in each language adapter.
 
-The authoritative shared-core decision is
+The authoritative shared-core language decision is
 [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md).
-Changes to the production shared-core language require an explicit update
-to that decision record.
+The Node/browser runtime and API boundary is specified in
+[ADR 0002: Cross-runtime Rust and TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md).
+Changes to either decision require an explicit update to the relevant ADR.
 
 ## How to use this roadmap
 

@@ -25,7 +25,7 @@ The repository currently provides:
 - A Python scene/SVG reference prototype.
 - A standalone Rust CLI with its own native build and test workflow.
 
-Rust is the accepted strategic shared-core implementation in [ADR 0001](adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and disposable R/rextendr adapter use the same `crates/corrplot-core` matrix-validation operation. This does not yet constitute a complete shared visualization engine or production R migration. The remaining rollout gates are CRAN guidance and a controlled maintainer-time comparison. C++/Rcpp is only a possible R-specific fallback; TypeScript, Node bindings, browser WASM, Canvas, and other renderers remain planned.
+Rust is the accepted strategic shared-core implementation in [ADR 0001](adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and disposable R/rextendr adapter use the same `crates/corrplot-core` matrix-validation operation. This does not yet constitute a complete shared visualization engine or production R migration. The remaining rollout gates are CRAN guidance and a controlled maintainer-time comparison. C++/Rcpp is only a possible R-specific fallback; The cross-runtime TypeScript architecture is specified by [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); Node bindings, browser WASM, Canvas, and other renderers remain planned.
 
 See [the current architecture](architecture.md) for implementation boundaries. See [top-level requirements](requirements.md) for product priorities; requirements are goals and are not proof that a feature is implemented.
 
@@ -35,6 +35,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Current architecture](architecture.md): implemented components, the selected Rust shared-core direction, versioned contracts, and remaining rollout gates.
 - [Repository layout](repository-layout.md): top-level directory ownership, contract/reference/experiment categories, and shared fixture sources of truth.
 - [ADR 0001: shared-core architecture](adr/0001-shared-core-architecture.md): Rust shared-core decision and the CLI/rextendr reuse proof.
+- [ADR 0002: cross-runtime TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md): Node-API and browser-WASM targets, backend selection, API boundaries, compatibility matrix, and memory/error contracts.
 - [corrplot-core](../crates/corrplot-core/README.md): the dependency-free shared matrix validation library.
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, and current backend limits.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
