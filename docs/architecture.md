@@ -99,7 +99,7 @@ The Rust/rextendr integration remains a disposable evaluation adapter that prove
 
 The following capabilities are tracked as future work, not as current shipped architecture:
 
-- TypeScript API and shared cross-runtime architecture (#139).
+- Cross-runtime Rust and TypeScript architecture (specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); #139).
 - Portable reusable Rust core for native and WebAssembly targets (#140).
 - Native Node.js binding (#141).
 - Browser WebAssembly integration (#142).
@@ -108,7 +108,7 @@ The following capabilities are tracked as future work, not as current shipped ar
 - Unified TypeScript API with backend selection (#145).
 - Cross-backend parity, visual regression, and performance coverage (#146).
 
-The standalone CLI should remain distinct from a future reusable native library. Likewise, browser Canvas rendering is a separate adapter from server-side or CLI rendering.
+The standalone CLI remains a thin application adapter over the reusable Rust crate. The cross-runtime TypeScript architecture is specified in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md); its Node-API and browser-WASM bindings are not yet implemented. Browser Canvas rendering remains a separate adapter from server-side or CLI rendering.
 
 ## Decision boundaries
 
@@ -121,9 +121,10 @@ The standalone CLI should remain distinct from a future reusable native library.
 | Rust/rextendr and C++/Rcpp | Experimental evaluation spikes |
 | Python shared-scene/SVG | Reference/prototype implementation |
 | R compatibility | Legacy path plus normalized-input and experimental scene paths |
-| TypeScript, Node binding, browser WASM and Canvas | Planned |
+| Cross-runtime TypeScript architecture | Specified by ADR 0002; implementation planned |
+| Node binding, browser WASM and Canvas | Planned |
 
-The Rust shared-core direction is accepted and the initial crate-reuse proof is complete. Production R rollout still requires CRAN guidance and measured maintainer effort. Keep language-specific adapters thin and keep scene-v1 as the versioned interchange/conformance contract.
+The Rust shared-core direction and cross-runtime boundary are accepted. PR #180 proves initial crate reuse for matrix validation; the complete shared visualization engine and Node/WASM bindings remain future implementation work. Production R rollout still requires CRAN guidance and measured maintainer effort. Keep language-specific adapters thin and keep scene-v1 as the versioned interchange/conformance contract.
 
 ## Dependency principles
 
