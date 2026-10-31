@@ -203,3 +203,12 @@ The Linux installed package size was 5.9 MB; the macOS and Windows checks report
 The separate [Rust Windows binary install run #41151817223](https://github.com/vsimko/corrplot-ng/actions/runs/41151817223) also passed: it built the binary package and installed/smoke-tested it on a fresh Windows runner with Rust removed from the restricted `PATH`.
 
 These deterministic CI checks disable CRAN incoming and remote incoming checks. They demonstrate a reproducible prototype source-package path, not CRAN acceptance. The production R package remains independent of Rust.
+
+### Updated Rust/rextendr evidence (2026-10-31, after extendr 0.9.0)
+
+The current generated package pins `extendr-api = "=0.9.0"`, declares Rust/Cargo 1.78, and is verified by CI on Ubuntu, macOS, and Windows. The Ubuntu 24.04 / R 4.6.2 / GCC 13.3.0 run measured a compressed source tarball of **1,314,420 bytes** and an installed package size of **6.0 MB** (5.9 MB in `libs`). The source tarball is below CRAN's general 10 MB source-package guideline; the installed package is above rextendr's 5 MB caution and therefore needs explicit CRAN guidance before any production R migration.
+
+The latest Ubuntu `R CMD check --as-cran` result is **1 NOTE**. The extendr 0.9.0 upgrade removed the `R_NamespaceRegistry` non-API NOTE, and pruning unused `lazy_static` test fixtures removed the non-portable-path NOTE. The remaining NOTE lists Cargo's hidden `.cargo-checksum.json` and `.cargo_vcs_info.json` files, which are retained because the first is needed for offline Cargo integrity checks and the second preserves vendored-source provenance. This rationale must be included in CRAN submission comments; it is not evidence of CRAN acceptance.
+
+The dedicated MSRV workflow successfully tests Rust/Cargo 1.78 for the shared core, CLI, and rextendr consumer. Stable CI continues to exercise the full shared-crate integration and generated R source package on all three hosted platforms. Controlled elapsed maintainer time remains unmeasured; existing effort estimates are planning estimates only.
+
