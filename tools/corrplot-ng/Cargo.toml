@@ -2,6 +2,7 @@
 name = "corrplot-ng"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.78"
 description = "Standalone native command-line renderer for corrplot-ng"
 license = "MIT"
 
