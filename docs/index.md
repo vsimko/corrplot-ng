@@ -34,6 +34,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Top-level requirements](requirements.md): product and engineering requirements, priorities, and acceptance checks.
 - [Current architecture](architecture.md): implemented components, versioned contracts, experimental integrations, and deferred decisions.
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, and current backend limits.
+- [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
 - [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md): decision to keep scene-v1 as the interoperability boundary and defer the production shared-core language.
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
