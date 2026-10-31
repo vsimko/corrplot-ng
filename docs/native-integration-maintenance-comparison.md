@@ -22,7 +22,7 @@ Both candidates implement the same narrow R-callable scene-v1 JSON builder. Both
 | R package metadata | `prototypes/cpp-rcpp/DESCRIPTION`, Imports/LinkingTo Rcpp | `prototypes/rust-rextendr/DESCRIPTION`, generated package metadata |
 | Binding generator | `Rcpp::compileAttributes()` | `rextendr::use_extendr()` via `prepare-r-package.R` |
 | Native build system | R package build + platform C++ compiler | Cargo build invoked through generated rextendr package |
-| Dependency pinning in spike | R package dependency declaration; R package resolution | Committed `Cargo.lock`; extendr API pinned to `=0.8.2` |
+| Dependency pinning in spike | R package dependency declaration; R package resolution | Committed `Cargo.lock`; extendr API pinned to `=0.9.0` |
 | Package output | Install the spike package directly | Generate disposable `.ci-r-package`, then install it |
 | Scope boundary | Experiment only; no production R package edits | Experiment only; no production R package edits |
 
@@ -64,7 +64,7 @@ After installation, call `corrplotngcppspike::build_scene_json_cpp()` with a sma
 **Prerequisites**
 
 - Git and R 4.x.
-- Stable Rust toolchain (`rustc` and `cargo`).
+- Rust/Cargo 1.78 or later (`rustc` and `cargo`); the manifests declare 1.78 as the MSRV.
 - R packages `rextendr`, `usethis`, `devtools`, and `testthat`; the shared benchmark workflow also installs `jsonlite`.
 - A supported native linker/build toolchain for the host platform.
 
@@ -161,7 +161,7 @@ The current Rust generator contains explicit compatibility adjustments around re
 
 ### Rust / rextendr
 
-- **Generated scaffold drift:** rextendr output can change across versions. The generator currently pins extendr-api 0.8.2 after scaffolding and makes targeted Makevars/lockfile adjustments; upgrades need explicit review.
+- **Generated scaffold drift:** rextendr output can change across versions. The generator currently pins extendr-api 0.9.0 after scaffolding and makes targeted Makevars/lockfile adjustments; upgrades need explicit review.
 - **Cargo dependency graph:** the lockfile makes the resolved graph reproducible, but each crate upgrade can change transitive dependencies, licenses, source archive size, or platform build behavior.
 - **Offline packaging complexity:** Cargo vendoring and path/config handling must survive R package build/clean steps. The workflow currently performs archive extraction/restoration to verify the actual source tarball.
 - **Toolchain and linker failures:** Rust compiler, target, static-library and linker diagnostics add a separate toolchain to investigate.
