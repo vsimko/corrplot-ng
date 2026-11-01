@@ -577,6 +577,16 @@ mod tests {
         let error = parse_scene_v1_matrix(source).unwrap_err();
         assert_eq!(error.code, "input.scene.invalid_semantics");
         assert_eq!(error.path, "matrix_semantics.mode");
+
+        let valid_general = source.replace("\"mode\":\"correlation\"", "\"mode\":\"general_numeric\"");
+        let matrix = parse_scene_v1_matrix(&valid_general).unwrap();
+        assert_eq!(matrix.semantics, MatrixSemantics::GeneralNumeric);
+        assert_eq!(matrix.values, vec![vec![Some(2.0)]]);
+
+        let unknown_field = valid_general.replace("\"title\":\"\"", "\"title\":\"\",\"unexpected\":true");
+        let error = parse_scene_v1_matrix(&unknown_field).unwrap_err();
+        assert_eq!(error.code, "input.scene.unknown_field");
+        assert_eq!(error.path, "$.unexpected");
     }
 
 }
