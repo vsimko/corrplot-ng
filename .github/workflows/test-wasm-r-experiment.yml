@@ -77,13 +77,30 @@ jobs:
           echo "WASM_MODULE=$WASM_MODULE" >> "$GITHUB_ENV"
           echo "EMBEDDED_WASM_MODULE=$EMBEDDED_WASM_MODULE" >> "$GITHUB_ENV"
 
-      - name: Install Wasmtime
+      - name: Install Wasmtime CLI (Unix)
+        if: runner.os != 'Windows'
         run: |
           curl https://wasmtime.dev/install.sh -sSf | bash
           echo "$HOME/.wasmtime/bin" >> "$GITHUB_PATH"
           "$HOME/.wasmtime/bin/wasmtime" --version
 
-      - name: Install pinned Wasmtime C API
+      - name: Install Wasmtime CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "50.0.1"
+          $archive = "wasmtime-v$version-x86_64-windows.zip"
+          $zip = Join-Path $env:RUNNER_TEMP $archive
+          $dest = Join-Path $env:RUNNER_TEMP "wasmtime-cli"
+          Invoke-WebRequest -Uri "https://github.com/bytecodealliance/wasmtime/releases/download/v$version/$archive" -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          $exe = Get-ChildItem $dest -Filter wasmtime.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw "wasmtime.exe not found" }
+          $exe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & $exe.FullName --version
+
+      - name: Install pinned Wasmtime C API (Unix)
+        if: runner.os != 'Windows'
         run: |
           set -euo pipefail
           VERSION=50.0.1
@@ -107,6 +124,25 @@ jobs:
             tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C /tmp/wasmtime-c-api
           fi
           echo "WASMTIME_C_API_ROOT=/tmp/wasmtime-c-api" >> "$GITHUB_ENV"
+
+      - name: Install pinned Wasmtime C API (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "50.0.1"
+          $archive = "${{ matrix.wasmtime_archive }}"
+          $expected = "${{ matrix.wasmtime_sha256 }}"
+          $zip = Join-Path $env:RUNNER_TEMP $archive
+          $dest = Join-Path $env:RUNNER_TEMP "wasmtime-c-api"
+          Invoke-WebRequest -Uri "https://github.com/bytecodealliance/wasmtime/releases/download/v$version/$archive" -OutFile $zip
+          $actual = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Wasmtime C API SHA-256 mismatch: $actual" }
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          $rootDir = Get-ChildItem $dest -Directory | Select-Object -First 1
+          $root = if ($rootDir) { $rootDir.FullName } else { $dest }
+          if (-not (Test-Path (Join-Path $root "include/wasmtime.h"))) { throw "Wasmtime C API headers not found" }
+          "WASMTIME_C_API_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Get-ChildItem (Join-Path $root "lib")
 
       - name: Install R system dependencies
         if: runner.os == 'Linux'
