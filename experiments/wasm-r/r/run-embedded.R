@@ -31,7 +31,8 @@ main <- function() {
   script_arg <- grep("^--file=", commandArgs(), value = TRUE)
   script_path <- sub("^--file=", "", script_arg[[1]])
   source_file <- file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "wasmtime-host.c")
-  shared <- tempfile(fileext = paste0(".", .Platform$dynlib.ext))
+  shared_dir <- if (.Platform$OS.type == "windows") lib else tempdir()
+  shared <- tempfile(tmpdir = shared_dir, fileext = paste0(".", .Platform$dynlib.ext))
 
   # Pass include and linker flags through the environment. On Windows, R CMD SHLIB
   # reads Makevars.win rather than a generic Makevars file, so a temporary
