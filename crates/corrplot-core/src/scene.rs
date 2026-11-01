@@ -190,7 +190,14 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
             return Err(SceneBuildError::new("input.matrix.invalid_source_indices", "variable_order.labels length must match labels", "variable_order.labels"));
         }
         for (index, label) in ordered_labels.iter().enumerate() {
-            as_string(label, &format!("variable_order.labels[{index}]"))?;
+            let ordered_label = as_string(label, &format!("variable_order.labels[{index}]"))?;
+            if ordered_label != labels[index] {
+                return Err(SceneBuildError::new(
+                    "input.matrix.invalid_source_indices",
+                    "variable_order.labels must match labels in displayed order",
+                    format!("variable_order.labels[{index}]"),
+                ));
+            }
         }
         let indices = as_array(required(order, "indices", "variable_order")?, "variable_order.indices")?;
         if indices.len() != n {
@@ -200,6 +207,13 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         let mut unique = HashSet::with_capacity(n);
         for (index, value) in indices.iter().enumerate() {
             let source_index = as_usize(value, &format!("variable_order.indices[{index}]"))?;
+            if source_index >= n {
+                return Err(SceneBuildError::new(
+                    "input.matrix.invalid_source_indices",
+                    "variable_order.indices must be a permutation of 0..labels.len()",
+                    format!("variable_order.indices[{index}]"),
+                ));
+            }
             if !unique.insert(source_index) {
                 return Err(SceneBuildError::new("input.matrix.invalid_source_indices", "variable_order.indices must be unique", format!("variable_order.indices[{index}]")));
             }
@@ -642,8 +656,19 @@ fn as_string<'a>(value: &'a crate::json::Value, path: &str) -> Result<&'a str, S
 }
 
 fn as_number(value: &crate::json::Value, path: &str) -> Result<f64, SceneBuildError> {
-    if let crate::json::Value::Number(number) = value { Ok(*number) }
-    else { Err(SceneBuildError::new("input.scene.invalid_type", "expected a finite number", path)) }
+    match value {
+        crate::json::Value::Number(number) if number.is_finite() => Ok(*number),
+        crate::json::Value::Number(_) => Err(SceneBuildError::new(
+            "input.scene.invalid_number",
+            "number must be finite",
+            path,
+        )),
+        _ => Err(SceneBuildError::new(
+            "input.scene.invalid_type",
+            "expected a finite number",
+            path,
+        )),
+    }
 }
 
 fn as_usize(value: &crate::json::Value, path: &str) -> Result<usize, SceneBuildError> {
@@ -680,6 +705,13 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
     }
     let mut seen = HashSet::with_capacity(n);
     for (index, source_index) in input.source_indices.iter().copied().enumerate() {
+        if source_index >= n {
+            return Err(SceneBuildError::new(
+                "input.matrix.invalid_source_indices",
+                "source_indices must be a permutation of 0..labels.len()",
+                format!("source_indices[{index}]"),
+            ));
+        }
         if !seen.insert(source_index) {
             return Err(SceneBuildError::new("input.matrix.invalid_source_indices", format!("source_indices contains duplicate index {source_index}"), format!("source_indices[{index}]")));
         }
@@ -834,6 +866,24 @@ mod tests {
         let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
         assert_eq!(error.code, "input.matrix.invalid_source_indices");
         assert_eq!(error.path, "source_indices[1]");
+    }
+
+    #[test]
+    fn rejects_out_of_range_source_indices() {
+        let mut matrix = input();
+        matrix.source_indices = vec![0, 1, 3];
+        let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
+        assert_eq!(error.code, "input.matrix.invalid_source_indices");
+        assert_eq!(error.path, "source_indices[2]");
+    }
+
+    #[test]
+    fn rejects_non_finite_json_numbers_with_a_stable_path() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace("\\"width\\": 380", "\\"width\\": 1e999");
+        let error = parse_scene_v1_matrix(&source).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_number");
+        assert_eq!(error.path, "width");
     }
 
     #[test]
