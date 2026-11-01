@@ -242,6 +242,23 @@ mod tests {
     }
 
     #[test]
+    fn maps_cell_validation_failures_to_stable_matrix_paths_and_coordinates() {
+        let mut matrix = input();
+        matrix.values[0][1] = Some(1.25);
+        let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
+        assert_eq!(error.code, "input.matrix.value_out_of_range");
+        assert_eq!(error.path, "values[0][1]");
+        assert_eq!(error.row, Some(0));
+        assert_eq!(error.column, Some(1));
+
+        matrix.values[0][1] = Some(f64::NAN);
+        let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
+        assert_eq!(error.path, "values[0][1]");
+        assert_eq!(error.row, Some(0));
+        assert_eq!(error.column, Some(1));
+    }
+
+    #[test]
     fn rejects_unsupported_schema_version() {
         let mut matrix = input();
         matrix.schema_version = 2;
