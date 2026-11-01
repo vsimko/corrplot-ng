@@ -13,6 +13,10 @@ const fixturePath = resolve(fixtureArg);
 const wasm = readFileSync(modulePath);
 const request = readFileSync(fixturePath);
 const runtime = process.env.CORRPLOT_WASMTIME || "wasmtime";
+const version = spawnSync(runtime, ["--version"], { encoding: "utf8" });
+if (version.error || version.status !== 0) {
+  throw new Error(`cannot execute ${runtime} --version: ${version.stderr || version.error}`);
+}
 const started = performance.now();
 const child = spawnSync(runtime, ["run", modulePath], {
   input: request,
@@ -28,7 +32,7 @@ if (child.status !== 0) {
 
 const response = JSON.parse(child.stdout);
 console.log(JSON.stringify({
-  runtime: child.stderr.match(/Wasmtime[^\\n]*/)?.[0] ?? "external Wasmtime",
+  runtime: version.stdout.trim(),
   wasmSha256: createHash("sha256").update(wasm).digest("hex"),
   fixtureSha256: createHash("sha256").update(request).digest("hex"),
   elapsedMs: Number(elapsedMs.toFixed(3)),
