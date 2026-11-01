@@ -65,6 +65,9 @@ main <- function() {
   # loading an R extension. Add the Wasmtime C API lib directory to PATH.
   if (.Platform$OS.type == "windows") {
     Sys.setenv(PATH = paste(lib, Sys.getenv("PATH"), sep = .Platform$path.sep))
+    # Preload by absolute path: Windows may not resolve a dependent DLL from
+    # PATH when loading an R extension from R's temporary directory.
+    wasmtime_handle <- dyn.load(wasmtime_library)
   }
   dyn.load(shared)
   on.exit(.Call("corrplot_wasm_shutdown"), add = TRUE)
