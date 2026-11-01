@@ -449,6 +449,7 @@ mod tests {
                     side: None,
                     rx: None,
                     ry: None,
+                    rotation_degrees: None,
                     start_radians: None,
                     end_radians: None,
                     text: None,
