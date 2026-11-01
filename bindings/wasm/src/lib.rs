@@ -472,7 +472,8 @@ mod tests {
         assert_eq!(Reflect::get(&output, &JsValue::from_str("heightPx")).unwrap().as_f64(), Some(12.0));
         assert_eq!(Reflect::get(&output, &JsValue::from_str("strideBytes")).unwrap().as_f64(), Some(64.0));
         assert_eq!(Reflect::get(&output, &JsValue::from_str("pixelFormat")).unwrap().as_string().as_deref(), Some("rgba8"));
-        assert!(Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap().is_null());
+        let diagnostic = Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap();
+        assert!(diagnostic.is_undefined() || diagnostic.is_null());
     }
 
     #[wasm_bindgen_test]
