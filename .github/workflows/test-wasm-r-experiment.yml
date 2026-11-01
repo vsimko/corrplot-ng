@@ -221,6 +221,6 @@ jobs:
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: corrplot-r-backend-benchmarks-\${{ matrix.os }}
-          path: \${{ runner.temp }}/corrplot-r-benchmarks/
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
           if-no-files-found: error
