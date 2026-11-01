@@ -283,7 +283,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, cells, texts, legend: Vec::new(), cluster_regions: Vec::new() })
+    Ok(Scene { width: input.width, height: input.height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[napi(js_name = "renderSceneSvg")]
