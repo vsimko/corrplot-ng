@@ -28,6 +28,9 @@ jobs:
           - os: macos-15-intel
             wasmtime_archive: wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz
             wasmtime_sha256: b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5
+          - os: windows-latest
+            wasmtime_archive: wasmtime-v50.0.1-x86_64-mingw-c-api.zip
+            wasmtime_sha256: 9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
