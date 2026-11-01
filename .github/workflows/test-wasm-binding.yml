@@ -19,7 +19,8 @@ permissions:
 jobs:
   test:
     name: WASM Node smoke (Node ${{ matrix.node }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -40,3 +41,24 @@ jobs:
       - name: Build browser ESM package
         working-directory: bindings/wasm
         run: wasm-pack build --target web --release --out-dir pkg
+      - name: Install Playwright
+        if: matrix.node == 26
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Verify preinstalled Chrome
+        if: matrix.node == 26
+        run: google-chrome --version
+      - name: Run browser WebAssembly smoke test
+        if: matrix.node == 26
+        env:
+          DEBUG: pw:api
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/corrplot-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/bindings/wasm/examples/browser/index.html >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          node bindings/wasm/examples/browser/smoke.test.mjs
