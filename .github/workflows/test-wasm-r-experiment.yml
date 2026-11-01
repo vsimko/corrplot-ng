@@ -20,8 +20,18 @@ permissions:
 
 jobs:
   shared-wasi-module:
-    name: Same WASI module in Node and R (Linux)
-    runs-on: ubuntu-latest
+    name: Same WASI module in Node and R (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            wasmtime_archive: wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz
+            wasmtime_sha256: e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d
+          - os: macos-14
+            wasmtime_archive: wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz
+            wasmtime_sha256: b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,12 +87,25 @@ jobs:
         run: |
           set -euo pipefail
           VERSION=50.0.1
-          ARCHIVE="wasmtime-v${VERSION}-x86_64-linux-c-api.tar.xz"
+          ARCHIVE="${{ matrix.wasmtime_archive }}"
           URL="https://github.com/bytecodealliance/wasmtime/releases/download/v${VERSION}/${ARCHIVE}"
           curl -fsSL "$URL" -o "/tmp/$ARCHIVE"
-          echo "e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d  /tmp/$ARCHIVE" | sha256sum -c -
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${{ matrix.wasmtime_sha256 }}  /tmp/$ARCHIVE" | sha256sum -c -
+          else
+            echo "${{ matrix.wasmtime_sha256 }}  /tmp/$ARCHIVE" | shasum -a 256 -c -
+          fi
           mkdir -p /tmp/wasmtime-c-api
-          tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C /tmp/wasmtime-c-api
+          if [[ "$ARCHIVE" == *.zip ]]; then
+            unzip -q "/tmp/$ARCHIVE" -d /tmp/wasmtime-c-api
+            ROOT="$(find /tmp/wasmtime-c-api -mindepth 1 -maxdepth 1 -type d -print -quit)"
+            if [[ -n "$ROOT" ]]; then
+              mv "$ROOT"/* /tmp/wasmtime-c-api/
+              rmdir "$ROOT"
+            fi
+          else
+            tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C /tmp/wasmtime-c-api
+          fi
           echo "WASMTIME_C_API_ROOT=/tmp/wasmtime-c-api" >> "$GITHUB_ENV"
 
       - name: Install R experiment dependencies
