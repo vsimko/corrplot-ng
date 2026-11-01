@@ -36,7 +36,7 @@ static void call_export(wasmtime_func_t *function,
   wasm_trap_t *trap = NULL;
   wasmtime_error_t *wt_error = wasmtime_func_call(
       g_context, function, args, nargs, results, nresults, &trap);
-  if (error != NULL || trap != NULL) fail_wasmtime(name, error, trap);
+  if (wt_error != NULL || trap != NULL) fail_wasmtime(name, wt_error, trap);
 }
 
 static void shutdown_host(void) {
@@ -71,7 +71,7 @@ static void ensure_module(const char *module_path) {
   wasmtime_module_t *module = NULL;
   wasmtime_error_t *wt_error = wasmtime_module_new(g_engine, bytes, (size_t)file_len, &module);
   free(bytes);
-  if (wt_error != NULL) fail_wasmtime("compile WASM module", error, NULL);
+  if (wt_error != NULL) fail_wasmtime("compile WASM module", wt_error, NULL);
 
   wasm_trap_t *trap = NULL;
   wt_error = wasmtime_instance_new(g_context, module, NULL, 0, &g_instance, &trap);
