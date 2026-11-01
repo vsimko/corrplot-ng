@@ -138,7 +138,21 @@ jobs:
           set -euo pipefail
           RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
           mkdir -p "$RESULTS_DIR"
-          echo "fixture,backend,calls,elapsed_ms,per_call_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
           for FIXTURE in experiments/wasm-r/fixtures/*.json; do
             NAME="$(basename "$FIXTURE" .json)"
             node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
@@ -176,7 +190,7 @@ jobs:
           with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
               writer = csv.writer(stream)
               for backend, result, size in rows:
-                  writer.writerow([name, backend, result.get("calls", ""), f'{result.get("elapsedMs", "")}', f'{result.get("perCallMs", "")}', size])
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
           print(f"{name}: " + "; ".join(f"{backend}={result.get('perCallMs', float('nan')):.5f} ms/call" for backend, result, _ in rows))
           PY
           done
@@ -201,13 +215,13 @@ jobs:
             echo
             echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
             echo
-            echo "| Fixture | Backend | Calls | ms/call | Artifact bytes |"
-            echo "|---|---:|---:|---:|---:|"
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
             python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
           import csv, sys
           with open(sys.argv[1], newline="", encoding="utf-8") as stream:
               for row in csv.DictReader(stream):
-                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {float(row['per_call_ms']):.5f} | {row['artifact_bytes']} |")
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
           PY
             echo
             echo "Runtime sizes"
