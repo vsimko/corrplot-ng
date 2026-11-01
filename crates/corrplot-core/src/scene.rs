@@ -1137,19 +1137,26 @@ mod tests {
 
     #[test]
     fn scene_v1_conversion_uses_explicit_cell_identity_not_array_order() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
-        let mut document = crate::json::parse(source).unwrap();
-        if let crate::json::Value::Object(root) = &mut document {
-            if let Some(crate::json::Value::Array(cells)) = root.get_mut("cells") {
-                cells.reverse();
-            }
-        }
-        let source = crate::json::stringify(&document);
-        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
-        assert_eq!((scene.cells[0].x, scene.cells[0].y), (104.0, 76.0));
-        assert_eq!((scene.cells[2].x, scene.cells[2].y), (272.0, 76.0));
-        assert!(matches!(&scene.cells[2].glyph, Some(CellGlyph::Circle { color, .. })
-            if color.red == 178 && color.green == 24 && color.blue == 43));
+        let source = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[
+            {"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4},
+            {"text":"b","row_x":1,"row_y":2,"column_x":3,"column_y":4}
+          ],
+          "cells":[
+            {"row":1,"column":1,"value":1,"x":30,"y":30,"center_x":35,"center_y":35,"size":10,"encoding":{"kind":"circle","magnitude":1,"sign":1,"color":"#2166ac","radius":4}},
+            {"row":0,"column":1,"value":-0.5,"x":20,"y":10,"center_x":25,"center_y":15,"size":10,"encoding":{"kind":"circle","magnitude":0.5,"sign":-1,"color":"#b2182b","radius":2}},
+            {"row":1,"column":0,"value":-0.5,"x":10,"y":20,"center_x":15,"center_y":25,"size":10,"encoding":{"kind":"circle","magnitude":0.5,"sign":-1,"color":"#b2182b","radius":2}},
+            {"row":0,"column":0,"value":1,"x":10,"y":10,"center_x":15,"center_y":15,"size":10,"encoding":{"kind":"circle","magnitude":1,"sign":1,"color":"#2166ac","radius":4}}
+          ]
+        }"##;
+        let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
+        assert_eq!((scene.cells[0].x, scene.cells[0].y), (10.0, 10.0));
+        assert_eq!((scene.cells[1].x, scene.cells[1].y), (20.0, 10.0));
+        assert!(matches!(&scene.cells[1].glyph, Some(CellGlyph::Circle { color, radius })
+            if color.red == 178 && color.green == 24 && color.blue == 43 && *radius == 2.0));
     }
 
     #[test]
