@@ -97,12 +97,19 @@ validate_request <- function(request) {
 }
 
 request_text <- paste(readLines(fixture, warn = FALSE), collapse = "\n")
-calls <- 100L
-started <- proc.time()[["elapsed"]]
-for (i in seq_len(calls)) {
+run_once <- function() {
   request <- jsonlite::fromJSON(request_text, simplifyVector = FALSE)
-  response <- validate_request(request)
+  validate_request(request)
 }
+# Warm up, then choose enough iterations to measure roughly half a second.
+invisible(replicate(5L, run_once(), simplify = FALSE))
+pilot_calls <- 10L
+started <- proc.time()[["elapsed"]]
+for (i in seq_len(pilot_calls)) response <- run_once()
+pilot_seconds <- proc.time()[["elapsed"]] - started
+calls <- max(100L, min(10000L, as.integer(ceiling(0.5 / max(pilot_seconds / pilot_calls, 1e-6)))))
+started <- proc.time()[["elapsed"]]
+for (i in seq_len(calls)) response <- run_once()
 elapsed_ms <- (proc.time()[["elapsed"]] - started) * 1000
 result <- list(
   runtime = R.version.string,
