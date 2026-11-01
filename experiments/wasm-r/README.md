@@ -97,8 +97,12 @@ a platform-specific native `libwasmtime` and a C compiler/toolchain to build the
 small host shim. The module itself is portable, but the host runtime is not.
 
 The native-R reference benchmark now runs the same JSON request decoding and
-validation contract for 100 calls per fixture. CI compares its semantic response
-with the embedded Wasmtime result and reports per-call timings. This is a
+validation contract for 100 calls per fixture. In addition to the small
+correlation fixtures, the suite includes 32×32 and 128×128 general-numeric
+matrices with explicit missing values. CI compares semantic responses with the
+embedded Wasmtime result and reports per-call timings. The larger fixtures help
+expose input parsing, allocation, and linear-memory transfer costs; they are
+still synthetic microbenchmarks. This is a
 microbenchmark of the validation boundary, not a full plotting benchmark; the
 reference implementation is intentionally isolated from the production package.
 
