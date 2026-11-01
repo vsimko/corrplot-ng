@@ -610,7 +610,9 @@ fn validate_scene_matrix_semantics(value: &crate::json::Value, expected: MatrixS
         return Err(SceneBuildError::new("input.scene.invalid_semantics", "normalization.zoom must be positive", "matrix_semantics.normalization.zoom"));
     }
     if let Some(palette) = object.get("palette") {
-        as_string(palette, "matrix_semantics.palette")?;
+        if as_string(palette, "matrix_semantics.palette")?.is_empty() {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "palette must not be empty", "matrix_semantics.palette"));
+        }
     }
     if let Some(observed) = object.get("has_observed_values") {
         if !matches!(observed, crate::json::Value::Bool(_)) {
