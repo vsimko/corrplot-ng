@@ -457,8 +457,8 @@ mod tests {
             let scene = matrix_to_scene_v1(&input(), &options).unwrap();
             assert_eq!(scene.cells.len(), 9);
             if method == CellMethod::Ellipse {
-                assert!(matches!(scene.cells[0].glyph, Some(CellGlyph::Ellipse { rotation_degrees: -45.0, .. })));
-                assert!(matches!(scene.cells[1].glyph, Some(CellGlyph::Ellipse { rotation_degrees: 45.0, .. })));
+                assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Ellipse { rotation_degrees, .. }) if *rotation_degrees == -45.0));
+                assert!(matches!(&scene.cells[1].glyph, Some(CellGlyph::Ellipse { rotation_degrees, .. }) if *rotation_degrees == 45.0));
             }
             scene.validate().unwrap();
         }
