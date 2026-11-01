@@ -172,3 +172,8 @@ These timings are exploratory microbenchmarks, not stable performance claims.
 The first comparison currently targets Ubuntu and Intel macOS. Windows support,
 complete package installation size (including V8 and Rust runtime dependencies),
 cold-start cost, and peak memory remain explicit follow-up measurements.
+
+
+## Benchmark results
+
+The first cross-platform R backend measurements (Linux x86-64 and macOS Intel) are recorded in [results/benchmark-2026-11-01.md](results/benchmark-2026-11-01.md), with machine-readable values in [results/benchmark-2026-11-01.csv](results/benchmark-2026-11-01.csv). They are exploratory warm-throughput measurements; cold-start, RSS and Windows remain open.
