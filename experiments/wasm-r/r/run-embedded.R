@@ -36,7 +36,9 @@ main <- function() {
   # Keep compiler flags in Makevars; system2() otherwise splits linker arguments.
   makevars <- tempfile()
   on.exit(unlink(c(makevars, shared)), add = TRUE)
-  linker_flags <- if (identical(Sys.info()[["sysname"]], "Darwin")) {
+  linker_flags <- if (.Platform$OS.type == "windows") {
+    "-lwasmtime"
+  } else if (identical(Sys.info()[["sysname"]], "Darwin")) {
     c(paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime")
   } else {
     c(paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime", "-lpthread", "-ldl", "-lm")
