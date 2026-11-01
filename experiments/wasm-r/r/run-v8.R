@@ -16,7 +16,6 @@ for (package in c("V8", "jsonlite", "digest")) {
 
 wasm_bytes <- readBin(wasm, what = "raw", n = file.info(wasm)$size)
 fixture_bytes <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
-request <- rawToChar(fixture_bytes)
 
 ctx <- V8::v8()
 ctx$assign("corrplotWasmBytes", wasm_bytes)
@@ -31,7 +30,6 @@ ctx$eval("
   );
   globalThis.corrplotWasmRun = function (input) {
     const e = globalThis.corrplotWasmInstance.exports;
-    const input = Uint8Array.from(json, character => character.charCodeAt(0));
     const inputPtr = e.corrplot_alloc(input.length);
     let outputPtr = 0;
     let outputLen = 0;
@@ -49,7 +47,7 @@ ctx$eval("
   };
 ")
 
-invoke <- function() ctx$call("corrplotWasmRun", request)
+invoke <- function() ctx$call("corrplotWasmRun", fixture_bytes)
 invisible(replicate(5L, invoke(), simplify = FALSE))
 pilot_calls <- 10L
 started <- proc.time()[["elapsed"]]
