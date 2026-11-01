@@ -26,7 +26,10 @@ validate_request <- function(request) {
   labels <- unlist(request$labels, use.names = FALSE)
   rows <- as.integer(request$rows)
   columns <- as.integer(request$columns)
-  values <- unlist(request$values, recursive = TRUE, use.names = FALSE)
+  # Preserve JSON null entries as NA_real_; unlist() would silently drop NULLs.
+  values <- vapply(request$values, function(value) {
+    if (is.null(value)) NA_real_ else as.numeric(value)
+  }, numeric(1))
   if (!length(labels) || rows == 0L || columns == 0L) {
     return(fail("input.matrix.invalid_shape", "matrix and labels must be non-empty"))
   }
