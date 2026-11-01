@@ -46,11 +46,21 @@ jobs:
             --target wasm32-wasip1 \
             --release
 
-      - name: Locate WASI artifact
+      - name: Build host-neutral embedded ABI module
         run: |
-          WASM_MODULE="$(find "$GITHUB_WORKSPACE" -name corrplot_wasm_r_host.wasm -print -quit)"
+          CARGO_TARGET_DIR=experiments/wasm-r/wasm-abi/target cargo build \
+            --manifest-path experiments/wasm-r/wasm-abi/Cargo.toml \
+            --target wasm32-unknown-unknown \
+            --release
+
+      - name: Locate WASM artifacts
+        run: |
+          WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-host/target" -name corrplot_wasm_r_host.wasm -print -quit)"
+          EMBEDDED_WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-abi/target" -name corrplot_wasm_r_abi.wasm -print -quit)"
           test -n "$WASM_MODULE"
+          test -n "$EMBEDDED_WASM_MODULE"
           echo "WASM_MODULE=$WASM_MODULE" >> "$GITHUB_ENV"
+          echo "EMBEDDED_WASM_MODULE=$EMBEDDED_WASM_MODULE" >> "$GITHUB_ENV"
 
       - name: Install Wasmtime
         run: |
@@ -70,16 +80,21 @@ jobs:
             NAME="$(basename "$FIXTURE" .json)"
             node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE" > "/tmp/node-$NAME.json"
             Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE" > "/tmp/r-$NAME.json"
-            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" <<'PY'
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/node-embedded-$NAME.json"
+            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" <<'PY'
           import json, sys
-          name, node_path, r_path = sys.argv[1:]
+          name, node_path, r_path, embedded_path = sys.argv[1:]
           with open(node_path, encoding="utf-8") as f:
               node = json.load(f)
           with open(r_path, encoding="utf-8") as f:
               r = json.load(f)
+          with open(embedded_path, encoding="utf-8") as f:
+              embedded = json.load(f)
           assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
           assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
           assert node["response"] == r["response"], (name, node["response"], r["response"])
-          print(f"{name}: identical WASM SHA-256 and semantic response ({node['wasmSha256']})")
+          assert embedded["fixtureSha256"] == node["fixtureSha256"], (name, embedded, node)
+          assert embedded["response"] == node["response"], (name, embedded["response"], node["response"])
+          print(f"{name}: WASI Node/R agree; embedded Node ABI matches semantic result ({embedded['wasmSha256']})")
           PY
           done
