@@ -167,7 +167,7 @@ jobs:
             R_HOME="$(R RHOME)" cargo build --manifest-path experiments/wasm-r/native-r/Cargo.toml --release
           fi
           if [[ "$RUNNER_OS" == "Windows" ]]; then NATIVE_DIR="experiments/wasm-r/native-r/target/x86_64-pc-windows-gnu/release"; else NATIVE_DIR="experiments/wasm-r/native-r/target/release"; fi
-          NATIVE_LIBRARY="$(find "$NATIVE_DIR" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)
+          NATIVE_LIBRARY="$(find "$NATIVE_DIR" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)$' | head -n 1 || true)"
           if [[ -z "$NATIVE_LIBRARY" ]]; then
             echo "Native Rust R library not found"
             find "$NATIVE_DIR" -maxdepth 1 -type f -print
