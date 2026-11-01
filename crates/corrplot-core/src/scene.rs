@@ -446,4 +446,67 @@ mod tests {
         let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
         assert_eq!(error.path, "schema_version");
     }
+
+    #[test]
+    fn parses_scene_v1_by_explicit_cell_identity_and_preserves_nulls() {
+        let source = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[
+            {"text":"alpha","row_x":1,"row_y":2,"column_x":3,"column_y":4},
+            {"text":"beta","row_x":1,"row_y":2,"column_x":3,"column_y":4}
+          ],
+          "cells":[
+            {"row":1,"column":1,"value":1,"x":10,"y":10,"center_x":15,"center_y":15,"size":10},
+            {"row":0,"column":1,"value":null,"x":20,"y":10,"center_x":25,"center_y":15,"size":10},
+            {"row":1,"column":0,"value":null,"x":10,"y":20,"center_x":15,"center_y":25,"size":10},
+            {"row":0,"column":0,"value":1,"x":10,"y":10,"center_x":15,"center_y":15,"size":10}
+          ]
+        }"##;
+        let matrix = parse_scene_v1_matrix(source).unwrap();
+        assert_eq!(matrix.labels, vec!["alpha", "beta"]);
+        assert_eq!(matrix.values, vec![vec![Some(1.0), None], vec![None, Some(1.0)]]);
+        assert_eq!(matrix.source_indices, vec![0, 1]);
+        assert_eq!(matrix.semantics, MatrixSemantics::Correlation);
+    }
+
+    #[test]
+    fn scene_v1_parser_rejects_unsupported_versions_and_duplicate_cell_identity() {
+        let source = r##"{
+          "schema_version":2,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":1,"x":1,"y":1,"center_x":2,"center_y":2,"size":1}]
+        }"##;
+        let error = parse_scene_v1_matrix(source).unwrap_err();
+        assert_eq!(error.code, "input.scene.unsupported_version");
+        assert_eq!(error.path, "schema_version");
+
+        let duplicate = source.replace("\"schema_version\":2", "\"schema_version\":1")
+            .replace("\"cells\":[{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1}]",
+                     "\"cells\":[{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1},{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1}]");
+        let error = parse_scene_v1_matrix(&duplicate).unwrap_err();
+        assert_eq!(error.code, "input.matrix.invalid_shape");
+    }
+
+    #[test]
+    fn scene_v1_parser_rejects_invalid_json_and_general_semantics_mismatch() {
+        let error = parse_scene_v1_matrix("{").unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_json");
+
+        let source = r##"{
+          "schema_version":1,"kind":"general_matrix_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "matrix_semantics":{"mode":"correlation"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":2,"x":1,"y":1,"center_x":2,"center_y":2,"size":1}]
+        }"##;
+        let error = parse_scene_v1_matrix(source).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_semantics");
+        assert_eq!(error.path, "matrix_semantics.mode");
+    }
+
 }
