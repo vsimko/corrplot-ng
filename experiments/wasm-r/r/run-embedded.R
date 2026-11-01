@@ -34,7 +34,7 @@ main <- function() {
   # Keep the temporary extension in the repository working directory on Windows.
   # R CMD SHLIB / MinGW mishandles drive-letter absolute output paths (it drops
   # the colon and separators while constructing the linker -o argument).
-  shared_dir <- if (.Platform$OS.type == "windows") getwd() else tempdir()
+  shared_dir <- if (.Platform$OS.type == "windows") "." else tempdir()
   shared <- tempfile(
     pattern = "wasmtime-host-",
     tmpdir = shared_dir,
