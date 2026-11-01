@@ -132,8 +132,14 @@ test("maps invalid matrix construction options to diagnostic-v1", () => {
     () => renderMatrixSvg(sceneV1, "unknown"),
     (error) => {
       assert.ok(error instanceof CorrplotError);
-      assert.equal(error.diagnostic.code, "configuration.invalid_field");
-      assert.equal(error.diagnostic.path, "cellMethod");
+      assert.deepEqual(error.diagnostic, {
+        schema_version: 1,
+        code: "configuration.invalid_field",
+        severity: "error",
+        stage: "configuration",
+        message: "unsupported cell method 'unknown'",
+        path: "cellMethod",
+      });
       return true;
     },
   );
