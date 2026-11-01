@@ -61,6 +61,11 @@ main <- function() {
     c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file))
   )
   if (status != 0L) stop("failed to compile the embedded Wasmtime R host", call. = FALSE)
+  # Windows does not search the linked DLL's directory automatically when
+  # loading an R extension. Add the Wasmtime C API lib directory to PATH.
+  if (.Platform$OS.type == "windows") {
+    Sys.setenv(PATH = paste(lib, Sys.getenv("PATH"), sep = .Platform$path.sep))
+  }
   dyn.load(shared)
   on.exit(.Call("corrplot_wasm_shutdown"), add = TRUE)
 
