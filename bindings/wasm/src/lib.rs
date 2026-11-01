@@ -60,6 +60,7 @@ pub struct CellGlyphInput {
     pub side: Option<f64>,
     pub rx: Option<f64>,
     pub ry: Option<f64>,
+    pub rotation_degrees: Option<f64>,
     pub start_radians: Option<f64>,
     pub end_radians: Option<f64>,
     pub text: Option<String>,
@@ -218,6 +219,7 @@ fn glyph(input: CellGlyphInput) -> Result<CellGlyph, DiagnosticV1> {
         "ellipse" => Ok(CellGlyph::Ellipse {
             rx: required(input.rx, "rx")?,
             ry: required(input.ry, "ry")?,
+            rotation_degrees: input.rotation_degrees.unwrap_or(0.0),
             color: rgba(required(input.color, "color")?, "cells.glyph.color")?,
         }),
         "pie" => Ok(CellGlyph::Pie {
@@ -401,6 +403,7 @@ mod tests {
                     side: None,
                     rx: None,
                     ry: None,
+                    rotation_degrees: None,
                     start_radians: None,
                     end_radians: None,
                     text: None,
