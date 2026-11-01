@@ -34,7 +34,7 @@ main <- function() {
   # Keep the temporary extension in the repository working directory on Windows.
   # R CMD SHLIB / MinGW mishandles drive-letter absolute output paths (it drops
   # the colon and separators while constructing the linker -o argument).
-  shared_dir <- if (.Platform$OS.type == "windows") "" else tempdir()
+  shared_dir <- tempdir()
   shared <- tempfile(
     pattern = "wasmtime-host-",
     tmpdir = shared_dir,
@@ -65,10 +65,14 @@ main <- function() {
     PKG_CPPFLAGS = cppflags,
     PKG_LIBS = paste(c(ldflags, linker_flags), collapse = " ")
   )
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(shared_dir)
   status <- system2(
     file.path(R.home("bin"), "R"),
-    c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file))
+    c("CMD", "SHLIB", "-o", shQuote(basename(shared)), shQuote(source_file))
   )
+  setwd(old_wd)
   if (status != 0L) stop("failed to compile the embedded Wasmtime R host", call. = FALSE)
   # Windows does not search the linked DLL's directory automatically when
   # loading an R extension. Add the Wasmtime C API lib directory to PATH.
