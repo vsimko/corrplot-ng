@@ -10,8 +10,8 @@ if (!nzchar(wasmtime)) {
   stop("Wasmtime CLI not found; install Wasmtime or set CORRPLOT_WASMTIME", call. = FALSE)
 }
 
-if (!requireNamespace("jsonlite", quietly = TRUE)) {
-  stop("the jsonlite package is required for this experiment", call. = FALSE)
+if (!requireNamespace("jsonlite", quietly = TRUE) || !requireNamespace("digest", quietly = TRUE)) {
+  stop("the jsonlite and digest packages are required for this experiment", call. = FALSE)
 }
 
 input <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
@@ -38,13 +38,13 @@ if (!identical(status, 0L)) {
 
 output <- paste(readLines(output_file, warn = FALSE), collapse = "\n")
 response <- jsonlite::fromJSON(output, simplifyVector = FALSE)
-wasm_hash <- unname(tools::md5sum(module))
-fixture_hash <- unname(tools::md5sum(fixture))
+wasm_hash <- digest::digest(module, algo = "sha256", file = TRUE)
+fixture_hash <- digest::digest(fixture, algo = "sha256", file = TRUE)
 
 cat(jsonlite::toJSON(list(
   runtime = if (nzchar(stderr)) stderr else "external Wasmtime",
-  wasmMd5 = wasm_hash,
-  fixtureMd5 = fixture_hash,
+  wasmSha256 = wasm_hash,
+  fixtureSha256 = fixture_hash,
   elapsedMs = round(elapsed * 1000, 3),
   response = response
 ), auto_unbox = TRUE, pretty = TRUE), "\n")
