@@ -712,10 +712,10 @@ fn is_srgb_hex(value: &str) -> bool {
 
 /// Construct a deterministic logical scene from normalized matrix data.
 ///
-/// This initial slice supports matrix semantics, source-index validation,
-/// labels, missing values, seven cell encodings, title/description input and a
-/// plain annotation. Cluster regions, plotmath, confidence intervals,
-/// significance and publication-text layout remain follow-up work.
+/// This slice supports matrix semantics, source-index validation, labels,
+/// missing values, seven cell encodings, triangle visibility, title/description
+/// input and a plain annotation. Cluster regions, plotmath, confidence
+/// intervals, significance and publication-text layout remain follow-up work.
 pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOptions) -> Result<Scene, SceneBuildError> {
     if input.schema_version != 1 {
         return Err(SceneBuildError::new("input.scene.unsupported_version", "only normalized_matrix schema_version 1 is supported", "schema_version"));
@@ -1094,6 +1094,21 @@ mod tests {
         let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
         assert_eq!(scene.cells.len(), 9);
         scene.validate().unwrap();
+    }
+
+    #[test]
+    fn parser_preserves_triangle_display_options_for_scene_construction() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace(
+                "\"glyph_method\": \"circle\"",
+                "\"glyph_method\": \"circle\", \"display_type\": \"upper\", \"show_diagonal\": false",
+            );
+        let matrix = parse_scene_v1_matrix(&source).unwrap();
+        assert_eq!(matrix.display_type, DisplayType::Upper);
+        assert!(!matrix.show_diagonal);
+        let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
+        assert_eq!(scene.cells.iter().map(|cell| cell.visible).collect::<Vec<_>>(),
+            vec![false, true, true, false, false, true, false, false, false]);
     }
 
     #[test]
