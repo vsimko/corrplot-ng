@@ -1140,7 +1140,8 @@ mod tests {
         assert!(scene.texts.iter().any(|text| {
             text.text == "0.65" && text.x == 314.0 && text.y == 202.0
                 && text.font_size == 9.0
-                && text.color == RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 }
+                && text.color.red == 0 && text.color.green == 0
+                && text.color.blue == 0 && text.color.alpha == 255
                 && text.anchor == TextAnchor::Middle
         }));
     }
