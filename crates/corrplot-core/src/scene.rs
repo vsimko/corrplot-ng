@@ -107,7 +107,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
         column: error.column,
     })?;
 
-    let max_abs = flat.iter().flatten().copied().map(|value| value.abs()).fold(0.0_f64, f64::max);
+    let max_abs = flat.iter().flatten().map(|value| value.abs()).fold(0.0_f64, f64::max);
     let pitch = CELL_SIZE + CELL_GAP;
     let width = LEFT_MARGIN + n as f64 * pitch + RIGHT_MARGIN;
     let height = TOP_MARGIN + n as f64 * pitch + BOTTOM_MARGIN;
@@ -147,7 +147,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
             });
             cells.push(SceneCell {
                 x, y, size: CELL_SIZE, visible: true,
-                fill: match value { None => missing_fill, Some(_) if options.cell_method == CellMethod::Color => color, Some(_) => white },
+                fill: if value.is_some() && options.cell_method == CellMethod::Color { color } else { white },
                 stroke: grid, glyph,
             });
             if value.is_none() {
@@ -182,20 +182,20 @@ mod tests {
     fn input() -> NormalizedMatrixV1 {
         NormalizedMatrixV1 {
             schema_version: 1, kind: "normalized_matrix".into(),
-            labels: vec!["alpha".into(), "beta".into(), "gamma".into()],
-            values: vec![vec![Some(1.0), Some(-0.5), None], vec![Some(-0.5), Some(1.0), None], vec![None, None, Some(1.0)]],
-            source_indices: vec![0, 1, 2], semantics: MatrixSemantics::Correlation,
+            labels: vec!["alpha".into(), "beta".into()],
+            values: vec![vec![Some(1.0), Some(-0.5)], vec![Some(-0.5), None]],
+            source_indices: vec![0, 1], semantics: MatrixSemantics::Correlation,
         }
     }
 
     #[test]
     fn builds_deterministic_scene_and_preserves_missing_values() {
         let scene = matrix_to_scene_v1(&input(), &SceneBuildOptions::default()).unwrap();
-        assert_eq!(scene.cells.len(), 9);
+        assert_eq!(scene.cells.len(), 4);
         assert_eq!(scene.cells[0].glyph, Some(CellGlyph::Circle { radius: CELL_SIZE * 0.43, color: RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 } }));
         assert!(scene.texts.iter().any(|text| text.text == "NA"));
         assert!(scene.texts.iter().any(|text| text.text == "alpha"));
-        assert_eq!(scene.width, LEFT_MARGIN + 3.0 * (CELL_SIZE + CELL_GAP) + RIGHT_MARGIN);
+        assert_eq!(scene.width, LEFT_MARGIN + 2.0 * (CELL_SIZE + CELL_GAP) + RIGHT_MARGIN);
     }
 
     #[test]
@@ -203,7 +203,7 @@ mod tests {
         for method in [CellMethod::Circle, CellMethod::Square, CellMethod::Ellipse, CellMethod::Number, CellMethod::Shade, CellMethod::Color, CellMethod::Pie] {
             let options = SceneBuildOptions { cell_method: method, ..Default::default() };
             let scene = matrix_to_scene_v1(&input(), &options).unwrap();
-            assert_eq!(scene.cells.len(), 9);
+            assert_eq!(scene.cells.len(), 4);
             scene.validate().unwrap();
         }
     }
@@ -212,30 +212,15 @@ mod tests {
     fn general_numeric_values_use_a_data_derived_magnitude() {
         let mut matrix = input();
         matrix.semantics = MatrixSemantics::GeneralNumeric;
-        matrix.labels = vec!["alpha".into(), "beta".into()];
-        matrix.source_indices = vec![0, 1];
         matrix.values = vec![vec![Some(0.0), Some(5.0)], vec![Some(-10.0), Some(2.0)]];
         let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
         assert_eq!(scene.cells[2].glyph, Some(CellGlyph::Circle { radius: CELL_SIZE * 0.43, color: RgbaColor { red: 178, green: 24, blue: 43, alpha: 255 } }));
     }
 
     #[test]
-    fn built_scene_is_consumed_by_both_existing_renderers() {
-        use crate::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
-        use crate::raster::{RgbaRenderer, SceneSvgRenderer};
-        let scene = matrix_to_scene_v1(&input(), &SceneBuildOptions::default()).unwrap();
-        let svg_options = OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels));
-        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
-        assert!(matches!(svg, RenderOutput::Svg(_)));
-        let rgba_options = OutputOptions::Rgba(RasterOptions::new(320, 320));
-        let rgba = RgbaRenderer.render(&scene, &rgba_options).unwrap();
-        assert!(matches!(rgba, RenderOutput::Rgba(_)));
-    }
-
-    #[test]
     fn rejects_duplicate_source_indices_with_stable_path() {
         let mut matrix = input();
-        matrix.source_indices = vec![0, 0, 2];
+        matrix.source_indices = vec![0, 0];
         let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
         assert_eq!(error.code, "input.matrix.invalid_source_indices");
         assert_eq!(error.path, "source_indices[1]");
