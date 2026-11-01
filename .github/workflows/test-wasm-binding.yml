@@ -19,7 +19,7 @@ permissions:
 jobs:
   test:
     name: WASM Node smoke (Node ${{ matrix.node }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -44,21 +44,9 @@ jobs:
       - name: Install Playwright
         if: matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1
-      - name: Install Chromium system dependencies
+      - name: Verify preinstalled Chrome
         if: matrix.node == 26
-        run: npx playwright install-deps chromium
-      - name: Cache Playwright browser
-        if: matrix.node == 26
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-headless-${{ runner.os }}-1.56.1
-      - name: Install Chromium headless shell
-        if: matrix.node == 26 && steps.playwright-cache.outputs.cache-hit != 'true'
-        env:
-          DEBUG: pw:install
-        run: npx playwright install chromium --only-shell
+        run: google-chrome --version
       - name: Run browser WebAssembly smoke test
         if: matrix.node == 26
         env:
