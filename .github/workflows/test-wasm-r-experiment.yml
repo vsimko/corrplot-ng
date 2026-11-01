@@ -46,6 +46,12 @@ jobs:
             --target wasm32-wasip1 \
             --release
 
+      - name: Locate WASI artifact
+        run: |
+          WASM_MODULE="$(find "$GITHUB_WORKSPACE" -name corrplot_wasm_r_host.wasm -print -quit)"
+          test -n "$WASM_MODULE"
+          echo "WASM_MODULE=$WASM_MODULE" >> "$GITHUB_ENV"
+
       - name: Install Wasmtime
         run: |
           curl https://wasmtime.dev/install.sh -sSf | bash
@@ -59,7 +65,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          WASM="experiments/wasm-r/wasm-host/target/wasm32-wasip1/release/corrplot_wasm_r_host.wasm"
+          WASM="$WASM_MODULE"
           for FIXTURE in experiments/wasm-r/fixtures/*.json; do
             NAME="$(basename "$FIXTURE" .json)"
             node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE" > "/tmp/node-$NAME.json"
