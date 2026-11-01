@@ -108,13 +108,14 @@ still synthetic microbenchmarks. This is a
 microbenchmark of the validation boundary, not a full plotting benchmark; the
 reference implementation is intentionally isolated from the production package.
 
-The embedded ABI CI now runs on Linux and Intel macOS (`macos-15-intel`) using
-separately pinned Wasmtime 50.0.1 C API release archives. The R host selects the platform shared
-library (`.so` or `.dylib`) and corresponding linker flags. Windows remains a
-separate follow-up because its Rtools/MSYS2 compiler and Wasmtime import-library
-layout need dedicated validation; the current C shim is not yet claimed to be
-Windows-compatible. Further work should measure larger matrix sizes and
-memory/transfer costs. The current
+The embedded ABI CI matrix now includes Ubuntu, Intel macOS (`macos-15-intel`),
+and Windows (`windows-latest`). Windows uses the Wasmtime MinGW C API archive
+and the GNU Rust target so the native `extendr` DLL matches the Rtools toolchain.
+The R host selects the platform shared library (`.so`, `.dylib`, or `.dll`) and
+platform-specific linker flags. Windows support is considered experimental
+until the Windows CI job passes; do not treat the platform as validated merely
+because it is present in the matrix. Further work should measure larger matrix
+sizes and memory/transfer costs. The current
 wasm-bindgen artifact should not be reused for this purpose without its
 JavaScript runtime glue.
 
@@ -179,11 +180,13 @@ validation work more substantial. Existing smaller fixtures remain useful for
 exposing fixed call-boundary overhead. These are still synthetic microbenchmarks,
 not a full plotting benchmark or stable cross-machine performance claims.
 
-The first comparison currently targets Ubuntu and Intel macOS. Windows support,
-complete package installation size (including V8 and Rust runtime dependencies),
-cold-start cost, and peak memory remain explicit follow-up measurements.
+The comparison targets Ubuntu, Intel macOS, and Windows in CI. Windows timings
+should only be added to the cross-platform results after its job passes and its
+benchmark artifact has been checked. Complete package installation size
+(including V8 and Rust runtime dependencies), cold-start cost, and peak memory
+remain explicit follow-up measurements.
 
 
 ## Benchmark results
 
-The first cross-platform R backend measurements (Linux x86-64 and macOS Intel) are recorded in [results/benchmark-2026-11-01.md](results/benchmark-2026-11-01.md), with machine-readable values in [results/benchmark-2026-11-01.csv](results/benchmark-2026-11-01.csv). They are exploratory warm-throughput measurements; cold-start, RSS and Windows remain open.
+The initial R backend measurements (Linux x86-64 and macOS Intel) are recorded in [results/benchmark-2026-11-01.md](results/benchmark-2026-11-01.md), with machine-readable values in [results/benchmark-2026-11-01.csv](results/benchmark-2026-11-01.csv). They are exploratory warm-throughput measurements; cold-start, RSS and Windows remain open.
