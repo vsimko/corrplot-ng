@@ -260,6 +260,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             fill,
             stroke,
             glyph: cell.glyph.map(glyph).transpose()?,
+            p_value: None, normalized_value: None, significance: None, confidence_interval: None,
         });
     }
 
