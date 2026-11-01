@@ -246,7 +246,7 @@ mod tests {
         let mut matrix = input();
         matrix.values[0][1] = Some(1.25);
         let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
-        assert_eq!(error.code, "input.matrix.value_out_of_range");
+        assert_eq!(error.code, "input.matrix.out_of_range");
         assert_eq!(error.path, "values[0][1]");
         assert_eq!(error.row, Some(0));
         assert_eq!(error.column, Some(1));
