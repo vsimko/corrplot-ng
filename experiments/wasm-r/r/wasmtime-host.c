@@ -81,7 +81,7 @@ static void ensure_module(const char *module_path) {
   wasmtime_extern_t item;
   if (!wasmtime_instance_export_get(g_context, &g_instance, "memory", 6, &g_memory) ||
       g_memory.kind != WASMTIME_EXTERN_MEMORY) Rf_error("WASM module must export memory");
-  if (!wasmtime_instance_export_get(g_context, &g_instance, "corrplot_alloc", 13, &item) ||
+  if (!wasmtime_instance_export_get(g_context, &g_instance, "corrplot_alloc", 14, &item) ||
       item.kind != WASMTIME_EXTERN_FUNC) Rf_error("WASM module must export corrplot_alloc");
   g_alloc = item.of.func;
   if (!wasmtime_instance_export_get(g_context, &g_instance, "corrplot_free", 13, &item) ||
