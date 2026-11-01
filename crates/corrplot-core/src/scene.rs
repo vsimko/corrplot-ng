@@ -5,7 +5,7 @@
 //! layout and glyph semantics remain in this module.
 
 use crate::output::RgbaColor;
-use crate::raster::{CellGlyph, Scene, SceneCell, SceneCellSignificance, SceneConfidenceInterval, SceneClusterRegion, SceneLegendEntry, SceneText, TextAnchor};
+use crate::raster::{CellGlyph, Scene, SceneCell, SceneCellSignificance, SceneConfidenceInterval, SceneClusterRegion, SceneLegendEntry, SceneSignificancePolicy, SceneText, TextAnchor};
 use crate::{validate_matrix, MatrixKind};
 use std::collections::HashSet;
 
@@ -415,12 +415,31 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
     }
     append_scene_v1_text_annotations(&mut scene, root)?;
+    append_scene_v1_significance_policy(&mut scene, root)?;
     append_scene_v1_legend(&mut scene, root)?;
     append_scene_v1_cluster_regions(&mut scene, root)?;
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
 }
 
+
+fn append_scene_v1_significance_policy(
+    scene: &mut Scene,
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+) -> Result<(), SceneBuildError> {
+    let Some(value) = root.get("significance") else { return Ok(()); };
+    let policy = as_object(value, "significance")?;
+    let thresholds = as_array(required(policy, "thresholds", "significance")?, "significance.thresholds")?
+        .iter().enumerate()
+        .map(|(index, value)| as_number(value, &format!("significance.thresholds[{index}]")))
+        .collect::<Result<Vec<_>, _>>()?;
+    scene.significance = Some(SceneSignificancePolicy {
+        mode: as_string(required(policy, "mode", "significance")?, "significance.mode")?.to_string(),
+        thresholds,
+        symbol: as_string(required(policy, "symbol", "significance")?, "significance.symbol")?.to_string(),
+    });
+    Ok(())
+}
 
 fn append_scene_v1_legend(
     scene: &mut Scene,
@@ -1194,7 +1213,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
     }
     // The current renderer Scene type has no accessibility metadata fields.
     let _description = &options.description;
-    let scene = Scene { width, height, cells, texts, legend: Vec::new(), cluster_regions: Vec::new() };
+    let scene = Scene { width, height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() };
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
 }
@@ -1253,6 +1272,7 @@ mod tests {
         let source = r##"{
           "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
           "title":"","description":"","annotation":"",
+          "significance":{"mode":"stars","thresholds":[0.05,0.01],"symbol":"*"},
           "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
           "labels":[
             {"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4},
@@ -1561,6 +1581,9 @@ mod tests {
             "confidence_interval":{"lower":0.1,"upper":0.8,"x1":11,"x2":19,"y":24,"cap_height":2,"stroke_width":1.5,"color":"#2166ac"}}]
         }"##;
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
+        assert_eq!(scene.significance, Some(SceneSignificancePolicy {
+            mode: "stars".into(), thresholds: vec![0.05, 0.01], symbol: "*".into(),
+        }));
         let cell = &scene.cells[0];
         assert_eq!(cell.p_value, Some(0.02));
         assert_eq!(cell.normalized_value, Some(0.75));
