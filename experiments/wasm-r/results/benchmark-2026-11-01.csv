@@ -1,0 +1,41 @@
+platform,fixture,backend,per_call_ms,artifact_bytes
+linux-x86_64,valid-small,V8,0.05760,147076
+linux-x86_64,valid-small,Wasmtime,0.00240,147076
+linux-x86_64,valid-small,Native Rust,0.00320,787392
+linux-x86_64,valid-small,Pure R reference,0.10560,0
+linux-x86_64,valid-general-32,V8,0.10240,147076
+linux-x86_64,valid-general-32,Wasmtime,0.03620,147076
+linux-x86_64,valid-general-32,Native Rust,0.02520,787392
+linux-x86_64,valid-general-32,Pure R reference,1.44410,0
+linux-x86_64,valid-general-128,V8,0.67390,147076
+linux-x86_64,valid-general-128,Wasmtime,0.52160,147076
+linux-x86_64,valid-general-128,Native Rust,0.30800,787392
+linux-x86_64,valid-general-128,Pure R reference,13.27000,0
+linux-x86_64,valid-correlation-64,V8,0.24100,147076
+linux-x86_64,valid-correlation-64,Wasmtime,0.15040,147076
+linux-x86_64,valid-correlation-64,Native Rust,0.08990,787392
+linux-x86_64,valid-correlation-64,Pure R reference,5.81000,0
+linux-x86_64,invalid-asymmetric,V8,0.07320,147076
+linux-x86_64,invalid-asymmetric,Wasmtime,0.00330,147076
+linux-x86_64,invalid-asymmetric,Native Rust,0.00420,787392
+linux-x86_64,invalid-asymmetric,Pure R reference,0.07400,0
+macos-intel-x86_64,valid-small,V8,0.13760,147079
+macos-intel-x86_64,valid-small,Wasmtime,0.00680,147079
+macos-intel-x86_64,valid-small,Native Rust,0.01680,664392
+macos-intel-x86_64,valid-small,Pure R reference,0.87130,0
+macos-intel-x86_64,valid-general-32,V8,0.28000,147079
+macos-intel-x86_64,valid-general-32,Wasmtime,0.08040,147079
+macos-intel-x86_64,valid-general-32,Native Rust,0.08310,664392
+macos-intel-x86_64,valid-general-32,Pure R reference,19.63000,0
+macos-intel-x86_64,valid-general-128,V8,2.22750,147079
+macos-intel-x86_64,valid-general-128,Wasmtime,1.46760,147079
+macos-intel-x86_64,valid-general-128,Native Rust,0.84400,664392
+macos-intel-x86_64,valid-general-128,Pure R reference,65.40000,0
+macos-intel-x86_64,valid-correlation-64,V8,0.77400,147079
+macos-intel-x86_64,valid-correlation-64,Wasmtime,0.46900,147079
+macos-intel-x86_64,valid-correlation-64,Native Rust,0.18180,664392
+macos-intel-x86_64,valid-correlation-64,Pure R reference,20.15000,0
+macos-intel-x86_64,invalid-asymmetric,V8,0.23500,147079
+macos-intel-x86_64,invalid-asymmetric,Wasmtime,0.04730,147079
+macos-intel-x86_64,invalid-asymmetric,Native Rust,0.01560,664392
+macos-intel-x86_64,invalid-asymmetric,Pure R reference,0.49520,0
