@@ -100,8 +100,8 @@ The native-R reference benchmark now runs the same JSON request decoding and
 validation contract. Both R benchmarks warm up first, estimate per-call cost,
 and adapt the measured iteration count to target roughly 0.5 seconds (bounded
 to 100–10,000 calls), avoiding zero-millisecond readings for tiny fixtures. In addition to the small
-correlation fixtures, the suite includes 32×32 and 128×128 general-numeric
-matrices with explicit missing values. CI compares semantic responses with the
+correlation fixtures, the suite includes a 64×64 symmetric correlation
+matrix and 32×32/128×128 general-numeric matrices with explicit missing values. CI compares semantic responses with the
 embedded Wasmtime result and reports per-call timings. The larger fixtures help
 expose input parsing, allocation, and linear-memory transfer costs; they are
 still synthetic microbenchmarks. This is a
