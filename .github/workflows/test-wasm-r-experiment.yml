@@ -108,8 +108,16 @@ jobs:
           fi
           echo "WASMTIME_C_API_ROOT=/tmp/wasmtime-c-api" >> "$GITHUB_ENV"
 
+      - name: Install R system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
       - name: Install R experiment dependencies
-        run: Rscript -e 'install.packages(c("jsonlite", "digest", "V8"), repos = "https://cloud.r-project.org")'
+        run: |
+          Rscript -e 'install.packages(c("jsonlite", "digest", "V8"), repos = "https://cloud.r-project.org")'
+          Rscript -e 'stopifnot(requireNamespace("V8", quietly = TRUE), requireNamespace("curl", quietly = TRUE))'
 
       - name: Build native Rust R binding
         shell: bash
@@ -118,109 +126,101 @@ jobs:
           R_HOME="$(R RHOME)" cargo build \
             --manifest-path experiments/wasm-r/native-r/Cargo.toml \
             --release
-          NATIVE_LIBRARY="$(find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print | grep -E '(lib)?corrplot_r_native\\.(so|dylib|dll)
+          NATIVE_LIBRARY="$(find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)$' | head -n 1 || true)"
           if [[ -z "$NATIVE_LIBRARY" ]]; then
             echo "Native Rust R library not found"
             find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
             exit 1
           fi
           echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
 
-      - name: Run identical module and fixtures in Node and R
+      - name: Run identical fixtures and collect benchmark results
         shell: bash
         run: |
           set -euo pipefail
-          WASM="$WASM_MODULE"
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,elapsed_ms,per_call_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
           for FIXTURE in experiments/wasm-r/fixtures/*.json; do
             NAME="$(basename "$FIXTURE" .json)"
-            node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE" > "/tmp/node-$NAME.json"
-            Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE" > "/tmp/r-$NAME.json"
-            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/node-embedded-$NAME.json"
-            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-embedded-$NAME.json"
-            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-v8-$NAME.json"
-            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "/tmp/r-native-rust-$NAME.json"
-            test -s "/tmp/r-embedded-$NAME.json"
-            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "/tmp/r-native-reference-$NAME.json"
-            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" "/tmp/r-v8-$NAME.json" "/tmp/r-native-rust-$NAME.json" "/tmp/r-native-reference-$NAME.json" <<'PY'
-          import json, sys
-          name, node_path, r_path, node_embedded_path, r_embedded_path, r_v8_path, r_native_rust_path, r_native_reference_path = sys.argv[1:]
-          with open(node_path, encoding="utf-8") as f:
-              node = json.load(f)
-          with open(r_path, encoding="utf-8") as f:
-              r = json.load(f)
-          with open(node_embedded_path, encoding="utf-8") as f:
-              node_embedded = json.load(f)
-          with open(r_embedded_path, encoding="utf-8") as f:
-              r_embedded = json.load(f)
-          with open(r_v8_path, encoding="utf-8") as f:
-              r_v8 = json.load(f)
-          with open(r_native_rust_path, encoding="utf-8") as f:
-              r_native_rust = json.load(f)
-          with open(r_native_reference_path, encoding="utf-8") as f:
-              r_native_reference = json.load(f)
-          assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
-          assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
-          assert node["response"] == r["response"], (name, node["response"], r["response"])
-          assert node_embedded["wasmSha256"] == r_embedded["wasmSha256"], (name, node_embedded, r_embedded)
-          assert node_embedded["fixtureSha256"] == r_embedded["fixtureSha256"], (name, node_embedded, r_embedded)
-          assert node_embedded["response"] == r_embedded["response"], (name, node_embedded["response"], r_embedded["response"])
-          assert node_embedded["response"] == node["response"], (name, node_embedded["response"], node["response"])
-          assert r_v8["response"] == r_embedded["response"], (name, r_v8["response"], r_embedded["response"])
-          assert r_native_rust["response"] == r_embedded["response"], (name, r_native_rust["response"], r_embedded["response"])
-          assert r_native_reference["response"] == r_embedded["response"], (name, r_native_reference["response"], r_embedded["response"])
-          print(f"{name}: parity passed; V8 {r_v8['perCallMs']:.4f} ms/call, Wasmtime {r_embedded['perCallMs']:.4f} ms/call, native Rust {r_native_rust['perCallMs']:.4f} ms/call, native R reference {r_native_reference['perCallMs']:.4f} ms/call")
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), f'{result.get("elapsedMs", "")}', f'{result.get("perCallMs", "")}', size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('perCallMs', float('nan')):.5f} ms/call" for backend, result, _ in rows))
           PY
           done
- | head -n 1)"
-          if [[ -z "$NATIVE_LIBRARY" ]]; then
-            echo "Native Rust R library not found"
-            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
-            exit 1
-          fi
-          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
 
-      - name: Run identical module and fixtures in Node and R
+      - name: Measure runtime and artifact sizes
         shell: bash
         run: |
           set -euo pipefail
-          WASM="$WASM_MODULE"
-          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
-            NAME="$(basename "$FIXTURE" .json)"
-            node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE" > "/tmp/node-$NAME.json"
-            Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE" > "/tmp/r-$NAME.json"
-            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/node-embedded-$NAME.json"
-            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-embedded-$NAME.json"
-            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-v8-$NAME.json"
-            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "/tmp/r-native-rust-$NAME.json"
-            test -s "/tmp/r-embedded-$NAME.json"
-            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "/tmp/r-native-reference-$NAME.json"
-            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" "/tmp/r-v8-$NAME.json" "/tmp/r-native-rust-$NAME.json" "/tmp/r-native-reference-$NAME.json" <<'PY'
-          import json, sys
-          name, node_path, r_path, node_embedded_path, r_embedded_path, r_v8_path, r_native_rust_path, r_native_reference_path = sys.argv[1:]
-          with open(node_path, encoding="utf-8") as f:
-              node = json.load(f)
-          with open(r_path, encoding="utf-8") as f:
-              r = json.load(f)
-          with open(node_embedded_path, encoding="utf-8") as f:
-              node_embedded = json.load(f)
-          with open(r_embedded_path, encoding="utf-8") as f:
-              r_embedded = json.load(f)
-          with open(r_v8_path, encoding="utf-8") as f:
-              r_v8 = json.load(f)
-          with open(r_native_rust_path, encoding="utf-8") as f:
-              r_native_rust = json.load(f)
-          with open(r_native_reference_path, encoding="utf-8") as f:
-              r_native_reference = json.load(f)
-          assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
-          assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
-          assert node["response"] == r["response"], (name, node["response"], r["response"])
-          assert node_embedded["wasmSha256"] == r_embedded["wasmSha256"], (name, node_embedded, r_embedded)
-          assert node_embedded["fixtureSha256"] == r_embedded["fixtureSha256"], (name, node_embedded, r_embedded)
-          assert node_embedded["response"] == r_embedded["response"], (name, node_embedded["response"], r_embedded["response"])
-          assert node_embedded["response"] == node["response"], (name, node_embedded["response"], node["response"])
-          assert r_v8["response"] == r_embedded["response"], (name, r_v8["response"], r_embedded["response"])
-          assert r_native_rust["response"] == r_embedded["response"], (name, r_native_rust["response"], r_embedded["response"])
-          assert r_native_reference["response"] == r_embedded["response"], (name, r_native_reference["response"], r_embedded["response"])
-          print(f"{name}: parity passed; V8 {r_v8['perCallMs']:.4f} ms/call, Wasmtime {r_embedded['perCallMs']:.4f} ms/call, native Rust {r_native_rust['perCallMs']:.4f} ms/call, native R reference {r_native_reference['perCallMs']:.4f} ms/call")
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | ms/call | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {float(row['per_call_ms']):.5f} | {row['artifact_bytes']} |")
           PY
-          done
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-\${{ matrix.os }}
+          path: \${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
