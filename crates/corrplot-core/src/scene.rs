@@ -152,7 +152,8 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         let row = as_usize(required(cell, "row", &path)?, &format!("{path}.row"))?;
         let column = as_usize(required(cell, "column", &path)?, &format!("{path}.column"))?;
         if row >= n || column >= n {
-            return Err(SceneBuildError::new("input.scene.cell_out_of_bounds", "cell row and column must refer to an existing label", format!("{path}.row")).with_cell(row, column));
+            let field = if row >= n { "row" } else { "column" };
+            return Err(SceneBuildError::new("input.scene.cell_out_of_bounds", "cell row and column must refer to an existing label", format!("{path}.{field}")).with_cell(row, column));
         }
         let identity = row * n + column;
         if seen[identity] {
@@ -173,7 +174,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         }
     }
     if let Some(index) = seen.iter().position(|present| !present) {
-        return Err(SceneBuildError::new("input.scene.missing_cell", "scene must contain every row/column cell identity", format!("cells[{index}]")));
+        return Err(SceneBuildError::new("input.scene.missing_cell", "scene must contain every row/column cell identity", format!("cells[row={},column={}]", index / n, index % n)).with_cell(index / n, index % n));
     }
 
     let source_indices = if let Some(order) = root.get("variable_order") {
@@ -329,8 +330,11 @@ fn is_srgb_hex(value: &str) -> bool {
 /// plain annotation. Cluster regions, plotmath, confidence intervals,
 /// significance and publication-text layout remain follow-up work.
 pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOptions) -> Result<Scene, SceneBuildError> {
-    if input.schema_version != 1 || input.kind != "normalized_matrix" {
-        return Err(SceneBuildError::new("input.invalid_schema_version", "expected normalized_matrix schema_version 1", "schema_version"));
+    if input.schema_version != 1 {
+        return Err(SceneBuildError::new("input.scene.unsupported_version", "only normalized_matrix schema_version 1 is supported", "schema_version"));
+    }
+    if input.kind != "normalized_matrix" {
+        return Err(SceneBuildError::new("input.matrix.invalid_kind", "expected normalized_matrix input kind", "kind"));
     }
     let n = input.labels.len();
     if n == 0 || input.values.len() != n || input.values.iter().any(|row| row.len() != n) {
