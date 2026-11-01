@@ -107,7 +107,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
         column: error.column,
     })?;
 
-    let max_abs = flat.iter().flatten().map(|value| value.abs()).fold(0.0_f64, f64::max);
+    let max_abs = flat.iter().flatten().copied().map(|value| value.abs()).fold(0.0_f64, f64::max);
     let pitch = CELL_SIZE + CELL_GAP;
     let width = LEFT_MARGIN + n as f64 * pitch + RIGHT_MARGIN;
     let height = TOP_MARGIN + n as f64 * pitch + BOTTOM_MARGIN;
