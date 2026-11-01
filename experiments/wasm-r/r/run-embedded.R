@@ -31,8 +31,12 @@ main <- function() {
   script_arg <- grep("^--file=", commandArgs(), value = TRUE)
   script_path <- sub("^--file=", "", script_arg[[1]])
   source_file <- file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "wasmtime-host.c")
-  shared_dir <- if (.Platform$OS.type == "windows") lib else tempdir()
-  shared <- tempfile(tmpdir = shared_dir, fileext = paste0(".", .Platform$dynlib.ext))
+  # Keep the temporary extension in the repository working directory on Windows.
+  # R CMD SHLIB / MinGW mishandles drive-letter absolute output paths (it drops
+  # the colon and separators while constructing the linker -o argument).
+  shared_dir <- if (.Platform$OS.type == "windows") getwd() else tempdir()
+  shared <- tempfile(pattern = "wasmtime-host-", tmpdir = shared_dir, fileext = paste0(".", .Platform$dynlib.ext))
+  on.exit(unlink(shared), add = TRUE)
 
   # Pass include and linker flags through the environment. On Windows, R CMD SHLIB
   # reads Makevars.win rather than a generic Makevars file, so a temporary
