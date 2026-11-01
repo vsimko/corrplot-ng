@@ -64,6 +64,13 @@ pub struct SceneClusterRegion {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct SceneSignificancePolicy {
+    pub mode: String,
+    pub thresholds: Vec<f64>,
+    pub symbol: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct SceneCellSignificance {
     pub p_value: Option<f64>,
     pub status: String,
@@ -107,6 +114,8 @@ pub struct Scene {
     pub height: f64,
     pub cells: Vec<SceneCell>,
     pub texts: Vec<SceneText>,
+    /// Plot-wide significance annotation policy from scene-v1.
+    pub significance: Option<SceneSignificancePolicy>,
     /// Renderer-neutral legend semantics, retained independently of text labels.
     pub legend: Vec<SceneLegendEntry>,
     /// Source and displayed matrix ranges for cluster overlays.
@@ -171,6 +180,18 @@ impl Scene {
                 Some(CellGlyph::Number { font_size, .. }) if !font_size.is_finite() || *font_size <= 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid number font size"))),
                 _ => {}
+            }
+        }
+        if let Some(policy) = &self.significance {
+            if !matches!(policy.mode.as_str(), "pch" | "p-value" | "blank" | "stars")
+                || policy.thresholds.is_empty()
+                || policy.thresholds.iter().any(|value| !value.is_finite() || !(0.0..=1.0).contains(value))
+                || policy.symbol.is_empty()
+                || policy.symbol.chars().count() > 8
+            {
+                return Err(OutputValidationError::invalid_options(
+                    "scene has invalid plot-wide significance policy",
+                ));
             }
         }
         for (index, entry) in self.legend.iter().enumerate() {
@@ -722,6 +743,7 @@ mod tests {
                     }),
                 },
             ],
+            significance: None,
             legend: vec![],
             cluster_regions: vec![],
             texts: vec![SceneText {
