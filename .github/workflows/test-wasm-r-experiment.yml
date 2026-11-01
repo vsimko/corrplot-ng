@@ -68,6 +68,18 @@ jobs:
           echo "$HOME/.wasmtime/bin" >> "$GITHUB_PATH"
           "$HOME/.wasmtime/bin/wasmtime" --version
 
+      - name: Install pinned Wasmtime C API
+        run: |
+          set -euo pipefail
+          VERSION=50.0.1
+          ARCHIVE="wasmtime-v${VERSION}-x86_64-linux-c-api.tar.xz"
+          URL="https://github.com/bytecodealliance/wasmtime/releases/download/v${VERSION}/${ARCHIVE}"
+          curl -fsSL "$URL" -o "/tmp/$ARCHIVE"
+          echo "e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d  /tmp/$ARCHIVE" | sha256sum -c -
+          mkdir -p /tmp/wasmtime-c-api
+          tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C /tmp/wasmtime-c-api
+          echo "WASMTIME_C_API_ROOT=/tmp/wasmtime-c-api" >> "$GITHUB_ENV"
+
       - name: Install R experiment dependencies
         run: Rscript -e 'install.packages(c("jsonlite", "digest"), repos = "https://cloud.r-project.org")'
 
@@ -81,20 +93,25 @@ jobs:
             node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE" > "/tmp/node-$NAME.json"
             Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE" > "/tmp/r-$NAME.json"
             node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/node-embedded-$NAME.json"
-            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" <<'PY'
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/r-embedded-$NAME.json"
+            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" <<'PY'
           import json, sys
-          name, node_path, r_path, embedded_path = sys.argv[1:]
+          name, node_path, r_path, node_embedded_path, r_embedded_path = sys.argv[1:]
           with open(node_path, encoding="utf-8") as f:
               node = json.load(f)
           with open(r_path, encoding="utf-8") as f:
               r = json.load(f)
-          with open(embedded_path, encoding="utf-8") as f:
-              embedded = json.load(f)
+          with open(node_embedded_path, encoding="utf-8") as f:
+              node_embedded = json.load(f)
+          with open(r_embedded_path, encoding="utf-8") as f:
+              r_embedded = json.load(f)
           assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
           assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
           assert node["response"] == r["response"], (name, node["response"], r["response"])
-          assert embedded["fixtureSha256"] == node["fixtureSha256"], (name, embedded, node)
-          assert embedded["response"] == node["response"], (name, embedded["response"], node["response"])
-          print(f"{name}: WASI Node/R agree; embedded Node ABI matches semantic result ({embedded['wasmSha256']})")
+          assert node_embedded["wasmSha256"] == r_embedded["wasmSha256"], (name, node_embedded, r_embedded)
+          assert node_embedded["fixtureSha256"] == r_embedded["fixtureSha256"], (name, node_embedded, r_embedded)
+          assert node_embedded["response"] == r_embedded["response"], (name, node_embedded["response"], r_embedded["response"])
+          assert node_embedded["response"] == node["response"], (name, node_embedded["response"], node["response"])
+          print(f"{name}: Node and R agree for both shared WASI and in-process ABI modules ({node_embedded['wasmSha256']})")
           PY
           done
