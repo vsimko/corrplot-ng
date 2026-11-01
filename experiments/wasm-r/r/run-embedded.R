@@ -13,7 +13,16 @@ main <- function() {
   include <- file.path(root, "include")
   lib <- file.path(root, "lib")
   if (!file.exists(file.path(include, "wasmtime.h"))) stop("Wasmtime C API headers not found", call. = FALSE)
-  if (!file.exists(file.path(lib, "libwasmtime.so"))) stop("libwasmtime.so not found", call. = FALSE)
+  wasmtime_library <- if (.Platform$OS.type == "windows") {
+    file.path(lib, "wasmtime.dll")
+  } else if (identical(Sys.info()[["sysname"]], "Darwin")) {
+    file.path(lib, "libwasmtime.dylib")
+  } else {
+    file.path(lib, "libwasmtime.so")
+  }
+  if (!file.exists(wasmtime_library)) {
+    stop("Wasmtime shared library not found: ", wasmtime_library, call. = FALSE)
+  }
 
   for (package in c("jsonlite", "digest")) {
     if (!requireNamespace(package, quietly = TRUE)) stop("missing R package: ", package, call. = FALSE)
@@ -27,9 +36,14 @@ main <- function() {
   # Keep compiler flags in Makevars; system2() otherwise splits linker arguments.
   makevars <- tempfile()
   on.exit(unlink(c(makevars, shared)), add = TRUE)
+  linker_flags <- if (identical(Sys.info()[["sysname"]], "Darwin")) {
+    c(paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime")
+  } else {
+    c(paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime", "-lpthread", "-ldl", "-lm")
+  }
   writeLines(c(
     paste("PKG_CPPFLAGS =", paste0("-I", shQuote(include))),
-    paste("PKG_LIBS =", paste("-L", shQuote(lib), paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime -lpthread -ldl -lm"))
+    paste("PKG_LIBS =", paste("-L", shQuote(lib), paste(linker_flags, collapse = " ")))
   ), makevars)
   status <- system2(
     file.path(R.home("bin"), "R"),
