@@ -36,6 +36,23 @@ pub struct NormalizedMatrixV1 {
     /// Displayed position to original source position.
     pub source_indices: Vec<usize>,
     pub semantics: MatrixSemantics,
+    pub display_type: DisplayType,
+    pub show_diagonal: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DisplayType { Full, Upper, Lower, Diagonal }
+
+impl DisplayType {
+    fn parse(value: &str) -> Option<Self> {
+        match value {
+            "full" => Some(Self::Full),
+            "upper" => Some(Self::Upper),
+            "lower" => Some(Self::Lower),
+            "diagonal" => Some(Self::Diagonal),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -233,6 +250,15 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         column: error.column,
     })?;
 
+    let display_type = root.get("display_type")
+        .and_then(|value| as_string(value, "display_type").ok())
+        .and_then(DisplayType::parse)
+        .unwrap_or(DisplayType::Full);
+    let show_diagonal = match root.get("show_diagonal") {
+        Some(crate::json::Value::Bool(value)) => *value,
+        _ => true,
+    };
+
     Ok(NormalizedMatrixV1 {
         schema_version: 1,
         kind: "normalized_matrix".into(),
@@ -240,6 +266,8 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         values,
         source_indices,
         semantics,
+        display_type,
+        show_diagonal,
     })
 }
 
@@ -768,12 +796,23 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
                     CellGlyph::Pie { radius: CELL_SIZE * 0.43, start_radians: -std::f64::consts::FRAC_PI_2, end_radians: -std::f64::consts::FRAC_PI_2 + sign * std::f64::consts::TAU * magnitude, color }
                 }
             });
+            let diagonal = row == column;
+            let visible = if diagonal && !input.show_diagonal {
+                false
+            } else {
+                match input.display_type {
+                    DisplayType::Full => true,
+                    DisplayType::Upper => row < column || diagonal,
+                    DisplayType::Lower => row > column || diagonal,
+                    DisplayType::Diagonal => diagonal,
+                }
+            };
             cells.push(SceneCell {
-                x, y, size: CELL_SIZE, visible: true,
+                x, y, size: CELL_SIZE, visible,
                 fill: match value { None => missing_fill, Some(_) if options.cell_method == CellMethod::Color => color, Some(_) => white },
                 stroke: grid, glyph,
             });
-            if value.is_none() {
+            if visible && value.is_none() {
                 texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle });
             }
         }
@@ -808,6 +847,7 @@ mod tests {
             labels: vec!["alpha".into(), "beta".into(), "gamma".into()],
             values: vec![vec![Some(1.0), Some(-0.5), None], vec![Some(-0.5), Some(1.0), None], vec![None, None, Some(1.0)]],
             source_indices: vec![0, 1, 2], semantics: MatrixSemantics::Correlation,
+            display_type: DisplayType::Full, show_diagonal: true,
         }
     }
 
@@ -833,6 +873,40 @@ mod tests {
             }
             scene.validate().unwrap();
         }
+    }
+
+    #[test]
+    fn display_type_masks_cells_without_removing_or_renumbering_them() {
+        for (display_type, expected_visible) in [
+            (DisplayType::Full, vec![true; 9]),
+            (DisplayType::Upper, vec![true, true, true, false, true, true, false, false, true]),
+            (DisplayType::Lower, vec![true, false, false, true, true, false, true, true, true]),
+            (DisplayType::Diagonal, vec![true, false, false, false, true, false, false, false, true]),
+        ] {
+            let mut matrix = input();
+            matrix.display_type = display_type;
+            let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
+            assert_eq!(scene.cells.len(), 9);
+            assert_eq!(scene.cells.iter().map(|cell| cell.visible).collect::<Vec<_>>(), expected_visible);
+        }
+    }
+
+    #[test]
+    fn show_diagonal_hides_diagonal_independently_of_triangle_mode() {
+        let mut matrix = input();
+        matrix.display_type = DisplayType::Upper;
+        matrix.show_diagonal = false;
+        let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
+        assert_eq!(scene.cells.iter().map(|cell| cell.visible).collect::<Vec<_>>(),
+            vec![false, true, true, false, false, true, false, false, false]);
+    }
+
+    #[test]
+    fn hidden_missing_cells_do_not_emit_na_annotations() {
+        let mut matrix = input();
+        matrix.display_type = DisplayType::Upper;
+        let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
+        assert!(!scene.texts.iter().any(|text| text.text == "NA"));
     }
 
     #[test]
