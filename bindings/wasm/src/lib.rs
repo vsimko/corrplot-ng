@@ -1,5 +1,6 @@
-use corrplot_core::output::{OutputOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
-use corrplot_core::raster::{CellGlyph, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
+use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
+use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
+use js_sys::{Reflect, Uint8Array};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -17,6 +18,8 @@ pub struct DiagnosticV1 {
     pub row: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub column: Option<u32>,
+
+
 }
 
 #[derive(Serialize, Deserialize)]
@@ -423,5 +426,179 @@ mod tests {
         let svg = output.svg.unwrap();
         assert!(svg.starts_with("<svg "));
         assert!(svg.contains("<circle "));
+    }
+
+    #[wasm_bindgen_test]
+    fn renders_owned_rgba_typed_array_with_shared_raster_renderer() {
+        let scene = SceneInput {
+            width: 10.0,
+            height: 10.0,
+            cells: vec![SceneCellInput {
+                x: 0.0,
+                y: 0.0,
+                size: 10.0,
+                visible: true,
+                fill: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+                stroke: RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 },
+                glyph: Some(CellGlyphInput {
+                    kind: "circle".into(),
+                    radius: Some(3.0),
+                    side: None,
+                    rx: None,
+                    ry: None,
+                    start_radians: None,
+                    end_radians: None,
+                    text: None,
+                    font_size: None,
+                    color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
+                }),
+            }],
+            texts: vec![],
+        };
+        let options = RgbaOptionsInput {
+            width_px: 16,
+            height_px: 12,
+            dpi: Some(96.0),
+            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+        };
+        let output = render_scene_rgba_wasm(
+            serde_wasm_bindgen::to_value(&scene).unwrap(),
+            serde_wasm_bindgen::to_value(&options).unwrap(),
+        ).unwrap();
+        let pixels = Reflect::get(&output, &JsValue::from_str("pixels")).unwrap()
+            .dyn_into::<Uint8Array>().unwrap();
+        assert_eq!(pixels.length(), 16 * 12 * 4);
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("widthPx")).unwrap().as_f64(), Some(16.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("heightPx")).unwrap().as_f64(), Some(12.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("strideBytes")).unwrap().as_f64(), Some(64.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("pixelFormat")).unwrap().as_string().as_deref(), Some("rgba8"));
+        let diagnostic = Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap();
+        assert!(diagnostic.is_undefined() || diagnostic.is_null());
+    }
+
+    #[wasm_bindgen_test]
+    fn maps_invalid_rgba_options_to_diagnostic_v1() {
+        let scene = SceneInput { width: 1.0, height: 1.0, cells: vec![], texts: vec![] };
+        let options = RgbaOptionsInput {
+            width_px: 0,
+            height_px: 12,
+            dpi: None,
+            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+        };
+        let output = render_scene_rgba_wasm(
+            serde_wasm_bindgen::to_value(&scene).unwrap(),
+            serde_wasm_bindgen::to_value(&options).unwrap(),
+        ).unwrap();
+        let diagnostic: DiagnosticV1 = serde_wasm_bindgen::from_value(
+            Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap()
+        ).unwrap();
+        assert_eq!(diagnostic.code, "renderer.output.invalid_options");
+        assert_eq!(diagnostic.stage, "renderer");
+        assert!(Reflect::get(&output, &JsValue::from_str("pixels")).unwrap().is_null());
+    }
+
+}
+
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RgbaOptionsInput {
+    pub width_px: u32,
+    pub height_px: u32,
+    pub dpi: Option<f64>,
+    pub background: RgbaColorInput,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RgbaMetadata {
+    width_px: Option<u32>,
+    height_px: Option<u32>,
+    stride_bytes: Option<u32>,
+    pixel_format: Option<String>,
+    alpha_mode: Option<String>,
+    color_space: Option<String>,
+    dpi: Option<f64>,
+    diagnostic: Option<DiagnosticV1>,
+}
+
+fn rgba_result(metadata: RgbaMetadata, pixels: Option<Uint8Array>) -> Result<JsValue, JsValue> {
+    let result = to_js(&metadata)?;
+    let pixels = pixels.map(JsValue::from).unwrap_or(JsValue::NULL);
+    Reflect::set(&result, &JsValue::from_str("pixels"), &pixels)?;
+    Ok(result)
+}
+
+fn rgba_failure(diagnostic: DiagnosticV1) -> Result<JsValue, JsValue> {
+    rgba_result(RgbaMetadata {
+        width_px: None,
+        height_px: None,
+        stride_bytes: None,
+        pixel_format: None,
+        alpha_mode: None,
+        color_space: None,
+        dpi: None,
+        diagnostic: Some(diagnostic),
+    }, None)
+}
+
+#[wasm_bindgen(js_name = "renderSceneRgba")]
+pub fn render_scene_rgba_wasm(scene_input: JsValue, options_input: JsValue) -> Result<JsValue, JsValue> {
+    let input: SceneInput = match from_js(scene_input, "scene") {
+        Ok(input) => input,
+        Err(diagnostic) => return rgba_failure(diagnostic),
+    };
+    let options: RgbaOptionsInput = match from_js(options_input, "options") {
+        Ok(options) => options,
+        Err(diagnostic) => return rgba_failure(diagnostic),
+    };
+    let scene = match scene(input) {
+        Ok(scene) => scene,
+        Err(diagnostic) => return rgba_failure(diagnostic),
+    };
+    let background = match rgba(options.background, "output.background") {
+        Ok(background) => background,
+        Err(diagnostic) => return rgba_failure(diagnostic),
+    };
+    let raster = RasterOptions {
+        width_px: options.width_px,
+        height_px: options.height_px,
+        dpi: options.dpi,
+        background,
+    };
+
+    match RgbaRenderer.render(&scene, &OutputOptions::Rgba(raster)) {
+        Ok(RenderOutput::Rgba(buffer)) => {
+            let stride_bytes = match u32::try_from(buffer.stride_bytes) {
+                Ok(stride) => stride,
+                Err(_) => return rgba_failure(diagnostic(
+                    "renderer.output.invalid_buffer",
+                    "export",
+                    "RGBA stride cannot be represented by the WebAssembly binding",
+                    Some("output.strideBytes"),
+                )),
+            };
+            // wasm memory cannot safely back a long-lived JS typed array: Rust
+            // allocations may move or be freed after this call. Copy once into
+            // JS-owned memory so the returned Uint8Array has stable ownership.
+            let pixels = Uint8Array::from(buffer.pixels.as_slice());
+            rgba_result(RgbaMetadata {
+                width_px: Some(buffer.width_px),
+                height_px: Some(buffer.height_px),
+                stride_bytes: Some(stride_bytes),
+                pixel_format: Some("rgba8".to_string()),
+                alpha_mode: Some("straight".to_string()),
+                color_space: Some("srgb".to_string()),
+                dpi: buffer.dpi,
+                diagnostic: None,
+            }, Some(pixels))
+        }
+        Ok(_) => rgba_failure(diagnostic(
+            "renderer.output.format_mismatch",
+            "export",
+            "RGBA renderer returned a non-RGBA output",
+            Some("output"),
+        )),
+        Err(error) => rgba_failure(diagnostic(error.code, "renderer", error.message, Some("output"))),
     }
 }
