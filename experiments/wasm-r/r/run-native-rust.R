@@ -14,7 +14,6 @@ for (package in c("jsonlite", "digest")) {
   }
 }
 dyn.load(library_path)
-on.exit(dyn.unload(library_path), add = TRUE)
 
 fixture_raw <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
 request <- rawToChar(fixture_raw)
