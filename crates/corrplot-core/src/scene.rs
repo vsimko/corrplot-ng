@@ -545,6 +545,9 @@ mod tests {
         assert_eq!(matrix.values[1][2], None);
         assert_eq!(matrix.source_indices, vec![0, 1, 2]);
         assert_eq!(matrix.semantics, MatrixSemantics::Correlation);
+        let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
+        assert_eq!(scene.cells.len(), 9);
+        scene.validate().unwrap();
     }
 
     #[test]
