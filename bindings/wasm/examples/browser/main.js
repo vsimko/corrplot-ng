@@ -2,6 +2,7 @@ import init, {
   getRendererCapabilities,
   renderSceneSvg,
   renderSceneRgba,
+  renderMatrixSvg,
   validateMatrix,
 } from "../../pkg/corrplot_ng_wasm.js";
 
@@ -35,6 +36,30 @@ try {
     kind: "correlation",
   });
   assert(validation.valid, validation.diagnostic?.message ?? "matrix validation failed");
+
+  const matrixSceneV1 = JSON.stringify({
+    schema_version: 1,
+    kind: "correlation_plot",
+    width: 100,
+    height: 100,
+    title: "",
+    description: "",
+    annotation: "",
+    style: {
+      positive_color: "#2166ac",
+      negative_color: "#b2182b",
+      zero_color: "#bdbdbd",
+      missing_fill: "#f2f2f2",
+      grid_color: "#e0e0e0",
+    },
+    labels: [{ text: "alpha", row_x: 1, row_y: 2, column_x: 3, column_y: 4 }],
+    cells: [{
+      row: 0, column: 0, value: 1,
+      x: 10, y: 10, center_x: 15, center_y: 15, size: 10,
+    }],
+  });
+  const matrixSvg = renderMatrixSvg(matrixSceneV1, "ellipse");
+  assert(matrixSvg.includes("<ellipse "), "matrix-to-scene WASM operation did not render an ellipse");
 
   const capabilities = JSON.parse(getRendererCapabilities());
   const scene = {
@@ -115,7 +140,7 @@ try {
   assertPixel(context.getImageData(80, 80, 1, 1).data, 1, 0, 0, [0, 0, 0, 255], "canvas circle center");
 
   figure.replaceChildren(image, canvas);
-  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; SVG and RGBA pixel checks passed (${rgba.pixels.byteLength} bytes)`;
+  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix-to-scene, SVG and RGBA checks passed (${rgba.pixels.byteLength} bytes)`;
 } catch (error) {
   status.textContent = `WASM smoke test failed: ${error.message}`;
   status.setAttribute("aria-live", "assertive");
