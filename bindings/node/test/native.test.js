@@ -5,6 +5,7 @@ const {
   getRendererCapabilities,
   renderSceneSvg,
   renderSceneRgba,
+  renderMatrixSvg,
   validateMatrix,
 } = require("../index.js");
 
@@ -109,4 +110,46 @@ test("exposes the shared renderer capability declaration", () => {
   const capabilities = getRendererCapabilities();
   assert.equal(capabilities.capability_schema_version, 1);
   assert.ok(Array.isArray(capabilities.cell_methods));
+});
+
+
+const sceneV1 = JSON.stringify({
+  schema_version: 1,
+  kind: "correlation_plot",
+  width: 100,
+  height: 100,
+  title: "",
+  description: "",
+  annotation: "",
+  style: {
+    positive_color: "#2166ac",
+    negative_color: "#b2182b",
+    zero_color: "#bdbdbd",
+    missing_fill: "#f2f2f2",
+    grid_color: "#e0e0e0",
+  },
+  labels: [{ text: "alpha", row_x: 1, row_y: 2, column_x: 3, column_y: 4 }],
+  cells: [{
+    row: 0, column: 0, value: 1,
+    x: 10, y: 10, center_x: 15, center_y: 15, size: 10,
+  }],
+});
+
+test("constructs and renders a matrix through the shared core operation", () => {
+  const svg = renderMatrixSvg(sceneV1, "ellipse");
+  assert.match(svg, /^<svg /);
+  assert.match(svg, /<ellipse /);
+  assert.match(svg, /rotate\(-45 /);
+});
+
+test("maps invalid matrix construction options to diagnostic-v1", () => {
+  assert.throws(
+    () => renderMatrixSvg(sceneV1, "unknown"),
+    (error) => {
+      assert.ok(error instanceof CorrplotError);
+      assert.equal(error.diagnostic.code, "configuration.invalid_field");
+      assert.equal(error.diagnostic.path, "cellMethod");
+      return true;
+    },
+  );
 });
