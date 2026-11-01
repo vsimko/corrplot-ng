@@ -1,19 +1,16 @@
 name: WASM from R experiment
 
 on:
-  push:
-    branches:
-      - experiment/wasm-r-runtime
-    paths:
-      - "experiments/wasm-r/**"
-      - "crates/corrplot-core/**"
-      - ".github/workflows/test-wasm-r-experiment.yml"
   pull_request:
     paths:
       - "experiments/wasm-r/**"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-r-experiment.yml"
   workflow_dispatch:
+
+concurrency:
+  group: wasm-r-experiment-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
