@@ -12,6 +12,10 @@ or rendering semantics in JavaScript.
 - `renderSceneRgba(scene, options)` invokes the shared Rust RGBA renderer and
   returns an owned Node Buffer with dimensions, stride, pixel format, alpha,
   color-space, and optional DPI metadata.
+- `renderMatrixSvg(sceneV1Json, method)` parses the matrix-bearing portion of
+  scene-v1 JSON, constructs the normalized matrix scene, and renders SVG
+  entirely through the shared Rust core. Supported methods are circle,
+  square, ellipse, number, shade, color, and pie.
 - `getRendererCapabilities()` returns the core's capability-v1 declaration.
 
 Errors are exposed as `CorrplotError` instances with a diagnostic-v1 record.
@@ -49,8 +53,5 @@ release work; this source-build package is not yet a published npm release.
 
 ## Scope boundary
 
-The Rust core currently provides matrix validation and typed-scene SVG/RGBA
-rendering, but not a complete scene-v1 parser or matrix-to-scene builder.
-This binding exposes the existing operations without inventing those missing
-semantics. Scene construction and the unified asynchronous TypeScript facade
+The Rust core now also provides an initial scene-v1 matrix parser and deterministic matrix-to-scene builder. The Node and WASM bindings expose the same end-to-end matrix-to-SVG operation. The parser intentionally validates only the matrix-bearing subset; full scene-v1 presentation semantics are not yet implemented. Scene construction and the unified asynchronous TypeScript facade
 remain follow-up work in #141 and #145.
