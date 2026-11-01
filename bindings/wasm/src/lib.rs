@@ -19,73 +19,6 @@ pub struct DiagnosticV1 {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub column: Option<u32>,
 
-    #[wasm_bindgen_test]
-    fn renders_owned_rgba_typed_array_with_shared_raster_renderer() {
-        let scene = SceneInput {
-            width: 10.0,
-            height: 10.0,
-            cells: vec![SceneCellInput {
-                x: 0.0,
-                y: 0.0,
-                size: 10.0,
-                visible: true,
-                fill: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
-                stroke: RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 },
-                glyph: Some(CellGlyphInput {
-                    kind: "circle".into(),
-                    radius: Some(3.0),
-                    side: None,
-                    rx: None,
-                    ry: None,
-                    start_radians: None,
-                    end_radians: None,
-                    text: None,
-                    font_size: None,
-                    color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
-                }),
-            }],
-            texts: vec![],
-        };
-        let options = RgbaOptionsInput {
-            width_px: 16,
-            height_px: 12,
-            dpi: Some(96.0),
-            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
-        };
-        let output = render_scene_rgba_wasm(
-            serde_wasm_bindgen::to_value(&scene).unwrap(),
-            serde_wasm_bindgen::to_value(&options).unwrap(),
-        ).unwrap();
-        let pixels = Reflect::get(&output, &JsValue::from_str("pixels")).unwrap()
-            .dyn_into::<Uint8Array>().unwrap();
-        assert_eq!(pixels.length(), 16 * 12 * 4);
-        assert_eq!(Reflect::get(&output, &JsValue::from_str("widthPx")).unwrap().as_f64(), Some(16.0));
-        assert_eq!(Reflect::get(&output, &JsValue::from_str("heightPx")).unwrap().as_f64(), Some(12.0));
-        assert_eq!(Reflect::get(&output, &JsValue::from_str("strideBytes")).unwrap().as_f64(), Some(64.0));
-        assert_eq!(Reflect::get(&output, &JsValue::from_str("pixelFormat")).unwrap().as_string().as_deref(), Some("rgba8"));
-        assert!(Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap().is_null());
-    }
-
-    #[wasm_bindgen_test]
-    fn maps_invalid_rgba_options_to_diagnostic_v1() {
-        let scene = SceneInput { width: 1.0, height: 1.0, cells: vec![], texts: vec![] };
-        let options = RgbaOptionsInput {
-            width_px: 0,
-            height_px: 12,
-            dpi: None,
-            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
-        };
-        let output = render_scene_rgba_wasm(
-            serde_wasm_bindgen::to_value(&scene).unwrap(),
-            serde_wasm_bindgen::to_value(&options).unwrap(),
-        ).unwrap();
-        let diagnostic: DiagnosticV1 = serde_wasm_bindgen::from_value(
-            Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap()
-        ).unwrap();
-        assert_eq!(diagnostic.code, "renderer.output.invalid_options");
-        assert_eq!(diagnostic.stage, "renderer");
-        assert!(Reflect::get(&output, &JsValue::from_str("pixels")).unwrap().is_null());
-    }
 
 }
 
@@ -494,6 +427,75 @@ mod tests {
         assert!(svg.starts_with("<svg "));
         assert!(svg.contains("<circle "));
     }
+
+    #[wasm_bindgen_test]
+    fn renders_owned_rgba_typed_array_with_shared_raster_renderer() {
+        let scene = SceneInput {
+            width: 10.0,
+            height: 10.0,
+            cells: vec![SceneCellInput {
+                x: 0.0,
+                y: 0.0,
+                size: 10.0,
+                visible: true,
+                fill: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+                stroke: RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 },
+                glyph: Some(CellGlyphInput {
+                    kind: "circle".into(),
+                    radius: Some(3.0),
+                    side: None,
+                    rx: None,
+                    ry: None,
+                    start_radians: None,
+                    end_radians: None,
+                    text: None,
+                    font_size: None,
+                    color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
+                }),
+            }],
+            texts: vec![],
+        };
+        let options = RgbaOptionsInput {
+            width_px: 16,
+            height_px: 12,
+            dpi: Some(96.0),
+            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+        };
+        let output = render_scene_rgba_wasm(
+            serde_wasm_bindgen::to_value(&scene).unwrap(),
+            serde_wasm_bindgen::to_value(&options).unwrap(),
+        ).unwrap();
+        let pixels = Reflect::get(&output, &JsValue::from_str("pixels")).unwrap()
+            .dyn_into::<Uint8Array>().unwrap();
+        assert_eq!(pixels.length(), 16 * 12 * 4);
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("widthPx")).unwrap().as_f64(), Some(16.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("heightPx")).unwrap().as_f64(), Some(12.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("strideBytes")).unwrap().as_f64(), Some(64.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("pixelFormat")).unwrap().as_string().as_deref(), Some("rgba8"));
+        assert!(Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap().is_null());
+    }
+
+    #[wasm_bindgen_test]
+    fn maps_invalid_rgba_options_to_diagnostic_v1() {
+        let scene = SceneInput { width: 1.0, height: 1.0, cells: vec![], texts: vec![] };
+        let options = RgbaOptionsInput {
+            width_px: 0,
+            height_px: 12,
+            dpi: None,
+            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+        };
+        let output = render_scene_rgba_wasm(
+            serde_wasm_bindgen::to_value(&scene).unwrap(),
+            serde_wasm_bindgen::to_value(&options).unwrap(),
+        ).unwrap();
+        let diagnostic: DiagnosticV1 = serde_wasm_bindgen::from_value(
+            Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap()
+        ).unwrap();
+        assert_eq!(diagnostic.code, "renderer.output.invalid_options");
+        assert_eq!(diagnostic.stage, "renderer");
+        assert!(Reflect::get(&output, &JsValue::from_str("pixels")).unwrap().is_null());
+    }
+
 }
 
 
