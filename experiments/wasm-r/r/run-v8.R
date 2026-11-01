@@ -20,8 +20,7 @@ fixture_bytes <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
 ctx <- V8::v8()
 ctx$assign("corrplotWasmBytes", wasm_bytes)
 ctx$assign("corrplotInputBytes", fixture_bytes)
-if (!isTRUE(ctx$eval("typeof WebAssembly === 'object' && typeof WebAssembly.instantiate === 'function'"))) {
-  stop("the selected V8 engine does not support WebAssembly", call. = FALSE)
+ctx$eval("if (typeof WebAssembly !== 'object' || typeof WebAssembly.instantiate !== 'function') throw new Error('WebAssembly is not available in this V8 engine');")
 }
 
 # Keep one V8 context and one compiled instance alive for all calls.
