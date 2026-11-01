@@ -85,9 +85,19 @@ jobs:
       - name: Install Wasmtime CLI (Unix)
         if: runner.os != 'Windows'
         run: |
-          curl https://wasmtime.dev/install.sh -sSf | bash
-          echo "$HOME/.wasmtime/bin" >> "$GITHUB_PATH"
-          "$HOME/.wasmtime/bin/wasmtime" --version
+          set -euo pipefail
+          VERSION=50.0.1
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            ARCHIVE="wasmtime-v${VERSION}-x86_64-macos.tar.xz"
+          else
+            ARCHIVE="wasmtime-v${VERSION}-x86_64-linux.tar.xz"
+          fi
+          URL="https://github.com/bytecodealliance/wasmtime/releases/download/v${VERSION}/${ARCHIVE}"
+          curl -fsSL "$URL" -o "/tmp/$ARCHIVE"
+          mkdir -p "$RUNNER_TEMP/wasmtime-cli"
+          tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C "$RUNNER_TEMP/wasmtime-cli"
+          echo "$RUNNER_TEMP/wasmtime-cli" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/wasmtime-cli/wasmtime" --version
 
       - name: Install Wasmtime CLI (Windows)
         if: runner.os == 'Windows'
