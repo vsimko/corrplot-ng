@@ -41,7 +41,7 @@ jobs:
 
       - name: Build shared-core WASI module
         run: |
-          cargo build \
+          CARGO_TARGET_DIR=experiments/wasm-r/wasm-host/target cargo build \
             --manifest-path experiments/wasm-r/wasm-host/Cargo.toml \
             --target wasm32-wasip1 \
             --release
