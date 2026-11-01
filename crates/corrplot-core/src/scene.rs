@@ -90,6 +90,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     let root = as_object(&document, "$")?;
     reject_unknown_fields(root, &["schema_version", "kind", "width", "height", "labels", "cells", "annotation", "style", "typography", "legend", "title", "description", "cluster_regions", "figure_text", "significance", "glyph_method", "text_annotations", "display_type", "show_diagonal", "variable_order", "matrix_semantics"], "$")?;
     validate_scene_optional_metadata(root)?;
+    validate_scene_extended_metadata(root)?;
     let schema_version = as_usize(required(root, "schema_version", "$")?, "schema_version")?;
     if schema_version != 1 {
         return Err(SceneBuildError::new("input.scene.unsupported_version", "only scene schema_version 1 is supported", "schema_version"));
@@ -384,6 +385,150 @@ fn validate_scene_cell_metadata(cell: &std::collections::BTreeMap<String, crate:
         }
         let color = as_string(required(object, "color", &p)?, &format!("{p}.color"))?;
         if !is_srgb_hex(color) { return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", format!("{p}.color"))); }
+    }
+    Ok(())
+}
+
+
+fn validate_scene_extended_metadata(root: &std::collections::BTreeMap<String, crate::json::Value>) -> Result<(), SceneBuildError> {
+    use crate::json::Value;
+    if let Some(value) = root.get("cluster_regions") {
+        for (index, item) in as_array(value, "cluster_regions")?.iter().enumerate() {
+            let path = format!("cluster_regions[{index}]");
+            let object = as_object(item, &path)?;
+            reject_unknown_fields(object, &["id", "variables", "source_indices", "row_start", "row_end", "column_start", "column_end", "x", "y", "width", "height", "color", "line_width"], &path)?;
+            if as_string(required(object, "id", &path)?, &format!("{path}.id"))?.is_empty() {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region id must not be empty", format!("{path}.id")));
+            }
+            for field in ["variables", "source_indices"] {
+                let entries = as_array(required(object, field, &path)?, &format!("{path}.{field}"))?;
+                if entries.is_empty() {
+                    return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region arrays must not be empty", format!("{path}.{field}")));
+                }
+                let mut unique = HashSet::with_capacity(entries.len());
+                for (entry_index, entry) in entries.iter().enumerate() {
+                    let entry_path = format!("{path}.{field}[{entry_index}]");
+                    let identity = if field == "variables" {
+                        let text = as_string(entry, &entry_path)?;
+                        if text.is_empty() { return Err(SceneBuildError::new("input.scene.invalid_value", "cluster variable must not be empty", entry_path)); }
+                        text.to_string()
+                    } else {
+                        as_usize(entry, &entry_path)?.to_string()
+                    };
+                    if !unique.insert(identity) {
+                        return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region entries must be unique", entry_path));
+                    }
+                }
+            }
+            for field in ["row_start", "row_end", "column_start", "column_end"] {
+                as_usize(required(object, field, &path)?, &format!("{path}.{field}"))?;
+            }
+            for field in ["x", "y"] {
+                as_number(required(object, field, &path)?, &format!("{path}.{field}"))?;
+            }
+            for field in ["width", "height", "line_width"] {
+                if as_number(required(object, field, &path)?, &format!("{path}.{field}"))? <= 0.0 {
+                    return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region dimensions and line_width must be positive", format!("{path}.{field}")));
+                }
+            }
+            let color = as_string(required(object, "color", &path)?, &format!("{path}.color"))?;
+            if !is_srgb_hex(color) {
+                return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", format!("{path}.color")));
+            }
+        }
+    }
+    if let Some(value) = root.get("figure_text") {
+        for (index, item) in as_array(value, "figure_text")?.iter().enumerate() {
+            let path = format!("figure_text[{index}]");
+            let object = as_object(item, &path)?;
+            reject_unknown_fields(object, &["role", "text", "lines", "alignment", "font_family", "font_size", "font_weight", "font_style", "line_height", "spacing_after", "x", "y"], &path)?;
+            let role = as_string(required(object, "role", &path)?, &format!("{path}.role"))?;
+            if !["title", "subtitle", "caption", "footnote"].contains(&role) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported figure text role", format!("{path}.role")));
+            }
+            as_string(required(object, "text", &path)?, &format!("{path}.text"))?;
+            let lines = as_array(required(object, "lines", &path)?, &format!("{path}.lines"))?;
+            if lines.is_empty() { return Err(SceneBuildError::new("input.scene.invalid_value", "figure text lines must not be empty", format!("{path}.lines"))); }
+            for (line_index, line) in lines.iter().enumerate() {
+                as_string(line, &format!("{path}.lines[{line_index}]"))?;
+            }
+            let alignment = as_string(required(object, "alignment", &path)?, &format!("{path}.alignment"))?;
+            if !["left", "center", "right"].contains(&alignment) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported figure text alignment", format!("{path}.alignment")));
+            }
+            if as_string(required(object, "font_family", &path)?, &format!("{path}.font_family"))?.is_empty() {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "font family must not be empty", format!("{path}.font_family")));
+            }
+            let font_size = as_number(required(object, "font_size", &path)?, &format!("{path}.font_size"))?;
+            if !(6.0..=48.0).contains(&font_size) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "font size must be between 6 and 48", format!("{path}.font_size")));
+            }
+            let font_weight = as_string(required(object, "font_weight", &path)?, &format!("{path}.font_weight"))?;
+            if !["normal", "bold"].contains(&font_weight) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported figure text font weight", format!("{path}.font_weight")));
+            }
+            let font_style = as_string(required(object, "font_style", &path)?, &format!("{path}.font_style"))?;
+            if !["normal", "italic"].contains(&font_style) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported figure text font style", format!("{path}.font_style")));
+            }
+            if as_number(required(object, "line_height", &path)?, &format!("{path}.line_height"))? <= 0.0 {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "line_height must be positive", format!("{path}.line_height")));
+            }
+            if as_number(required(object, "spacing_after", &path)?, &format!("{path}.spacing_after"))? < 0.0 {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "spacing_after must be non-negative", format!("{path}.spacing_after")));
+            }
+            for field in ["x", "y"] { as_number(required(object, field, &path)?, &format!("{path}.{field}"))?; }
+        }
+    }
+    if let Some(value) = root.get("significance") {
+        let object = as_object(value, "significance")?;
+        reject_unknown_fields(object, &["mode", "thresholds", "symbol"], "significance")?;
+        let mode = as_string(required(object, "mode", "significance")?, "significance.mode")?;
+        if !["pch", "p-value", "blank", "stars"].contains(&mode) {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported significance mode", "significance.mode"));
+        }
+        let thresholds = as_array(required(object, "thresholds", "significance")?, "significance.thresholds")?;
+        if thresholds.is_empty() {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "significance thresholds must not be empty", "significance.thresholds"));
+        }
+        for (index, threshold) in thresholds.iter().enumerate() {
+            let number = as_number(threshold, &format!("significance.thresholds[{index}]"))?;
+            if !(0.0..=1.0).contains(&number) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "significance thresholds must be between 0 and 1", format!("significance.thresholds[{index}]")));
+            }
+        }
+        let symbol = as_string(required(object, "symbol", "significance")?, "significance.symbol")?;
+        if symbol.is_empty() || symbol.chars().count() > 8 {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "significance symbol must contain 1 to 8 characters", "significance.symbol"));
+        }
+    }
+    if let Some(value) = root.get("text_annotations") {
+        for (index, item) in as_array(value, "text_annotations")?.iter().enumerate() {
+            let path = format!("text_annotations[{index}]");
+            let object = as_object(item, &path)?;
+            reject_unknown_fields(object, &["row", "column", "role", "text", "color", "font_size", "font_weight", "font_style"], &path)?;
+            as_usize(required(object, "row", &path)?, &format!("{path}.row"))?;
+            as_usize(required(object, "column", &path)?, &format!("{path}.column"))?;
+            let role = as_string(required(object, "role", &path)?, &format!("{path}.role"))?;
+            if !["coefficient", "value", "missing"].contains(&role) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported text annotation role", format!("{path}.role")));
+            }
+            as_string(required(object, "text", &path)?, &format!("{path}.text"))?;
+            if as_string(required(object, "color", &path)?, &format!("{path}.color"))?.is_empty() {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "text annotation color must not be empty", format!("{path}.color")));
+            }
+            if as_number(required(object, "font_size", &path)?, &format!("{path}.font_size"))? <= 0.0 {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "text annotation font_size must be positive", format!("{path}.font_size")));
+            }
+            let weight = as_string(required(object, "font_weight", &path)?, &format!("{path}.font_weight"))?;
+            if !["normal", "bold"].contains(&weight) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported text annotation font weight", format!("{path}.font_weight")));
+            }
+            let style = as_string(required(object, "font_style", &path)?, &format!("{path}.font_style"))?;
+            if !["normal", "italic"].contains(&style) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported text annotation font style", format!("{path}.font_style")));
+            }
+        }
     }
     Ok(())
 }
@@ -736,6 +881,32 @@ mod tests {
         let error = parse_scene_v1_matrix(&invalid_legend).unwrap_err();
         assert_eq!(error.code, "input.scene.invalid_color");
         assert_eq!(error.path, "legend[0].color");
+    }
+
+    #[test]
+    fn validates_scene_v1_cluster_regions_figure_text_global_significance_and_annotations() {
+        let base = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":1,"x":1,"y":1,"center_x":2,"center_y":2,"size":1}]
+        }"##;
+        let valid = base.replace(
+            "\\"title\\":\\"\\"",
+            "\\"title\\":\\"\\",\\"cluster_regions\\":[{\\"id\\":\\"c1\\",\\"variables\\":[\\"a\\",\\"b\\"],\\"source_indices\\":[0,1],\\"row_start\\":0,\\"row_end\\":1,\\"column_start\\":0,\\"column_end\\":1,\\"x\\":1,\\"y\\":2,\\"width\\":10,\\"height\\":10,\\"color\\":\\"#2166ac\\",\\"line_width\\":1}],\\"figure_text\\":[{\\"role\\":\\"caption\\",\\"text\\":\\"caption\\",\\"lines\\":[\\"caption\\"],\\"alignment\\":\\"center\\",\\"font_family\\":\\"sans\\",\\"font_size\\":10,\\"font_weight\\":\\"normal\\",\\"font_style\\":\\"italic\\",\\"line_height\\":1.2,\\"spacing_after\\":0,\\"x\\":0,\\"y\\":90}],\\"significance\\":{\\"mode\\":\\"stars\\",\\"thresholds\\":[0.05,0.01],\\"symbol\\":\\"*\\"},\\"text_annotations\\":[{\\"row\\":0,\\"column\\":0,\\"role\\":\\"coefficient\\",\\"text\\":\\"1.0\\",\\"color\\":\\"black\\",\\"font_size\\":8,\\"font_weight\\":\\"bold\\",\\"font_style\\":\\"normal\\"}]"
+        );
+        assert!(parse_scene_v1_matrix(&valid).is_ok());
+
+        for (bad, expected_path) in [
+            (valid.replace("\\"line_width\\":1", "\\"line_width\\":0"), "cluster_regions[0].line_width"),
+            (valid.replace("\\"font_size\\":10", "\\"font_size\\":50"), "figure_text[0].font_size"),
+            (valid.replace("\\"thresholds\\":[0.05,0.01]", "\\"thresholds\\":[1.5]"), "significance.thresholds[0]"),
+            (valid.replace("\\"font_size\\":8", "\\"font_size\\":0"), "text_annotations[0].font_size"),
+        ] {
+            let error = parse_scene_v1_matrix(&bad).unwrap_err();
+            assert_eq!(error.path, expected_path);
+        }
     }
 
     #[test]
