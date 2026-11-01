@@ -18,11 +18,11 @@ Environment: Ubuntu 24.04, R 4.6.2, V8 8.2.1, Wasmtime 50.0.1.
 
 | Fixture | V8 | Wasmtime | Native Rust | Pure R reference |
 |---|---:|---:|---:|---:|
-| valid-small | 0.05760 | 0.00240 | 0.00320 | 0.10560 |
-| valid-general-32 | 0.10240 | 0.03620 | 0.02520 | 1.44410 |
-| valid-general-128 | 0.67390 | 0.52160 | 0.30800 | 13.27000 |
-| valid-correlation-64 | 0.24100 | 0.15040 | 0.08990 | 5.81000 |
-| invalid-asymmetric | 0.07320 | 0.00330 | 0.00420 | 0.07400 |
+| valid-small | 0.11460 | 0.00440 | 0.00500 | 0.14840 |
+| valid-general-32 | 0.19700 | 0.06660 | 0.03240 | 1.81820 |
+| valid-general-128 | 0.99580 | 0.82720 | 0.42000 | 17.87000 |
+| valid-correlation-64 | 0.37770 | 0.24240 | 0.12160 | 8.29000 |
+| invalid-asymmetric | 0.12900 | 0.00570 | 0.00480 | 0.12720 |
 
 ### Linux binary/package sizes
 
@@ -39,11 +39,11 @@ Environment: macOS 15 Intel, R 4.6.2, V8 8.2.1, Wasmtime 50.0.1.
 
 | Fixture | V8 | Wasmtime | Native Rust | Pure R reference |
 |---|---:|---:|---:|---:|
-| valid-small | 0.13760 | 0.00680 | 0.01680 | 0.87130 |
-| valid-general-32 | 0.28000 | 0.08040 | 0.08310 | 19.63000 |
-| valid-general-128 | 2.22750 | 1.46760 | 0.84400 | 65.40000 |
-| valid-correlation-64 | 0.77400 | 0.46900 | 0.18180 | 20.15000 |
-| invalid-asymmetric | 0.23500 | 0.04730 | 0.01560 | 0.49520 |
+| valid-small | 0.15520 | 0.00530 | 0.00700 | 0.37530 |
+| valid-general-32 | 0.22800 | 0.06520 | 0.05050 | 4.09000 |
+| valid-general-128 | 1.42170 | 0.93710 | 0.48600 | 32.75000 |
+| valid-correlation-64 | 0.57190 | 0.26560 | 0.22060 | 16.54000 |
+| invalid-asymmetric | 0.13200 | 0.00550 | 0.00900 | 0.25600 |
 
 ### macOS binary/package sizes
 
@@ -71,4 +71,4 @@ Environment: macOS 15 Intel, R 4.6.2, V8 8.2.1, Wasmtime 50.0.1.
 - The native binding currently uses a JSON string boundary for parity. A typed R/native API could reduce overhead, but would no longer be an identical ABI comparison.
 - Package sizes are installed V8 package directory, Wasmtime shared library file, Rust cdylib file, and WASM file; they are not complete end-user download sizes.
 
-CI run: https://github.com/vsimko/corrplot-ng/actions/runs/41342721347
+CI run: https://github.com/vsimko/corrplot-ng/actions/runs/41343130014
