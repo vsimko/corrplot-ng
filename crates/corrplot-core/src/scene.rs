@@ -1083,19 +1083,19 @@ mod tests {
         );
         assert!(parse_scene_v1_matrix(&valid).is_ok());
 
-        let unknown_variable = valid.replace("\\"variables\\":[\\"a\\"],", "\\"variables\\":[\\"missing\\"],");
+        let unknown_variable = valid.replace(r#""variables":["a"],"#, r#""variables":["missing"],"#);
         let error = parse_scene_v1_matrix(&unknown_variable).unwrap_err();
         assert_eq!(error.path, "cluster_regions[0].variables[0]");
 
-        let out_of_range_source = valid.replace("\\"source_indices\\":[0]", "\\"source_indices\\":[1]");
+        let out_of_range_source = valid.replace(r#""source_indices":[0]"#, r#""source_indices":[1]"#);
         let error = parse_scene_v1_matrix(&out_of_range_source).unwrap_err();
         assert_eq!(error.path, "cluster_regions[0].source_indices[0]");
 
-        let out_of_range_bounds = valid.replace("\\"row_end\\":0", "\\"row_end\\":1");
+        let out_of_range_bounds = valid.replace(r#""row_end":0"#, r#""row_end":1"#);
         let error = parse_scene_v1_matrix(&out_of_range_bounds).unwrap_err();
         assert_eq!(error.path, "cluster_regions[0].row_end");
 
-        let reversed_bounds = valid.replace("\\"row_start\\":0", "\\"row_start\\":1");
+        let reversed_bounds = valid.replace(r#""row_start":0"#, r#""row_start":1"#);
         let error = parse_scene_v1_matrix(&reversed_bounds).unwrap_err();
         assert_eq!(error.path, "cluster_regions[0].row_start");
 
