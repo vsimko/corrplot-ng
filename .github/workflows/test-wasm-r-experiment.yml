@@ -171,8 +171,897 @@ jobs:
           fi
           if [[ "$RUNNER_OS" == "Windows" ]]; then NATIVE_DIR="experiments/wasm-r/native-r/target/x86_64-pc-windows-gnu/release"; else NATIVE_DIR="experiments/wasm-r/native-r/target/release"; fi
           NATIVE_LIBRARY="$(find "$NATIVE_DIR" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
             echo "Native Rust R library not found"
             find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
+ | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find "$NATIVE_DIR" -maxdepth 1 -type f -print
             exit 1
           fi
           echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
