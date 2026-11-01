@@ -906,10 +906,14 @@ mod tests {
         matrix.display_type = DisplayType::Upper;
         let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
         let missing: Vec<_> = scene.texts.iter().filter(|text| text.text == "NA").collect();
-        assert_eq!(missing.len(), 1);
+        assert_eq!(missing.len(), 2);
         let expected_x = LEFT_MARGIN + 2.0 * (CELL_SIZE + CELL_GAP) + CELL_SIZE / 2.0;
-        let expected_y = TOP_MARGIN + CELL_SIZE / 2.0 - 5.0;
-        assert_eq!((missing[0].x, missing[0].y), (expected_x, expected_y));
+        let expected_positions = vec![
+            (expected_x, TOP_MARGIN + CELL_SIZE / 2.0 - 5.0),
+            (expected_x, TOP_MARGIN + (CELL_SIZE + CELL_GAP) + CELL_SIZE / 2.0 - 5.0),
+        ];
+        let actual_positions: Vec<_> = missing.iter().map(|text| (text.x, text.y)).collect();
+        assert_eq!(actual_positions, expected_positions);
     }
 
     #[test]
