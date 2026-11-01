@@ -165,9 +165,19 @@ Rscript experiments/wasm-r/r/run-native-rust.R \
 ```
 
 The CI workflow runs all three R backends against the same fixtures and checks
-their semantic responses against the Wasmtime/Node results. It reports
-per-call timings for V8, Wasmtime, native Rust, and the pure-R reference.
-These timings are exploratory microbenchmarks, not stable performance claims.
+their semantic responses against the Wasmtime/Node results. Each backend now runs
+10 separately timed batches per fixture, targeting one second per batch after
+warm-up. The reported mean per-call time and 95% Student-t confidence interval
+are calculated across those batch-level measurements. This captures
+within-process batch variability, not independent machine-to-machine variation.
+Set `CORRPLOT_BENCH_SAMPLES` and `CORRPLOT_BENCH_TARGET_SECONDS` to adjust
+the defaults.
+
+The suite also generates a 512×512 general-numeric matrix (16× the element count
+of the previous 128×128 largest fixture) to make JSON parsing, allocation, and
+validation work more substantial. Existing smaller fixtures remain useful for
+exposing fixed call-boundary overhead. These are still synthetic microbenchmarks,
+not a full plotting benchmark or stable cross-machine performance claims.
 
 The first comparison currently targets Ubuntu and Intel macOS. Windows support,
 complete package installation size (including V8 and Rust runtime dependencies),
