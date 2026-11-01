@@ -118,6 +118,13 @@ impl Scene {
                 _ => {}
             }
         }
+        for (index, entry) in self.legend.iter().enumerate() {
+            if !matches!(entry.kind.as_str(), "stop" | "interval" | "missing") {
+                return Err(OutputValidationError::invalid_options(format!(
+                    "scene legend entry {index} has an unsupported kind",
+                )));
+            }
+        }
         for (index, region) in self.cluster_regions.iter().enumerate() {
             if region.id.is_empty() || region.variables.is_empty()
                 || region.variables.len() != region.source_indices.len()
@@ -666,6 +673,15 @@ mod tests {
                 anchor: TextAnchor::Start,
             }],
         }
+    }
+
+    #[test]
+    fn rejects_unknown_scene_legend_kinds() {
+        let mut scene = sample_scene();
+        scene.legend.push(SceneLegendEntry {
+            kind: "custom".into(), label: "Custom".into(), color: RgbaColor::WHITE,
+        });
+        assert!(scene.validate().unwrap_err().message.contains("unsupported kind"));
     }
 
     #[test]
