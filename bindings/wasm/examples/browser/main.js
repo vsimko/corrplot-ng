@@ -51,10 +51,18 @@ try {
   );
   assert(matrixResult.svg.includes(">NA</text>"), "matrix-to-scene WASM operation did not preserve missing values");
   const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
+  const invalidMethodDiagnostic = invalidMatrixResult.diagnostic;
   assert(
-    invalidMatrixResult.diagnostic?.code === "configuration.invalid_field" &&
-      invalidMatrixResult.diagnostic?.path === "cellMethod",
-    "matrix-to-scene WASM operation did not return the expected diagnostic-v1 for an invalid method",
+    invalidMethodDiagnostic?.schema_version === 1 &&
+      invalidMethodDiagnostic?.code === "configuration.invalid_field" &&
+      invalidMethodDiagnostic?.severity === "error" &&
+      invalidMethodDiagnostic?.stage === "configuration" &&
+      invalidMethodDiagnostic?.message === "unsupported cell method 'unknown'" &&
+      invalidMethodDiagnostic?.path === "cellMethod" &&
+      invalidMethodDiagnostic?.row == null &&
+      invalidMethodDiagnostic?.column == null &&
+      invalidMatrixResult.svg == null,
+    "matrix-to-scene WASM operation did not return the complete expected diagnostic-v1",
   );
 
   const capabilities = JSON.parse(getRendererCapabilities());
