@@ -60,7 +60,7 @@ main <- function() {
     perCallMs = elapsed / calls,
     response = response
   )
-  cat(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null"), "\\n", sep = "")
+  cat(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null"), "\n", sep = "")
   invisible(result)
 }
 
