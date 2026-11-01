@@ -58,8 +58,18 @@ try {
       x: 10, y: 10, center_x: 15, center_y: 15, size: 10,
     }],
   });
-  const matrixSvg = renderMatrixSvg(matrixSceneV1, "ellipse");
-  assert(matrixSvg.includes("<ellipse "), "matrix-to-scene WASM operation did not render an ellipse");
+  const matrixResult = renderMatrixSvg(matrixSceneV1, "ellipse");
+  assert(!matrixResult.diagnostic, matrixResult.diagnostic?.message ?? "matrix-to-scene WASM operation failed");
+  assert(
+    typeof matrixResult.svg === "string" && matrixResult.svg.includes("<ellipse "),
+    "matrix-to-scene WASM operation did not return an ellipse SVG",
+  );
+  const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
+  assert(
+    invalidMatrixResult.diagnostic?.code === "configuration.invalid_field" &&
+      invalidMatrixResult.diagnostic?.path === "cellMethod",
+    "matrix-to-scene WASM operation did not return the expected diagnostic-v1 for an invalid method",
+  );
 
   const capabilities = JSON.parse(getRendererCapabilities());
   const scene = {
