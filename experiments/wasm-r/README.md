@@ -32,11 +32,8 @@ CARGO_TARGET_DIR=experiments/wasm-r/wasm-host/target cargo build \\
   --target wasm32-wasip1 --release
 ```
 
-The resulting module is:
-
-```
-experiments/wasm-r/wasm-host/target/wasm32-wasip1/release/corrplot_wasm_r_host.wasm
-```
+Locate the resulting module with the `find` command above; Cargo's target
+folder can be configured by the environment or workspace settings.
 
 Install Wasmtime and the two R-side experiment dependencies, then record the version:
 
