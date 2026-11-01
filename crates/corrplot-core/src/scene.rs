@@ -89,6 +89,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     ))?;
     let root = as_object(&document, "$")?;
     reject_unknown_fields(root, &["schema_version", "kind", "width", "height", "labels", "cells", "annotation", "style", "typography", "legend", "title", "description", "cluster_regions", "figure_text", "significance", "glyph_method", "text_annotations", "display_type", "show_diagonal", "variable_order", "matrix_semantics"], "$")?;
+    validate_scene_optional_metadata(root)?;
     let schema_version = as_usize(required(root, "schema_version", "$")?, "schema_version")?;
     if schema_version != 1 {
         return Err(SceneBuildError::new("input.scene.unsupported_version", "only scene schema_version 1 is supported", "schema_version"));
@@ -235,6 +236,52 @@ impl SceneBuildError {
 
 fn required<'a>(object: &'a std::collections::BTreeMap<String, crate::json::Value>, key: &str, parent: &str) -> Result<&'a crate::json::Value, SceneBuildError> {
     object.get(key).ok_or_else(|| SceneBuildError::new("input.scene.missing_field", format!("required field '{key}' is missing"), if parent == "$" { key.to_string() } else { format!("{parent}.{key}") }))
+}
+
+fn validate_scene_optional_metadata(root: &std::collections::BTreeMap<String, crate::json::Value>) -> Result<(), SceneBuildError> {
+    use crate::json::Value;
+    if let Some(value) = root.get("typography") {
+        let object = as_object(value, "typography")?;
+        reject_unknown_fields(object, &["label_font_family", "label_font_size", "label_font_weight", "column_label_orientation", "label_collision"], "typography")?;
+        if as_string(required(object, "label_font_family", "typography")?, "typography.label_font_family")?.is_empty() {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "font family must not be empty", "typography.label_font_family"));
+        }
+        let size = as_number(required(object, "label_font_size", "typography")?, "typography.label_font_size")?;
+        if !(6.0..=48.0).contains(&size) { return Err(SceneBuildError::new("input.scene.invalid_value", "font size must be between 6 and 48", "typography.label_font_size")); }
+        for (field, allowed) in [
+            ("label_font_weight", &["normal", "bold"][..]),
+            ("column_label_orientation", &["vertical", "horizontal"][..]),
+            ("label_collision", &["preserve", "wrap", "truncate", "omit"][..]),
+        ] {
+            let value = as_string(required(object, field, "typography")?, &format!("typography.{field}"))?;
+            if !allowed.contains(&value) { return Err(SceneBuildError::new("input.scene.invalid_value", format!("unsupported {field} value"), format!("typography.{field}"))); }
+        }
+    }
+    if let Some(value) = root.get("legend") {
+        for (index, item) in as_array(value, "legend")?.iter().enumerate() {
+            let path = format!("legend[{index}]");
+            let object = as_object(item, &path)?;
+            reject_unknown_fields(object, &["kind", "label", "color"], &path)?;
+            let kind = as_string(required(object, "kind", &path)?, &format!("{path}.kind"))?;
+            if !["stop", "interval", "missing"].contains(&kind) { return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported legend kind", format!("{path}.kind"))); }
+            as_string(required(object, "label", &path)?, &format!("{path}.label"))?;
+            let color = as_string(required(object, "color", &path)?, &format!("{path}.color"))?;
+            if !is_srgb_hex(color) { return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", format!("{path}.color"))); }
+        }
+    }
+    for (field, allowed) in [
+        ("glyph_method", &["circle", "square", "ellipse", "number", "shade", "color", "pie"][..]),
+        ("display_type", &["full", "upper", "lower", "diagonal"][..]),
+    ] {
+        if let Some(value) = root.get(field) {
+            let value = as_string(value, field)?;
+            if !allowed.contains(&value) { return Err(SceneBuildError::new("input.scene.invalid_value", format!("unsupported {field} value"), field)); }
+        }
+    }
+    if let Some(value) = root.get("show_diagonal") {
+        if !matches!(value, Value::Bool(_)) { return Err(SceneBuildError::new("input.scene.invalid_type", "show_diagonal must be a boolean", "show_diagonal")); }
+    }
+    Ok(())
 }
 
 fn validate_scene_matrix_semantics(value: &crate::json::Value, expected: MatrixSemantics) -> Result<(), SceneBuildError> {
@@ -518,6 +565,27 @@ mod tests {
         matrix.schema_version = 2;
         let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
         assert_eq!(error.path, "schema_version");
+    }
+
+    #[test]
+    fn validates_optional_scene_v1_typography_legend_and_display_metadata() {
+        let base = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":1,"x":1,"y":1,"center_x":2,"center_y":2,"size":1}]
+        }"##;
+        let valid = base.replace("\"title\":\"\"", "\"title\":\"\",\"typography\":{\"label_font_family\":\"sans\",\"label_font_size\":12,\"label_font_weight\":\"bold\",\"column_label_orientation\":\"vertical\",\"label_collision\":\"wrap\"},\"legend\":[{\"kind\":\"missing\",\"label\":\"NA\",\"color\":\"#f2f2f2\"}],\"glyph_method\":\"circle\",\"display_type\":\"full\",\"show_diagonal\":true");
+        assert!(parse_scene_v1_matrix(&valid).is_ok());
+        let invalid = valid.replace("\"label_font_size\":12", "\"label_font_size\":60");
+        let error = parse_scene_v1_matrix(&invalid).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_value");
+        assert_eq!(error.path, "typography.label_font_size");
+        let invalid_legend = valid.replace("\"#f2f2f2\"}],\"glyph_method\"", "\"red\"}],\"glyph_method\"");
+        let error = parse_scene_v1_matrix(&invalid_legend).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_color");
+        assert_eq!(error.path, "legend[0].color");
     }
 
     #[test]
