@@ -287,12 +287,100 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
     let description = as_string(required(root, "description", "$")?, "description")?.to_string();
     let annotation_text = as_string(required(root, "annotation", "$")?, "annotation")?;
     let annotation = if annotation_text.is_empty() { None } else { Some(annotation_text.to_string()) };
-    matrix_to_scene_v1(&matrix, &SceneBuildOptions {
+    let mut scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions {
         cell_method,
         title,
         description,
         annotation,
-    })
+    })?;
+
+    // scene-v1 is already a laid-out scene document. Keep the builder's
+    // semantic glyph construction, but use the document's canonical geometry,
+    // dimensions, label positions, visibility and palette.
+    scene.width = as_number(required(root, "width", "$")?, "width")?;
+    scene.height = as_number(required(root, "height", "$")?, "height")?;
+    let labels = as_array(required(root, "labels", "$")?, "labels")?;
+    for (index, item) in labels.iter().enumerate() {
+        let path = format!("labels[{index}]");
+        let label = as_object(item, &path)?;
+        let row_x = as_number(required(label, "row_x", &path)?, &format!("{path}.row_x"))?;
+        let row_y = as_number(required(label, "row_y", &path)?, &format!("{path}.row_y"))?;
+        let column_x = as_number(required(label, "column_x", &path)?, &format!("{path}.column_x"))?;
+        let column_y = as_number(required(label, "column_y", &path)?, &format!("{path}.column_y"))?;
+        scene.texts[index * 2].x = row_x;
+        scene.texts[index * 2].y = row_y;
+        scene.texts[index * 2 + 1].x = column_x;
+        scene.texts[index * 2 + 1].y = column_y;
+        if matches!(label.get("row_visible"), Some(crate::json::Value::Bool(false))) {
+            scene.texts[index * 2].text.clear();
+        }
+        if matches!(label.get("column_visible"), Some(crate::json::Value::Bool(false))) {
+            scene.texts[index * 2 + 1].text.clear();
+        }
+    }
+
+    let style = as_object(required(root, "style", "$")?, "style")?;
+    let positive = scene_v1_color(required(style, "positive_color", "style")?, "style.positive_color")?;
+    let negative = scene_v1_color(required(style, "negative_color", "style")?, "style.negative_color")?;
+    let zero = scene_v1_color(required(style, "zero_color", "style")?, "style.zero_color")?;
+    let missing = scene_v1_color(required(style, "missing_fill", "style")?, "style.missing_fill")?;
+    let grid = scene_v1_color(required(style, "grid_color", "style")?, "style.grid_color")?;
+    let cells = as_array(required(root, "cells", "$")?, "cells")?;
+    for (index, item) in cells.iter().enumerate() {
+        let path = format!("cells[{index}]");
+        let cell = as_object(item, &path)?;
+        let target = &mut scene.cells[index];
+        target.x = as_number(required(cell, "x", &path)?, &format!("{path}.x"))?;
+        target.y = as_number(required(cell, "y", &path)?, &format!("{path}.y"))?;
+        target.size = as_number(required(cell, "size", &path)?, &format!("{path}.size"))?;
+        if let Some(crate::json::Value::Bool(visible)) = cell.get("visible") {
+            target.visible &= *visible;
+        }
+        target.stroke = grid;
+        let value = matrix.values[index / matrix.labels.len()][index % matrix.labels.len()];
+        let color = if value.is_none() { missing } else if let Some(crate::json::Value::String(hex)) = cell.get("color") {
+            parse_scene_v1_hex_color(hex)?
+        } else if let Some(value) = value {
+            if value > 0.0 { positive } else if value < 0.0 { negative } else { zero }
+        } else { missing };
+        if value.is_none() {
+            target.fill = missing;
+        } else if cell_method == CellMethod::Color {
+            target.fill = color;
+        }
+        if let Some(glyph) = &mut target.glyph {
+            set_scene_glyph_color(glyph, color);
+        }
+    }
+    scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
+    Ok(scene)
+}
+
+fn scene_v1_color(value: &crate::json::Value, path: &str) -> Result<RgbaColor, SceneBuildError> {
+    let hex = as_string(value, path)?;
+    parse_scene_v1_hex_color(hex).map_err(|_| SceneBuildError::new(
+        "input.scene.invalid_color", "expected a six-digit sRGB hex color", path,
+    ))
+}
+
+fn parse_scene_v1_hex_color(hex: &str) -> Result<RgbaColor, SceneBuildError> {
+    if !is_srgb_hex(hex) {
+        return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", "color"));
+    }
+    let channel = |start| u8::from_str_radix(&hex[start..start + 2], 16).unwrap();
+    Ok(RgbaColor { red: channel(1), green: channel(3), blue: channel(5), alpha: 255 })
+}
+
+fn set_scene_glyph_color(glyph: &mut CellGlyph, color: RgbaColor) {
+    match glyph {
+        CellGlyph::Circle { color: current, .. }
+        | CellGlyph::Square { color: current, .. }
+        | CellGlyph::Ellipse { color: current, .. }
+        | CellGlyph::Pie { color: current, .. }
+        | CellGlyph::Number { color: current, .. }
+        | CellGlyph::Shade { color: current, .. } => *current = color,
+        CellGlyph::Color => {}
+    }
 }
 
 impl SceneBuildError {
@@ -929,11 +1017,16 @@ mod tests {
     }
 
     #[test]
-    fn scene_v1_to_scene_preserves_title_and_annotation() {
+    fn scene_v1_to_scene_preserves_title_annotation_geometry_and_palette() {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
+        assert_eq!((scene.width, scene.height), (380.0, 392.0));
         assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
+        assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
+        assert_eq!((scene.texts[0].x, scene.texts[0].y), (92.0, 118.0));
+        assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Circle { radius, color })
+            if *radius == CELL_SIZE * 0.43 && *color == RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 }));
     }
 
     #[test]
