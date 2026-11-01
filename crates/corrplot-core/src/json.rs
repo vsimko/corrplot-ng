@@ -1,7 +1,4 @@
 //! Small dependency-free JSON reader used at the shared-core data boundary.
-//!
-//! This deliberately implements JSON only (not JavaScript): duplicate object
-//! keys, malformed UTF-8 escapes, non-finite numbers and trailing input fail.
 
 use std::collections::BTreeMap;
 
@@ -43,7 +40,7 @@ impl Parser<'_> {
     }
 
     fn whitespace(&mut self) {
-        while matches!(self.bytes.get(self.offset), Some(b' ' | b'\\n' | b'\\r' | b'\\t')) {
+        while matches!(self.bytes.get(self.offset), Some(b' ' | b'\n' | b'\r' | b'\t')) {
             self.offset += 1;
         }
     }
@@ -72,29 +69,29 @@ impl Parser<'_> {
     }
 
     fn string(&mut self) -> Result<String, ParseError> {
-        self.offset += 1; // opening quote
+        self.offset += 1;
         let mut result = String::new();
         loop {
             let byte = self.bytes.get(self.offset).copied().ok_or_else(|| self.error("unterminated JSON string"))?;
             match byte {
                 b'"' => { self.offset += 1; return Ok(result); }
-                b'\\\\' => {
+                b'\\' => {
                     self.offset += 1;
                     let escaped = self.bytes.get(self.offset).copied().ok_or_else(|| self.error("incomplete JSON escape"))?;
                     self.offset += 1;
                     match escaped {
                         b'"' => result.push('"'),
-                        b'\\\\' => result.push('\\\\'),
+                        b'\\' => result.push('\\'),
                         b'/' => result.push('/'),
-                        b'b' => result.push('\\u{0008}'),
-                        b'f' => result.push('\\u{000c}'),
-                        b'n' => result.push('\\n'),
-                        b'r' => result.push('\\r'),
-                        b't' => result.push('\\t'),
+                        b'b' => result.push('\u{0008}'),
+                        b'f' => result.push('\u{000c}'),
+                        b'n' => result.push('\n'),
+                        b'r' => result.push('\r'),
+                        b't' => result.push('\t'),
                         b'u' => {
                             let first = self.hex_quad()?;
                             let scalar = if (0xD800..=0xDBFF).contains(&first) {
-                                if self.bytes.get(self.offset..self.offset + 2) != Some(b"\\\\u") {
+                                if self.bytes.get(self.offset..self.offset + 2) != Some(b"\\u") {
                                     return Err(self.error("high surrogate must be followed by a low surrogate"));
                                 }
                                 self.offset += 2;
@@ -214,7 +211,7 @@ mod tests {
 
     #[test]
     fn parses_nested_json_and_unicode_surrogate_pairs() {
-        let value = parse(r#"{"label":"A\\uD83D\\uDE80","cells":[null,true,-1.25e2]}"#).unwrap();
+        let value = parse(r#"{"label":"A\uD83D\uDE80","cells":[null,true,-1.25e2]}"#).unwrap();
         let Value::Object(object) = value else { panic!("expected object") };
         assert_eq!(object.get("label"), Some(&Value::String("A🚀".into())));
         assert_eq!(object.get("cells"), Some(&Value::Array(vec![Value::Null, Value::Bool(true), Value::Number(-125.0)])));
