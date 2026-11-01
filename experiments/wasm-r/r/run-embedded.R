@@ -35,7 +35,11 @@ main <- function() {
   # R CMD SHLIB / MinGW mishandles drive-letter absolute output paths (it drops
   # the colon and separators while constructing the linker -o argument).
   shared_dir <- if (.Platform$OS.type == "windows") getwd() else tempdir()
-  shared <- tempfile(pattern = "wasmtime-host-", tmpdir = shared_dir, fileext = paste0(".", .Platform$dynlib.ext))
+  shared <- tempfile(
+    pattern = "wasmtime-host-",
+    tmpdir = shared_dir,
+    fileext = if (.Platform$OS.type == "windows") "" else paste0(".", .Platform$dynlib.ext)
+  )
   on.exit(unlink(shared), add = TRUE)
 
   # Pass include and linker flags through the environment. On Windows, R CMD SHLIB
