@@ -330,7 +330,10 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
     for (index, item) in cells.iter().enumerate() {
         let path = format!("cells[{index}]");
         let cell = as_object(item, &path)?;
-        let target = &mut scene.cells[index];
+        let row = as_usize(required(cell, "row", &path)?, &format!("{path}.row"))?;
+        let column = as_usize(required(cell, "column", &path)?, &format!("{path}.column"))?;
+        let target_index = row * matrix.labels.len() + column;
+        let target = &mut scene.cells[target_index];
         target.x = as_number(required(cell, "x", &path)?, &format!("{path}.x"))?;
         target.y = as_number(required(cell, "y", &path)?, &format!("{path}.y"))?;
         target.size = as_number(required(cell, "size", &path)?, &format!("{path}.size"))?;
@@ -338,7 +341,7 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
             target.visible &= *visible;
         }
         target.stroke = grid;
-        let value = matrix.values[index / matrix.labels.len()][index % matrix.labels.len()];
+        let value = matrix.values[row][column];
         let encoding = cell.get("encoding").map(|value| as_object(value, &format!("{path}.encoding"))).transpose()?;
         let color = if value.is_none() { missing } else if let Some(crate::json::Value::String(hex)) = encoding.and_then(|object| object.get("color")).or_else(|| cell.get("color")) {
             parse_scene_v1_hex_color(hex)?
@@ -1131,6 +1134,23 @@ mod tests {
             if *radius == 36.12 && *color == RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 }));
     }
 
+
+    #[test]
+    fn scene_v1_conversion_uses_explicit_cell_identity_not_array_order() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let mut document = crate::json::parse(source).unwrap();
+        if let crate::json::Value::Object(root) = &mut document {
+            if let Some(crate::json::Value::Array(cells)) = root.get_mut("cells") {
+                cells.reverse();
+            }
+        }
+        let source = crate::json::stringify(&document);
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        assert_eq!((scene.cells[0].x, scene.cells[0].y), (104.0, 76.0));
+        assert_eq!((scene.cells[2].x, scene.cells[2].y), (272.0, 76.0));
+        assert!(matches!(&scene.cells[2].glyph, Some(CellGlyph::Circle { color, .. })
+            if color.red == 178 && color.green == 24 && color.blue == 43));
+    }
 
     #[test]
     fn scene_v1_to_scene_preserves_cell_text_annotations() {
