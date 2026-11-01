@@ -755,6 +755,20 @@ mod tests {
     }
 
     #[test]
+    fn rejects_invalid_plot_wide_significance_policy() {
+        let mut scene = sample_scene();
+        scene.significance = Some(SceneSignificancePolicy {
+            mode: "unknown".into(), thresholds: vec![0.05], symbol: "*".into(),
+        });
+        assert!(scene.validate().unwrap_err().message.contains("significance policy"));
+
+        scene.significance = Some(SceneSignificancePolicy {
+            mode: "stars".into(), thresholds: vec![1.5], symbol: "*".into(),
+        });
+        assert!(scene.validate().unwrap_err().message.contains("significance policy"));
+    }
+
+    #[test]
     fn rejects_unknown_scene_legend_kinds() {
         let mut scene = sample_scene();
         scene.legend.push(SceneLegendEntry {
