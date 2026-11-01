@@ -203,7 +203,7 @@ mod tests {
         for method in [CellMethod::Circle, CellMethod::Square, CellMethod::Ellipse, CellMethod::Number, CellMethod::Shade, CellMethod::Color, CellMethod::Pie] {
             let options = SceneBuildOptions { cell_method: method, ..Default::default() };
             let scene = matrix_to_scene_v1(&input(), &options).unwrap();
-            assert_eq!(scene.cells.len(), 4);
+            assert_eq!(scene.cells.len(), 9);
             scene.validate().unwrap();
         }
     }
@@ -212,6 +212,8 @@ mod tests {
     fn general_numeric_values_use_a_data_derived_magnitude() {
         let mut matrix = input();
         matrix.semantics = MatrixSemantics::GeneralNumeric;
+        matrix.labels = vec!["alpha".into(), "beta".into()];
+        matrix.source_indices = vec![0, 1];
         matrix.values = vec![vec![Some(0.0), Some(5.0)], vec![Some(-10.0), Some(2.0)]];
         let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
         assert_eq!(scene.cells[2].glyph, Some(CellGlyph::Circle { radius: CELL_SIZE * 0.43, color: RgbaColor { red: 178, green: 24, blue: 43, alpha: 255 } }));
