@@ -21,6 +21,9 @@ error_file <- tempfile("corrplot-wasm-stderr-")
 on.exit(unlink(c(input_file, output_file, error_file)), add = TRUE)
 writeBin(input, input_file)
 
+version <- system2(wasmtime, "--version", stdout = TRUE, stderr = TRUE)
+if (!length(version)) version <- "external Wasmtime"
+
 started <- proc.time()[["elapsed"]]
 status <- system2(
   command = wasmtime,
@@ -42,7 +45,7 @@ wasm_hash <- digest::digest(module, algo = "sha256", file = TRUE)
 fixture_hash <- digest::digest(fixture, algo = "sha256", file = TRUE)
 
 cat(jsonlite::toJSON(list(
-  runtime = if (nzchar(stderr)) stderr else "external Wasmtime",
+  runtime = paste(version, collapse = " "),
   wasmSha256 = wasm_hash,
   fixtureSha256 = fixture_hash,
   elapsedMs = round(elapsed * 1000, 3),
