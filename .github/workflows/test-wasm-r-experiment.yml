@@ -55,10 +55,15 @@ jobs:
 
       - name: Locate WASM artifacts
         run: |
-          WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-host/target" -name corrplot_wasm_r_host.wasm -print -quit)"
-          EMBEDDED_WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-abi/target" -name corrplot_wasm_r_abi.wasm -print -quit)"
-          test -n "$WASM_MODULE"
-          test -n "$EMBEDDED_WASM_MODULE"
+          WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-host/target/wasm32-wasip1/release" -maxdepth 1 -type f -name "*.wasm" -print -quit)"
+          EMBEDDED_WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-abi/target/wasm32-unknown-unknown/release" -maxdepth 1 -type f -name "*.wasm" -print -quit)"
+          if [[ -z "$WASM_MODULE" || -z "$EMBEDDED_WASM_MODULE" ]]; then
+            echo "WASM artifacts not found; available files:"
+            find experiments/wasm-r/wasm-host/target experiments/wasm-r/wasm-abi/target -type f -name "*.wasm" -print
+            exit 1
+          fi
+          echo "WASI module: $WASM_MODULE"
+          echo "Embedded ABI module: $EMBEDDED_WASM_MODULE"
           echo "WASM_MODULE=$WASM_MODULE" >> "$GITHUB_ENV"
           echo "EMBEDDED_WASM_MODULE=$EMBEDDED_WASM_MODULE" >> "$GITHUB_ENV"
 
