@@ -41,6 +41,8 @@ jobs:
       - name: Build browser ESM package
         working-directory: bindings/wasm
         run: wasm-pack build --target web --release --out-dir pkg
+      - name: Measure WASM size, initialization, and renderer baselines
+        run: node bindings/wasm/benchmarks/measure.mjs
       - name: Install Playwright
         if: matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1

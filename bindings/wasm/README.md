@@ -37,6 +37,13 @@ browser smoke example. The page checks the SVG result envelope, verifies
 representative RGBA pixels and the Canvas copy, and confirms that a later WASM
 call does not mutate the previously returned JavaScript-owned pixel buffer.
 
+After building, run `node benchmarks/measure.mjs` from this directory to
+report the raw/gzip/Brotli WASM module size, cold initialization time, available
+WASM linear-memory size, process RSS delta, and median/p95 timings for matrix
+validation, SVG rendering, and RGBA rendering. The script uses fixed fixtures
+and iteration counts; results are informational baselines, not noisy
+per-pull-request performance gates. CI records them on Node.js 24 and 26.
+
 ## Scope boundary
 
 The current Rust core provides matrix validation and typed-scene SVG/RGBA
