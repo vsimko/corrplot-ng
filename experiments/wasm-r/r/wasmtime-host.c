@@ -17,11 +17,11 @@ static wasmtime_func_t g_free;
 static wasmtime_func_t g_validate;
 static char *g_module_path = NULL;
 
-static void fail_wasmtime(const char *where, wasmtime_error_t *error, wasm_trap_t *trap) {
+static void fail_wasmtime(const char *where, wasmtime_error_t *wt_error, wasm_trap_t *trap) {
   wasm_byte_vec_t message;
-  if (error != NULL) {
-    wasmtime_error_message(error, &message);
-    wasmtime_error_delete(error);
+  if (wt_error != NULL) {
+    wasmtime_error_message(wt_error, &message);
+    wasmtime_error_delete(wt_error);
   } else {
     wasm_trap_message(trap, &message);
     wasm_trap_delete(trap);
@@ -34,7 +34,7 @@ static void call_export(wasmtime_func_t *function,
                         wasmtime_val_t *results, size_t nresults,
                         const char *name) {
   wasm_trap_t *trap = NULL;
-  wasmtime_error_t *error = wasmtime_func_call(
+  wasmtime_error_t *wt_error = wasmtime_func_call(
       g_context, function, args, nargs, results, nresults, &trap);
   if (error != NULL || trap != NULL) fail_wasmtime(name, error, trap);
 }
@@ -69,13 +69,13 @@ static void ensure_module(const char *module_path) {
   g_store = wasmtime_store_new(g_engine, NULL, NULL);
   g_context = wasmtime_store_context(g_store);
   wasmtime_module_t *module = NULL;
-  wasmtime_error_t *error = wasmtime_module_new(g_engine, bytes, (size_t)file_len, &module);
+  wasmtime_error_t *wt_error = wasmtime_module_new(g_engine, bytes, (size_t)file_len, &module);
   free(bytes);
-  if (error != NULL) fail_wasmtime("compile WASM module", error, NULL);
+  if (wt_error != NULL) fail_wasmtime("compile WASM module", error, NULL);
 
   wasm_trap_t *trap = NULL;
-  error = wasmtime_instance_new(g_context, module, NULL, 0, &g_instance, &trap);
-  if (error != NULL || trap != NULL) fail_wasmtime("instantiate WASM module", error, trap);
+  wt_error = wasmtime_instance_new(g_context, module, NULL, 0, &g_instance, &trap);
+  if (wt_error != NULL || trap != NULL) fail_wasmtime("instantiate WASM module", wt_error, trap);
   wasmtime_module_delete(module);
 
   wasmtime_extern_t item;
