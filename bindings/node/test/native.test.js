@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
   CorrplotError,
   getRendererCapabilities,
@@ -113,27 +115,10 @@ test("exposes the shared renderer capability declaration", () => {
 });
 
 
-const sceneV1 = JSON.stringify({
-  schema_version: 1,
-  kind: "correlation_plot",
-  width: 100,
-  height: 100,
-  title: "",
-  description: "",
-  annotation: "",
-  style: {
-    positive_color: "#2166ac",
-    negative_color: "#b2182b",
-    zero_color: "#bdbdbd",
-    missing_fill: "#f2f2f2",
-    grid_color: "#e0e0e0",
-  },
-  labels: [{ text: "alpha", row_x: 1, row_y: 2, column_x: 3, column_y: 4 }],
-  cells: [{
-    row: 0, column: 0, value: 1,
-    x: 10, y: 10, center_x: 15, center_y: 15, size: 10,
-  }],
-});
+const sceneV1 = fs.readFileSync(
+  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1.example.json"),
+  "utf8",
+);
 
 test("constructs and renders a matrix through the shared core operation", () => {
   const svg = renderMatrixSvg(sceneV1, "ellipse");
