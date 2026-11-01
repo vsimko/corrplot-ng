@@ -82,9 +82,9 @@ const validation = validateMatrix(matrix);
 assert.equal(validation.valid, true);
 const svg = renderSceneSvg(scene, svgOptions);
 assert.equal(typeof svg.svg, "string");
-assert.equal(svg.diagnostic, undefined);
+assert.ok(svg.diagnostic == null);
 const rgba = renderSceneRgba(scene, rgbaOptions);
-assert.equal(rgba.diagnostic, undefined);
+assert.ok(rgba.diagnostic == null);
 assert.ok(rgba.pixels instanceof Uint8Array);
 assert.equal(rgba.pixels.byteLength, rgba.strideBytes * rgba.heightPx);
 
