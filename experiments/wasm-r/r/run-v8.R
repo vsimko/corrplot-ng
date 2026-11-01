@@ -23,7 +23,7 @@ ctx$assign("corrplotInputBytes", fixture_bytes)
 ctx$eval("if (typeof WebAssembly !== 'object' || typeof WebAssembly.instantiate !== 'function') throw new Error('WebAssembly is not available in this V8 engine');")
 
 # Keep one V8 context and one compiled instance alive for all calls.
-ctx$eval("
+invisible(ctx$eval("
   globalThis.corrplotWasmInstance = new WebAssembly.Instance(
     new WebAssembly.Module(corrplotWasmBytes), {}
   );
@@ -45,7 +45,7 @@ ctx$eval("
       if (inputPtr) e.corrplot_free(inputPtr, input.length);
     }
   };
-")
+"))
 
 invoke <- function() ctx$call("corrplotWasmRun")
 invisible(replicate(5L, invoke(), simplify = FALSE))
@@ -61,7 +61,7 @@ elapsed_ms <- (proc.time()[["elapsed"]] - started) * 1000
 result <- list(
   runtime = R.version.string,
   backend = "V8 WebAssembly (in-process)",
-  v8 = V8::engine_info(),
+  v8 = list(version = V8::engine_info()$version, numeric_version = as.character(V8::engine_info()$numeric_version)),
   wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
   calls = calls,
