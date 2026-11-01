@@ -30,16 +30,21 @@ dyn.load(shared)
 
 fixture_raw <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
 request <- rawToChar(fixture_raw)
+invisible(.Call("corrplot_wasm_validate", wasm, request)) # warm-up: compilation is excluded
+calls <- 100L
 started <- proc.time()[["elapsed"]]
-response_json <- .Call("corrplot_wasm_validate", wasm, request)
+for (i in seq_len(calls)) {
+  response_json <- .Call("corrplot_wasm_validate", wasm, request)
+}
 elapsed <- (proc.time()[["elapsed"]] - started) * 1000
 response <- jsonlite::fromJSON(response_json, simplifyVector = FALSE)
+.Call("corrplot_wasm_shutdown")
 
 cat(jsonlite::toJSON(list(
   runtime = R.version.string,
   wasmtime = "C API (embedded)",
   wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
-  elapsedMs = elapsed,
+  calls = calls,\n  elapsedMs = elapsed,\n  perCallMs = elapsed / calls,
   response = response
 ), auto_unbox = TRUE, null = "null"), "\n", sep = "")
