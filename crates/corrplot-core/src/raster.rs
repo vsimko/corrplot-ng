@@ -40,6 +40,30 @@ pub enum CellGlyph {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct SceneLegendEntry {
+    pub kind: String,
+    pub label: String,
+    pub color: RgbaColor,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneClusterRegion {
+    pub id: String,
+    pub variables: Vec<String>,
+    pub source_indices: Vec<usize>,
+    pub row_start: usize,
+    pub row_end: usize,
+    pub column_start: usize,
+    pub column_end: usize,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub color: RgbaColor,
+    pub line_width: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct SceneCell {
     pub x: f64,
     pub y: f64,
@@ -56,6 +80,10 @@ pub struct Scene {
     pub height: f64,
     pub cells: Vec<SceneCell>,
     pub texts: Vec<SceneText>,
+    /// Renderer-neutral legend semantics, retained independently of text labels.
+    pub legend: Vec<SceneLegendEntry>,
+    /// Source and displayed matrix ranges for cluster overlays.
+    pub cluster_regions: Vec<SceneClusterRegion>,
 }
 
 impl Scene {
@@ -88,6 +116,21 @@ impl Scene {
                 Some(CellGlyph::Number { font_size, .. }) if !font_size.is_finite() || *font_size <= 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid number font size"))),
                 _ => {}
+            }
+        }
+        for (index, region) in self.cluster_regions.iter().enumerate() {
+            if region.id.is_empty() || region.variables.is_empty()
+                || region.variables.len() != region.source_indices.len()
+                || region.row_start > region.row_end
+                || region.column_start > region.column_end
+                || !region.x.is_finite() || !region.y.is_finite()
+                || !region.width.is_finite() || region.width <= 0.0
+                || !region.height.is_finite() || region.height <= 0.0
+                || !region.line_width.is_finite() || region.line_width <= 0.0
+            {
+                return Err(OutputValidationError::invalid_options(format!(
+                    "scene cluster region {index} has invalid metadata or geometry",
+                )));
             }
         }
         for (index, text) in self.texts.iter().enumerate() {
@@ -569,6 +612,8 @@ mod tests {
                     }),
                 },
             ],
+            legend: vec![],
+            cluster_regions: vec![],
             texts: vec![SceneText {
                 text: "A".into(), x: 10.0, y: 10.0, font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
