@@ -878,12 +878,12 @@ mod tests {
     }
 
     #[test]
-    fn rejects_non_finite_json_numbers_with_a_stable_path() {
+    fn rejects_overflowing_json_numbers_as_invalid_json() {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
             .replace(r#""width": 380"#, r#""width": 1e999"#);
         let error = parse_scene_v1_matrix(&source).unwrap_err();
-        assert_eq!(error.code, "input.scene.invalid_number");
-        assert_eq!(error.path, "width");
+        assert_eq!(error.code, "input.scene.invalid_json");
+        assert_eq!(error.path, "$");
     }
 
     #[test]
