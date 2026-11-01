@@ -101,23 +101,25 @@ run_once <- function() {
   request <- jsonlite::fromJSON(request_text, simplifyVector = FALSE)
   validate_request(request)
 }
-# Warm up, then choose enough iterations to measure roughly half a second.
-invisible(replicate(5L, run_once(), simplify = FALSE))
-pilot_calls <- 10L
-started <- proc.time()[["elapsed"]]
-for (i in seq_len(pilot_calls)) response <- run_once()
-pilot_seconds <- proc.time()[["elapsed"]] - started
-calls <- max(100L, min(10000L, as.integer(ceiling(0.5 / max(pilot_seconds / pilot_calls, 1e-6)))))
-started <- proc.time()[["elapsed"]]
-for (i in seq_len(calls)) response <- run_once()
-elapsed_ms <- (proc.time()[["elapsed"]] - started) * 1000
+script_arg <- grep("^--file=", commandArgs(), value = TRUE)
+source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
+metrics <- benchmark_repeated(run_once)
+response <- run_once()
 result <- list(
   runtime = R.version.string,
   implementation = "native R reference (JSON decode + validation)",
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
-  calls = calls,
-  elapsedMs = elapsed_ms,
-  perCallMs = elapsed_ms / calls,
+  calls = metrics$calls,
+  callsPerSample = metrics$callsPerSample,
+  sampleCount = metrics$sampleCount,
+  targetSecondsPerSample = metrics$targetSecondsPerSample,
+  elapsedMs = metrics$elapsedMs,
+  perCallMs = metrics$meanPerCallMs,
+  meanPerCallMs = metrics$meanPerCallMs,
+  sdPerCallMs = metrics$sdPerCallMs,
+  ci95LowerMs = metrics$ci95LowerMs,
+  ci95UpperMs = metrics$ci95UpperMs,
+  samplesPerCallMs = metrics$samplesPerCallMs,
   response = response
 )
 writeLines(as.character(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null")),
