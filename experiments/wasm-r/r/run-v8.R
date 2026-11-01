@@ -31,7 +31,7 @@ ctx$eval("
   );
   globalThis.corrplotWasmRun = function (json) {
     const e = globalThis.corrplotWasmInstance.exports;
-    const input = new TextEncoder().encode(json);
+    const input = Uint8Array.from(json, character => character.charCodeAt(0));
     const inputPtr = e.corrplot_alloc(input.length);
     let outputPtr = 0;
     let outputLen = 0;
@@ -41,9 +41,7 @@ ctx$eval("
       outputPtr = Number(packed & 0xffffffffn);
       outputLen = Number(packed >> 32n);
       if (!outputPtr || !outputLen) throw new Error('WASM validation returned an empty result');
-      return new TextDecoder().decode(
-        new Uint8Array(e.memory.buffer, outputPtr, outputLen)
-      );
+      return Array.from(new Uint8Array(e.memory.buffer, outputPtr, outputLen), byte => String.fromCharCode(byte)).join('');
     } finally {
       if (outputPtr && outputLen) e.corrplot_free(outputPtr, outputLen);
       if (inputPtr) e.corrplot_free(inputPtr, input.length);
