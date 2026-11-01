@@ -388,13 +388,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn renders_scene_v1_matrix_and_maps_invalid_method_to_diagnostic_v1() {
-        let scene_v1 = r##"{
-          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
-          "title":"","description":"","annotation":"",
-          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
-          "labels":[{"text":"alpha","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
-          "cells":[{"row":0,"column":0,"value":1,"x":10,"y":10,"center_x":15,"center_y":15,"size":10}]
-        }"##;
+        let scene_v1 = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
 
         let output = render_matrix_svg_wasm(scene_v1.into(), "ellipse".into()).unwrap();
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
