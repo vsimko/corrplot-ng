@@ -108,8 +108,8 @@ still synthetic microbenchmarks. This is a
 microbenchmark of the validation boundary, not a full plotting benchmark; the
 reference implementation is intentionally isolated from the production package.
 
-The embedded ABI CI now runs on Linux and Intel macOS using separately pinned
-Wasmtime 50.0.1 C API release archives. The R host selects the platform shared
+The embedded ABI CI now runs on Linux and Intel macOS (`macos-15-intel`) using
+separately pinned Wasmtime 50.0.1 C API release archives. The R host selects the platform shared
 library (`.so` or `.dylib`) and corresponding linker flags. Windows remains a
 separate follow-up because its Rtools/MSYS2 compiler and Wasmtime import-library
 layout need dedicated validation; the current C shim is not yet claimed to be
