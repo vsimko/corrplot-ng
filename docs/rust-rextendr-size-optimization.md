@@ -84,14 +84,47 @@ and the source-package NOTE are separate issues.
 
 ## Follow-up
 
-The CLI is not linked into the R package, and the size-oriented Cargo release
-profile regressed Linux and macOS. The next engineering experiment should
-evaluate a reproducible post-link debug-strip step in the generated package
-build, with the full offline install, source-tarball inspection, R CMD check,
-exported-symbol comparison, and runtime smoke tests. Windows needs a
-validated PE/COFF approach before a cross-platform change is considered.
+## Build-time linker stripping experiment
+
+Merged PR #215 adds an opt-in `CORRPLOT_REXTENDR_STRIP_DEBUG=true` mode to
+the disposable package generator. The three-platform offline CI workflow
+enables it. Linux passes `-Wl,--strip-debug`; macOS passes Apple's
+`-Wl,-S`; Windows deliberately remains unmodified pending validated
+PE/COFF tooling. The generator's default remains unchanged when the
+environment variable is unset. This is still prototype-only and is not a
+production R-package migration.
+
+The full workflow (offline dependency resolution and installation, R smoke
+test, source-tarball build, and `R CMD check --as-cran`) passed on all three
+platforms in [CI run #41230348952](https://github.com/vsimko/corrplot-ng/actions/runs/41230348952).
+
+| Platform | Installed package | Installed native library | Source tarball | R CMD check |
+| --- | ---: | ---: | ---: | --- |
+| Linux | 2,112,721 bytes (2.01 MiB) | 2,100,280 bytes (2.00 MiB) | 1,049,181 bytes | 1 NOTE |
+| macOS | 1,805,047 bytes (1.72 MiB) | 1,792,600 bytes (1.71 MiB) | 1,048,308 bytes | 1 NOTE |
+| Windows | 1,176,796 bytes (1.12 MiB) | 1,164,288 bytes (1.11 MiB) | 1,041,008 bytes | 1 NOTE |
+
+The NOTE is the known R CMD check warning about Cargo's hidden
+`.cargo-checksum.json` files retained for offline Cargo integrity. It is
+not a linker or runtime failure. Do not remove checksum/provenance metadata
+to silence it. The source archive and installed package are separate
+measurements.
+
+The temporary-copy experiment from PR #212 was rerun after linker stripping:
+Linux changed only from 2,100,280 to 2,098,408 bytes (a further 1,872-byte
+reduction), while macOS remained 1,792,600 bytes. This independently
+confirms that the build-time linker flags already removed essentially all
+debug-only payload available to those tools. Windows was not stripped.
+
+## Follow-up
+
+The measured prototype build-time reduction is now implemented and validated
+on Linux/macOS. Do not repeat the experiment or enable Windows stripping
+without a validated PE/COFF method. Remaining work is external release
+readiness: obtain maintainer/CRAN guidance on the hidden Cargo checksum NOTE
+and actual production package acceptance, and complete the human maintainer
+time comparison against C++/Rcpp. No production R migration or CRAN
+acceptance is claimed.
 
 Do not remove Cargo checksum/provenance metadata, weaken offline
-verification, or duplicate shared-core logic to reduce package size. Obtain
-maintainer/CRAN guidance on the retained vendor metadata NOTE and installed
-package size before any production R migration.
+verification, or duplicate shared-core logic to reduce package size.

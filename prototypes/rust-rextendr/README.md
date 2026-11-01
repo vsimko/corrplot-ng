@@ -23,19 +23,31 @@ remains for Cargo vendor checksum/provenance metadata required by offline
 builds; actual CRAN acceptance and production R migration remain unproven.
 
 The 2026-10-31 Ubuntu 24.04 / R 4.6.2 run measured a 1,314,220-byte source
-tarball. The historical 6.0 MB installed-package figure describes the
-unstripped Linux build, not a universal cross-platform result. Subsequent
-measurements recorded unstripped native-library sizes of 6,207,880 bytes on
-Linux, 1,932,808 bytes on macOS, and 1,164,288 bytes on Windows. An isolated
-post-link experiment on temporary copies reduced Linux to 2,098,408 bytes
-(66.2%) and macOS to 1,792,600 bytes (7.3%), preserving exported symbols and
-passing the R smoke test. Windows stripping was deliberately not attempted.
-This experiment did not alter the generated package, source tarball, or
-production build; the normal installed package therefore remains unstripped.
-The source-tarball size is a separate metric. CRAN guidance is still required
-for the Cargo vendor metadata NOTE and the actual production package size.
-Controlled human maintainer time versus the C++/Rcpp path remains unmeasured;
-existing effort ranges are planning estimates only.
+tarball and a historical 6.0 MB unstripped installed package. That figure is
+not a universal cross-platform result. PR #215 subsequently added opt-in
+build-time linker stripping to the disposable package generator and enabled
+it in the three-platform offline CI workflow. Measured results from CI run
+[ #41230348952 ](https://github.com/vsimko/corrplot-ng/actions/runs/41230348952):
+
+| Platform | Installed package | Native library | Source tarball | R CMD check |
+| --- | ---: | ---: | ---: | --- |
+| Linux | 2,112,721 bytes | 2,100,280 bytes | 1,049,181 bytes | 1 NOTE |
+| macOS | 1,805,047 bytes | 1,792,600 bytes | 1,048,308 bytes | 1 NOTE |
+| Windows | 1,176,796 bytes | 1,164,288 bytes | 1,041,008 bytes | 1 NOTE |
+
+Linux uses `-Wl,--strip-debug`, macOS uses Apple's `-Wl,-S`, and Windows
+remains unstripped until PE/COFF behavior is validated. The full offline
+install, R smoke test, source-tarball build, and `R CMD check --as-cran`
+passed on all three platforms. The single NOTE concerns retained Cargo
+`.cargo-checksum.json` files required for offline dependency integrity;
+do not remove that metadata to suppress the NOTE.
+
+This remains an opt-in experiment in the disposable package generator, not
+a production R-package migration or CRAN acceptance. The source-tarball size
+is separate from the installed package size. CRAN guidance is still needed
+on the remaining NOTE and production package acceptability. Controlled human
+maintainer time versus the C++/Rcpp path remains unmeasured; existing effort
+ranges are planning estimates only.
 
 The generated R Cargo package uses Cargo's standard release profile. A
 controlled CI experiment compared it with a size-oriented profile
