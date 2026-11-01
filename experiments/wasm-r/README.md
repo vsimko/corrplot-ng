@@ -37,10 +37,11 @@ The resulting module is:
 experiments/wasm-r/wasm-host/target/wasm32-wasip1/release/corrplot_wasm_r_host.wasm
 ```
 
-Install Wasmtime and record the version:
+Install Wasmtime and the two R-side experiment dependencies, then record the version:
 
 ```sh
 wasmtime --version
+Rscript -e 'install.packages(c("jsonlite", "digest"))'
 ```
 
 ## Run from Node and R
@@ -53,10 +54,9 @@ node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE"
 Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE"
 ```
 
-Both runners report a module hash and the semantic response. The initial
-implementation uses SHA-256 in Node and MD5 in base R only as a lightweight
-cross-check; CI should compute SHA-256 once with a system utility and compare
-the exact artifact passed to both runners.
+Both runners report a module hash and the semantic response. Both runners calculate SHA-256 for the module and fixture. CI compares the
+hashes reported by each runtime and verifies that both produced the same
+semantic response.
 
 Use `CORRPLOT_WASMTIME` to select a non-default Wasmtime executable.
 
