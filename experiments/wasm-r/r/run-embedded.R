@@ -33,24 +33,27 @@ main <- function() {
   source_file <- file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "wasmtime-host.c")
   shared <- tempfile(fileext = paste0(".", .Platform$dynlib.ext))
 
-  # Keep compiler flags in Makevars; system2() otherwise splits linker arguments.
-  makevars <- tempfile()
-  on.exit(unlink(c(makevars, shared)), add = TRUE)
+  # Pass include and linker flags through the environment. On Windows, R CMD SHLIB
+  # reads Makevars.win rather than a generic Makevars file, so a temporary
+  # R_MAKEVARS_USER file is not portable across all R platforms.
+  quote_flag_path <- function(path) {
+    path <- normalizePath(path, winslash = "/", mustWork = TRUE)
+    paste0('"', gsub('"', '\\\\"', path, fixed = TRUE), '"')
+  }
+  cppflags <- paste0("-I", quote_flag_path(include))
+  ldflags <- paste0("-L", quote_flag_path(lib))
   linker_flags <- if (.Platform$OS.type == "windows") {
     "-lwasmtime"
   } else if (identical(Sys.info()[["sysname"]], "Darwin")) {
-    c(paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime")
+    c(paste0("-Wl,-rpath,", quote_flag_path(lib)), "-lwasmtime")
   } else {
-    c(paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime", "-lpthread", "-ldl", "-lm")
+    c(paste0("-Wl,-rpath,", quote_flag_path(lib)), "-lwasmtime", "-lpthread", "-ldl", "-lm")
   }
-  writeLines(c(
-    paste("PKG_CPPFLAGS =", paste0("-I", shQuote(include))),
-    paste("PKG_LIBS =", paste("-L", shQuote(lib), paste(linker_flags, collapse = " ")))
-  ), makevars)
   status <- system2(
     file.path(R.home("bin"), "R"),
     c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file)),
-    env = paste0("R_MAKEVARS_USER=", makevars)
+    env = c(paste0("PKG_CPPFLAGS=", cppflags),
+            paste0("PKG_LIBS=", paste(c(ldflags, linker_flags), collapse = " ")))
   )
   if (status != 0L) stop("failed to compile the embedded Wasmtime R host", call. = FALSE)
   dyn.load(shared)
