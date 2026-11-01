@@ -538,6 +538,16 @@ mod tests {
     }
 
     #[test]
+    fn parses_the_shared_canonical_scene_v1_fixture() {
+        let matrix = parse_scene_v1_matrix(include_str!("../../../prototypes/shared-svg/scene-v1.example.json")).unwrap();
+        assert_eq!(matrix.labels, vec!["alpha", "beta", "gamma"]);
+        assert_eq!(matrix.values[0], vec![Some(1.0), Some(0.65), Some(-0.4)]);
+        assert_eq!(matrix.values[1][2], None);
+        assert_eq!(matrix.source_indices, vec![0, 1, 2]);
+        assert_eq!(matrix.semantics, MatrixSemantics::Correlation);
+    }
+
+    #[test]
     fn scene_v1_parser_rejects_unsupported_versions_and_duplicate_cell_identity() {
         let source = r##"{
           "schema_version":2,"kind":"correlation_plot","width":100,"height":100,
