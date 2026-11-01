@@ -338,7 +338,8 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
         target.stroke = grid;
         let value = matrix.values[index / matrix.labels.len()][index % matrix.labels.len()];
-        let color = if value.is_none() { missing } else if let Some(crate::json::Value::String(hex)) = cell.get("color") {
+        let encoding = cell.get("encoding").map(|value| as_object(value, &format!("{path}.encoding"))).transpose()?;
+        let color = if value.is_none() { missing } else if let Some(crate::json::Value::String(hex)) = encoding.and_then(|object| object.get("color")).or_else(|| cell.get("color")) {
             parse_scene_v1_hex_color(hex)?
         } else if let Some(value) = value {
             if value > 0.0 { positive } else if value < 0.0 { negative } else { zero }
@@ -350,6 +351,28 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
         if let Some(glyph) = &mut target.glyph {
             set_scene_glyph_color(glyph, color);
+            if let Some(encoding) = encoding {
+                match glyph {
+                    CellGlyph::Circle { radius, .. } => {
+                        if let Some(value) = encoding.get("radius") { *radius = as_number(value, &format!("{path}.encoding.radius"))?; }
+                    }
+                    CellGlyph::Square { side, .. } => {
+                        if let Some(value) = encoding.get("width") { *side = as_number(value, &format!("{path}.encoding.width"))?; }
+                    }
+                    CellGlyph::Ellipse { rx, ry, rotation_degrees, .. } => {
+                        if let Some(value) = encoding.get("rx") { *rx = as_number(value, &format!("{path}.encoding.rx"))?; }
+                        if let Some(value) = encoding.get("ry") { *ry = as_number(value, &format!("{path}.encoding.ry"))?; }
+                        if let Some(value) = encoding.get("rotation") { *rotation_degrees = as_number(value, &format!("{path}.encoding.rotation"))?; }
+                    }
+                    CellGlyph::Pie { radius, .. } => {
+                        if let Some(value) = encoding.get("radius") { *radius = as_number(value, &format!("{path}.encoding.radius"))?; }
+                    }
+                    CellGlyph::Number { text, .. } => {
+                        if let Some(crate::json::Value::String(value)) = encoding.get("text") { *text = value.clone(); }
+                    }
+                    CellGlyph::Shade { .. } | CellGlyph::Color => {}
+                }
+            }
         }
     }
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
@@ -1026,7 +1049,7 @@ mod tests {
         assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
         assert_eq!((scene.texts[0].x, scene.texts[0].y), (92.0, 118.0));
         assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Circle { radius, color })
-            if *radius == CELL_SIZE * 0.43 && *color == RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 }));
+            if *radius == 36.12 && *color == RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 }));
     }
 
     #[test]
