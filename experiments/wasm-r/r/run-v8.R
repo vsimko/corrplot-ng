@@ -19,6 +19,7 @@ fixture_bytes <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
 
 ctx <- V8::v8()
 ctx$assign("corrplotWasmBytes", wasm_bytes)
+ctx$assign("corrplotInputBytes", fixture_bytes)
 if (!isTRUE(ctx$eval("typeof WebAssembly === 'object' && typeof WebAssembly.instantiate === 'function'"))) {
   stop("the selected V8 engine does not support WebAssembly", call. = FALSE)
 }
@@ -28,7 +29,8 @@ ctx$eval("
   globalThis.corrplotWasmInstance = new WebAssembly.Instance(
     new WebAssembly.Module(corrplotWasmBytes), {}
   );
-  globalThis.corrplotWasmRun = function (input) {
+  globalThis.corrplotWasmRun = function () {
+    const input = corrplotInputBytes;
     const e = globalThis.corrplotWasmInstance.exports;
     const inputPtr = e.corrplot_alloc(input.length);
     let outputPtr = 0;
@@ -47,7 +49,7 @@ ctx$eval("
   };
 ")
 
-invoke <- function() ctx$call("corrplotWasmRun", fixture_bytes)
+invoke <- function() ctx$eval("corrplotWasmRun()")
 invisible(replicate(5L, invoke(), simplify = FALSE))
 pilot_calls <- 10L
 started <- proc.time()[["elapsed"]]
