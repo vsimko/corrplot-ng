@@ -57,15 +57,10 @@ main <- function() {
   fixture_raw <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
   request <- rawToChar(fixture_raw)
   invoke <- function() .Call("corrplot_wasm_validate", wasm, request)
-  invisible(replicate(5L, invoke(), simplify = FALSE))
-  pilot_calls <- 10L
-  started <- proc.time()[["elapsed"]]
-  for (i in seq_len(pilot_calls)) response_json <- invoke()
-  pilot_seconds <- proc.time()[["elapsed"]] - started
-  calls <- max(100L, min(10000L, as.integer(ceiling(0.5 / max(pilot_seconds / pilot_calls, 1e-6)))))
-  started <- proc.time()[["elapsed"]]
-  for (i in seq_len(calls)) response_json <- invoke()
-  elapsed <- (proc.time()[["elapsed"]] - started) * 1000
+  script_arg <- grep("^--file=", commandArgs(), value = TRUE)
+  source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
+  metrics <- benchmark_repeated(invoke)
+  response_json <- invoke()
   response <- jsonlite::fromJSON(response_json, simplifyVector = FALSE)
 
   result <- list(
@@ -73,9 +68,17 @@ main <- function() {
     wasmtime = "C API (embedded)",
     wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
     fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
-    calls = calls,
-    elapsedMs = elapsed,
-    perCallMs = elapsed / calls,
+    calls = metrics$calls,
+  callsPerSample = metrics$callsPerSample,
+  sampleCount = metrics$sampleCount,
+  targetSecondsPerSample = metrics$targetSecondsPerSample,
+  elapsedMs = metrics$elapsedMs,
+  perCallMs = metrics$meanPerCallMs,
+  meanPerCallMs = metrics$meanPerCallMs,
+  sdPerCallMs = metrics$sdPerCallMs,
+  ci95LowerMs = metrics$ci95LowerMs,
+  ci95UpperMs = metrics$ci95UpperMs,
+  samplesPerCallMs = metrics$samplesPerCallMs,
     response = response
   )
   output <- file(output_path, open = "wt")
