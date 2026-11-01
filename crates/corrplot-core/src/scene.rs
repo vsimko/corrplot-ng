@@ -182,20 +182,20 @@ mod tests {
     fn input() -> NormalizedMatrixV1 {
         NormalizedMatrixV1 {
             schema_version: 1, kind: "normalized_matrix".into(),
-            labels: vec!["alpha".into(), "beta".into()],
-            values: vec![vec![Some(1.0), Some(-0.5)], vec![Some(-0.5), None]],
-            source_indices: vec![0, 1], semantics: MatrixSemantics::Correlation,
+            labels: vec!["alpha".into(), "beta".into(), "gamma".into()],
+            values: vec![vec![Some(1.0), Some(-0.5), None], vec![Some(-0.5), Some(1.0), None], vec![None, None, Some(1.0)]],
+            source_indices: vec![0, 1, 2], semantics: MatrixSemantics::Correlation,
         }
     }
 
     #[test]
     fn builds_deterministic_scene_and_preserves_missing_values() {
         let scene = matrix_to_scene_v1(&input(), &SceneBuildOptions::default()).unwrap();
-        assert_eq!(scene.cells.len(), 4);
+        assert_eq!(scene.cells.len(), 9);
         assert_eq!(scene.cells[0].glyph, Some(CellGlyph::Circle { radius: CELL_SIZE * 0.43, color: RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 } }));
         assert!(scene.texts.iter().any(|text| text.text == "NA"));
         assert!(scene.texts.iter().any(|text| text.text == "alpha"));
-        assert_eq!(scene.width, LEFT_MARGIN + 2.0 * (CELL_SIZE + CELL_GAP) + RIGHT_MARGIN);
+        assert_eq!(scene.width, LEFT_MARGIN + 3.0 * (CELL_SIZE + CELL_GAP) + RIGHT_MARGIN);
     }
 
     #[test]
@@ -220,7 +220,7 @@ mod tests {
     #[test]
     fn rejects_duplicate_source_indices_with_stable_path() {
         let mut matrix = input();
-        matrix.source_indices = vec![0, 0];
+        matrix.source_indices = vec![0, 0, 2];
         let error = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap_err();
         assert_eq!(error.code, "input.matrix.invalid_source_indices");
         assert_eq!(error.path, "source_indices[1]");
