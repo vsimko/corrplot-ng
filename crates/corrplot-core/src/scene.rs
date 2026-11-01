@@ -272,6 +272,29 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     })
 }
 
+/// Parse scene-v1 and construct its matrix scene while retaining the document's
+/// title and annotation. The normalized-matrix parser remains available for
+/// callers that intentionally want to supply their own presentation options.
+pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene, SceneBuildError> {
+    let matrix = parse_scene_v1_matrix(source)?;
+    let document = crate::json::parse(source).map_err(|error| SceneBuildError::new(
+        "input.scene.invalid_json",
+        format!("invalid JSON at byte {}: {}", error.offset, error.message),
+        "$",
+    ))?;
+    let root = as_object(&document, "$")?;
+    let title = as_string(required(root, "title", "$")?, "title")?.to_string();
+    let description = as_string(required(root, "description", "$")?, "description")?.to_string();
+    let annotation_text = as_string(required(root, "annotation", "$")?, "annotation")?;
+    let annotation = if annotation_text.is_empty() { None } else { Some(annotation_text.to_string()) };
+    matrix_to_scene_v1(&matrix, &SceneBuildOptions {
+        cell_method,
+        title,
+        description,
+        annotation,
+    })
+}
+
 impl SceneBuildError {
     fn with_cell(mut self, row: usize, column: usize) -> Self {
         self.row = Some(row);
@@ -903,6 +926,14 @@ mod tests {
             source_indices: vec![0, 1, 2], semantics: MatrixSemantics::Correlation,
             display_type: DisplayType::Full, show_diagonal: true,
         }
+    }
+
+    #[test]
+    fn scene_v1_to_scene_preserves_title_and_annotation() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
+        assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
+        assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
     }
 
     #[test]
