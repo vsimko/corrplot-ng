@@ -49,7 +49,7 @@ ctx$eval("
   };
 ")
 
-invoke <- function() ctx$eval("corrplotWasmRun()")
+invoke <- function() ctx$call("corrplotWasmRun")
 invisible(replicate(5L, invoke(), simplify = FALSE))
 pilot_calls <- 10L
 started <- proc.time()[["elapsed"]]
@@ -63,7 +63,7 @@ elapsed_ms <- (proc.time()[["elapsed"]] - started) * 1000
 result <- list(
   runtime = R.version.string,
   backend = "V8 WebAssembly (in-process)",
-  v8 = as.character(ctx$eval("JSON.stringify({version: (typeof process !== 'undefined' && process.versions && process.versions.v8) || 'embedded'})")),
+  v8 = V8::engine_info(),
   wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
   calls = calls,
