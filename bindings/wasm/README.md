@@ -2,13 +2,13 @@
 
 This package compiles the same `crates/corrplot-core` Rust library used by the
 native CLI and Node-API adapter. The binding contains only JavaScript value
-conversion; matrix validation and SVG rendering remain in Rust.
+conversion; matrix validation and SVG/RGBA rendering remain in Rust.
 
 ## Implemented operations
 
 - `validateMatrix(input)` calls the shared Rust matrix validator.
 - `renderSceneSvg(scene, options)` converts a typed scene and calls the shared
-  Rust SVG renderer.
+  Rust SVG renderer. It returns an object containing `svg` or a diagnostic.
 - `renderSceneRgba(scene, options)` calls the shared Rust raster renderer and
   returns an owned `Uint8Array` plus dimensions, stride, `rgba8` pixel format,
   straight alpha, sRGB color space, and optional DPI metadata.
@@ -33,13 +33,15 @@ wasm-pack build --target web --release --out-dir pkg
 The browser build is ESM and initializes asynchronously. Serve this directory
 over HTTP (not `file://`) and open
 [`examples/browser/index.html`](examples/browser/index.html) to run the
-browser smoke example.
+browser smoke example. The page checks the SVG result envelope, verifies
+representative RGBA pixels and the Canvas copy, and confirms that a later WASM
+call does not mutate the previously returned JavaScript-owned pixel buffer.
 
 ## Scope boundary
 
 The current Rust core provides matrix validation and typed-scene SVG/RGBA
 rendering, but not a complete scene-v1 parser or matrix-to-scene builder.
 This first slice exposes existing operations without inventing missing
-semantics. Scene construction, browser-side conformance/visual tests, performance budgets,
-package publishing, and the unified TypeScript facade remain follow-up work in
-#142 and #145.
+semantics. Full scene-v1 construction, automated browser conformance/visual
+tests, performance budgets, package publishing, and the unified TypeScript
+facade remain follow-up work in #142 and #145.
