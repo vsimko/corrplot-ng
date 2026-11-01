@@ -47,6 +47,10 @@ function renderSceneRgba(scene, options) {
   return unwrap(native.renderSceneRgba(scene, options));
 }
 
+function renderMatrixSvg(sceneV1Json, method = "circle") {
+  return unwrap(native.renderMatrixSvg(sceneV1Json, method), "svg");
+}
+
 function getRendererCapabilities() {
   return JSON.parse(native.getRendererCapabilities());
 }
@@ -56,5 +60,6 @@ module.exports = {
   validateMatrix,
   renderSceneSvg,
   renderSceneRgba,
+  renderMatrixSvg,
   getRendererCapabilities,
 };

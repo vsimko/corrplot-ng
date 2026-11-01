@@ -1,10 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
   CorrplotError,
   getRendererCapabilities,
   renderSceneSvg,
   renderSceneRgba,
+  renderMatrixSvg,
   validateMatrix,
 } = require("../index.js");
 
@@ -109,4 +112,35 @@ test("exposes the shared renderer capability declaration", () => {
   const capabilities = getRendererCapabilities();
   assert.equal(capabilities.capability_schema_version, 1);
   assert.ok(Array.isArray(capabilities.cell_methods));
+});
+
+
+const sceneV1 = fs.readFileSync(
+  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1.example.json"),
+  "utf8",
+);
+
+test("constructs and renders a matrix through the shared core operation", () => {
+  const svg = renderMatrixSvg(sceneV1, "ellipse");
+  assert.match(svg, /^<svg /);
+  assert.match(svg, /<ellipse /);
+  assert.match(svg, /rotate\(-45 /);
+});
+
+test("maps invalid matrix construction options to diagnostic-v1", () => {
+  assert.throws(
+    () => renderMatrixSvg(sceneV1, "unknown"),
+    (error) => {
+      assert.ok(error instanceof CorrplotError);
+      assert.deepEqual(error.diagnostic, {
+        schema_version: 1,
+        code: "configuration.invalid_field",
+        severity: "error",
+        stage: "configuration",
+        message: "unsupported cell method 'unknown'",
+        path: "cellMethod",
+      });
+      return true;
+    },
+  );
 });

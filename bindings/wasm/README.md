@@ -12,6 +12,10 @@ conversion; matrix validation and SVG/RGBA rendering remain in Rust.
 - `renderSceneRgba(scene, options)` calls the shared Rust raster renderer and
   returns an owned `Uint8Array` plus dimensions, stride, `rgba8` pixel format,
   straight alpha, sRGB color space, and optional DPI metadata.
+- `renderMatrixSvg(sceneV1Json, method)` parses the matrix-bearing portion of
+  scene-v1 JSON, constructs the normalized matrix scene, and renders SVG
+  entirely through the shared Rust core. Supported methods are circle,
+  square, ellipse, number, shade, color, and pie.
 - `getRendererCapabilities()` returns the core capability-v1 JSON string.
 
 Results use diagnostic-v1 records. Input objects are deserialized into
@@ -46,9 +50,6 @@ per-pull-request performance gates. CI records them on Node.js 24 and 26.
 
 ## Scope boundary
 
-The current Rust core provides matrix validation and typed-scene SVG/RGBA
-rendering, but not a complete scene-v1 parser or matrix-to-scene builder.
-This first slice exposes existing operations without inventing missing
-semantics. Full scene-v1 construction, automated browser conformance/visual
+The Rust core now also provides an initial scene-v1 matrix parser and deterministic matrix-to-scene builder. The Node and WASM bindings expose the same end-to-end matrix-to-SVG operation. The parser intentionally validates only the matrix-bearing subset; full scene-v1 presentation semantics are not yet implemented. Full scene-v1 construction, automated browser conformance/visual
 tests, performance budgets, package publishing, and the unified TypeScript
 facade remain follow-up work in #142 and #145.

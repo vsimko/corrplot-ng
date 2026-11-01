@@ -31,12 +31,63 @@ pub struct SceneText {
 pub enum CellGlyph {
     Circle { radius: f64, color: RgbaColor },
     Square { side: f64, color: RgbaColor },
-    Ellipse { rx: f64, ry: f64, color: RgbaColor },
+    Ellipse { rx: f64, ry: f64, rotation_degrees: f64, color: RgbaColor },
     Pie { radius: f64, start_radians: f64, end_radians: f64, color: RgbaColor },
     Number { text: String, font_size: f64, color: RgbaColor },
     Shade { color: RgbaColor },
     /// The cell's semantic fill is the complete glyph for the color method.
     Color,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneLegendEntry {
+    pub kind: String,
+    pub label: String,
+    pub color: RgbaColor,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneClusterRegion {
+    pub id: String,
+    pub variables: Vec<String>,
+    pub source_indices: Vec<usize>,
+    pub row_start: usize,
+    pub row_end: usize,
+    pub column_start: usize,
+    pub column_end: usize,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub color: RgbaColor,
+    pub line_width: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneSignificancePolicy {
+    pub mode: String,
+    pub thresholds: Vec<f64>,
+    pub symbol: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneCellSignificance {
+    pub p_value: Option<f64>,
+    pub status: String,
+    pub annotation: Option<String>,
+    pub blank: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneConfidenceInterval {
+    pub lower: f64,
+    pub upper: f64,
+    pub x1: f64,
+    pub x2: f64,
+    pub y: f64,
+    pub cap_height: f64,
+    pub stroke_width: f64,
+    pub color: RgbaColor,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -48,6 +99,13 @@ pub struct SceneCell {
     pub fill: RgbaColor,
     pub stroke: RgbaColor,
     pub glyph: Option<CellGlyph>,
+    /// Original cell-level p-value, independent of significance display policy.
+    pub p_value: Option<f64>,
+    /// Optional visual-only normalized value; never replaces the matrix value.
+    pub normalized_value: Option<f64>,
+    pub significance: Option<SceneCellSignificance>,
+    /// Statistical bounds and their already-computed scene geometry.
+    pub confidence_interval: Option<SceneConfidenceInterval>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -56,6 +114,12 @@ pub struct Scene {
     pub height: f64,
     pub cells: Vec<SceneCell>,
     pub texts: Vec<SceneText>,
+    /// Plot-wide significance annotation policy from scene-v1.
+    pub significance: Option<SceneSignificancePolicy>,
+    /// Renderer-neutral legend semantics, retained independently of text labels.
+    pub legend: Vec<SceneLegendEntry>,
+    /// Source and displayed matrix ranges for cluster overlays.
+    pub cluster_regions: Vec<SceneClusterRegion>,
 }
 
 impl Scene {
@@ -75,12 +139,40 @@ impl Scene {
                     "scene cell {index} has invalid geometry",
                 )));
             }
+            if cell.p_value.is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value))
+                || cell.normalized_value.is_some_and(|value| !value.is_finite())
+            {
+                return Err(OutputValidationError::invalid_options(format!(
+                    "scene cell {index} has invalid statistical values",
+                )));
+            }
+            if let Some(significance) = &cell.significance {
+                if significance.p_value.is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value))
+                    || !matches!(significance.status.as_str(), "unknown" | "significant" | "not_significant")
+                {
+                    return Err(OutputValidationError::invalid_options(format!(
+                        "scene cell {index} has invalid significance metadata",
+                    )));
+                }
+            }
+            if let Some(interval) = &cell.confidence_interval {
+                if !interval.lower.is_finite() || !interval.upper.is_finite()
+                    || interval.lower < -1.0 || interval.upper > 1.0 || interval.lower > interval.upper
+                    || !interval.x1.is_finite() || !interval.x2.is_finite() || !interval.y.is_finite()
+                    || !interval.cap_height.is_finite() || interval.cap_height < 0.0
+                    || !interval.stroke_width.is_finite() || interval.stroke_width < 0.0
+                {
+                    return Err(OutputValidationError::invalid_options(format!(
+                        "scene cell {index} has invalid confidence interval metadata",
+                    )));
+                }
+            }
             match &cell.glyph {
                 Some(CellGlyph::Circle { radius, .. }) if !radius.is_finite() || *radius < 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has an invalid circle radius"))),
                 Some(CellGlyph::Square { side, .. }) if !side.is_finite() || *side < 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has an invalid square side"))),
-                Some(CellGlyph::Ellipse { rx, ry, .. }) if !rx.is_finite() || !ry.is_finite() || *rx < 0.0 || *ry < 0.0 =>
+                Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, .. }) if !rx.is_finite() || !ry.is_finite() || !rotation_degrees.is_finite() || *rx < 0.0 || *ry < 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid ellipse radii"))),
                 Some(CellGlyph::Pie { radius, start_radians, end_radians, .. })
                     if !radius.is_finite() || *radius < 0.0 || !start_radians.is_finite() || !end_radians.is_finite() || !(end_radians - start_radians).is_finite() =>
@@ -88,6 +180,40 @@ impl Scene {
                 Some(CellGlyph::Number { font_size, .. }) if !font_size.is_finite() || *font_size <= 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid number font size"))),
                 _ => {}
+            }
+        }
+        if let Some(policy) = &self.significance {
+            if !matches!(policy.mode.as_str(), "pch" | "p-value" | "blank" | "stars")
+                || policy.thresholds.is_empty()
+                || policy.thresholds.iter().any(|value| !value.is_finite() || !(0.0..=1.0).contains(value))
+                || policy.symbol.is_empty()
+                || policy.symbol.chars().count() > 8
+            {
+                return Err(OutputValidationError::invalid_options(
+                    "scene has invalid plot-wide significance policy",
+                ));
+            }
+        }
+        for (index, entry) in self.legend.iter().enumerate() {
+            if !matches!(entry.kind.as_str(), "stop" | "interval" | "missing") {
+                return Err(OutputValidationError::invalid_options(format!(
+                    "scene legend entry {index} has an unsupported kind",
+                )));
+            }
+        }
+        for (index, region) in self.cluster_regions.iter().enumerate() {
+            if region.id.is_empty() || region.variables.is_empty()
+                || region.variables.len() != region.source_indices.len()
+                || region.row_start > region.row_end
+                || region.column_start > region.column_end
+                || !region.x.is_finite() || !region.y.is_finite()
+                || !region.width.is_finite() || region.width <= 0.0
+                || !region.height.is_finite() || region.height <= 0.0
+                || !region.line_width.is_finite() || region.line_width <= 0.0
+            {
+                return Err(OutputValidationError::invalid_options(format!(
+                    "scene cluster region {index} has invalid metadata or geometry",
+                )));
             }
         }
         for (index, text) in self.texts.iter().enumerate() {
@@ -178,7 +304,7 @@ pub fn render_rgba(
                 let half = side / 2.0;
                 canvas.fill_rect(cx - half, cy - half, cx + half, cy + half, *color);
             }
-            Some(CellGlyph::Ellipse { rx, ry, color }) => canvas.fill_ellipse(cx, cy, *rx, *ry, *color),
+            Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => canvas.fill_ellipse(cx, cy, *rx, *ry, *rotation_degrees, *color),
             Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) =>
                 canvas.fill_pie(cx, cy, *radius, *start_radians, *end_radians, *color),
             Some(CellGlyph::Number { text, font_size, color }) =>
@@ -188,6 +314,10 @@ pub fn render_rgba(
             Some(CellGlyph::Color) | None => {}
         }
     }
+    for region in &scene.cluster_regions {
+        canvas.stroke_rect_width(region.x, region.y, region.x + region.width, region.y + region.height, region.line_width, region.color);
+    }
+    draw_scene_legend_rgba(&mut canvas, scene);
     for text in &scene.texts {
         canvas.draw_text(&text.text, text.x, text.y, text.font_size, text.color, text.anchor);
     }
@@ -271,10 +401,15 @@ impl Canvas {
     }
 
     fn stroke_rect(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: RgbaColor) {
-        self.draw_line(x0, y0, x1, y0, color);
-        self.draw_line(x1, y0, x1, y1, color);
-        self.draw_line(x1, y1, x0, y1, color);
-        self.draw_line(x0, y1, x0, y0, color);
+        self.stroke_rect_width(x0, y0, x1, y1, 1.0, color);
+    }
+
+    fn stroke_rect_width(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, line_width: f64, color: RgbaColor) {
+        let half = line_width / 2.0;
+        self.fill_rect(x0 - half, y0 - half, x1 + half, y0 + half, color);
+        self.fill_rect(x0 - half, y1 - half, x1 + half, y1 + half, color);
+        self.fill_rect(x0 - half, y0 + half, x0 + half, y1 - half, color);
+        self.fill_rect(x1 - half, y0 + half, x1 + half, y1 - half, color);
     }
 
     fn draw_line(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: RgbaColor) {
@@ -315,20 +450,27 @@ impl Canvas {
         }
     }
 
-    fn fill_ellipse(&mut self, cx: f64, cy: f64, rx: f64, ry: f64, color: RgbaColor) {
+    fn fill_ellipse(&mut self, cx: f64, cy: f64, rx: f64, ry: f64, rotation_degrees: f64, color: RgbaColor) {
         if rx <= 0.0 || ry <= 0.0 { return; }
         let (cx, cy) = self.point(cx, cy);
         let rx = rx * self.scale;
         let ry = ry * self.scale;
-        let left = (cx - rx).floor().max(0.0) as isize;
-        let right = (cx + rx).ceil().min(self.width as f64) as isize;
-        let top = (cy - ry).floor().max(0.0) as isize;
-        let bottom = (cy + ry).ceil().min(self.height as f64) as isize;
+        let angle = rotation_degrees.to_radians();
+        let cos = angle.cos();
+        let sin = angle.sin();
+        let extent_x = ((rx * cos).powi(2) + (ry * sin).powi(2)).sqrt();
+        let extent_y = ((rx * sin).powi(2) + (ry * cos).powi(2)).sqrt();
+        let left = (cx - extent_x).floor().max(0.0) as isize;
+        let right = (cx + extent_x).ceil().min(self.width as f64) as isize;
+        let top = (cy - extent_y).floor().max(0.0) as isize;
+        let bottom = (cy + extent_y).ceil().min(self.height as f64) as isize;
         for y in top..bottom {
             for x in left..right {
-                let dx = (x as f64 + 0.5 - cx) / rx;
-                let dy = (y as f64 + 0.5 - cy) / ry;
-                if dx * dx + dy * dy <= 1.0 { self.blend_pixel(x, y, color); }
+                let dx = x as f64 + 0.5 - cx;
+                let dy = y as f64 + 0.5 - cy;
+                let local_x = (dx * cos + dy * sin) / rx;
+                let local_y = (-dx * sin + dy * cos) / ry;
+                if local_x * local_x + local_y * local_y <= 1.0 { self.blend_pixel(x, y, color); }
             }
         }
     }
@@ -467,8 +609,8 @@ impl Renderer<Scene> for SceneSvgRenderer {
                     "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\" fill-opacity=\"{}\"/>",
                     cx - side / 2.0, cy - side / 2.0, color_hex(*color), alpha(*color)
                 )),
-                Some(CellGlyph::Ellipse { rx, ry, color }) => out.push_str(&format!(
-                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => out.push_str(&format!(
+                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" transform=\"rotate({rotation_degrees} {cx} {cy})\" fill=\"{}\" fill-opacity=\"{}\"/>",
                     color_hex(*color), alpha(*color)
                 )),
                 Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => {
@@ -502,6 +644,14 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 Some(CellGlyph::Color) | None => {}
             }
         }
+        for region in &scene.cluster_regions {
+            out.push_str(&format!(
+                "<rect class=\"cluster-region\" data-region-id=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"none\" stroke=\"{}\" stroke-opacity=\"{}\" stroke-width=\"{}\" pointer-events=\"none\"/>",
+                escape_xml(&region.id), region.x, region.y, region.width, region.height,
+                color_hex(region.color), alpha(region.color), region.line_width
+            ));
+        }
+        append_scene_legend_svg(&mut out, scene, &svg.font_family);
         for text in &scene.texts {
             let anchor = match text.anchor {
                 TextAnchor::Start => "start",
@@ -518,6 +668,35 @@ impl Renderer<Scene> for SceneSvgRenderer {
         let output = RenderOutput::Svg(out);
         output.validate_for(options)?;
         Ok(output)
+    }
+}
+
+fn draw_scene_legend_rgba(canvas: &mut Canvas, scene: &Scene) {
+    if scene.legend.is_empty() { return; }
+    let font_size = 8.0;
+    let swatch = 7.0;
+    let gap = 4.0;
+    let mut x = 8.0;
+    let y = scene.height - 13.0;
+    for entry in &scene.legend {
+        canvas.fill_rect(x, y + 1.0, x + swatch, y + 1.0 + swatch, entry.color);
+        x += swatch + gap;
+        canvas.draw_text(&entry.label, x, y, font_size, RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 }, TextAnchor::Start);
+        x += entry.label.chars().count() as f64 * font_size * 6.0 / 7.0 + 10.0;
+    }
+}
+
+fn append_scene_legend_svg(out: &mut String, scene: &Scene, font_family: &str) {
+    if scene.legend.is_empty() { return; }
+    let mut x = 8.0;
+    let y = scene.height - 13.0;
+    for entry in &scene.legend {
+        out.push_str(&format!(
+            "<g class=\"legend-entry\" data-kind=\"{}\"><rect x=\"{}\" y=\"{}\" width=\"7\" height=\"7\" fill=\"{}\" fill-opacity=\"{}\"/><text x=\"{}\" y=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"8\" fill=\"#000000\">{}</text></g>",
+            escape_xml(&entry.kind), x, y + 1.0, color_hex(entry.color), alpha(entry.color),
+            x + 11.0, y, escape_xml(font_family), escape_xml(&entry.label)
+        ));
+        x += 18.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
     }
 }
 
@@ -547,6 +726,7 @@ mod tests {
                     x: 20.0, y: 20.0, size: 30.0, visible: true,
                     fill: RgbaColor::WHITE,
                     stroke: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
+                    p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                     glyph: Some(CellGlyph::Circle {
                         radius: 10.0,
                         color: RgbaColor { red: 20, green: 80, blue: 160, alpha: 255 },
@@ -556,18 +736,78 @@ mod tests {
                     x: 60.0, y: 20.0, size: 30.0, visible: true,
                     fill: RgbaColor::WHITE,
                     stroke: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
+                    p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                     glyph: Some(CellGlyph::Number {
                         text: "-0.5".into(), font_size: 12.0,
                         color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                     }),
                 },
             ],
+            significance: None,
+            legend: vec![],
+            cluster_regions: vec![],
             texts: vec![SceneText {
                 text: "A".into(), x: 10.0, y: 10.0, font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
             }],
         }
+    }
+
+    #[test]
+    fn rejects_invalid_plot_wide_significance_policy() {
+        let mut scene = sample_scene();
+        scene.significance = Some(SceneSignificancePolicy {
+            mode: "unknown".into(), thresholds: vec![0.05], symbol: "*".into(),
+        });
+        assert!(scene.validate().unwrap_err().message.contains("significance policy"));
+
+        scene.significance = Some(SceneSignificancePolicy {
+            mode: "stars".into(), thresholds: vec![1.5], symbol: "*".into(),
+        });
+        assert!(scene.validate().unwrap_err().message.contains("significance policy"));
+    }
+
+    #[test]
+    fn rejects_unknown_scene_legend_kinds() {
+        let mut scene = sample_scene();
+        scene.legend.push(SceneLegendEntry {
+            kind: "custom".into(), label: "Custom".into(), color: RgbaColor::WHITE,
+        });
+        assert!(scene.validate().unwrap_err().message.contains("unsupported kind"));
+    }
+
+    #[test]
+    fn renders_cluster_regions_and_legend_in_svg_and_rgba() {
+        let mut scene = sample_scene();
+        let region_color = RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 };
+        let legend_color = RgbaColor { red: 242, green: 242, blue: 242, alpha: 255 };
+        scene.cluster_regions.push(SceneClusterRegion {
+            id: "group-a".into(), variables: vec!["alpha".into()], source_indices: vec![0],
+            row_start: 0, row_end: 0, column_start: 0, column_end: 0,
+            x: 10.0, y: 10.0, width: 40.0, height: 40.0,
+            color: region_color, line_width: 2.0,
+        });
+        scene.legend.push(SceneLegendEntry {
+            kind: "missing".into(), label: "Not observed".into(), color: legend_color,
+        });
+
+        let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(100.0, 100.0, crate::output::SvgUnit::Pixels));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output") };
+        assert!(svg.contains("class=\"cluster-region\""));
+        assert!(svg.contains("data-region-id=\"group-a\""));
+        assert!(svg.contains("stroke-width=\"2\""));
+        assert!(svg.contains("class=\"legend-entry\""));
+        assert!(svg.contains("Not observed"));
+
+        let rgba = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
+        let pixel = |x: usize, y: usize| {
+            let i = y * rgba.stride_bytes + x * 4;
+            &rgba.pixels[i..i + 4]
+        };
+        assert_eq!(pixel(10, 30), &[33, 102, 172, 255]);
+        assert_eq!(pixel(8, 88), &[242, 242, 242, 255]);
     }
 
     #[test]
@@ -619,7 +859,7 @@ mod tests {
             SceneCell { x: 10.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
                 glyph: Some(CellGlyph::Square { side: 10.0, color }) },
             SceneCell { x: 30.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
-                glyph: Some(CellGlyph::Ellipse { rx: 6.0, ry: 3.0, color }) },
+                glyph: Some(CellGlyph::Ellipse { rx: 6.0, ry: 3.0, rotation_degrees: 25.0, color }) },
             SceneCell { x: 50.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
                 glyph: Some(CellGlyph::Pie { radius: 6.0, start_radians: 0.0, end_radians: 2.0, color }) },
             SceneCell { x: 70.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
@@ -629,6 +869,11 @@ mod tests {
         ]);
         let buffer = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
         assert!(buffer.pixels.chunks_exact(4).any(|pixel| pixel == [220, 20, 60, 255]));
+
+        let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(100.0, 100.0, crate::output::SvgUnit::Pixels));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output") };
+        assert!(svg.contains("rotate(25"));
     }
 
     #[test]

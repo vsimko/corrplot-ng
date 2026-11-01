@@ -2,6 +2,7 @@ import init, {
   getRendererCapabilities,
   renderSceneSvg,
   renderSceneRgba,
+  renderMatrixSvg,
   validateMatrix,
 } from "../../pkg/corrplot_ng_wasm.js";
 
@@ -35,6 +36,34 @@ try {
     kind: "correlation",
   });
   assert(validation.valid, validation.diagnostic?.message ?? "matrix validation failed");
+
+  const fixtureResponse = await fetch("/prototypes/shared-svg/scene-v1.example.json");
+  assert(fixtureResponse.ok, "could not load the canonical scene-v1 fixture");
+  const matrixSceneV1 = await fixtureResponse.text();
+
+  const matrixResult = renderMatrixSvg(matrixSceneV1, "ellipse");
+  assert(!matrixResult.diagnostic, matrixResult.diagnostic?.message ?? "matrix-to-scene WASM operation failed");
+  assert(
+    typeof matrixResult.svg === "string" &&
+      matrixResult.svg.includes("<ellipse ") &&
+      matrixResult.svg.includes("rotate(-45 "),
+    "matrix-to-scene WASM operation did not return the expected ellipse SVG",
+  );
+  assert(matrixResult.svg.includes(">NA</text>"), "matrix-to-scene WASM operation did not preserve missing values");
+  const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
+  const invalidMethodDiagnostic = invalidMatrixResult.diagnostic;
+  assert(
+    invalidMethodDiagnostic?.schema_version === 1 &&
+      invalidMethodDiagnostic?.code === "configuration.invalid_field" &&
+      invalidMethodDiagnostic?.severity === "error" &&
+      invalidMethodDiagnostic?.stage === "configuration" &&
+      invalidMethodDiagnostic?.message === "unsupported cell method 'unknown'" &&
+      invalidMethodDiagnostic?.path === "cellMethod" &&
+      invalidMethodDiagnostic?.row == null &&
+      invalidMethodDiagnostic?.column == null &&
+      invalidMatrixResult.svg == null,
+    "matrix-to-scene WASM operation did not return the complete expected diagnostic-v1",
+  );
 
   const capabilities = JSON.parse(getRendererCapabilities());
   const scene = {
@@ -115,7 +144,7 @@ try {
   assertPixel(context.getImageData(80, 80, 1, 1).data, 1, 0, 0, [0, 0, 0, 255], "canvas circle center");
 
   figure.replaceChildren(image, canvas);
-  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; SVG and RGBA pixel checks passed (${rgba.pixels.byteLength} bytes)`;
+  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix-to-scene, SVG and RGBA checks passed (${rgba.pixels.byteLength} bytes)`;
 } catch (error) {
   status.textContent = `WASM smoke test failed: ${error.message}`;
   status.setAttribute("aria-live", "assertive");
