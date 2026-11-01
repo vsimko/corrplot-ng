@@ -44,6 +44,31 @@ validation, SVG rendering, and RGBA rendering. The script uses fixed fixtures
 and iteration counts; results are informational baselines, not noisy
 per-pull-request performance gates. CI records them on Node.js 24 and 26.
 
+## Browser threading and Canvas status
+
+The current build is single-threaded WebAssembly. It does not enable shared
+WebAssembly memory, atomics, or a Rust thread pool, and the binding does not
+create or manage Web Workers. A host application may load its own module
+instance inside a worker, but worker startup, message protocols, transferable
+input/output buffers, cancellation, and worker-pool policy are not part of this
+package and have not been validated here. Shared-memory threading is therefore
+intentionally deferred; it would require an explicit browser compatibility
+policy (including cross-origin isolation) and dedicated CI coverage.
+
+The browser smoke page copies the returned RGBA pixels into a regular Canvas
+2D context. This is not a direct Canvas renderer: drawing remains host-owned,
+and the Rust backend currently returns SVG or RGBA data. OffscreenCanvas and
+worker-owned Canvas rendering are not implemented or claimed as supported.
+Applications can transfer the owned RGBA result to their own Canvas adapter,
+but device-pixel-ratio policy, resizing, and OffscreenCanvas lifecycle remain
+the responsibility of that adapter.
+
+The only automated real-browser smoke environment currently configured in CI
+is the preinstalled Google Chrome on Ubuntu 24.04. Node 24 and 26 both run the
+WASM tests and baseline measurements; the browser smoke currently runs on
+Node 26. This is a tested CI configuration, not a claim of a comprehensive
+browser compatibility matrix.
+
 ## Scope boundary
 
 The current Rust core provides matrix validation and typed-scene SVG/RGBA
