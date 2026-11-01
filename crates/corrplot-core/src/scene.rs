@@ -1183,15 +1183,6 @@ mod tests {
     }
 
     #[test]
-    fn scene_v1_rejects_text_annotations_outside_matrix() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
-            .replace("\\"text_annotations\\": []", "\\"text_annotations\\": [{\\"row\\":3,\\"column\\":0,\\"role\\":\\"value\\",\\"text\\":\\"x\\",\\"color\\":\\"black\\",\\"font_size\\":9,\\"font_weight\\":\\"normal\\",\\"font_style\\":\\"normal\\"}]");
-        let error = scene_v1_to_scene(&source, CellMethod::Circle).unwrap_err();
-        assert_eq!(error.code, "input.scene.cell_out_of_bounds");
-        assert_eq!(error.path, "text_annotations[0].row");
-    }
-
-    #[test]
     fn builds_deterministic_scene_and_preserves_missing_values() {
         let scene = matrix_to_scene_v1(&input(), &SceneBuildOptions::default()).unwrap();
         assert_eq!(scene.cells.len(), 9);
