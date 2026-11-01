@@ -636,6 +636,11 @@ mod tests {
         ]);
         let buffer = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
         assert!(buffer.pixels.chunks_exact(4).any(|pixel| pixel == [220, 20, 60, 255]));
+
+        let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(100.0, 100.0, crate::output::SvgUnit::Pixels));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output") };
+        assert!(svg.contains("rotate(25"));
     }
 
     #[test]
