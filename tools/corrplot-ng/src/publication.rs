@@ -886,7 +886,7 @@ impl Publication {
                 }
             }
         }
-        Scene { width, height, cells, texts }
+        Scene { width, height, cells, texts, legend: Vec::new(), cluster_regions: Vec::new() }
     }
 
     pub fn svg_output_options(&self) -> Result<OutputOptions, String> {
