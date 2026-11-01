@@ -705,6 +705,7 @@ mod tests {
                     x: 20.0, y: 20.0, size: 30.0, visible: true,
                     fill: RgbaColor::WHITE,
                     stroke: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
+                    p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                     glyph: Some(CellGlyph::Circle {
                         radius: 10.0,
                         color: RgbaColor { red: 20, green: 80, blue: 160, alpha: 255 },
@@ -714,6 +715,7 @@ mod tests {
                     x: 60.0, y: 20.0, size: 30.0, visible: true,
                     fill: RgbaColor::WHITE,
                     stroke: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
+                    p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                     glyph: Some(CellGlyph::Number {
                         text: "-0.5".into(), font_size: 12.0,
                         color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
