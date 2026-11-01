@@ -231,6 +231,10 @@ pub fn render_rgba(
             Some(CellGlyph::Color) | None => {}
         }
     }
+    for region in &scene.cluster_regions {
+        canvas.stroke_rect_width(region.x, region.y, region.x + region.width, region.y + region.height, region.line_width, region.color);
+    }
+    draw_scene_legend_rgba(&mut canvas, scene);
     for text in &scene.texts {
         canvas.draw_text(&text.text, text.x, text.y, text.font_size, text.color, text.anchor);
     }
@@ -314,10 +318,15 @@ impl Canvas {
     }
 
     fn stroke_rect(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: RgbaColor) {
-        self.draw_line(x0, y0, x1, y0, color);
-        self.draw_line(x1, y0, x1, y1, color);
-        self.draw_line(x1, y1, x0, y1, color);
-        self.draw_line(x0, y1, x0, y0, color);
+        self.stroke_rect_width(x0, y0, x1, y1, 1.0, color);
+    }
+
+    fn stroke_rect_width(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, line_width: f64, color: RgbaColor) {
+        let half = line_width / 2.0;
+        self.fill_rect(x0 - half, y0 - half, x1 + half, y0 + half, color);
+        self.fill_rect(x0 - half, y1 - half, x1 + half, y1 + half, color);
+        self.fill_rect(x0 - half, y0 + half, x0 + half, y1 - half, color);
+        self.fill_rect(x1 - half, y0 + half, x1 + half, y1 - half, color);
     }
 
     fn draw_line(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: RgbaColor) {
@@ -552,6 +561,14 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 Some(CellGlyph::Color) | None => {}
             }
         }
+        for region in &scene.cluster_regions {
+            out.push_str(&format!(
+                "<rect class=\"cluster-region\" data-region-id=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" fill=\"none\" stroke=\"{}\" stroke-opacity=\"{}\" stroke-width=\"{}\" pointer-events=\"none\"/>",
+                escape_xml(&region.id), region.x, region.y, region.width, region.height,
+                color_hex(region.color), alpha(region.color), region.line_width
+            ));
+        }
+        append_scene_legend_svg(&mut out, scene, &svg.font_family);
         for text in &scene.texts {
             let anchor = match text.anchor {
                 TextAnchor::Start => "start",
@@ -568,6 +585,35 @@ impl Renderer<Scene> for SceneSvgRenderer {
         let output = RenderOutput::Svg(out);
         output.validate_for(options)?;
         Ok(output)
+    }
+}
+
+fn draw_scene_legend_rgba(canvas: &mut Canvas, scene: &Scene) {
+    if scene.legend.is_empty() { return; }
+    let font_size = 8.0;
+    let swatch = 7.0;
+    let gap = 4.0;
+    let mut x = 8.0;
+    let y = scene.height - 13.0;
+    for entry in &scene.legend {
+        canvas.fill_rect(x, y + 1.0, x + swatch, y + 1.0 + swatch, entry.color);
+        x += swatch + gap;
+        canvas.draw_text(&entry.label, x, y, font_size, RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 }, TextAnchor::Start);
+        x += entry.label.chars().count() as f64 * font_size * 6.0 / 7.0 + 10.0;
+    }
+}
+
+fn append_scene_legend_svg(out: &mut String, scene: &Scene, font_family: &str) {
+    if scene.legend.is_empty() { return; }
+    let mut x = 8.0;
+    let y = scene.height - 13.0;
+    for entry in &scene.legend {
+        out.push_str(&format!(
+            "<g class=\"legend-entry\" data-kind=\"{}\"><rect x=\"{}\" y=\"{}\" width=\"7\" height=\"7\" fill=\"{}\" fill-opacity=\"{}\"/><text x=\"{}\" y=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"8\" fill=\"#000000\">{}</text></g>",
+            escape_xml(&entry.kind), x, y + 1.0, color_hex(entry.color), alpha(entry.color),
+            x + 11.0, y, escape_xml(font_family), escape_xml(&entry.label)
+        ));
+        x += 18.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
     }
 }
 
@@ -620,6 +666,39 @@ mod tests {
                 anchor: TextAnchor::Start,
             }],
         }
+    }
+
+    #[test]
+    fn renders_cluster_regions_and_legend_in_svg_and_rgba() {
+        let mut scene = sample_scene();
+        let region_color = RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 };
+        let legend_color = RgbaColor { red: 242, green: 242, blue: 242, alpha: 255 };
+        scene.cluster_regions.push(SceneClusterRegion {
+            id: "group-a".into(), variables: vec!["alpha".into()], source_indices: vec![0],
+            row_start: 0, row_end: 0, column_start: 0, column_end: 0,
+            x: 10.0, y: 10.0, width: 40.0, height: 40.0,
+            color: region_color, line_width: 2.0,
+        });
+        scene.legend.push(SceneLegendEntry {
+            kind: "missing".into(), label: "Not observed".into(), color: legend_color,
+        });
+
+        let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(100.0, 100.0, crate::output::SvgUnit::Pixels));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output") };
+        assert!(svg.contains("class=\"cluster-region\""));
+        assert!(svg.contains("data-region-id=\"group-a\""));
+        assert!(svg.contains("stroke-width=\"2\""));
+        assert!(svg.contains("class=\"legend-entry\""));
+        assert!(svg.contains("Not observed"));
+
+        let rgba = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
+        let pixel = |x: usize, y: usize| {
+            let i = y * rgba.stride_bytes + x * 4;
+            &rgba.pixels[i..i + 4]
+        };
+        assert_eq!(pixel(10, 30), &[33, 102, 172, 255]);
+        assert_eq!(pixel(8, 88), &[242, 242, 242, 255]);
     }
 
     #[test]
