@@ -17,11 +17,12 @@ for (package in c("jsonlite", "digest")) {
   if (!requireNamespace(package, quietly = TRUE)) stop("missing R package: ", package, call. = FALSE)
 }
 
-source_file <- file.path(dirname(normalizePath(sys.frame(1)$ofile %||% "experiments/wasm-r/r/run-embedded.R")), "wasmtime-host.c")
-if (!file.exists(source_file)) source_file <- "experiments/wasm-r/r/wasmtime-host.c"
+script_arg <- grep("^--file=", commandArgs(), value = TRUE)
+script_path <- sub("^--file=", "", script_arg[[1]])
+source_file <- file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "wasmtime-host.c")
 shared <- tempfile(fileext = paste0(".", .Platform$dynlib.ext))
 cppflags <- paste0("-I", shQuote(include))
-libs <- paste("-L", shQuote(lib), "-Wl,-rpath,", shQuote(lib), "-lwasmtime -lpthread -ldl -lm")
+libs <- paste0("-L", shQuote(lib), " -Wl,-rpath,", shQuote(lib), " -lwasmtime -lpthread -ldl -lm")
 env <- c(paste0("PKG_CPPFLAGS=", cppflags), paste0("PKG_LIBS=", libs))
 status <- system2(file.path(R.home("bin"), "R"), c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file)), env = env)
 if (status != 0L) stop("failed to compile the embedded Wasmtime R host", call. = FALSE)
