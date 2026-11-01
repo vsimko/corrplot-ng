@@ -109,7 +109,22 @@ jobs:
           echo "WASMTIME_C_API_ROOT=/tmp/wasmtime-c-api" >> "$GITHUB_ENV"
 
       - name: Install R experiment dependencies
-        run: Rscript -e 'install.packages(c("jsonlite", "digest"), repos = "https://cloud.r-project.org")'
+        run: Rscript -e 'install.packages(c("jsonlite", "digest", "V8"), repos = "https://cloud.r-project.org")'
+
+      - name: Build native Rust R binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          R_HOME="$(R RHOME)" cargo build \
+            --manifest-path experiments/wasm-r/native-r/Cargo.toml \
+            --release
+          NATIVE_LIBRARY="$(find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f \\( -name 'libcorrplot_r_native.so' -o -name 'libcorrplot_r_native.dylib' -o -name 'corrplot_r_native.dll' \\) -print -quit)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find experiments/wasm-r/native-r/target/release -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
 
       - name: Run identical module and fixtures in Node and R
         shell: bash
@@ -122,11 +137,13 @@ jobs:
             Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE" > "/tmp/r-$NAME.json"
             node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/node-embedded-$NAME.json"
             WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-embedded-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "/tmp/r-native-rust-$NAME.json"
             test -s "/tmp/r-embedded-$NAME.json"
-            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "/tmp/r-native-$NAME.json"
-            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" "/tmp/r-native-$NAME.json" <<'PY'
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "/tmp/r-native-reference-$NAME.json"
+            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" "/tmp/r-v8-$NAME.json" "/tmp/r-native-rust-$NAME.json" "/tmp/r-native-reference-$NAME.json" <<'PY'
           import json, sys
-          name, node_path, r_path, node_embedded_path, r_embedded_path, r_native_path = sys.argv[1:]
+          name, node_path, r_path, node_embedded_path, r_embedded_path, r_v8_path, r_native_rust_path, r_native_reference_path = sys.argv[1:]
           with open(node_path, encoding="utf-8") as f:
               node = json.load(f)
           with open(r_path, encoding="utf-8") as f:
@@ -135,8 +152,12 @@ jobs:
               node_embedded = json.load(f)
           with open(r_embedded_path, encoding="utf-8") as f:
               r_embedded = json.load(f)
-          with open(r_native_path, encoding="utf-8") as f:
-              r_native = json.load(f)
+          with open(r_v8_path, encoding="utf-8") as f:
+              r_v8 = json.load(f)
+          with open(r_native_rust_path, encoding="utf-8") as f:
+              r_native_rust = json.load(f)
+          with open(r_native_reference_path, encoding="utf-8") as f:
+              r_native_reference = json.load(f)
           assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
           assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
           assert node["response"] == r["response"], (name, node["response"], r["response"])
@@ -144,7 +165,9 @@ jobs:
           assert node_embedded["fixtureSha256"] == r_embedded["fixtureSha256"], (name, node_embedded, r_embedded)
           assert node_embedded["response"] == r_embedded["response"], (name, node_embedded["response"], r_embedded["response"])
           assert node_embedded["response"] == node["response"], (name, node_embedded["response"], node["response"])
-          assert r_native["response"] == r_embedded["response"], (name, r_native["response"], r_embedded["response"])
-          print(f"{name}: Node/R parity passed; native R baseline {r_native['perCallMs']:.4f} ms/call, embedded Wasmtime R {r_embedded['perCallMs']:.4f} ms/call")
+          assert r_v8["response"] == r_embedded["response"], (name, r_v8["response"], r_embedded["response"])
+          assert r_native_rust["response"] == r_embedded["response"], (name, r_native_rust["response"], r_embedded["response"])
+          assert r_native_reference["response"] == r_embedded["response"], (name, r_native_reference["response"], r_embedded["response"])
+          print(f"{name}: parity passed; V8 {r_v8['perCallMs']:.4f} ms/call, Wasmtime {r_embedded['perCallMs']:.4f} ms/call, native Rust {r_native_rust['perCallMs']:.4f} ms/call, native R reference {r_native_reference['perCallMs']:.4f} ms/call")
           PY
           done
