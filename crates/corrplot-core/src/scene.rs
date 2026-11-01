@@ -5,7 +5,7 @@
 //! layout and glyph semantics remain in this module.
 
 use crate::output::RgbaColor;
-use crate::raster::{CellGlyph, Scene, SceneCell, SceneClusterRegion, SceneLegendEntry, SceneText, TextAnchor};
+use crate::raster::{CellGlyph, Scene, SceneCell, SceneCellSignificance, SceneConfidenceInterval, SceneClusterRegion, SceneLegendEntry, SceneText, TextAnchor};
 use crate::{validate_matrix, MatrixKind};
 use std::collections::HashSet;
 
@@ -342,6 +342,42 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
         target.stroke = grid;
         let value = matrix.values[row][column];
+        target.p_value = cell.get("p_value")
+            .filter(|value| !matches!(value, crate::json::Value::Null))
+            .map(|value| as_number(value, &format!("{path}.p_value")))
+            .transpose()?;
+        target.normalized_value = cell.get("normalized_value")
+            .filter(|value| !matches!(value, crate::json::Value::Null))
+            .map(|value| as_number(value, &format!("{path}.normalized_value")))
+            .transpose()?;
+        target.significance = if let Some(value) = cell.get("significance") {
+            let significance = as_object(value, &format!("{path}.significance"))?;
+            let significance_path = format!("{path}.significance");
+            let p_value = required(significance, "p_value", &significance_path)?;
+            let annotation = required(significance, "annotation", &significance_path)?;
+            let blank = required(significance, "blank", &significance_path)?;
+            let blank = if let crate::json::Value::Bool(value) = blank { *value } else { return Err(SceneBuildError::new("input.scene.invalid_type", "blank must be a boolean", format!("{significance_path}.blank"))); };
+            Some(SceneCellSignificance {
+                p_value: if matches!(p_value, crate::json::Value::Null) { None } else { Some(as_number(p_value, &format!("{significance_path}.p_value"))?) },
+                status: as_string(required(significance, "status", &significance_path)?, &format!("{significance_path}.status"))?.to_string(),
+                annotation: if matches!(annotation, crate::json::Value::Null) { None } else { Some(as_string(annotation, &format!("{significance_path}.annotation"))?.to_string()) },
+                blank,
+            })
+        } else { None };
+        target.confidence_interval = if let Some(value) = cell.get("confidence_interval") {
+            let interval = as_object(value, &format!("{path}.confidence_interval"))?;
+            let interval_path = format!("{path}.confidence_interval");
+            Some(SceneConfidenceInterval {
+                lower: as_number(required(interval, "lower", &interval_path)?, &format!("{interval_path}.lower"))?,
+                upper: as_number(required(interval, "upper", &interval_path)?, &format!("{interval_path}.upper"))?,
+                x1: as_number(required(interval, "x1", &interval_path)?, &format!("{interval_path}.x1"))?,
+                x2: as_number(required(interval, "x2", &interval_path)?, &format!("{interval_path}.x2"))?,
+                y: as_number(required(interval, "y", &interval_path)?, &format!("{interval_path}.y"))?,
+                cap_height: as_number(required(interval, "cap_height", &interval_path)?, &format!("{interval_path}.cap_height"))?,
+                stroke_width: as_number(required(interval, "stroke_width", &interval_path)?, &format!("{interval_path}.stroke_width"))?,
+                color: scene_v1_color(required(interval, "color", &interval_path)?, &format!("{interval_path}.color"))?,
+            })
+        } else { None };
         let encoding = cell.get("encoding").map(|value| as_object(value, &format!("{path}.encoding"))).transpose()?;
         let color = if value.is_none() { missing } else if let Some(crate::json::Value::String(hex)) = encoding.and_then(|object| object.get("color")).or_else(|| cell.get("color")) {
             parse_scene_v1_hex_color(hex)?
@@ -1135,6 +1171,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
                 x, y, size: CELL_SIZE, visible,
                 fill: match value { None => missing_fill, Some(_) if options.cell_method == CellMethod::Color => color, Some(_) => white },
                 stroke: grid, glyph,
+                p_value: None, normalized_value: None, significance: None, confidence_interval: None,
             });
             if visible && value.is_none() {
                 texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle });
@@ -1509,6 +1546,33 @@ mod tests {
         assert_eq!(matrix.values, vec![vec![Some(1.0), None], vec![None, Some(1.0)]]);
         assert_eq!(matrix.source_indices, vec![0, 1]);
         assert_eq!(matrix.semantics, MatrixSemantics::Correlation);
+    }
+
+    #[test]
+    fn scene_conversion_preserves_cell_significance_and_confidence_interval_metadata() {
+        let source = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":0.5,"x":10,"y":20,"center_x":15,"center_y":25,"size":10,
+            "p_value":0.02,"normalized_value":0.75,
+            "significance":{"p_value":0.02,"status":"significant","annotation":"*","blank":false},
+            "confidence_interval":{"lower":0.1,"upper":0.8,"x1":11,"x2":19,"y":24,"cap_height":2,"stroke_width":1.5,"color":"#2166ac"}}]
+        }"##;
+        let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
+        let cell = &scene.cells[0];
+        assert_eq!(cell.p_value, Some(0.02));
+        assert_eq!(cell.normalized_value, Some(0.75));
+        assert_eq!(cell.significance, Some(SceneCellSignificance {
+            p_value: Some(0.02), status: "significant".into(), annotation: Some("*".into()), blank: false,
+        }));
+        assert_eq!(cell.confidence_interval, Some(SceneConfidenceInterval {
+            lower: 0.1, upper: 0.8, x1: 11.0, x2: 19.0, y: 24.0,
+            cap_height: 2.0, stroke_width: 1.5,
+            color: RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 },
+        }));
+        assert_eq!((cell.x, cell.y, cell.size), (10.0, 20.0, 10.0));
     }
 
     #[test]
