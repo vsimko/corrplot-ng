@@ -49,11 +49,16 @@ main <- function() {
   } else {
     c(paste0("-Wl,-rpath,", quote_flag_path(lib)), "-lwasmtime", "-lpthread", "-ldl", "-lm")
   }
+  # Set these in the current R process so the child R CMD SHLIB inherits
+  # them unchanged on Unix and Windows (system2(env=...) handles spaces
+  # differently across platforms).
+  Sys.setenv(
+    PKG_CPPFLAGS = cppflags,
+    PKG_LIBS = paste(c(ldflags, linker_flags), collapse = " ")
+  )
   status <- system2(
     file.path(R.home("bin"), "R"),
-    c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file)),
-    env = c(paste0("PKG_CPPFLAGS=", cppflags),
-            paste0("PKG_LIBS=", paste(c(ldflags, linker_flags), collapse = " ")))
+    c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file))
   )
   if (status != 0L) stop("failed to compile the embedded Wasmtime R host", call. = FALSE)
   dyn.load(shared)
