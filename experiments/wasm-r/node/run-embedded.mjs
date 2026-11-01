@@ -19,18 +19,27 @@ if (!(memory instanceof WebAssembly.Memory)) {
   throw new Error("module does not export linear memory");
 }
 
-const started = performance.now();
-const inputPointer = corrplot_alloc(request.length);
-new Uint8Array(memory.buffer, inputPointer, request.length).set(request);
-const packed = corrplot_validate_json(inputPointer, request.length);
-corrplot_free(inputPointer, request.length);
+function invoke() {
+  const inputPointer = corrplot_alloc(request.length);
+  new Uint8Array(memory.buffer, inputPointer, request.length).set(request);
+  const packed = corrplot_validate_json(inputPointer, request.length);
+  corrplot_free(inputPointer, request.length);
 
-const result = BigInt(packed);
-const outputPointer = Number(result & 0xffffffffn);
-const outputLength = Number(result >> 32n);
-if (!outputPointer || !outputLength) throw new Error("WASM validation returned an empty result");
-const outputBytes = new Uint8Array(memory.buffer, outputPointer, outputLength).slice();
-corrplot_free(outputPointer, outputLength);
+  const result = BigInt(packed);
+  const outputPointer = Number(result & 0xffffffffn);
+  const outputLength = Number(result >> 32n);
+  if (!outputPointer || !outputLength) throw new Error("WASM validation returned an empty result");
+  const outputBytes = new Uint8Array(memory.buffer, outputPointer, outputLength).slice();
+  corrplot_free(outputPointer, outputLength);
+  return outputBytes;
+}
+
+invoke(); // warm-up: module compilation and first-call effects are excluded
+const calls = 100;
+const started = performance.now();
+let outputBytes;
+for (let i = 0; i < calls; i++) outputBytes = invoke();
+const elapsedMs = performance.now() - started;
 const response = JSON.parse(new TextDecoder().decode(outputBytes));
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -38,6 +47,8 @@ console.log(JSON.stringify({
   runtime: process.version,
   wasmSha256: sha256(wasmBytes),
   fixtureSha256: sha256(fixtureBytes),
-  elapsedMs: performance.now() - started,
+  calls,
+  elapsedMs,
+  perCallMs: elapsedMs / calls,
   response
 }));
