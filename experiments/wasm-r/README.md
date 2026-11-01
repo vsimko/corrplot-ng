@@ -96,9 +96,15 @@ that a CRAN package can ship only the `.wasm` file: the R embedding still needs
 a platform-specific native `libwasmtime` and a C compiler/toolchain to build the
 small host shim. The module itself is portable, but the host runtime is not.
 
-The next experiment stage is to validate the ABI on macOS and Windows, measure
-repeated calls and transfer costs, and compare against a native R baseline. The
-current wasm-bindgen artifact should not be reused for this purpose without its
+The native-R reference benchmark now runs the same JSON request decoding and
+validation contract for 100 calls per fixture. CI compares its semantic response
+with the embedded Wasmtime result and reports per-call timings. This is a
+microbenchmark of the validation boundary, not a full plotting benchmark; the
+reference implementation is intentionally isolated from the production package.
+
+The next experiment stage is to validate the ABI on macOS and Windows and
+measure larger matrix sizes and memory/transfer costs. The current
+wasm-bindgen artifact should not be reused for this purpose without its
 JavaScript runtime glue.
 
 ## Measurements to collect
