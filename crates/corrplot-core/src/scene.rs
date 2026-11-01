@@ -88,6 +88,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         "$",
     ))?;
     let root = as_object(&document, "$")?;
+    reject_unknown_fields(root, &["schema_version", "kind", "width", "height", "labels", "cells", "annotation", "style", "typography", "legend", "title", "description", "cluster_regions", "figure_text", "significance", "glyph_method", "text_annotations", "display_type", "show_diagonal", "variable_order", "matrix_semantics"], "$")?;
     let schema_version = as_usize(required(root, "schema_version", "$")?, "schema_version")?;
     if schema_version != 1 {
         return Err(SceneBuildError::new("input.scene.unsupported_version", "only scene schema_version 1 is supported", "schema_version"));
@@ -114,6 +115,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         as_string(required(root, field, "$")?, field)?;
     }
     let style = as_object(required(root, "style", "$")?, "style")?;
+    reject_unknown_fields(style, &["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"], "style")?;
     for field in ["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"] {
         let path = format!("style.{field}");
         let color = as_string(required(style, field, "style")?, &path)?;
@@ -130,6 +132,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     for (index, value) in label_values.iter().enumerate() {
         let path = format!("labels[{index}]");
         let label = as_object(value, &path)?;
+        reject_unknown_fields(label, &["text", "row_x", "row_y", "column_x", "column_y", "row_visible", "column_visible", "row_position", "column_position", "column_rotation", "offset", "plotmath"], &path)?;
         labels.push(as_string(required(label, "text", &path)?, &format!("{path}.text"))?.to_string());
         for field in ["row_x", "row_y", "column_x", "column_y"] {
             as_number(required(label, field, &path)?, &format!("{path}.{field}"))?;
@@ -146,6 +149,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     for (index, value) in cells.iter().enumerate() {
         let path = format!("cells[{index}]");
         let cell = as_object(value, &path)?;
+        reject_unknown_fields(cell, &["row", "column", "value", "x", "y", "center_x", "center_y", "size", "color", "visible", "encoding", "method", "region", "p_value", "significance", "confidence_interval", "normalized_value"], &path)?;
         let row = as_usize(required(cell, "row", &path)?, &format!("{path}.row"))?;
         let column = as_usize(required(cell, "column", &path)?, &format!("{path}.column"))?;
         if row >= n || column >= n {
@@ -175,6 +179,15 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
 
     let source_indices = if let Some(order) = root.get("variable_order") {
         let order = as_object(order, "variable_order")?;
+        reject_unknown_fields(order, &["strategy", "indices", "labels"], "variable_order")?;
+        as_string(required(order, "strategy", "variable_order")?, "variable_order.strategy")?;
+        let ordered_labels = as_array(required(order, "labels", "variable_order")?, "variable_order.labels")?;
+        if ordered_labels.len() != n {
+            return Err(SceneBuildError::new("input.matrix.invalid_source_indices", "variable_order.labels length must match labels", "variable_order.labels"));
+        }
+        for (index, label) in ordered_labels.iter().enumerate() {
+            as_string(label, &format!("variable_order.labels[{index}]"))?;
+        }
         let indices = as_array(required(order, "indices", "variable_order")?, "variable_order.indices")?;
         if indices.len() != n {
             return Err(SceneBuildError::new("input.matrix.invalid_source_indices", "variable_order.indices length must match labels", "variable_order.indices"));
@@ -222,6 +235,13 @@ impl SceneBuildError {
 
 fn required<'a>(object: &'a std::collections::BTreeMap<String, crate::json::Value>, key: &str, parent: &str) -> Result<&'a crate::json::Value, SceneBuildError> {
     object.get(key).ok_or_else(|| SceneBuildError::new("input.scene.missing_field", format!("required field '{key}' is missing"), if parent == "$" { key.to_string() } else { format!("{parent}.{key}") }))
+}
+
+fn reject_unknown_fields(object: &std::collections::BTreeMap<String, crate::json::Value>, allowed: &[&str], path: &str) -> Result<(), SceneBuildError> {
+    if let Some(key) = object.keys().find(|key| !allowed.contains(&key.as_str())) {
+        return Err(SceneBuildError::new("input.scene.unknown_field", format!("unknown field '{key}'"), format!("{path}.{key}")));
+    }
+    Ok(())
 }
 
 fn as_object<'a>(value: &'a crate::json::Value, path: &str) -> Result<&'a std::collections::BTreeMap<String, crate::json::Value>, SceneBuildError> {
