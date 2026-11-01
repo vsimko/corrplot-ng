@@ -400,8 +400,14 @@ mod tests {
         let output = render_matrix_svg_wasm(scene_v1.into(), "unknown".into()).unwrap();
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
         let diagnostic = output.diagnostic.unwrap();
+        assert_eq!(diagnostic.schema_version, 1);
         assert_eq!(diagnostic.code, "configuration.invalid_field");
+        assert_eq!(diagnostic.severity, "error");
+        assert_eq!(diagnostic.stage, "configuration");
+        assert_eq!(diagnostic.message, "unsupported cell method 'unknown'");
         assert_eq!(diagnostic.path.as_deref(), Some("cellMethod"));
+        assert_eq!(diagnostic.row, None);
+        assert_eq!(diagnostic.column, None);
         assert!(output.svg.is_none());
     }
 
