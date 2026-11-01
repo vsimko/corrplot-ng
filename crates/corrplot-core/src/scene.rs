@@ -75,6 +75,187 @@ impl std::fmt::Display for SceneBuildError {
 }
 impl std::error::Error for SceneBuildError {}
 
+/// Parse the matrix-bearing portion of the established renderer-neutral scene-v1 JSON contract.
+///
+/// The returned value is normalized matrix input, not a renderer scene. Geometry
+/// and presentation metadata are validated where required by the v1 schema and
+/// deliberately remain owned by the scene consumer.
+pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBuildError> {
+    use crate::json::Value;
+    let document = crate::json::parse(source).map_err(|error| SceneBuildError::new(
+        "input.scene.invalid_json",
+        format!("invalid JSON at byte {}: {}", error.offset, error.message),
+        "$",
+    ))?;
+    let root = as_object(&document, "$")?;
+    let schema_version = as_usize(required(root, "schema_version", "$")?, "schema_version")?;
+    if schema_version != 1 {
+        return Err(SceneBuildError::new("input.scene.unsupported_version", "only scene schema_version 1 is supported", "schema_version"));
+    }
+    let kind = as_string(required(root, "kind", "$")?, "kind")?;
+    let semantics = match kind {
+        "correlation_plot" => MatrixSemantics::Correlation,
+        "general_matrix_plot" => {
+            let matrix_semantics = as_object(required(root, "matrix_semantics", "$")?, "matrix_semantics")?;
+            if as_string(required(matrix_semantics, "mode", "matrix_semantics")?, "matrix_semantics.mode")? != "general_numeric" {
+                return Err(SceneBuildError::new("input.scene.invalid_semantics", "general_matrix_plot requires matrix_semantics.mode general_numeric", "matrix_semantics.mode"));
+            }
+            MatrixSemantics::GeneralNumeric
+        }
+        _ => return Err(SceneBuildError::new("input.scene.invalid_kind", "kind must be correlation_plot or general_matrix_plot", "kind")),
+    };
+
+    let width = as_number(required(root, "width", "$")?, "width")?;
+    let height = as_number(required(root, "height", "$")?, "height")?;
+    if width <= 0.0 || height <= 0.0 {
+        return Err(SceneBuildError::new("input.scene.invalid_geometry", "scene width and height must be positive", "width"));
+    }
+    for field in ["title", "description", "annotation"] {
+        as_string(required(root, field, "$")?, field)?;
+    }
+    let style = as_object(required(root, "style", "$")?, "style")?;
+    for field in ["positive_color", "negative_color", "zero_color", "missing_fill", "grid_color"] {
+        let path = format!("style.{field}");
+        let color = as_string(required(style, field, "style")?, &path)?;
+        if !is_srgb_hex(color) {
+            return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", path));
+        }
+    }
+
+    let label_values = as_array(required(root, "labels", "$")?, "labels")?;
+    if label_values.is_empty() {
+        return Err(SceneBuildError::new("input.matrix.invalid_shape", "scene labels must not be empty", "labels"));
+    }
+    let mut labels = Vec::with_capacity(label_values.len());
+    for (index, value) in label_values.iter().enumerate() {
+        let path = format!("labels[{index}]");
+        let label = as_object(value, &path)?;
+        labels.push(as_string(required(label, "text", &path)?, &format!("{path}.text"))?.to_string());
+        for field in ["row_x", "row_y", "column_x", "column_y"] {
+            as_number(required(label, field, &path)?, &format!("{path}.{field}"))?;
+        }
+    }
+    let n = labels.len();
+    let cells = as_array(required(root, "cells", "$")?, "cells")?;
+    let expected_cells = n.checked_mul(n).ok_or_else(|| SceneBuildError::new("input.matrix.invalid_shape", "matrix dimensions overflow", "cells"))?;
+    if cells.len() != expected_cells {
+        return Err(SceneBuildError::new("input.matrix.invalid_shape", format!("scene has {} cells; expected {expected_cells}", cells.len()), "cells"));
+    }
+    let mut values = vec![vec![None; n]; n];
+    let mut seen = vec![false; expected_cells];
+    for (index, value) in cells.iter().enumerate() {
+        let path = format!("cells[{index}]");
+        let cell = as_object(value, &path)?;
+        let row = as_usize(required(cell, "row", &path)?, &format!("{path}.row"))?;
+        let column = as_usize(required(cell, "column", &path)?, &format!("{path}.column"))?;
+        if row >= n || column >= n {
+            return Err(SceneBuildError::new("input.scene.cell_out_of_bounds", "cell row and column must refer to an existing label", format!("{path}.row")).with_cell(row, column));
+        }
+        let identity = row * n + column;
+        if seen[identity] {
+            return Err(SceneBuildError::new("input.scene.duplicate_cell", "duplicate row/column cell identity", format!("{path}.row")).with_cell(row, column));
+        }
+        seen[identity] = true;
+        let cell_value = required(cell, "value", &path)?;
+        values[row][column] = match cell_value {
+            Value::Null => None,
+            Value::Number(number) => Some(*number),
+            _ => return Err(SceneBuildError::new("input.scene.invalid_cell_value", "cell value must be a finite number or null", format!("{path}.value")).with_cell(row, column)),
+        };
+        for field in ["x", "y", "center_x", "center_y"] {
+            as_number(required(cell, field, &path)?, &format!("{path}.{field}"))?;
+        }
+        if as_number(required(cell, "size", &path)?, &format!("{path}.size"))? <= 0.0 {
+            return Err(SceneBuildError::new("input.scene.invalid_geometry", "cell size must be positive", format!("{path}.size")).with_cell(row, column));
+        }
+    }
+    if let Some(index) = seen.iter().position(|present| !present) {
+        return Err(SceneBuildError::new("input.scene.missing_cell", "scene must contain every row/column cell identity", format!("cells[{index}]")));
+    }
+
+    let source_indices = if let Some(order) = root.get("variable_order") {
+        let order = as_object(order, "variable_order")?;
+        let indices = as_array(required(order, "indices", "variable_order")?, "variable_order.indices")?;
+        if indices.len() != n {
+            return Err(SceneBuildError::new("input.matrix.invalid_source_indices", "variable_order.indices length must match labels", "variable_order.indices"));
+        }
+        let mut result = Vec::with_capacity(n);
+        let mut unique = HashSet::with_capacity(n);
+        for (index, value) in indices.iter().enumerate() {
+            let source_index = as_usize(value, &format!("variable_order.indices[{index}]"))?;
+            if !unique.insert(source_index) {
+                return Err(SceneBuildError::new("input.matrix.invalid_source_indices", "variable_order.indices must be unique", format!("variable_order.indices[{index}]")));
+            }
+            result.push(source_index);
+        }
+        result
+    } else {
+        (0..n).collect()
+    };
+
+    let flat: Vec<Option<f64>> = values.iter().flatten().copied().collect();
+    validate_matrix(&labels, n, n, &flat, semantics.validation_kind()).map_err(|error| SceneBuildError {
+        code: error.code,
+        message: error.message,
+        path: error.row.zip(error.column).map(|(row, column)| format!("cells[row={row},column={column}].value")).unwrap_or_else(|| "labels".to_string()),
+        row: error.row,
+        column: error.column,
+    })?;
+
+    Ok(NormalizedMatrixV1 {
+        schema_version: 1,
+        kind: "normalized_matrix".into(),
+        labels,
+        values,
+        source_indices,
+        semantics,
+    })
+}
+
+impl SceneBuildError {
+    fn with_cell(mut self, row: usize, column: usize) -> Self {
+        self.row = Some(row);
+        self.column = Some(column);
+        self
+    }
+}
+
+fn required<'a>(object: &'a std::collections::BTreeMap<String, crate::json::Value>, key: &str, parent: &str) -> Result<&'a crate::json::Value, SceneBuildError> {
+    object.get(key).ok_or_else(|| SceneBuildError::new("input.scene.missing_field", format!("required field '{key}' is missing"), if parent == "$" { key.to_string() } else { format!("{parent}.{key}") }))
+}
+
+fn as_object<'a>(value: &'a crate::json::Value, path: &str) -> Result<&'a std::collections::BTreeMap<String, crate::json::Value>, SceneBuildError> {
+    if let crate::json::Value::Object(object) = value { Ok(object) }
+    else { Err(SceneBuildError::new("input.scene.invalid_type", "expected an object", path)) }
+}
+
+fn as_array<'a>(value: &'a crate::json::Value, path: &str) -> Result<&'a [crate::json::Value], SceneBuildError> {
+    if let crate::json::Value::Array(array) = value { Ok(array) }
+    else { Err(SceneBuildError::new("input.scene.invalid_type", "expected an array", path)) }
+}
+
+fn as_string<'a>(value: &'a crate::json::Value, path: &str) -> Result<&'a str, SceneBuildError> {
+    if let crate::json::Value::String(string) = value { Ok(string) }
+    else { Err(SceneBuildError::new("input.scene.invalid_type", "expected a string", path)) }
+}
+
+fn as_number(value: &crate::json::Value, path: &str) -> Result<f64, SceneBuildError> {
+    if let crate::json::Value::Number(number) = value { Ok(*number) }
+    else { Err(SceneBuildError::new("input.scene.invalid_type", "expected a finite number", path)) }
+}
+
+fn as_usize(value: &crate::json::Value, path: &str) -> Result<usize, SceneBuildError> {
+    let number = as_number(value, path)?;
+    if number < 0.0 || number.fract() != 0.0 || number > usize::MAX as f64 {
+        return Err(SceneBuildError::new("input.scene.invalid_integer", "expected a non-negative integer", path));
+    }
+    Ok(number as usize)
+}
+
+fn is_srgb_hex(value: &str) -> bool {
+    value.len() == 7 && value.starts_with('#') && value.as_bytes()[1..].iter().all(u8::is_ascii_hexdigit)
+}
+
 /// Construct a deterministic logical scene from normalized matrix data.
 ///
 /// This initial slice supports matrix semantics, source-index validation,
