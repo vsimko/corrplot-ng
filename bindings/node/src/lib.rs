@@ -2,6 +2,7 @@ use napi::bindgen_prelude::Buffer;
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
 use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
+use corrplot_core::scene::{matrix_to_scene_v1, parse_scene_v1_matrix, CellMethod, SceneBuildOptions};
 use napi_derive::napi;
 
 #[napi(object)]
@@ -434,6 +435,70 @@ pub fn render_scene_rgba_native(input: SceneInput, options: RgbaOptionsInput) ->
             color_space: None,
             dpi: None,
             pixels: None,
+            diagnostic: Some(diagnostic(error.code, "renderer", error.message, Some("output"))),
+        },
+    }
+}
+
+
+fn scene_build_diagnostic(error: corrplot_core::scene::SceneBuildError) -> DiagnosticV1 {
+    DiagnosticV1 {
+        schema_version: 1,
+        code: error.code.to_string(),
+        severity: "error".to_string(),
+        stage: "input".to_string(),
+        message: error.message,
+        path: Some(error.path),
+        row: error.row.and_then(|value| u32::try_from(value).ok()),
+        column: error.column.and_then(|value| u32::try_from(value).ok()),
+    }
+}
+
+fn cell_method(value: &str) -> Result<CellMethod, DiagnosticV1> {
+    match value {
+        "circle" => Ok(CellMethod::Circle),
+        "square" => Ok(CellMethod::Square),
+        "ellipse" => Ok(CellMethod::Ellipse),
+        "number" => Ok(CellMethod::Number),
+        "shade" => Ok(CellMethod::Shade),
+        "color" => Ok(CellMethod::Color),
+        "pie" => Ok(CellMethod::Pie),
+        other => Err(diagnostic(
+            "configuration.invalid_field",
+            "configuration",
+            format!("unsupported cell method '{other}'"),
+            Some("cellMethod"),
+        )),
+    }
+}
+
+/// End-to-end matrix construction through the shared Rust core.
+#[napi(js_name = "renderMatrixSvg")]
+pub fn render_matrix_svg_native(scene_v1_json: String, method: String) -> SvgResult {
+    let matrix = match parse_scene_v1_matrix(&scene_v1_json) {
+        Ok(matrix) => matrix,
+        Err(error) => return SvgResult { svg: None, diagnostic: Some(scene_build_diagnostic(error)) },
+    };
+    let method = match cell_method(&method) {
+        Ok(method) => method,
+        Err(error) => return SvgResult { svg: None, diagnostic: Some(error) },
+    };
+    let scene = match matrix_to_scene_v1(&matrix, &SceneBuildOptions {
+        cell_method: method,
+        ..SceneBuildOptions::default()
+    }) {
+        Ok(scene) => scene,
+        Err(error) => return SvgResult { svg: None, diagnostic: Some(scene_build_diagnostic(error)) },
+    };
+    let options = SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels);
+    match SceneSvgRenderer.render(&scene, &OutputOptions::Svg(options)) {
+        Ok(RenderOutput::Svg(svg)) => SvgResult { svg: Some(svg), diagnostic: None },
+        Ok(_) => SvgResult {
+            svg: None,
+            diagnostic: Some(diagnostic("renderer.output.format_mismatch", "export", "SVG renderer returned a non-SVG output", Some("output"))),
+        },
+        Err(error) => SvgResult {
+            svg: None,
             diagnostic: Some(diagnostic(error.code, "renderer", error.message, Some("output"))),
         },
     }
