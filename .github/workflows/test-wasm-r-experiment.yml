@@ -1,0 +1,79 @@
+name: WASM from R experiment
+
+on:
+  push:
+    branches:
+      - experiment/wasm-r-runtime
+    paths:
+      - "experiments/wasm-r/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/test-wasm-r-experiment.yml"
+  pull_request:
+    paths:
+      - "experiments/wasm-r/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/test-wasm-r-experiment.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shared-wasi-module:
+    name: Same WASI module in Node and R (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install Rust target
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-wasip1
+
+      - name: Build shared-core WASI module
+        run: |
+          cargo build \
+            --manifest-path experiments/wasm-r/wasm-host/Cargo.toml \
+            --target wasm32-wasip1 \
+            --release
+
+      - name: Install Wasmtime
+        run: |
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          echo "$HOME/.wasmtime/bin" >> "$GITHUB_PATH"
+          "$HOME/.wasmtime/bin/wasmtime" --version
+
+      - name: Install R experiment dependencies
+        run: Rscript -e 'install.packages(c("jsonlite", "digest"), repos = "https://cloud.r-project.org")'
+
+      - name: Run identical module and fixtures in Node and R
+        shell: bash
+        run: |
+          set -euo pipefail
+          WASM="experiments/wasm-r/wasm-host/target/wasm32-wasip1/release/corrplot_wasm_r_host.wasm"
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM" "$FIXTURE" > "/tmp/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM" "$FIXTURE" > "/tmp/r-$NAME.json"
+            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" <<'PY'
+          import json, sys
+          name, node_path, r_path = sys.argv[1:]
+          with open(node_path, encoding="utf-8") as f:
+              node = json.load(f)
+          with open(r_path, encoding="utf-8") as f:
+              r = json.load(f)
+          assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
+          assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
+          assert node["response"] == r["response"], (name, node["response"], r["response"])
+          print(f"{name}: identical WASM SHA-256 and semantic response ({node['wasmSha256']})")
+          PY
+          done
