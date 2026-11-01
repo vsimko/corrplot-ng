@@ -100,9 +100,10 @@ jobs:
             node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "/tmp/node-embedded-$NAME.json"
             WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "/tmp/r-embedded-$NAME.json"
             test -s "/tmp/r-embedded-$NAME.json"
-            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" <<'PY'
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "/tmp/r-native-$NAME.json"
+            python3 - "$NAME" "/tmp/node-$NAME.json" "/tmp/r-$NAME.json" "/tmp/node-embedded-$NAME.json" "/tmp/r-embedded-$NAME.json" "/tmp/r-native-$NAME.json" <<'PY'
           import json, sys
-          name, node_path, r_path, node_embedded_path, r_embedded_path = sys.argv[1:]
+          name, node_path, r_path, node_embedded_path, r_embedded_path, r_native_path = sys.argv[1:]
           with open(node_path, encoding="utf-8") as f:
               node = json.load(f)
           with open(r_path, encoding="utf-8") as f:
@@ -111,6 +112,8 @@ jobs:
               node_embedded = json.load(f)
           with open(r_embedded_path, encoding="utf-8") as f:
               r_embedded = json.load(f)
+          with open(r_native_path, encoding="utf-8") as f:
+              r_native = json.load(f)
           assert node["wasmSha256"] == r["wasmSha256"], (name, node["wasmSha256"], r["wasmSha256"])
           assert node["fixtureSha256"] == r["fixtureSha256"], (name, node["fixtureSha256"], r["fixtureSha256"])
           assert node["response"] == r["response"], (name, node["response"], r["response"])
@@ -118,6 +121,7 @@ jobs:
           assert node_embedded["fixtureSha256"] == r_embedded["fixtureSha256"], (name, node_embedded, r_embedded)
           assert node_embedded["response"] == r_embedded["response"], (name, node_embedded["response"], r_embedded["response"])
           assert node_embedded["response"] == node["response"], (name, node_embedded["response"], node["response"])
-          print(f"{name}: Node and R agree for both shared WASI and in-process ABI modules ({node_embedded['wasmSha256']})")
+          assert r_native["response"] == r_embedded["response"], (name, r_native["response"], r_embedded["response"])
+          print(f"{name}: Node/R parity passed; native R baseline {r_native['perCallMs']:.4f} ms/call, embedded Wasmtime R {r_embedded['perCallMs']:.4f} ms/call")
           PY
           done
