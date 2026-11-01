@@ -28,7 +28,7 @@ jobs:
           - os: ubuntu-latest
             wasmtime_archive: wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz
             wasmtime_sha256: e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d
-          - os: macos-14
+          - os: macos-15-intel
             wasmtime_archive: wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz
             wasmtime_sha256: b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5
     runs-on: ${{ matrix.os }}
