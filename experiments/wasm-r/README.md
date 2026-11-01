@@ -129,3 +129,46 @@ JavaScript runtime glue.
 
 Do not use this first JSON/stdin process path as the final high-throughput
 interface; it is a feasibility baseline.
+
+## Three R backend comparison
+
+The experiment now compares three ways for R to call the same Rust validation
+core. Node.js and browser consumers remain WASM consumers; this comparison is
+only about the R host integration.
+
+1. **V8:** R package `V8` instantiates the existing
+   `wasm32-unknown-unknown` module in-process. The runner keeps one V8 context
+   and WASM instance alive across calls. It uses the WebAssembly JS API directly
+   because the module exports linear memory as well as functions.
+2. **Wasmtime:** the existing R `.Call` C shim embeds the Wasmtime C API and
+   invokes the same host-neutral module in-process.
+3. **Native Rust:** an `extendr` cdylib links to `corrplot-core` and exposes
+   the same JSON request/response boundary directly to R, without a WASM
+   runtime. This is an experimental binding, not yet a complete CRAN package.
+
+Run V8 after building the embedded ABI module and installing `V8`,
+`jsonlite`, and `digest`:
+
+```sh
+Rscript experiments/wasm-r/r/run-v8.R MODULE.wasm FIXTURE.json OUTPUT.json
+```
+
+Build and run the native Rust binding with an R installation available to
+Cargo (the build uses `R_HOME`):
+
+```sh
+R_HOME="$(R RHOME)" cargo build \
+  --manifest-path experiments/wasm-r/native-r/Cargo.toml --release
+Rscript experiments/wasm-r/r/run-native-rust.R \
+  experiments/wasm-r/native-r/target/release/libcorrplot_r_native.so \
+  experiments/wasm-r/fixtures/valid-small.json /tmp/native-rust.json
+```
+
+The CI workflow runs all three R backends against the same fixtures and checks
+their semantic responses against the Wasmtime/Node results. It reports
+per-call timings for V8, Wasmtime, native Rust, and the pure-R reference.
+These timings are exploratory microbenchmarks, not stable performance claims.
+
+The first comparison currently targets Ubuntu and Intel macOS. Windows support,
+complete package installation size (including V8 and Rust runtime dependencies),
+cold-start cost, and peak memory remain explicit follow-up measurements.
