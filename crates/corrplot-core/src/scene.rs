@@ -419,11 +419,11 @@ fn append_scene_v1_text_annotations(
         let row = as_usize(required(annotation, "row", &path)?, &format!("{path}.row"))?;
         let column = as_usize(required(annotation, "column", &path)?, &format!("{path}.column"))?;
         let cell = cells.iter().find(|item| {
-            as_object(item, "cells[]").ok().and_then(|cell| {
+            as_object(item, "cells[]").ok().map(|cell| {
                 let r = cell.get("row").and_then(|v| as_usize(v, "cells[].row").ok());
                 let c = cell.get("column").and_then(|v| as_usize(v, "cells[].column").ok());
                 (r, c) == (Some(row), Some(column))
-            }).is_some()
+            }).unwrap_or(false)
         }).ok_or_else(|| SceneBuildError::new(
             "input.scene.missing_cell",
             "text annotation refers to a cell that does not exist",
