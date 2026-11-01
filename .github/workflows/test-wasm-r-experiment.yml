@@ -44,6 +44,7 @@ jobs:
           use-public-rspm: true
 
       - name: Install Rust target
+        shell: bash
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
