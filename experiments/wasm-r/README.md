@@ -58,17 +58,48 @@ semantic response.
 
 Use `CORRPLOT_WASMTIME` to select a non-default Wasmtime executable.
 
+## Second implementation: in-process host-neutral ABI
+
+The `wasm-abi` crate builds the same `corrplot-core::validate_matrix` operation
+for `wasm32-unknown-unknown`, without wasm-bindgen or WASI imports. Its exported
+C ABI consists of:
+
+- `corrplot_alloc(len) -> ptr` for host-owned input buffers;
+- `corrplot_validate_json(ptr, len) -> u64`, packing output length in the high
+  32 bits and output pointer in the low 32 bits;
+- `corrplot_free(ptr, len)` for explicit buffer release;
+- exported linear memory.
+
+Node instantiates this module with the built-in `WebAssembly` API. The R runner
+loads a small C shim through `.Call`; that shim embeds Wasmtime through its C
+API, invokes the same exports, and returns the JSON response to R. CI pins
+Wasmtime C API 50.0.1 and verifies its release archive SHA-256 before use.
+
+Run the in-process path locally after installing the matching Wasmtime C API
+release and setting `WASMTIME_C_API_ROOT` to its extracted directory:
+
+```sh
+CARGO_TARGET_DIR=experiments/wasm-r/wasm-abi/target cargo build \
+  --manifest-path experiments/wasm-r/wasm-abi/Cargo.toml \
+  --target wasm32-unknown-unknown --release
+EMBEDDED=experiments/wasm-r/wasm-abi/target/wasm32-unknown-unknown/release/corrplot_wasm_r_abi.wasm
+node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED" experiments/wasm-r/fixtures/valid-small.json
+WASMTIME_C_API_ROOT=/path/to/wasmtime-c-api \
+  Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED" experiments/wasm-r/fixtures/valid-small.json
+```
+
 ## What this proves — and does not prove
 
-It proves that R and Node can drive the same WASI module without embedding Rust
-or duplicating matrix validation. It does **not** prove that a CRAN package can
-ship only the `.wasm` file: users still need a native Wasmtime executable,
-which is platform-specific, and each invocation starts a process.
+It proves that both process-based WASI and in-process embedding are viable
+integration shapes on Linux, provided the CI checks pass. It does **not** prove
+that a CRAN package can ship only the `.wasm` file: the R embedding still needs
+a platform-specific native `libwasmtime` and a C compiler/toolchain to build the
+small host shim. The module itself is portable, but the host runtime is not.
 
-The next experiment stage should compare a persistent embedded Wasmtime C API
-host for R and an in-process Node host. That requires a stable pointer/length
-ABI and explicit memory ownership. The current wasm-bindgen artifact should
-not be reused for that purpose without its JavaScript runtime glue.
+The next experiment stage is to validate the ABI on macOS and Windows, measure
+repeated calls and transfer costs, and compare against a native R baseline. The
+current wasm-bindgen artifact should not be reused for this purpose without its
+JavaScript runtime glue.
 
 ## Measurements to collect
 
