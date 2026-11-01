@@ -27,7 +27,8 @@ From the repository root:
 
 ```sh
 rustup target add wasm32-wasip1
-cargo build --manifest-path experiments/wasm-r/wasm-host/Cargo.toml \
+CARGO_TARGET_DIR=experiments/wasm-r/wasm-host/target cargo build \\
+  --manifest-path experiments/wasm-r/wasm-host/Cargo.toml \
   --target wasm32-wasip1 --release
 ```
 
