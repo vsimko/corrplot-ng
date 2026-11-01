@@ -2,7 +2,7 @@ use napi::bindgen_prelude::Buffer;
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
 use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
-use corrplot_core::scene::{matrix_to_scene_v1, parse_scene_v1_matrix, CellMethod, SceneBuildOptions};
+use corrplot_core::scene::{scene_v1_to_scene, CellMethod};
 use napi_derive::napi;
 
 #[napi(object)]
@@ -475,18 +475,11 @@ fn cell_method(value: &str) -> Result<CellMethod, DiagnosticV1> {
 /// End-to-end matrix construction through the shared Rust core.
 #[napi(js_name = "renderMatrixSvg")]
 pub fn render_matrix_svg_native(scene_v1_json: String, method: String) -> SvgResult {
-    let matrix = match parse_scene_v1_matrix(&scene_v1_json) {
-        Ok(matrix) => matrix,
-        Err(error) => return SvgResult { svg: None, diagnostic: Some(scene_build_diagnostic(error)) },
-    };
     let method = match cell_method(&method) {
         Ok(method) => method,
         Err(error) => return SvgResult { svg: None, diagnostic: Some(error) },
     };
-    let scene = match matrix_to_scene_v1(&matrix, &SceneBuildOptions {
-        cell_method: method,
-        ..SceneBuildOptions::default()
-    }) {
+    let scene = match scene_v1_to_scene(&scene_v1_json, method) {
         Ok(scene) => scene,
         Err(error) => return SvgResult { svg: None, diagnostic: Some(scene_build_diagnostic(error)) },
     };
