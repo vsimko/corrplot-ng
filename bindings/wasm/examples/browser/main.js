@@ -26,7 +26,7 @@ try {
   }
 
   const capabilities = JSON.parse(getRendererCapabilities());
-  const svg = renderSceneSvg({
+  const svgResult = renderSceneSvg({
     width: 10,
     height: 10,
     cells: [{
@@ -48,9 +48,16 @@ try {
     background: white,
   });
 
+  if (svgResult.diagnostic) {
+    throw new Error(svgResult.diagnostic.message);
+  }
+  if (typeof svgResult.svg !== "string" || !svgResult.svg.startsWith("<svg ")) {
+    throw new Error("SVG renderer did not return a valid SVG string");
+  }
+
   const image = document.createElement("img");
   image.alt = "A single black circle rendered as SVG by the Rust WebAssembly backend";
-  image.src = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  image.src = URL.createObjectURL(new Blob([svgResult.svg], { type: "image/svg+xml" }));
 
   const rgba = renderSceneRgba({
     width: 10,
