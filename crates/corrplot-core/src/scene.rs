@@ -1573,6 +1573,7 @@ mod tests {
         let source = r##"{
           "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
           "title":"","description":"","annotation":"",
+          "significance":{"mode":"stars","thresholds":[0.05,0.01],"symbol":"*"},
           "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
           "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
           "cells":[{"row":0,"column":0,"value":0.5,"x":10,"y":20,"center_x":15,"center_y":25,"size":10,
