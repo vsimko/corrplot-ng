@@ -32,6 +32,9 @@ jobs:
             wasmtime_archive: wasmtime-v50.0.1-x86_64-mingw-c-api.zip
             wasmtime_sha256: 9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
