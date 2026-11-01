@@ -31,7 +31,7 @@ pub struct SceneText {
 pub enum CellGlyph {
     Circle { radius: f64, color: RgbaColor },
     Square { side: f64, color: RgbaColor },
-    Ellipse { rx: f64, ry: f64, color: RgbaColor },
+    Ellipse { rx: f64, ry: f64, rotation_degrees: f64, color: RgbaColor },
     Pie { radius: f64, start_radians: f64, end_radians: f64, color: RgbaColor },
     Number { text: String, font_size: f64, color: RgbaColor },
     Shade { color: RgbaColor },
@@ -80,7 +80,7 @@ impl Scene {
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has an invalid circle radius"))),
                 Some(CellGlyph::Square { side, .. }) if !side.is_finite() || *side < 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has an invalid square side"))),
-                Some(CellGlyph::Ellipse { rx, ry, .. }) if !rx.is_finite() || !ry.is_finite() || *rx < 0.0 || *ry < 0.0 =>
+                Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, .. }) if !rx.is_finite() || !ry.is_finite() || !rotation_degrees.is_finite() || *rx < 0.0 || *ry < 0.0 =>
                     return Err(OutputValidationError::invalid_options(format!("scene cell {index} has invalid ellipse radii"))),
                 Some(CellGlyph::Pie { radius, start_radians, end_radians, .. })
                     if !radius.is_finite() || *radius < 0.0 || !start_radians.is_finite() || !end_radians.is_finite() || !(end_radians - start_radians).is_finite() =>
@@ -178,7 +178,7 @@ pub fn render_rgba(
                 let half = side / 2.0;
                 canvas.fill_rect(cx - half, cy - half, cx + half, cy + half, *color);
             }
-            Some(CellGlyph::Ellipse { rx, ry, color }) => canvas.fill_ellipse(cx, cy, *rx, *ry, *color),
+            Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => canvas.fill_ellipse(cx, cy, *rx, *ry, *rotation_degrees, *color),
             Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) =>
                 canvas.fill_pie(cx, cy, *radius, *start_radians, *end_radians, *color),
             Some(CellGlyph::Number { text, font_size, color }) =>
@@ -315,20 +315,27 @@ impl Canvas {
         }
     }
 
-    fn fill_ellipse(&mut self, cx: f64, cy: f64, rx: f64, ry: f64, color: RgbaColor) {
+    fn fill_ellipse(&mut self, cx: f64, cy: f64, rx: f64, ry: f64, rotation_degrees: f64, color: RgbaColor) {
         if rx <= 0.0 || ry <= 0.0 { return; }
         let (cx, cy) = self.point(cx, cy);
         let rx = rx * self.scale;
         let ry = ry * self.scale;
-        let left = (cx - rx).floor().max(0.0) as isize;
-        let right = (cx + rx).ceil().min(self.width as f64) as isize;
-        let top = (cy - ry).floor().max(0.0) as isize;
-        let bottom = (cy + ry).ceil().min(self.height as f64) as isize;
+        let angle = rotation_degrees.to_radians();
+        let cos = angle.cos();
+        let sin = angle.sin();
+        let extent_x = ((rx * cos).powi(2) + (ry * sin).powi(2)).sqrt();
+        let extent_y = ((rx * sin).powi(2) + (ry * cos).powi(2)).sqrt();
+        let left = (cx - extent_x).floor().max(0.0) as isize;
+        let right = (cx + extent_x).ceil().min(self.width as f64) as isize;
+        let top = (cy - extent_y).floor().max(0.0) as isize;
+        let bottom = (cy + extent_y).ceil().min(self.height as f64) as isize;
         for y in top..bottom {
             for x in left..right {
-                let dx = (x as f64 + 0.5 - cx) / rx;
-                let dy = (y as f64 + 0.5 - cy) / ry;
-                if dx * dx + dy * dy <= 1.0 { self.blend_pixel(x, y, color); }
+                let dx = x as f64 + 0.5 - cx;
+                let dy = y as f64 + 0.5 - cy;
+                let local_x = (dx * cos + dy * sin) / rx;
+                let local_y = (-dx * sin + dy * cos) / ry;
+                if local_x * local_x + local_y * local_y <= 1.0 { self.blend_pixel(x, y, color); }
             }
         }
     }
@@ -467,8 +474,8 @@ impl Renderer<Scene> for SceneSvgRenderer {
                     "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\" fill-opacity=\"{}\"/>",
                     cx - side / 2.0, cy - side / 2.0, color_hex(*color), alpha(*color)
                 )),
-                Some(CellGlyph::Ellipse { rx, ry, color }) => out.push_str(&format!(
-                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => out.push_str(&format!(
+                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" transform=\"rotate({rotation_degrees} {cx} {cy})\" fill=\"{}\" fill-opacity=\"{}\"/>",
                     color_hex(*color), alpha(*color)
                 )),
                 Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => {
@@ -619,7 +626,7 @@ mod tests {
             SceneCell { x: 10.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
                 glyph: Some(CellGlyph::Square { side: 10.0, color }) },
             SceneCell { x: 30.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
-                glyph: Some(CellGlyph::Ellipse { rx: 6.0, ry: 3.0, color }) },
+                glyph: Some(CellGlyph::Ellipse { rx: 6.0, ry: 3.0, rotation_degrees: 25.0, color }) },
             SceneCell { x: 50.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
                 glyph: Some(CellGlyph::Pie { radius: 6.0, start_radians: 0.0, end_radians: 2.0, color }) },
             SceneCell { x: 70.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
