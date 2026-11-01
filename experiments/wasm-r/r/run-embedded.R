@@ -21,11 +21,20 @@ script_arg <- grep("^--file=", commandArgs(), value = TRUE)
 script_path <- sub("^--file=", "", script_arg[[1]])
 source_file <- file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "wasmtime-host.c")
 shared <- tempfile(fileext = paste0(".", .Platform$dynlib.ext))
-cppflags <- paste0("-I", include)
-# R CMD SHLIB expands PKG_LIBS through the shell; avoid nested shell quotes.
-libs <- paste0("-L", lib, " -Wl,-rpath,", lib, " -lwasmtime -lpthread -ldl -lm")
-env <- c(paste0("PKG_CPPFLAGS=", cppflags), paste0("PKG_LIBS=", libs))
-status <- system2(file.path(R.home("bin"), "R"), c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file)), env = env)
+
+# Put compiler flags in a Makevars file. Passing PKG_LIBS through system2()
+# causes the embedded spaces to be split by the command shell on some R builds.
+makevars <- tempfile()
+writeLines(c(
+  paste("PKG_CPPFLAGS =", paste0("-I", shQuote(include))),
+  paste("PKG_LIBS =", paste("-L", shQuote(lib), paste0("-Wl,-rpath,", shQuote(lib)), "-lwasmtime -lpthread -ldl -lm"))
+), makevars)
+on.exit(unlink(makevars), add = TRUE)
+status <- system2(
+  file.path(R.home("bin"), "R"),
+  c("CMD", "SHLIB", "-o", shQuote(shared), shQuote(source_file)),
+  env = paste0("R_MAKEVARS_USER=", makevars)
+)
 if (status != 0L) stop("failed to compile the embedded Wasmtime R host", call. = FALSE)
 dyn.load(shared)
 
@@ -46,6 +55,8 @@ cat(jsonlite::toJSON(list(
   wasmtime = "C API (embedded)",
   wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
-  calls = calls,\n  elapsedMs = elapsed,\n  perCallMs = elapsed / calls,
+  calls = calls,
+  elapsedMs = elapsed,
+  perCallMs = elapsed / calls,
   response = response
 ), auto_unbox = TRUE, null = "null"), "\n", sep = "")
