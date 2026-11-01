@@ -158,6 +158,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         validate_scene_label_metadata(label, &path)?;
     }
     let n = labels.len();
+    validate_scene_cluster_region_semantics(root, &labels)?;
     let cells = as_array(required(root, "cells", "$")?, "cells")?;
     let expected_cells = n.checked_mul(n).ok_or_else(|| SceneBuildError::new("input.matrix.invalid_shape", "matrix dimensions overflow", "cells"))?;
     if cells.len() != expected_cells {
@@ -619,6 +620,60 @@ fn validate_scene_optional_metadata(root: &std::collections::BTreeMap<String, cr
     Ok(())
 }
 
+fn validate_scene_cluster_region_semantics(
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+    labels: &[String],
+) -> Result<(), SceneBuildError> {
+    let Some(value) = root.get("cluster_regions") else {
+        return Ok(());
+    };
+    let mut region_ids = HashSet::new();
+    for (index, item) in as_array(value, "cluster_regions")?.iter().enumerate() {
+        let path = format!("cluster_regions[{index}]");
+        let object = as_object(item, &path)?;
+        let id = as_string(required(object, "id", &path)?, &format!("{path}.id"))?;
+        if !region_ids.insert(id) {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region ids must be unique", format!("{path}.id")));
+        }
+
+        let variables = as_array(required(object, "variables", &path)?, &format!("{path}.variables"))?;
+        let source_indices = as_array(required(object, "source_indices", &path)?, &format!("{path}.source_indices"))?;
+        if variables.len() != source_indices.len() {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region variables and source_indices must have matching lengths", format!("{path}.source_indices")));
+        }
+        for (member_index, variable) in variables.iter().enumerate() {
+            let variable_path = format!("{path}.variables[{member_index}]");
+            let name = as_string(variable, &variable_path)?;
+            if !labels.iter().any(|label| label == name) {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region references an unknown displayed variable", variable_path));
+            }
+        }
+        for (member_index, source_index) in source_indices.iter().enumerate() {
+            let member_path = format!("{path}.source_indices[{member_index}]");
+            if as_usize(source_index, &member_path)? >= labels.len() {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "cluster source index must refer to an existing matrix variable", member_path));
+            }
+        }
+
+        let row_start = as_usize(required(object, "row_start", &path)?, &format!("{path}.row_start"))?;
+        let row_end = as_usize(required(object, "row_end", &path)?, &format!("{path}.row_end"))?;
+        let column_start = as_usize(required(object, "column_start", &path)?, &format!("{path}.column_start"))?;
+        let column_end = as_usize(required(object, "column_end", &path)?, &format!("{path}.column_end"))?;
+        for (field, value) in [("row_start", row_start), ("row_end", row_end), ("column_start", column_start), ("column_end", column_end)] {
+            if value >= labels.len() {
+                return Err(SceneBuildError::new("input.scene.invalid_value", "cluster region cell bounds must refer to existing matrix positions", format!("{path}.{field}")));
+            }
+        }
+        if row_start > row_end {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "cluster row_start must not exceed row_end", format!("{path}.row_start")));
+        }
+        if column_start > column_end {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "cluster column_start must not exceed column_end", format!("{path}.column_start")));
+        }
+    }
+    Ok(())
+}
+
 fn validate_scene_matrix_semantics(value: &crate::json::Value, expected: MatrixSemantics) -> Result<(), SceneBuildError> {
     let object = as_object(value, "matrix_semantics")?;
     reject_unknown_fields(object, &["mode", "color_limits", "color_mapping", "normalization", "palette", "has_observed_values"], "matrix_semantics")?;
@@ -1024,9 +1079,25 @@ mod tests {
         }"##;
         let valid = base.replace(
             "\"title\":\"\"",
-            r###""title":"","cluster_regions":[{"id":"c1","variables":["a","b"],"source_indices":[0,1],"row_start":0,"row_end":1,"column_start":0,"column_end":1,"x":1,"y":2,"width":10,"height":10,"color":"#2166ac","line_width":1}],"figure_text":[{"role":"caption","text":"caption","lines":["caption"],"alignment":"center","font_family":"sans","font_size":10,"font_weight":"normal","font_style":"italic","line_height":1.2,"spacing_after":0,"x":0,"y":90}],"significance":{"mode":"stars","thresholds":[0.05,0.01],"symbol":"*"},"text_annotations":[{"row":0,"column":0,"role":"coefficient","text":"1.0","color":"black","font_size":8,"font_weight":"bold","font_style":"normal"}]"###
+            r###""title":"","cluster_regions":[{"id":"c1","variables":["a"],"source_indices":[0],"row_start":0,"row_end":0,"column_start":0,"column_end":0,"x":1,"y":2,"width":10,"height":10,"color":"#2166ac","line_width":1}],"figure_text":[{"role":"caption","text":"caption","lines":["caption"],"alignment":"center","font_family":"sans","font_size":10,"font_weight":"normal","font_style":"italic","line_height":1.2,"spacing_after":0,"x":0,"y":90}],"significance":{"mode":"stars","thresholds":[0.05,0.01],"symbol":"*"},"text_annotations":[{"row":0,"column":0,"role":"coefficient","text":"1.0","color":"black","font_size":8,"font_weight":"bold","font_style":"normal"}]"###
         );
         assert!(parse_scene_v1_matrix(&valid).is_ok());
+
+        let unknown_variable = valid.replace("\\"variables\\":[\\"a\\"],", "\\"variables\\":[\\"missing\\"],");
+        let error = parse_scene_v1_matrix(&unknown_variable).unwrap_err();
+        assert_eq!(error.path, "cluster_regions[0].variables[0]");
+
+        let out_of_range_source = valid.replace("\\"source_indices\\":[0]", "\\"source_indices\\":[1]");
+        let error = parse_scene_v1_matrix(&out_of_range_source).unwrap_err();
+        assert_eq!(error.path, "cluster_regions[0].source_indices[0]");
+
+        let out_of_range_bounds = valid.replace("\\"row_end\\":0", "\\"row_end\\":1");
+        let error = parse_scene_v1_matrix(&out_of_range_bounds).unwrap_err();
+        assert_eq!(error.path, "cluster_regions[0].row_end");
+
+        let reversed_bounds = valid.replace("\\"row_start\\":0", "\\"row_start\\":1");
+        let error = parse_scene_v1_matrix(&reversed_bounds).unwrap_err();
+        assert_eq!(error.path, "cluster_regions[0].row_start");
 
         for (bad, expected_path) in [
             (valid.replace("\"line_width\":1", "\"line_width\":0"), "cluster_regions[0].line_width"),
