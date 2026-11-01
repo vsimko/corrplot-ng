@@ -383,7 +383,12 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
             let glyph = value.map(|raw| match options.cell_method {
                 CellMethod::Circle => CellGlyph::Circle { radius: magnitude * CELL_SIZE * 0.43, color },
                 CellMethod::Square => CellGlyph::Square { side: magnitude * CELL_SIZE * 0.86, color },
-                CellMethod::Ellipse => CellGlyph::Ellipse { rx: CELL_SIZE * 0.43, ry: (CELL_SIZE * 0.43 * (1.0 - magnitude)).max(CELL_SIZE * 0.015), color },
+                CellMethod::Ellipse => CellGlyph::Ellipse {
+                    rx: CELL_SIZE * 0.43,
+                    ry: (CELL_SIZE * 0.43 * (1.0 - magnitude)).max(CELL_SIZE * 0.015),
+                    rotation_degrees: if raw > 0.0 { -45.0 } else if raw < 0.0 { 45.0 } else { 0.0 },
+                    color,
+                },
                 CellMethod::Number => CellGlyph::Number { text: format!("{raw:.3}"), font_size: 12.0, color: black },
                 CellMethod::Shade => CellGlyph::Shade { color },
                 CellMethod::Color => CellGlyph::Color,
@@ -451,6 +456,10 @@ mod tests {
             let options = SceneBuildOptions { cell_method: method, ..Default::default() };
             let scene = matrix_to_scene_v1(&input(), &options).unwrap();
             assert_eq!(scene.cells.len(), 9);
+            if method == CellMethod::Ellipse {
+                assert!(matches!(scene.cells[0].glyph, Some(CellGlyph::Ellipse { rotation_degrees: -45.0, .. })));
+                assert!(matches!(scene.cells[1].glyph, Some(CellGlyph::Ellipse { rotation_degrees: 45.0, .. })));
+            }
             scene.validate().unwrap();
         }
     }
