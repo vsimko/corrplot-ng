@@ -875,6 +875,7 @@ impl Publication {
                 };
                 cells.push(SceneCell {
                     x, y, size: cell_size, visible, fill: cell_color, stroke: grid, glyph,
+                    p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                 });
                 if let Some(value) = value {
                     if visible && (self.method == "number" || self.show_values) {
