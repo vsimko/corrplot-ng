@@ -606,6 +606,11 @@ mod tests {
         assert_eq!(matrix.semantics, MatrixSemantics::GeneralNumeric);
         assert_eq!(matrix.values, vec![vec![Some(2.0)]]);
 
+        let missing_limits = valid_general.replace(",\"color_limits\":[0,2]", "");
+        let error = parse_scene_v1_matrix(&missing_limits).unwrap_err();
+        assert_eq!(error.code, "input.scene.missing_field");
+        assert_eq!(error.path, "matrix_semantics.color_limits");
+
         let unknown_field = valid_general.replace("\"title\":\"\"", "\"title\":\"\",\"unexpected\":true");
         let error = parse_scene_v1_matrix(&unknown_field).unwrap_err();
         assert_eq!(error.code, "input.scene.unknown_field");
