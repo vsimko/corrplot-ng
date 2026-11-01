@@ -137,6 +137,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         for field in ["row_x", "row_y", "column_x", "column_y"] {
             as_number(required(label, field, &path)?, &format!("{path}.{field}"))?;
         }
+        validate_scene_label_metadata(label, &path)?;
     }
     let n = labels.len();
     let cells = as_array(required(root, "cells", "$")?, "cells")?;
@@ -173,6 +174,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         if as_number(required(cell, "size", &path)?, &format!("{path}.size"))? <= 0.0 {
             return Err(SceneBuildError::new("input.scene.invalid_geometry", "cell size must be positive", format!("{path}.size")).with_cell(row, column));
         }
+        validate_scene_cell_metadata(cell, &path)?;
     }
     if let Some(index) = seen.iter().position(|present| !present) {
         return Err(SceneBuildError::new("input.scene.missing_cell", "scene must contain every row/column cell identity", format!("cells[row={},column={}]", index / n, index % n)).with_cell(index / n, index % n));
@@ -236,6 +238,154 @@ impl SceneBuildError {
 
 fn required<'a>(object: &'a std::collections::BTreeMap<String, crate::json::Value>, key: &str, parent: &str) -> Result<&'a crate::json::Value, SceneBuildError> {
     object.get(key).ok_or_else(|| SceneBuildError::new("input.scene.missing_field", format!("required field '{key}' is missing"), if parent == "$" { key.to_string() } else { format!("{parent}.{key}") }))
+}
+
+fn validate_scene_label_metadata(label: &std::collections::BTreeMap<String, crate::json::Value>, path: &str) -> Result<(), SceneBuildError> {
+    use crate::json::Value;
+    for field in ["row_visible", "column_visible"] {
+        if let Some(value) = label.get(field) {
+            if !matches!(value, Value::Bool(_)) { return Err(SceneBuildError::new("input.scene.invalid_type", "expected a boolean", format!("{path}.{field}"))); }
+        }
+    }
+    for (field, allowed) in [
+        ("row_position", &["left", "diagonal"][..]),
+        ("column_position", &["top", "diagonal"][..]),
+    ] {
+        if let Some(value) = label.get(field) {
+            let value = as_string(value, &format!("{path}.{field}"))?;
+            if !allowed.contains(&value) { return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported label position", format!("{path}.{field}"))); }
+        }
+    }
+    for field in ["column_rotation", "offset"] {
+        if let Some(value) = label.get(field) { as_number(value, &format!("{path}.{field}"))?; }
+    }
+    if let Some(value) = label.get("plotmath") {
+        let plotmath = as_object(value, &format!("{path}.plotmath"))?;
+        let plotmath_path = format!("{path}.plotmath");
+        reject_unknown_fields(plotmath, &["prefix", "source"], &plotmath_path)?;
+        let prefix = as_string(required(plotmath, "prefix", &plotmath_path)?, &format!("{plotmath_path}.prefix"))?;
+        if ![":", "=", "$"].contains(&prefix) { return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported plotmath prefix", format!("{plotmath_path}.prefix"))); }
+        if as_string(required(plotmath, "source", &plotmath_path)?, &format!("{plotmath_path}.source"))?.is_empty() {
+            return Err(SceneBuildError::new("input.scene.invalid_value", "plotmath source must not be empty", format!("{plotmath_path}.source")));
+        }
+    }
+    Ok(())
+}
+
+fn validate_scene_cell_metadata(cell: &std::collections::BTreeMap<String, crate::json::Value>, path: &str) -> Result<(), SceneBuildError> {
+    use crate::json::Value;
+    if let Some(value) = cell.get("color") {
+        let color = as_string(value, &format!("{path}.color"))?;
+        if !is_srgb_hex(color) { return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", format!("{path}.color"))); }
+    }
+    if let Some(value) = cell.get("visible") {
+        if !matches!(value, Value::Bool(_)) { return Err(SceneBuildError::new("input.scene.invalid_type", "visible must be a boolean", format!("{path}.visible"))); }
+    }
+    for (field, allowed) in [
+        ("method", &["circle", "square", "ellipse", "number", "shade", "color", "pie"][..]),
+        ("region", &["upper", "lower", "diagonal"][..]),
+    ] {
+        if let Some(value) = cell.get(field) {
+            let value = as_string(value, &format!("{path}.{field}"))?;
+            if !allowed.contains(&value) { return Err(SceneBuildError::new("input.scene.invalid_value", format!("unsupported {field} value"), format!("{path}.{field}"))); }
+        }
+    }
+    for field in ["p_value", "normalized_value"] {
+        if let Some(value) = cell.get(field) {
+            if !matches!(value, Value::Null) { as_number(value, &format!("{path}.{field}"))?; }
+        }
+    }
+    if let Some(value) = cell.get("p_value") {
+        if let Value::Number(number) = value {
+            if !(0.0..=1.0).contains(number) { return Err(SceneBuildError::new("input.scene.invalid_value", "p_value must be between 0 and 1", format!("{path}.p_value"))); }
+        }
+    }
+    if let Some(value) = cell.get("encoding") {
+        let encoding = as_object(value, &format!("{path}.encoding"))?;
+        let ep = format!("{path}.encoding");
+        reject_unknown_fields(encoding, &["kind", "magnitude", "sign", "color", "radius", "x", "y", "width", "height", "center_x", "center_y", "rx", "ry", "rotation", "fill_opacity", "fill", "line", "full_circle", "large_arc", "sweep_flag", "start_x", "start_y", "end_x", "end_y"], &ep)?;
+        let kind = as_string(required(encoding, "kind", &ep)?, &format!("{ep}.kind"))?;
+        if !["circle", "square", "ellipse", "number", "shade", "color", "pie"].contains(&kind) { return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported encoding kind", format!("{ep}.kind"))); }
+        let magnitude = as_number(required(encoding, "magnitude", &ep)?, &format!("{ep}.magnitude"))?;
+        if !(0.0..=1.0).contains(&magnitude) { return Err(SceneBuildError::new("input.scene.invalid_value", "magnitude must be between 0 and 1", format!("{ep}.magnitude"))); }
+        let sign = as_number(required(encoding, "sign", &ep)?, &format!("{ep}.sign"))?;
+        if ![-1.0, 0.0, 1.0].contains(&sign) { return Err(SceneBuildError::new("input.scene.invalid_value", "sign must be -1, 0 or 1", format!("{ep}.sign"))); }
+        for field in ["color", "fill"] {
+            if let Some(value) = encoding.get(field) {
+                let color = as_string(value, &format!("{ep}.{field}"))?;
+                if !is_srgb_hex(color) { return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", format!("{ep}.{field}"))); }
+            } else if field == "color" {
+                return Err(SceneBuildError::new("input.scene.missing_field", "required field 'color' is missing", format!("{ep}.color")));
+            }
+        }
+        for field in ["radius", "width", "height", "rx", "ry"] {
+            if let Some(value) = encoding.get(field) {
+                if as_number(value, &format!("{ep}.{field}"))? < 0.0 { return Err(SceneBuildError::new("input.scene.invalid_value", "value must be non-negative", format!("{ep}.{field}"))); }
+            }
+        }
+        for field in ["x", "y", "center_x", "center_y", "rotation", "start_x", "start_y", "end_x", "end_y"] {
+            if let Some(value) = encoding.get(field) { as_number(value, &format!("{ep}.{field}"))?; }
+        }
+        for field in ["fill_opacity"] {
+            if let Some(value) = encoding.get(field) {
+                let number = as_number(value, &format!("{ep}.{field}"))?;
+                if !(0.0..=1.0).contains(&number) { return Err(SceneBuildError::new("input.scene.invalid_value", "opacity must be between 0 and 1", format!("{ep}.{field}"))); }
+            }
+        }
+        for field in ["full_circle", "large_arc"] {
+            if let Some(value) = encoding.get(field) {
+                if !matches!(value, Value::Bool(_)) { return Err(SceneBuildError::new("input.scene.invalid_type", "expected a boolean", format!("{ep}.{field}"))); }
+            }
+        }
+        if let Some(value) = encoding.get("sweep_flag") {
+            let number = as_number(value, &format!("{ep}.sweep_flag"))?;
+            if number != 0.0 && number != 1.0 { return Err(SceneBuildError::new("input.scene.invalid_value", "sweep_flag must be 0 or 1", format!("{ep}.sweep_flag"))); }
+        }
+        if let Some(value) = encoding.get("line") {
+            let line = as_object(value, &format!("{ep}.line"))?;
+            let lp = format!("{ep}.line");
+            reject_unknown_fields(line, &["x1", "y1", "x2", "y2", "stroke_width", "stroke_opacity"], &lp)?;
+            for field in ["x1", "y1", "x2", "y2", "stroke_width", "stroke_opacity"] {
+                let number = as_number(required(line, field, &lp)?, &format!("{lp}.{field}"))?;
+                if field == "stroke_width" && number < 0.0 || field == "stroke_opacity" && !(0.0..=1.0).contains(&number) {
+                    return Err(SceneBuildError::new("input.scene.invalid_value", "line width or opacity is out of range", format!("{lp}.{field}")));
+                }
+            }
+        }
+    }
+    if let Some(value) = cell.get("significance") {
+        let object = as_object(value, &format!("{path}.significance"))?;
+        let p = format!("{path}.significance");
+        reject_unknown_fields(object, &["p_value", "status", "annotation", "blank"], &p)?;
+        let pv = required(object, "p_value", &p)?;
+        if !matches!(pv, Value::Null) {
+            let number = as_number(pv, &format!("{p}.p_value"))?;
+            if !(0.0..=1.0).contains(&number) { return Err(SceneBuildError::new("input.scene.invalid_value", "p_value must be between 0 and 1", format!("{p}.p_value"))); }
+        }
+        let status = as_string(required(object, "status", &p)?, &format!("{p}.status"))?;
+        if !["unknown", "significant", "not_significant"].contains(&status) { return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported significance status", format!("{p}.status"))); }
+        let annotation = required(object, "annotation", &p)?;
+        if !matches!(annotation, Value::Null) { as_string(annotation, &format!("{p}.annotation"))?; }
+        if !matches!(required(object, "blank", &p)?, Value::Bool(_)) { return Err(SceneBuildError::new("input.scene.invalid_type", "blank must be a boolean", format!("{p}.blank"))); }
+    }
+    if let Some(value) = cell.get("confidence_interval") {
+        let object = as_object(value, &format!("{path}.confidence_interval"))?;
+        let p = format!("{path}.confidence_interval");
+        reject_unknown_fields(object, &["lower", "upper", "x1", "x2", "y", "cap_height", "stroke_width", "color"], &p)?;
+        let lower = as_number(required(object, "lower", &p)?, &format!("{p}.lower"))?;
+        let upper = as_number(required(object, "upper", &p)?, &format!("{p}.upper"))?;
+        for (field, number) in [("lower", lower), ("upper", upper)] {
+            if !(-1.0..=1.0).contains(&number) { return Err(SceneBuildError::new("input.scene.invalid_value", "confidence interval bounds must be between -1 and 1", format!("{p}.{field}"))); }
+        }
+        if lower > upper { return Err(SceneBuildError::new("input.scene.invalid_value", "lower bound must not exceed upper bound", format!("{p}.lower"))); }
+        for field in ["x1", "x2", "y", "cap_height", "stroke_width"] {
+            let number = as_number(required(object, field, &p)?, &format!("{p}.{field}"))?;
+            if (field == "cap_height" || field == "stroke_width") && number < 0.0 { return Err(SceneBuildError::new("input.scene.invalid_value", "value must be non-negative", format!("{p}.{field}"))); }
+        }
+        let color = as_string(required(object, "color", &p)?, &format!("{p}.color"))?;
+        if !is_srgb_hex(color) { return Err(SceneBuildError::new("input.scene.invalid_color", "expected a six-digit sRGB hex color", format!("{p}.color"))); }
+    }
+    Ok(())
 }
 
 fn validate_scene_optional_metadata(root: &std::collections::BTreeMap<String, crate::json::Value>) -> Result<(), SceneBuildError> {
@@ -586,6 +736,30 @@ mod tests {
         let error = parse_scene_v1_matrix(&invalid_legend).unwrap_err();
         assert_eq!(error.code, "input.scene.invalid_color");
         assert_eq!(error.path, "legend[0].color");
+    }
+
+    #[test]
+    fn validates_scene_v1_cell_encoding_significance_and_confidence_interval() {
+        let base = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":1,"x":1,"y":1,"center_x":2,"center_y":2,"size":1,
+            "encoding":{"kind":"circle","magnitude":1,"sign":1,"color":"#2166ac","fill_opacity":0.5},
+            "significance":{"p_value":0.01,"status":"significant","annotation":"*","blank":false},
+            "confidence_interval":{"lower":0.2,"upper":0.8,"x1":1,"x2":2,"y":1,"cap_height":1,"stroke_width":1,"color":"#2166ac"}}]
+        }"##;
+        assert!(parse_scene_v1_matrix(base).is_ok());
+        let bad_encoding = base.replace("\"magnitude\":1", "\"magnitude\":2");
+        let error = parse_scene_v1_matrix(&bad_encoding).unwrap_err();
+        assert_eq!(error.path, "cells[0].encoding.magnitude");
+        let bad_significance = base.replace("\"status\":\"significant\"", "\"status\":\"maybe\"");
+        let error = parse_scene_v1_matrix(&bad_significance).unwrap_err();
+        assert_eq!(error.path, "cells[0].significance.status");
+        let bad_interval = base.replace("\"lower\":0.2", "\"lower\":0.9");
+        let error = parse_scene_v1_matrix(&bad_interval).unwrap_err();
+        assert_eq!(error.path, "cells[0].confidence_interval.lower");
     }
 
     #[test]
