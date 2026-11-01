@@ -5,7 +5,7 @@
 //! layout and glyph semantics remain in this module.
 
 use crate::output::RgbaColor;
-use crate::raster::{CellGlyph, Scene, SceneCell, SceneText, TextAnchor};
+use crate::raster::{CellGlyph, Scene, SceneCell, SceneClusterRegion, SceneLegendEntry, SceneText, TextAnchor};
 use crate::{validate_matrix, MatrixKind};
 use std::collections::HashSet;
 
@@ -379,10 +379,64 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
     }
     append_scene_v1_text_annotations(&mut scene, root)?;
+    append_scene_v1_legend(&mut scene, root)?;
+    append_scene_v1_cluster_regions(&mut scene, root)?;
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
 }
 
+
+fn append_scene_v1_legend(
+    scene: &mut Scene,
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+) -> Result<(), SceneBuildError> {
+    let Some(value) = root.get("legend") else { return Ok(()); };
+    for (index, item) in as_array(value, "legend")?.iter().enumerate() {
+        let path = format!("legend[{index}]");
+        let entry = as_object(item, &path)?;
+        scene.legend.push(SceneLegendEntry {
+            kind: as_string(required(entry, "kind", &path)?, &format!("{path}.kind"))?.to_string(),
+            label: as_string(required(entry, "label", &path)?, &format!("{path}.label"))?.to_string(),
+            color: scene_v1_color(required(entry, "color", &path)?, &format!("{path}.color"))?,
+        });
+    }
+    Ok(())
+}
+
+fn append_scene_v1_cluster_regions(
+    scene: &mut Scene,
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+) -> Result<(), SceneBuildError> {
+    let Some(value) = root.get("cluster_regions") else { return Ok(()); };
+    for (index, item) in as_array(value, "cluster_regions")?.iter().enumerate() {
+        let path = format!("cluster_regions[{index}]");
+        let region = as_object(item, &path)?;
+        let variables = as_array(required(region, "variables", &path)?, &format!("{path}.variables"))?
+            .iter().enumerate()
+            .map(|(i, value)| as_string(value, &format!("{path}.variables[{i}]")).map(str::to_string))
+            .collect::<Result<Vec<_>, _>>()?;
+        let source_indices = as_array(required(region, "source_indices", &path)?, &format!("{path}.source_indices"))?
+            .iter().enumerate()
+            .map(|(i, value)| as_usize(value, &format!("{path}.source_indices[{i}]")))
+            .collect::<Result<Vec<_>, _>>()?;
+        scene.cluster_regions.push(SceneClusterRegion {
+            id: as_string(required(region, "id", &path)?, &format!("{path}.id"))?.to_string(),
+            variables,
+            source_indices,
+            row_start: as_usize(required(region, "row_start", &path)?, &format!("{path}.row_start"))?,
+            row_end: as_usize(required(region, "row_end", &path)?, &format!("{path}.row_end"))?,
+            column_start: as_usize(required(region, "column_start", &path)?, &format!("{path}.column_start"))?,
+            column_end: as_usize(required(region, "column_end", &path)?, &format!("{path}.column_end"))?,
+            x: as_number(required(region, "x", &path)?, &format!("{path}.x"))?,
+            y: as_number(required(region, "y", &path)?, &format!("{path}.y"))?,
+            width: as_number(required(region, "width", &path)?, &format!("{path}.width"))?,
+            height: as_number(required(region, "height", &path)?, &format!("{path}.height"))?,
+            color: parse_scene_v1_hex_color(as_string(required(region, "color", &path)?, &format!("{path}.color"))?)?,
+            line_width: as_number(required(region, "line_width", &path)?, &format!("{path}.line_width"))?,
+        });
+    }
+    Ok(())
+}
 
 fn validate_scene_text_annotation_bounds(
     root: &std::collections::BTreeMap<String, crate::json::Value>,
@@ -1103,7 +1157,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
     }
     // The current renderer Scene type has no accessibility metadata fields.
     let _description = &options.description;
-    let scene = Scene { width, height, cells, texts };
+    let scene = Scene { width, height, cells, texts, legend: Vec::new(), cluster_regions: Vec::new() };
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
 }
