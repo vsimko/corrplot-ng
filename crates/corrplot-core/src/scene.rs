@@ -485,10 +485,14 @@ mod tests {
         assert_eq!(error.path, "schema_version");
 
         let duplicate = source.replace("\"schema_version\":2", "\"schema_version\":1")
+            .replace("\"labels\":[{\"text\":\"a\",\"row_x\":1,\"row_y\":2,\"column_x\":3,\"column_y\":4}]",
+                     "\"labels\":[{\"text\":\"a\",\"row_x\":1,\"row_y\":2,\"column_x\":3,\"column_y\":4},{\"text\":\"b\",\"row_x\":1,\"row_y\":2,\"column_x\":3,\"column_y\":4}]")
             .replace("\"cells\":[{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1}]",
-                     "\"cells\":[{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1},{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1}]");
+                     "\"cells\":[{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1},{\"row\":0,\"column\":0,\"value\":1,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1},{\"row\":0,\"column\":1,\"value\":0,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1},{\"row\":1,\"column\":0,\"value\":0,\"x\":1,\"y\":1,\"center_x\":2,\"center_y\":2,\"size\":1}]");
         let error = parse_scene_v1_matrix(&duplicate).unwrap_err();
-        assert_eq!(error.code, "input.matrix.invalid_shape");
+        assert_eq!(error.code, "input.scene.duplicate_cell");
+        assert_eq!(error.row, Some(0));
+        assert_eq!(error.column, Some(0));
     }
 
     #[test]
