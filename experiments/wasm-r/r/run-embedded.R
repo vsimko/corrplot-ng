@@ -1,11 +1,12 @@
 #!/usr/bin/env Rscript
 main <- function() {
   args <- commandArgs(trailingOnly = TRUE)
-  if (length(args) != 2L) {
-    stop("usage: Rscript run-embedded.R MODULE.wasm FIXTURE.json", call. = FALSE)
+  if (length(args) != 3L) {
+    stop("usage: Rscript run-embedded.R MODULE.wasm FIXTURE.json OUTPUT.json", call. = FALSE)
   }
   wasm <- normalizePath(args[[1]], mustWork = TRUE)
   fixture <- normalizePath(args[[2]], mustWork = TRUE)
+  output_path <- args[[3]]
   root <- Sys.getenv("WASMTIME_C_API_ROOT")
   if (!nzchar(root)) stop("WASMTIME_C_API_ROOT must point to an extracted Wasmtime C API release", call. = FALSE)
   root <- normalizePath(root, mustWork = TRUE)
@@ -60,7 +61,10 @@ main <- function() {
     perCallMs = elapsed / calls,
     response = response
   )
-  writeLines(as.character(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null")), stdout())
+  output <- file(output_path, open = "wt")
+  on.exit(close(output), add = TRUE)
+  writeLines(as.character(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null")), output)
+  flush(output)
   invisible(result)
 }
 
