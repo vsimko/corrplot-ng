@@ -159,6 +159,7 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     }
     let n = labels.len();
     validate_scene_cluster_region_semantics(root, &labels)?;
+    validate_scene_text_annotation_bounds(root, n)?;
     let cells = as_array(required(root, "cells", "$")?, "cells")?;
     let expected_cells = n.checked_mul(n).ok_or_else(|| SceneBuildError::new("input.matrix.invalid_shape", "matrix dimensions overflow", "cells"))?;
     if cells.len() != expected_cells {
@@ -367,16 +368,94 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
                     CellGlyph::Pie { radius, .. } => {
                         if let Some(value) = encoding.get("radius") { *radius = as_number(value, &format!("{path}.encoding.radius"))?; }
                     }
-                    CellGlyph::Number { text, .. } => {
-                        if let Some(crate::json::Value::String(value)) = encoding.get("text") { *text = value.clone(); }
-                    }
+                    // scene-v1 has no number-text override; keep the builder's formatted value.
+                    CellGlyph::Number { .. } => {}
                     CellGlyph::Shade { .. } | CellGlyph::Color => {}
                 }
             }
         }
     }
+    append_scene_v1_text_annotations(&mut scene, root)?;
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
+}
+
+
+fn validate_scene_text_annotation_bounds(
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+    dimension: usize,
+) -> Result<(), SceneBuildError> {
+    if let Some(value) = root.get("text_annotations") {
+        for (index, item) in as_array(value, "text_annotations")?.iter().enumerate() {
+            let path = format!("text_annotations[{index}]");
+            let object = as_object(item, &path)?;
+            let row = as_usize(required(object, "row", &path)?, &format!("{path}.row"))?;
+            let column = as_usize(required(object, "column", &path)?, &format!("{path}.column"))?;
+            if row >= dimension || column >= dimension {
+                let field = if row >= dimension { "row" } else { "column" };
+                return Err(SceneBuildError::new(
+                    "input.scene.cell_out_of_bounds",
+                    "text annotation row and column must refer to an existing cell",
+                    format!("{path}.{field}"),
+                ).with_cell(row, column));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn append_scene_v1_text_annotations(
+    scene: &mut Scene,
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+) -> Result<(), SceneBuildError> {
+    let Some(value) = root.get("text_annotations") else { return Ok(()); };
+    let cells = as_array(required(root, "cells", "$")?, "cells")?;
+    for (index, item) in as_array(value, "text_annotations")?.iter().enumerate() {
+        let path = format!("text_annotations[{index}]");
+        let annotation = as_object(item, &path)?;
+        let row = as_usize(required(annotation, "row", &path)?, &format!("{path}.row"))?;
+        let column = as_usize(required(annotation, "column", &path)?, &format!("{path}.column"))?;
+        let cell = cells.iter().find(|item| {
+            as_object(item, "cells[]").ok().and_then(|cell| {
+                let r = cell.get("row").and_then(|v| as_usize(v, "cells[].row").ok());
+                let c = cell.get("column").and_then(|v| as_usize(v, "cells[].column").ok());
+                (r, c) == (Some(row), Some(column))
+            }).is_some()
+        }).ok_or_else(|| SceneBuildError::new(
+            "input.scene.missing_cell",
+            "text annotation refers to a cell that does not exist",
+            format!("{path}.row"),
+        ))?;
+        let cell_path = format!("cells[row={row},column={column}]");
+        let cell = as_object(cell, &cell_path)?;
+        let x = as_number(required(cell, "center_x", &cell_path)?, &format!("{cell_path}.center_x"))?;
+        let y = as_number(required(cell, "center_y", &cell_path)?, &format!("{cell_path}.center_y"))?;
+        let text = as_string(required(annotation, "text", &path)?, &format!("{path}.text"))?.to_string();
+        let color = scene_v1_annotation_color(
+            as_string(required(annotation, "color", &path)?, &format!("{path}.color"))?,
+            &format!("{path}.color"),
+        )?;
+        let font_size = as_number(required(annotation, "font_size", &path)?, &format!("{path}.font_size"))?;
+        scene.texts.push(SceneText { text, x, y, font_size, color, anchor: TextAnchor::Middle });
+    }
+    Ok(())
+}
+
+fn scene_v1_annotation_color(value: &str, path: &str) -> Result<RgbaColor, SceneBuildError> {
+    if value.starts_with('#') {
+        return parse_scene_v1_hex_color(value).map_err(|_| SceneBuildError::new(
+            "input.scene.invalid_color", "expected a six-digit sRGB hex color or supported basic color name", path,
+        ));
+    }
+    let (red, green, blue) = match value.to_ascii_lowercase().as_str() {
+        "black" => (0, 0, 0), "white" => (255, 255, 255), "red" => (255, 0, 0),
+        "green" => (0, 128, 0), "blue" => (0, 0, 255), "gray" | "grey" => (128, 128, 128),
+        "yellow" => (255, 255, 0), "orange" => (255, 165, 0),
+        _ => return Err(SceneBuildError::new(
+            "input.scene.invalid_color", "unsupported text annotation color; use a six-digit sRGB hex color or basic color name", path,
+        )),
+    };
+    Ok(RgbaColor { red, green, blue, alpha: 255 })
 }
 
 fn scene_v1_color(value: &crate::json::Value, path: &str) -> Result<RgbaColor, SceneBuildError> {
@@ -1050,6 +1129,29 @@ mod tests {
         assert_eq!((scene.texts[0].x, scene.texts[0].y), (92.0, 118.0));
         assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Circle { radius, color })
             if *radius == 36.12 && *color == RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 }));
+    }
+
+
+    #[test]
+    fn scene_v1_to_scene_preserves_cell_text_annotations() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace("\\"text_annotations\\": []", "\\"text_annotations\\": [{\\"row\\":1,\\"column\\":2,\\"role\\":\\"coefficient\\",\\"text\\":\\"0.65\\",\\"color\\":\\"black\\",\\"font_size\\":9,\\"font_weight\\":\\"bold\\",\\"font_style\\":\\"normal\\"}]");
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        assert!(scene.texts.iter().any(|text| {
+            text.text == "0.65" && text.x == 314.0 && text.y == 202.0
+                && text.font_size == 9.0
+                && text.color == RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 }
+                && text.anchor == TextAnchor::Middle
+        }));
+    }
+
+    #[test]
+    fn scene_v1_rejects_text_annotations_outside_matrix() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace("\\"text_annotations\\": []", "\\"text_annotations\\": [{\\"row\\":3,\\"column\\":0,\\"role\\":\\"value\\",\\"text\\":\\"x\\",\\"color\\":\\"black\\",\\"font_size\\":9,\\"font_weight\\":\\"normal\\",\\"font_style\\":\\"normal\\"}]");
+        let error = scene_v1_to_scene(&source, CellMethod::Circle).unwrap_err();
+        assert_eq!(error.code, "input.scene.cell_out_of_bounds");
+        assert_eq!(error.path, "text_annotations[0].row");
     }
 
     #[test]
