@@ -29,7 +29,7 @@ ctx$eval("
   globalThis.corrplotWasmInstance = new WebAssembly.Instance(
     new WebAssembly.Module(corrplotWasmBytes), {}
   );
-  globalThis.corrplotWasmRun = function (json) {
+  globalThis.corrplotWasmRun = function (input) {
     const e = globalThis.corrplotWasmInstance.exports;
     const input = Uint8Array.from(json, character => character.charCodeAt(0));
     const inputPtr = e.corrplot_alloc(input.length);
