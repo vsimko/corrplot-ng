@@ -96,15 +96,14 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
     let kind = as_string(required(root, "kind", "$")?, "kind")?;
     let semantics = match kind {
         "correlation_plot" => MatrixSemantics::Correlation,
-        "general_matrix_plot" => {
-            let matrix_semantics = as_object(required(root, "matrix_semantics", "$")?, "matrix_semantics")?;
-            if as_string(required(matrix_semantics, "mode", "matrix_semantics")?, "matrix_semantics.mode")? != "general_numeric" {
-                return Err(SceneBuildError::new("input.scene.invalid_semantics", "general_matrix_plot requires matrix_semantics.mode general_numeric", "matrix_semantics.mode"));
-            }
-            MatrixSemantics::GeneralNumeric
-        }
+        "general_matrix_plot" => MatrixSemantics::GeneralNumeric,
         _ => return Err(SceneBuildError::new("input.scene.invalid_kind", "kind must be correlation_plot or general_matrix_plot", "kind")),
     };
+    if let Some(matrix_semantics) = root.get("matrix_semantics") {
+        validate_scene_matrix_semantics(matrix_semantics, semantics)?;
+    } else if semantics == MatrixSemantics::GeneralNumeric {
+        return Err(SceneBuildError::new("input.scene.missing_field", "general_matrix_plot requires matrix_semantics", "matrix_semantics"));
+    }
 
     let width = as_number(required(root, "width", "$")?, "width")?;
     let height = as_number(required(root, "height", "$")?, "height")?;
@@ -235,6 +234,53 @@ impl SceneBuildError {
 
 fn required<'a>(object: &'a std::collections::BTreeMap<String, crate::json::Value>, key: &str, parent: &str) -> Result<&'a crate::json::Value, SceneBuildError> {
     object.get(key).ok_or_else(|| SceneBuildError::new("input.scene.missing_field", format!("required field '{key}' is missing"), if parent == "$" { key.to_string() } else { format!("{parent}.{key}") }))
+}
+
+fn validate_scene_matrix_semantics(value: &crate::json::Value, expected: MatrixSemantics) -> Result<(), SceneBuildError> {
+    let object = as_object(value, "matrix_semantics")?;
+    reject_unknown_fields(object, &["mode", "color_limits", "color_mapping", "normalization", "palette", "has_observed_values"], "matrix_semantics")?;
+    let mode = as_string(required(object, "mode", "matrix_semantics")?, "matrix_semantics.mode")?;
+    let expected_mode = match expected {
+        MatrixSemantics::Correlation => "correlation",
+        MatrixSemantics::GeneralNumeric => "general_numeric",
+    };
+    if mode != expected_mode {
+        return Err(SceneBuildError::new("input.scene.invalid_semantics", format!("matrix kind requires matrix_semantics.mode {expected_mode}"), "matrix_semantics.mode"));
+    }
+    if let Some(limits) = object.get("color_limits") {
+        let limits = as_array(limits, "matrix_semantics.color_limits")?;
+        if limits.len() != 2 {
+            return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_limits must contain exactly two values", "matrix_semantics.color_limits"));
+        }
+        let lower = as_number(&limits[0], "matrix_semantics.color_limits[0]")?;
+        let upper = as_number(&limits[1], "matrix_semantics.color_limits[1]")?;
+        if lower > upper {
+            return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_limits lower bound must not exceed upper bound", "matrix_semantics.color_limits"));
+        }
+    }
+    if let Some(mapping) = object.get("color_mapping") {
+        let mapping = as_string(mapping, "matrix_semantics.color_mapping")?;
+        if !matches!(mapping, "sequential" | "diverging") {
+            return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_mapping must be sequential or diverging", "matrix_semantics.color_mapping"));
+        }
+    }
+    if let Some(normalization) = object.get("normalization") {
+        let normalization = as_object(normalization, "matrix_semantics.normalization")?;
+        reject_unknown_fields(normalization, &["intercept", "zoom"], "matrix_semantics.normalization")?;
+        as_number(required(normalization, "intercept", "matrix_semantics.normalization")?, "matrix_semantics.normalization.intercept")?;
+        if as_number(required(normalization, "zoom", "matrix_semantics.normalization")?, "matrix_semantics.normalization.zoom")? <= 0.0 {
+            return Err(SceneBuildError::new("input.scene.invalid_semantics", "normalization.zoom must be positive", "matrix_semantics.normalization.zoom"));
+        }
+    }
+    if let Some(palette) = object.get("palette") {
+        as_string(palette, "matrix_semantics.palette")?;
+    }
+    if let Some(observed) = object.get("has_observed_values") {
+        if !matches!(observed, crate::json::Value::Bool(_)) {
+            return Err(SceneBuildError::new("input.scene.invalid_type", "has_observed_values must be a boolean", "matrix_semantics.has_observed_values"));
+        }
+    }
+    Ok(())
 }
 
 fn reject_unknown_fields(object: &std::collections::BTreeMap<String, crate::json::Value>, allowed: &[&str], path: &str) -> Result<(), SceneBuildError> {
