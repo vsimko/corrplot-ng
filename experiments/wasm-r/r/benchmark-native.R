@@ -44,11 +44,9 @@ validate_request <- function(request) {
       return(fail("input.matrix.invalid_label",
         sprintf("label at index %d must not be empty", i - 1L)))
     }
-    if (anyDuplicated(labels[seq_len(i)]) && anyDuplicated(labels[seq_len(i)]) == 1L) {
-      if (i > 1L && labels[[i]] %in% labels[seq_len(i - 1L)]) {
-        return(fail("input.matrix.invalid_label",
-          sprintf("duplicate label '%s'", labels[[i]])))
-      }
+    if (i > 1L && labels[[i]] %in% labels[seq_len(i - 1L)]) {
+      return(fail("input.matrix.invalid_label",
+        sprintf("duplicate label '%s'", labels[[i]])))
     }
   }
   matrix_values <- matrix(as.numeric(values), nrow = rows, byrow = TRUE)
