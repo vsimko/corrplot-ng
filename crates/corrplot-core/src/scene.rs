@@ -432,7 +432,6 @@ fn validate_scene_cell_metadata(cell: &std::collections::BTreeMap<String, crate:
 }
 
 fn validate_scene_extended_metadata(root: &std::collections::BTreeMap<String, crate::json::Value>) -> Result<(), SceneBuildError> {
-    use crate::json::Value;
     if let Some(value) = root.get("cluster_regions") {
         for (index, item) in as_array(value, "cluster_regions")?.iter().enumerate() {
             let path = format!("cluster_regions[{index}]");
@@ -902,11 +901,15 @@ mod tests {
     }
 
     #[test]
-    fn hidden_missing_cells_do_not_emit_na_annotations() {
+    fn missing_annotations_follow_the_display_mask() {
         let mut matrix = input();
         matrix.display_type = DisplayType::Upper;
         let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
-        assert!(!scene.texts.iter().any(|text| text.text == "NA"));
+        let missing: Vec<_> = scene.texts.iter().filter(|text| text.text == "NA").collect();
+        assert_eq!(missing.len(), 1);
+        let expected_x = LEFT_MARGIN + 2.0 * (CELL_SIZE + CELL_GAP) + CELL_SIZE / 2.0;
+        let expected_y = TOP_MARGIN + CELL_SIZE / 2.0 - 5.0;
+        assert_eq!((missing[0].x, missing[0].y), (expected_x, expected_y));
     }
 
     #[test]
