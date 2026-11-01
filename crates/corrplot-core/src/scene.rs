@@ -1190,6 +1190,28 @@ mod tests {
 
 
     #[test]
+    fn scene_v1_to_scene_preserves_typed_legend_and_cluster_regions() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace(
+                "\"annotation\": \"Prototype annotation: synthetic example only\",",
+                "\"annotation\": \"Prototype annotation: synthetic example only\",\n  \"legend\": [{\"kind\":\"missing\",\"label\":\"Not observed\",\"color\":\"#f2f2f2\"}],\n  \"cluster_regions\": [{\"id\":\"group-a\",\"variables\":[\"alpha\"],\"source_indices\":[0],\"row_start\":0,\"row_end\":0,\"column_start\":0,\"column_end\":0,\"x\":100,\"y\":72,\"width\":86,\"height\":86,\"color\":\"#2166ac\",\"line_width\":1.5}],"
+            );
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        assert_eq!(scene.legend.len(), 1);
+        assert_eq!(scene.legend[0].kind, "missing");
+        assert_eq!(scene.legend[0].label, "Not observed");
+        assert_eq!(scene.legend[0].color, RgbaColor { red: 242, green: 242, blue: 242, alpha: 255 });
+        assert_eq!(scene.cluster_regions.len(), 1);
+        let region = &scene.cluster_regions[0];
+        assert_eq!(region.id, "group-a");
+        assert_eq!(region.variables, vec!["alpha"]);
+        assert_eq!(region.source_indices, vec![0]);
+        assert_eq!((region.row_start, region.row_end, region.column_start, region.column_end), (0, 0, 0, 0));
+        assert_eq!((region.x, region.y, region.width, region.height, region.line_width), (100.0, 72.0, 86.0, 86.0, 1.5));
+        assert_eq!(region.color, RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 });
+    }
+
+    #[test]
     fn scene_v1_conversion_uses_explicit_cell_identity_not_array_order() {
         let source = r##"{
           "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
