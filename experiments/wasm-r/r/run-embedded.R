@@ -38,7 +38,7 @@ main <- function() {
   shared <- tempfile(
     pattern = "wasmtime-host-",
     tmpdir = shared_dir,
-    fileext = if (.Platform$OS.type == "windows") "" else paste0(".", .Platform$dynlib.ext)
+    fileext = .Platform$dynlib.ext
   )
   on.exit(unlink(shared), add = TRUE)
 
