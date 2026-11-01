@@ -64,6 +64,26 @@ pub struct SceneClusterRegion {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct SceneCellSignificance {
+    pub p_value: Option<f64>,
+    pub status: String,
+    pub annotation: Option<String>,
+    pub blank: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneConfidenceInterval {
+    pub lower: f64,
+    pub upper: f64,
+    pub x1: f64,
+    pub x2: f64,
+    pub y: f64,
+    pub cap_height: f64,
+    pub stroke_width: f64,
+    pub color: RgbaColor,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct SceneCell {
     pub x: f64,
     pub y: f64,
@@ -72,6 +92,13 @@ pub struct SceneCell {
     pub fill: RgbaColor,
     pub stroke: RgbaColor,
     pub glyph: Option<CellGlyph>,
+    /// Original cell-level p-value, independent of significance display policy.
+    pub p_value: Option<f64>,
+    /// Optional visual-only normalized value; never replaces the matrix value.
+    pub normalized_value: Option<f64>,
+    pub significance: Option<SceneCellSignificance>,
+    /// Statistical bounds and their already-computed scene geometry.
+    pub confidence_interval: Option<SceneConfidenceInterval>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -102,6 +129,34 @@ impl Scene {
                 return Err(OutputValidationError::invalid_options(format!(
                     "scene cell {index} has invalid geometry",
                 )));
+            }
+            if cell.p_value.is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value))
+                || cell.normalized_value.is_some_and(|value| !value.is_finite())
+            {
+                return Err(OutputValidationError::invalid_options(format!(
+                    "scene cell {index} has invalid statistical values",
+                )));
+            }
+            if let Some(significance) = &cell.significance {
+                if significance.p_value.is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value))
+                    || !matches!(significance.status.as_str(), "unknown" | "significant" | "not_significant")
+                {
+                    return Err(OutputValidationError::invalid_options(format!(
+                        "scene cell {index} has invalid significance metadata",
+                    )));
+                }
+            }
+            if let Some(interval) = &cell.confidence_interval {
+                if !interval.lower.is_finite() || !interval.upper.is_finite()
+                    || interval.lower < -1.0 || interval.upper > 1.0 || interval.lower > interval.upper
+                    || !interval.x1.is_finite() || !interval.x2.is_finite() || !interval.y.is_finite()
+                    || !interval.cap_height.is_finite() || interval.cap_height < 0.0
+                    || !interval.stroke_width.is_finite() || interval.stroke_width < 0.0
+                {
+                    return Err(OutputValidationError::invalid_options(format!(
+                        "scene cell {index} has invalid confidence interval metadata",
+                    )));
+                }
             }
             match &cell.glyph {
                 Some(CellGlyph::Circle { radius, .. }) if !radius.is_finite() || *radius < 0.0 =>
