@@ -147,7 +147,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
             });
             cells.push(SceneCell {
                 x, y, size: CELL_SIZE, visible: true,
-                fill: if value.is_some() && options.cell_method == CellMethod::Color { color } else { white },
+                fill: match value { None => missing_fill, Some(_) if options.cell_method == CellMethod::Color => color, Some(_) => white },
                 stroke: grid, glyph,
             });
             if value.is_none() {
@@ -217,6 +217,19 @@ mod tests {
         matrix.values = vec![vec![Some(0.0), Some(5.0)], vec![Some(-10.0), Some(2.0)]];
         let scene = matrix_to_scene_v1(&matrix, &SceneBuildOptions::default()).unwrap();
         assert_eq!(scene.cells[2].glyph, Some(CellGlyph::Circle { radius: CELL_SIZE * 0.43, color: RgbaColor { red: 178, green: 24, blue: 43, alpha: 255 } }));
+    }
+
+    #[test]
+    fn built_scene_is_consumed_by_both_existing_renderers() {
+        use crate::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        use crate::raster::{RgbaRenderer, SceneSvgRenderer};
+        let scene = matrix_to_scene_v1(&input(), &SceneBuildOptions::default()).unwrap();
+        let svg_options = OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        assert!(matches!(svg, RenderOutput::Svg(_)));
+        let rgba_options = OutputOptions::Rgba(RasterOptions::new(320, 320));
+        let rgba = RgbaRenderer.render(&scene, &rgba_options).unwrap();
+        assert!(matches!(rgba, RenderOutput::Rgba(_)));
     }
 
     #[test]
