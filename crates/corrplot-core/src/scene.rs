@@ -248,30 +248,24 @@ fn validate_scene_matrix_semantics(value: &crate::json::Value, expected: MatrixS
     if mode != expected_mode {
         return Err(SceneBuildError::new("input.scene.invalid_semantics", format!("matrix kind requires matrix_semantics.mode {expected_mode}"), "matrix_semantics.mode"));
     }
-    if let Some(limits) = object.get("color_limits") {
-        let limits = as_array(limits, "matrix_semantics.color_limits")?;
-        if limits.len() != 2 {
-            return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_limits must contain exactly two values", "matrix_semantics.color_limits"));
-        }
-        let lower = as_number(&limits[0], "matrix_semantics.color_limits[0]")?;
-        let upper = as_number(&limits[1], "matrix_semantics.color_limits[1]")?;
-        if lower > upper {
-            return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_limits lower bound must not exceed upper bound", "matrix_semantics.color_limits"));
-        }
+    let limits = as_array(required(object, "color_limits", "matrix_semantics")?, "matrix_semantics.color_limits")?;
+    if limits.len() != 2 {
+        return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_limits must contain exactly two values", "matrix_semantics.color_limits"));
     }
-    if let Some(mapping) = object.get("color_mapping") {
-        let mapping = as_string(mapping, "matrix_semantics.color_mapping")?;
-        if !matches!(mapping, "sequential" | "diverging") {
-            return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_mapping must be sequential or diverging", "matrix_semantics.color_mapping"));
-        }
+    let lower = as_number(&limits[0], "matrix_semantics.color_limits[0]")?;
+    let upper = as_number(&limits[1], "matrix_semantics.color_limits[1]")?;
+    if lower > upper {
+        return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_limits lower bound must not exceed upper bound", "matrix_semantics.color_limits"));
     }
-    if let Some(normalization) = object.get("normalization") {
-        let normalization = as_object(normalization, "matrix_semantics.normalization")?;
-        reject_unknown_fields(normalization, &["intercept", "zoom"], "matrix_semantics.normalization")?;
-        as_number(required(normalization, "intercept", "matrix_semantics.normalization")?, "matrix_semantics.normalization.intercept")?;
-        if as_number(required(normalization, "zoom", "matrix_semantics.normalization")?, "matrix_semantics.normalization.zoom")? <= 0.0 {
-            return Err(SceneBuildError::new("input.scene.invalid_semantics", "normalization.zoom must be positive", "matrix_semantics.normalization.zoom"));
-        }
+    let mapping = as_string(required(object, "color_mapping", "matrix_semantics")?, "matrix_semantics.color_mapping")?;
+    if !matches!(mapping, "sequential" | "diverging") {
+        return Err(SceneBuildError::new("input.scene.invalid_semantics", "color_mapping must be sequential or diverging", "matrix_semantics.color_mapping"));
+    }
+    let normalization = as_object(required(object, "normalization", "matrix_semantics")?, "matrix_semantics.normalization")?;
+    reject_unknown_fields(normalization, &["intercept", "zoom"], "matrix_semantics.normalization")?;
+    as_number(required(normalization, "intercept", "matrix_semantics.normalization")?, "matrix_semantics.normalization.intercept")?;
+    if as_number(required(normalization, "zoom", "matrix_semantics.normalization")?, "matrix_semantics.normalization.zoom")? <= 0.0 {
+        return Err(SceneBuildError::new("input.scene.invalid_semantics", "normalization.zoom must be positive", "matrix_semantics.normalization.zoom"));
     }
     if let Some(palette) = object.get("palette") {
         as_string(palette, "matrix_semantics.palette")?;
@@ -604,7 +598,10 @@ mod tests {
         assert_eq!(error.code, "input.scene.invalid_semantics");
         assert_eq!(error.path, "matrix_semantics.mode");
 
-        let valid_general = source.replace("\"mode\":\"correlation\"", "\"mode\":\"general_numeric\"");
+        let valid_general = source.replace(
+            "\"mode\":\"correlation\"",
+            "\"mode\":\"general_numeric\",\"color_limits\":[0,2],\"color_mapping\":\"sequential\",\"normalization\":{\"intercept\":0,\"zoom\":1}",
+        );
         let matrix = parse_scene_v1_matrix(&valid_general).unwrap();
         assert_eq!(matrix.semantics, MatrixSemantics::GeneralNumeric);
         assert_eq!(matrix.values, vec![vec![Some(2.0)]]);
