@@ -191,7 +191,7 @@ jobs:
               writer = csv.writer(stream)
               for backend, result, size in rows:
                   writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
-          print(f"{name}: " + "; ".join(f"{backend}={result.get('perCallMs', float('nan')):.5f} ms/call" for backend, result, _ in rows))
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
           PY
           done
 
