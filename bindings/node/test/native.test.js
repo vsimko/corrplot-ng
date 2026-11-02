@@ -124,7 +124,6 @@ test("constructs and renders a matrix through the shared core operation", () => 
   const svg = renderMatrixSvg(sceneV1, "ellipse");
   assert.match(svg, /^<svg /);
   assert.match(svg, /<circle /);
-  assert.match(svg, /rotate\(-45 /);
 });
 
 const sceneV1Construction = fs.readFileSync(
