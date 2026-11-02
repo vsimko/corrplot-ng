@@ -824,7 +824,7 @@ impl Publication {
         texts.push(SceneText {
             text: title.to_owned(), x: 120.0, y: 28.0,
             font_size: self.base_size * 1.5, color: black, anchor: TextAnchor::Start,
-                font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into(),
+                font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
         });
         for (index, label) in self.labels.iter().enumerate() {
             let center_y = top + index as f64 * cell_size + cell_size / 2.0;
@@ -832,12 +832,12 @@ impl Publication {
             texts.push(SceneText {
                 text: label.clone(), x: left - 12.0, y: center_y,
                 font_size: self.base_size, color: black, anchor: TextAnchor::End,
-                font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into(),
+                font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
             });
             texts.push(SceneText {
                 text: label.clone(), x: center_x, y: top - 12.0,
                 font_size: self.base_size, color: black, anchor: TextAnchor::Middle,
-                font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into(),
+                font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
             });
         }
         let mut cells = Vec::with_capacity(n * n);
@@ -885,7 +885,7 @@ impl Publication {
                         texts.push(SceneText {
                             text: format!("{value}"), x: center_x, y: center_y - self.base_size / 2.0,
                             font_size: self.base_size, color: white, anchor: TextAnchor::Middle,
-                font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into(),
+                font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
                         });
                     }
                 }
