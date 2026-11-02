@@ -301,6 +301,9 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
     scene.width = as_number(required(root, "width", "$")?, "width")?;
     scene.height = as_number(required(root, "height", "$")?, "height")?;
     let labels = as_array(required(root, "labels", "$")?, "labels")?;
+    // Missing-cell annotations are emitted before the row/column labels by
+    // matrix_to_scene_v1. Keep their prefix out of label indexing.
+    let label_start = scene.cells.iter().filter(|cell| cell.visible && cell.glyph.is_none()).count();
     for (index, item) in labels.iter().enumerate() {
         let path = format!("labels[{index}]");
         let label = as_object(item, &path)?;
@@ -308,15 +311,15 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         let row_y = as_number(required(label, "row_y", &path)?, &format!("{path}.row_y"))?;
         let column_x = as_number(required(label, "column_x", &path)?, &format!("{path}.column_x"))?;
         let column_y = as_number(required(label, "column_y", &path)?, &format!("{path}.column_y"))?;
-        scene.texts[index * 2].x = row_x;
-        scene.texts[index * 2].y = row_y;
-        scene.texts[index * 2 + 1].x = column_x;
-        scene.texts[index * 2 + 1].y = column_y;
+        scene.texts[label_start + index * 2].x = row_x;
+        scene.texts[label_start + index * 2].y = row_y;
+        scene.texts[label_start + index * 2 + 1].x = column_x;
+        scene.texts[label_start + index * 2 + 1].y = column_y;
         if matches!(label.get("row_visible"), Some(crate::json::Value::Bool(false))) {
-            scene.texts[index * 2].text.clear();
+            scene.texts[label_start + index * 2].text.clear();
         }
         if matches!(label.get("column_visible"), Some(crate::json::Value::Bool(false))) {
-            scene.texts[index * 2 + 1].text.clear();
+            scene.texts[label_start + index * 2 + 1].text.clear();
         }
     }
 
@@ -332,7 +335,7 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         let max_width = scene.cells.first().map(|cell| cell.size * 0.9).unwrap_or(font_size * 5.0);
         let max_chars = ((max_width / (font_size * 0.6)).floor() as usize).max(1);
         for index in 0..labels.len() {
-            for text_index in [index * 2, index * 2 + 1] {
+            for text_index in [label_start + index * 2, label_start + index * 2 + 1] {
                 let label_text = &mut scene.texts[text_index];
                 label_text.font_family = font_family.clone();
                 label_text.font_size = font_size;
@@ -1375,15 +1378,16 @@ mod tests {
                 "\"typography\": {\"label_font_family\": \"serif\", \"label_font_size\": 10, \"label_font_weight\": \"bold\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"truncate\"},\n  \"glyph_method\": \"circle\",",
             );
         let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
-        assert_eq!(scene.texts[0].font_family, "serif");
-        assert_eq!(scene.texts[0].font_size, 10.0);
-        assert_eq!(scene.texts[0].font_weight, "bold");
-        assert!(scene.texts[0].text.ends_with('…'));
-        assert!(scene.texts[0].text.chars().count() <= 12);
+        let row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap();
+        assert_eq!(row_label.font_family, "serif");
+        assert_eq!(row_label.font_size, 10.0);
+        assert_eq!(row_label.font_weight, "bold");
+        assert!(row_label.text.ends_with('…'));
+        assert!(row_label.text.chars().count() <= 12);
 
         let omit_source = source.replace("\"label_collision\": \"truncate\"", "\"label_collision\": \"omit\"");
         let omitted = scene_v1_to_scene(&omit_source, CellMethod::Circle).unwrap();
-        assert!(omitted.texts[0].text.is_empty());
+        assert!(omitted.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap().text.is_empty());
     }
 
     #[test]
