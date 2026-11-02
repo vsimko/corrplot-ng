@@ -12,6 +12,7 @@ on:
       - "bindings/wasm/**"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -42,6 +43,7 @@ jobs:
         working-directory: bindings/wasm
         run: wasm-pack build --target web --release --out-dir pkg
       - name: Measure WASM size, initialization, and renderer baselines
+        if: github.event_name == 'workflow_dispatch'
         run: node bindings/wasm/benchmarks/measure.mjs
       - name: Install Playwright
         if: matrix.node == 26
