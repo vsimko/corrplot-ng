@@ -96,10 +96,10 @@
         "second line"
       ],
       "alignment": "center",
-      "font_family": "sans",
+      "font_family": "serif",
       "font_size": 10,
-      "font_weight": "normal",
-      "font_style": "normal",
+      "font_weight": "bold",
+      "font_style": "italic",
       "line_height": 12,
       "spacing_after": 2,
       "x": 50,
