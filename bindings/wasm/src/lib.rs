@@ -326,7 +326,9 @@ pub fn render_scene_svg_wasm(scene_input: JsValue, options_input: JsValue) -> Re
         Err(diagnostic) => return to_js(&SvgResult { svg: None, diagnostic: Some(diagnostic) }),
     };
     let mut svg = SvgOptions::new(options.width, options.height, unit);
-    svg.font_family = options.font_family;
+    if !options.font_family.trim().is_empty() {
+        svg.font_family = options.font_family;
+    }
     svg.font_size_pt = options.font_size_pt;
     svg.background = background;
 
