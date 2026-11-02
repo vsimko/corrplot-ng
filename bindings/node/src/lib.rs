@@ -280,6 +280,9 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             font_size: text.font_size,
             color: rgba(text.color, &format!("texts[{index}].color"))?,
             anchor,
+            font_family: "sans-serif".into(),
+            font_weight: "normal".into(),
+            font_style: "normal".into(),
         });
     }
 
