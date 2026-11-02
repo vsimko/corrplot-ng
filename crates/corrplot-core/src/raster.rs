@@ -23,6 +23,9 @@ pub struct SceneText {
     pub y: f64,
     /// Logical scene units for the full seven-row bitmap font.
     pub font_size: f64,
+    pub font_family: String,
+    pub font_weight: String,
+    pub font_style: String,
     pub color: RgbaColor,
     pub anchor: TextAnchor,
 }
@@ -659,8 +662,9 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::End => "end",
             };
             out.push_str(&format!(
-                "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
-                text.x, text.y, anchor, escape_xml(&svg.font_family), text.font_size,
+                "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
+                text.x, text.y, anchor, escape_xml(&text.font_family), text.font_size,
+                escape_xml(&text.font_weight), escape_xml(&text.font_style),
                 color_hex(text.color), alpha(text.color), escape_xml(&text.text)
             ));
         }
@@ -750,6 +754,7 @@ mod tests {
                 text: "A".into(), x: 10.0, y: 10.0, font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
+                font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into(),
             }],
         }
     }
