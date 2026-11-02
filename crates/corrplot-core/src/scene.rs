@@ -1393,8 +1393,12 @@ mod tests {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
             .replace("\"alpha\"", "\"a-very-long-variable-label\"")
             .replace(
+                "\"text\": \"a-very-long-variable-label\",",
+                "\"text\": \"a-very-long-variable-label\", \"column_rotation\": 35,",
+            )
+            .replace(
                 "\"glyph_method\": \"circle\",",
-                "\"typography\": {\"label_font_family\": \"serif\", \"label_font_size\": 10, \"label_font_weight\": \"bold\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"truncate\"},\n  \"glyph_method\": \"circle\",",
+                "\"typography\": {\"label_font_family\": \"serif\", \"label_font_size\": 10, \"label_font_weight\": \"bold\", \"column_label_orientation\": \"vertical\", \"label_collision\": \"truncate\"},\n  \"glyph_method\": \"circle\",",
             );
         let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
         let row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap();
@@ -1403,6 +1407,21 @@ mod tests {
         assert_eq!(row_label.font_weight, "bold");
         assert!(row_label.text.ends_with('…'));
         assert!(row_label.text.chars().count() <= 12);
+        let column_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::Start && text.text.ends_with('…')).unwrap();
+        assert_eq!(column_label.rotation_degrees, -35.0);
+
+        let horizontal_source = source.replace("\"column_label_orientation\": \"vertical\"", "\"column_label_orientation\": \"horizontal\"");
+        let horizontal = scene_v1_to_scene(&horizontal_source, CellMethod::Circle).unwrap();
+        let horizontal_label = horizontal.texts.iter().find(|text| text.anchor == TextAnchor::Middle && text.text.ends_with('…')).unwrap();
+        assert_eq!(horizontal_label.rotation_degrees, 0.0);
+
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("rotate(-35 146 60)"));
 
         let omit_source = source.replace("\"label_collision\": \"truncate\"", "\"label_collision\": \"omit\"");
         let omitted = scene_v1_to_scene(&omit_source, CellMethod::Circle).unwrap();
