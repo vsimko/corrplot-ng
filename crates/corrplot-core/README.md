@@ -11,14 +11,14 @@ square dimensions, unique labels, finite observed values, and (for
 correlation matrices) range, symmetry, and unit diagonal.
 
 Errors expose stable diagnostic codes and optional zero-based row/column
-coordinates. The crate does not depend on R, extendr, Node.js, CLI parsing, JSON, or
-runtime-specific host APIs. Adapters own parsing and serialization and
-translate R NA to None at the boundary. Renderer-neutral scene types and
-shared SVG/RGBA rendering algorithms live here; JavaScript, CLI, R, and
-browser-specific package or host integration remain in their adapters.
-
-The core is still incomplete: it does not yet provide the scene-v1 parser
-or matrix-to-scene builder, and PNG encoding is not implemented.
+coordinates. The crate does not depend on R, extendr, Node.js, CLI parsing, external JSON
+crates, or runtime-specific host APIs. A small in-crate JSON reader supports
+the scene-v1 parser; host adapters still own runtime value conversion and
+serialization. The shared parser validates scene-v1 matrix identity, values,
+geometry, and metadata, while `matrix_to_scene_v1` and `scene_v1_to_scene`
+provide the initial deterministic construction path. Full scene-v1 presentation
+semantics and schema-conformance coverage remain in progress. PNG encoding is
+not implemented.
 
 
 ## Portable targets
@@ -38,12 +38,12 @@ cargo check --locked --offline --all-targets --target wasm32-unknown-unknown
 cargo test --locked --offline
 ```
 
-The WebAssembly build check proves target portability of this Rust library; it
-does not create JavaScript exports or a browser package. The thin WASM binding
-and its loading/memory boundary are tracked separately in issue #142. Native
-unit tests execute the shared semantic test suite; the WebAssembly CI job also
-compiles those same tests for the target, without claiming a browser runtime
-test before the binding/runtime harness exists.
+The WebAssembly build check proves target portability of this Rust library.
+The repository also has thin Node-API and browser-WASM adapters that invoke the
+shared core; the browser smoke test exercises the matrix-to-SVG path. Issue
+#142 continues to track the broader WASM API and loading/memory boundary.
+Native unit tests execute the shared semantic test suite, and the WebAssembly
+CI job compiles those same tests for the target.
 
 
 ## Direct scene renderers
