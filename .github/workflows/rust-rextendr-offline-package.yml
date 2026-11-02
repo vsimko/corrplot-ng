@@ -140,6 +140,11 @@ jobs:
         run: |
           set -euxo pipefail
           manifest=experiments/wasm-r/native-r/Cargo.toml
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            export RUSTFLAGS="-C link-arg=-Wl,--strip-debug"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            export RUSTFLAGS="-C link-arg=-Wl,-S"
+          fi
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --target x86_64-pc-windows-gnu --release
             native_dir="prototypes/rust-rextendr/.ci-rust-target/x86_64-pc-windows-gnu/release"
@@ -147,12 +152,7 @@ jobs:
             R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --release
             native_dir="prototypes/rust-rextendr/.ci-rust-target/release"
           fi
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            export RUSTFLAGS="-C link-arg=-Wl,--strip-debug"
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            export RUSTFLAGS="-C link-arg=-Wl,-S"
-          fi
-          native_library="$(find "$native_dir" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)
+          native_library="$(find "$native_dir" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)$' | head -n 1 || true)"
           if [[ -z "$native_library" ]]; then
             echo "Native extendr cdylib not found in $native_dir" >&2
             find "$native_dir" -maxdepth 1 -type f -print
@@ -296,9 +296,9 @@ jobs:
               }
           }
           Path("size-results/size-report.json").write_text(
-              json.dumps(report, indent=2) + "\\n", encoding="utf-8"
+              json.dumps(report, indent=2) + "\n", encoding="utf-8"
           )
-          Path("size-results/rustc-vv.txt").write_text(report["rustc_vv"] + "\\n", encoding="utf-8")
+          Path("size-results/rustc-vv.txt").write_text(report["rustc_vv"] + "\n", encoding="utf-8")
           Path("size-results/native-r-cargo-tree.txt").write_text(
               Path("native-r-cargo-tree.txt").read_text(encoding="utf-8"), encoding="utf-8"
           )
@@ -476,9 +476,9 @@ jobs:
               }
           }
           Path("size-results/size-report.json").write_text(
-              json.dumps(report, indent=2) + "\\n", encoding="utf-8"
+              json.dumps(report, indent=2) + "\n", encoding="utf-8"
           )
-          Path("size-results/rustc-vv.txt").write_text(report["rustc_vv"] + "\\n", encoding="utf-8")
+          Path("size-results/rustc-vv.txt").write_text(report["rustc_vv"] + "\n", encoding="utf-8")
           Path("size-results/native-r-cargo-tree.txt").write_text(
               Path("native-r-cargo-tree.txt").read_text(encoding="utf-8"), encoding="utf-8"
           )
