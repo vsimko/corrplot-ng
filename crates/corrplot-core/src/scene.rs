@@ -650,6 +650,7 @@ fn append_scene_v1_figure_text(
     for (index, item) in as_array(value, "figure_text")?.iter().enumerate() {
         let path = format!("figure_text[{index}]");
         let figure = as_object(item, &path)?;
+        let role = as_string(required(figure, "role", &path)?, &format!("{path}.role"))?.to_string();
         let x = as_number(required(figure, "x", &path)?, &format!("{path}.x"))?;
         let y = as_number(required(figure, "y", &path)?, &format!("{path}.y"))?;
         let font_size = as_number(required(figure, "font_size", &path)?, &format!("{path}.font_size"))?;
@@ -667,6 +668,7 @@ fn append_scene_v1_figure_text(
         let lines = as_array(required(figure, "lines", &path)?, &format!("{path}.lines"))?;
         for (line_index, line) in lines.iter().enumerate() {
             scene.texts.push(SceneText {
+                semantic_role: Some(role.clone()),
                 text: as_string(line, &format!("{path}.lines[{line_index}]"))?.to_string(),
                 x,
                 y: y + line_index as f64 * line_height,
@@ -710,6 +712,7 @@ fn append_scene_v1_text_annotations(
         let x = as_number(required(cell, "center_x", &cell_path)?, &format!("{cell_path}.center_x"))?;
         let y = as_number(required(cell, "center_y", &cell_path)?, &format!("{cell_path}.center_y"))?;
         let text = as_string(required(annotation, "text", &path)?, &format!("{path}.text"))?.to_string();
+        let role = as_string(required(annotation, "role", &path)?, &format!("{path}.role"))?.to_string();
         let color = scene_v1_annotation_color(
             as_string(required(annotation, "color", &path)?, &format!("{path}.color"))?,
             &format!("{path}.color"),
@@ -717,7 +720,8 @@ fn append_scene_v1_text_annotations(
         let font_size = as_number(required(annotation, "font_size", &path)?, &format!("{path}.font_size"))?;
         let font_weight = as_string(required(annotation, "font_weight", &path)?, &format!("{path}.font_weight"))?.to_string();
         let font_style = as_string(required(annotation, "font_style", &path)?, &format!("{path}.font_style"))?.to_string();
-        scene.texts.push(SceneText { text, x, y, rotation_degrees: 0.0, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
+        scene.texts.push(SceneText {
+                semantic_role: Some(role.clone()), text, x, y, rotation_degrees: 0.0, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
     }
     Ok(())
 }
@@ -1391,22 +1395,27 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
                 p_value: None, normalized_value: None, significance: None, confidence_interval: None,
             });
             if visible && value.is_none() {
-                texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+                texts.push(SceneText {
+                semantic_role: None, text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
             }
         }
     }
 
     for (index, label) in input.labels.iter().enumerate() {
         let center = TOP_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0;
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText {
+                semantic_role: None, text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText {
+                semantic_role: None, text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if !options.title.is_empty() {
-        texts.push(SceneText { text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText {
+                semantic_role: None, text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if let Some(annotation) = &options.annotation {
         if !annotation.is_empty() {
-            texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+            texts.push(SceneText {
+                semantic_role: None, text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
         }
     }
     let scene = Scene { width, height, description: options.description.clone(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() };
@@ -1586,6 +1595,7 @@ mod tests {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
+        assert!(scene.texts.iter().any(|text| text.text == "A caption" && text.semantic_role.as_deref() == Some("caption")));
             && text.x == 50.0 && text.y == 90.0 && text.font_size == 10.0
             && text.anchor == TextAnchor::Middle
             && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));

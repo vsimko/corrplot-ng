@@ -276,6 +276,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         };
         texts.push(SceneText {
             text: text.text,
+            semantic_role: None,
             x: text.x,
             y: text.y,
             font_size: text.font_size,

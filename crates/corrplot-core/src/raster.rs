@@ -19,6 +19,8 @@ pub enum TextAnchor {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SceneText {
     pub text: String,
+    /// Optional semantic role retained from scene-v1 annotations and figure text.
+    pub semantic_role: Option<String>,
     pub x: f64,
     pub y: f64,
     /// Counter-clockwise rotation around the text anchor, in degrees.
@@ -729,11 +731,15 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 let dy = if index == 0 { 0.0 } else { text.font_size * 1.2 };
                 format!("<tspan x=\"{}\" dy=\"{}\">{}</tspan>", text.x, dy, escape_xml(line))
             }).collect::<String>();
+            let semantic_attrs = text.semantic_role.as_ref().map(|role| format!(
+                " data-semantic-role=\"{}\" aria-label=\"{}: {}\"",
+                escape_xml(role), escape_xml(role), escape_xml(&text.text)
+            )).unwrap_or_default();
             out.push_str(&format!(
-                "<text x=\"{}\" y=\"{}\" transform=\"rotate({} {} {})\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
+                "<text x=\"{}\" y=\"{}\" transform=\"rotate({} {} {})\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\"{}>{}</text>",
                 text.x, text.y, text.rotation_degrees, text.x, text.y, anchor, escape_xml(font_family), text.font_size,
                 escape_xml(&text.font_weight), escape_xml(&text.font_style),
-                color_hex(text.color), alpha(text.color), text_content
+                color_hex(text.color), alpha(text.color), semantic_attrs, text_content
             ));
         }
         out.push_str("</svg>");
@@ -820,7 +826,7 @@ mod tests {
             legend: vec![],
             cluster_regions: vec![],
             texts: vec![SceneText {
-                text: "A".into(), x: 10.0, y: 10.0, rotation_degrees: 0.0, font_size: 10.0,
+                text: "A".into(), semantic_role: None, x: 10.0, y: 10.0, rotation_degrees: 0.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
