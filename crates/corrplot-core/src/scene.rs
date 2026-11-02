@@ -327,6 +327,7 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
     let missing = scene_v1_color(required(style, "missing_fill", "style")?, "style.missing_fill")?;
     let grid = scene_v1_color(required(style, "grid_color", "style")?, "style.grid_color")?;
     let cells = as_array(required(root, "cells", "$")?, "cells")?;
+    let max_abs = matrix.values.iter().flatten().flatten().map(|value| value.abs()).fold(0.0_f64, f64::max);
     for (index, item) in cells.iter().enumerate() {
         let path = format!("cells[{index}]");
         let cell = as_object(item, &path)?;
@@ -396,7 +397,6 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         } else if effective_method == CellMethod::Color {
             target.fill = color;
         }
-        let max_abs = matrix.values.iter().flatten().flatten().map(|value| value.abs()).fold(0.0_f64, f64::max);
         target.glyph = value.map(|raw| scene_v1_make_glyph(raw, effective_method, color, target.size, matrix.semantics, max_abs));
         if let Some(glyph) = &mut target.glyph {
             set_scene_glyph_color(glyph, color);
@@ -1365,9 +1365,9 @@ mod tests {
           ]
         }"##;
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
-        assert!(matches!(scene.cells[0].glyph, Some(CellGlyph::Square { .. })));
-        assert!(matches!(scene.cells[1].glyph, Some(CellGlyph::Pie { .. })));
-        assert!(matches!(scene.cells[2].glyph, Some(CellGlyph::Number { .. })));
+        assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Square { .. })));
+        assert!(matches!(&scene.cells[1].glyph, Some(CellGlyph::Pie { .. })));
+        assert!(matches!(&scene.cells[2].glyph, Some(CellGlyph::Number { .. })));
     }
 
     #[test]
