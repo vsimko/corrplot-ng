@@ -2,6 +2,7 @@ use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer
 use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
 use js_sys::{Reflect, Uint8Array};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
+use corrplot_core::scene::{scene_v1_to_scene, CellMethod};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -60,6 +61,7 @@ pub struct CellGlyphInput {
     pub side: Option<f64>,
     pub rx: Option<f64>,
     pub ry: Option<f64>,
+    pub rotation_degrees: Option<f64>,
     pub start_radians: Option<f64>,
     pub end_radians: Option<f64>,
     pub text: Option<String>,
@@ -87,6 +89,7 @@ pub struct SceneTextInput {
     pub font_size: f64,
     pub color: RgbaColorInput,
     pub anchor: String,
+    pub rotation_degrees: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -218,6 +221,7 @@ fn glyph(input: CellGlyphInput) -> Result<CellGlyph, DiagnosticV1> {
         "ellipse" => Ok(CellGlyph::Ellipse {
             rx: required(input.rx, "rx")?,
             ry: required(input.ry, "ry")?,
+            rotation_degrees: input.rotation_degrees.unwrap_or(0.0),
             color: rgba(required(input.color, "color")?, "cells.glyph.color")?,
         }),
         "pie" => Ok(CellGlyph::Pie {
@@ -257,6 +261,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             fill,
             stroke,
             glyph: cell.glyph.map(glyph).transpose()?,
+            p_value: None, normalized_value: None, significance: None, confidence_interval: None,
         });
     }
 
@@ -280,10 +285,14 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             font_size: text.font_size,
             color: rgba(text.color, &format!("texts[{index}].color"))?,
             anchor,
+            font_family: String::new(),
+            font_weight: "normal".into(),
+            font_style: "normal".into(),
+            rotation_degrees: text.rotation_degrees.unwrap_or(0.0),
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, cells, texts })
+    Ok(Scene { width: input.width, height: input.height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[wasm_bindgen(js_name = "renderSceneSvg")]
@@ -319,7 +328,9 @@ pub fn render_scene_svg_wasm(scene_input: JsValue, options_input: JsValue) -> Re
         Err(diagnostic) => return to_js(&SvgResult { svg: None, diagnostic: Some(diagnostic) }),
     };
     let mut svg = SvgOptions::new(options.width, options.height, unit);
-    svg.font_family = options.font_family;
+    if !options.font_family.trim().is_empty() {
+        svg.font_family = options.font_family;
+    }
     svg.font_size_pt = options.font_size_pt;
     svg.background = background;
 
@@ -384,6 +395,41 @@ mod tests {
     }
 
     #[wasm_bindgen_test]
+    fn renders_scene_v1_matrix_and_maps_invalid_method_to_diagnostic_v1() {
+        let scene_v1 = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+
+        let output = render_matrix_svg_wasm(scene_v1.into(), "ellipse".into()).unwrap();
+        let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
+        let svg = output.svg.unwrap();
+        assert!(svg.starts_with("<svg "));
+        assert!(svg.contains("<circle "));
+
+        let output = render_matrix_svg_wasm(scene_v1.into(), "unknown".into()).unwrap();
+        let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
+        let diagnostic = output.diagnostic.unwrap();
+        assert_eq!(diagnostic.schema_version, 1);
+        assert_eq!(diagnostic.code, "configuration.invalid_field");
+        assert_eq!(diagnostic.severity, "error");
+        assert_eq!(diagnostic.stage, "configuration");
+        assert_eq!(diagnostic.message, "unsupported cell method 'unknown'");
+        assert_eq!(diagnostic.path.as_deref(), Some("cellMethod"));
+        assert_eq!(diagnostic.row, None);
+        assert_eq!(diagnostic.column, None);
+        assert!(output.svg.is_none());
+    }
+
+    #[wasm_bindgen_test]
+    fn renders_shared_scene_v1_construction_fixture() {
+        let fixture = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
+        let output = render_matrix_svg_wasm(fixture.into(), "circle".into()).unwrap();
+        let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
+        let svg = output.svg.unwrap();
+        assert!(svg.starts_with("<svg "));
+        assert!(svg.contains("A caption"));
+        assert!(svg.contains("second line"));
+    }
+
+    #[wasm_bindgen_test]
     fn renders_typed_scene_with_the_shared_svg_renderer() {
         let scene = SceneInput {
             width: 10.0,
@@ -401,6 +447,7 @@ mod tests {
                     side: None,
                     rx: None,
                     ry: None,
+                    rotation_degrees: None,
                     start_radians: None,
                     end_radians: None,
                     text: None,
@@ -414,7 +461,7 @@ mod tests {
             width: 100.0,
             height: 100.0,
             unit: "px".into(),
-            font_family: "sans-serif".into(),
+            font_family: String::new(),
             font_size_pt: 10.0,
             background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
         };
@@ -446,6 +493,7 @@ mod tests {
                     side: None,
                     rx: None,
                     ry: None,
+                    rotation_degrees: None,
                     start_radians: None,
                     end_radians: None,
                     text: None,
@@ -601,4 +649,62 @@ pub fn render_scene_rgba_wasm(scene_input: JsValue, options_input: JsValue) -> R
         )),
         Err(error) => rgba_failure(diagnostic(error.code, "renderer", error.message, Some("output"))),
     }
+}
+
+
+fn scene_build_diagnostic(error: corrplot_core::scene::SceneBuildError) -> DiagnosticV1 {
+    DiagnosticV1 {
+        schema_version: 1,
+        code: error.code.to_string(),
+        severity: "error".to_string(),
+        stage: "input".to_string(),
+        message: error.message,
+        path: Some(error.path),
+        row: error.row.and_then(|value| u32::try_from(value).ok()),
+        column: error.column.and_then(|value| u32::try_from(value).ok()),
+    }
+}
+
+fn cell_method(value: &str) -> Result<CellMethod, DiagnosticV1> {
+    match value {
+        "circle" => Ok(CellMethod::Circle),
+        "square" => Ok(CellMethod::Square),
+        "ellipse" => Ok(CellMethod::Ellipse),
+        "number" => Ok(CellMethod::Number),
+        "shade" => Ok(CellMethod::Shade),
+        "color" => Ok(CellMethod::Color),
+        "pie" => Ok(CellMethod::Pie),
+        other => Err(diagnostic(
+            "configuration.invalid_field",
+            "configuration",
+            format!("unsupported cell method '{other}'"),
+            Some("cellMethod"),
+        )),
+    }
+}
+
+/// End-to-end matrix construction through the shared Rust core.
+#[wasm_bindgen(js_name = "renderMatrixSvg")]
+pub fn render_matrix_svg_wasm(scene_v1_json: String, method: String) -> Result<JsValue, JsValue> {
+    let method = match cell_method(&method) {
+        Ok(method) => method,
+        Err(error) => return to_js(&SvgResult { svg: None, diagnostic: Some(error) }),
+    };
+    let scene = match scene_v1_to_scene(&scene_v1_json, method) {
+        Ok(scene) => scene,
+        Err(error) => return to_js(&SvgResult { svg: None, diagnostic: Some(scene_build_diagnostic(error)) }),
+    };
+    let options = SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels);
+    let result = match SceneSvgRenderer.render(&scene, &OutputOptions::Svg(options)) {
+        Ok(RenderOutput::Svg(svg)) => SvgResult { svg: Some(svg), diagnostic: None },
+        Ok(_) => SvgResult {
+            svg: None,
+            diagnostic: Some(diagnostic("renderer.output.format_mismatch", "export", "SVG renderer returned a non-SVG output", Some("output"))),
+        },
+        Err(error) => SvgResult {
+            svg: None,
+            diagnostic: Some(diagnostic(error.code, "renderer", error.message, Some("output"))),
+        },
+    };
+    to_js(&result)
 }

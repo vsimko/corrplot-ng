@@ -12,9 +12,17 @@ try {
     { waitUntil: "networkidle" },
   );
   await page.waitForFunction(
-    () => document.querySelector("#status")?.textContent?.startsWith("WASM ready;"),
+    () => {
+      const status = document.querySelector("#status")?.textContent ?? "";
+      return status.startsWith("WASM ready;") || status.startsWith("WASM smoke test failed:");
+    },
     null,
     { timeout: 30_000 },
+  );
+  const statusText = await page.locator("#status").textContent();
+  assert(
+    statusText?.startsWith("WASM ready;"),
+    `browser WASM initialization failed: ${statusText}; page errors: ${pageErrors.join(" | ") || "none"}`,
   );
 
   const svg = page.locator("#figure img");

@@ -30,6 +30,7 @@ export interface CellGlyphInput {
   side?: number;
   rx?: number;
   ry?: number;
+  rotationDegrees?: number;
   startRadians?: number;
   endRadians?: number;
   text?: string;
@@ -98,4 +99,5 @@ export class CorrplotError extends Error {
 export function validateMatrix(input: MatrixInput): true;
 export function renderSceneSvg(scene: SceneInput, options: SvgOptionsInput): string;
 export function renderSceneRgba(scene: SceneInput, options: RgbaOptionsInput): RgbaOutput;
+export function renderMatrixSvg(sceneV1Json: string, method?: "circle" | "square" | "ellipse" | "number" | "shade" | "color" | "pie"): string;
 export function getRendererCapabilities(): unknown;

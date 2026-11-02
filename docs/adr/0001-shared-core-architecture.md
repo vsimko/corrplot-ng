@@ -67,6 +67,12 @@ cross-language interchange boundary. A controlled comparison of actual
 maintainer elapsed time against the C++/Rcpp-only path has not yet been run;
 the existing 1–2 h versus 2–4 h figures remain planning estimates, not
 measured effort.
+## Scene-construction progress
+
+Draft PR #237 adds the first shared Rust scene-v1 parser and normalized-matrix-to-scene construction path. The parser reads matrix values by explicit row/column identity, validates the established scene-v1 structure and supported metadata, and constructs the renderer-neutral `Scene` consumed by the existing SVG and RGBA renderers. Thin Node-API and browser-WASM adapters expose the same initial matrix-to-SVG operation.
+
+This is an incremental implementation, not a claim that all scene-v1 presentation semantics are complete. Full schema-conformance coverage, complete typography and plotmath handling, accessibility metadata, detailed label layout, and shared cross-backend fixture parity remain follow-up work. The PR remains a draft until those boundaries and its acceptance criteria are reviewed.
+
 ## Evidence reviewed
 
 The evaluation issues and merged implementation PRs provide the following evidence:

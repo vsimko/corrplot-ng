@@ -8,6 +8,8 @@
 
 pub mod output;
 pub mod raster;
+mod json;
+pub mod scene;
 
 /// Renderer capability declaration for the typed SVG/RGBA scene backend.
 pub const RENDERER_CAPABILITIES_V1: &str = include_str!("../renderer-capabilities.json");

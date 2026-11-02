@@ -11,14 +11,25 @@ square dimensions, unique labels, finite observed values, and (for
 correlation matrices) range, symmetry, and unit diagonal.
 
 Errors expose stable diagnostic codes and optional zero-based row/column
-coordinates. The crate does not depend on R, extendr, Node.js, CLI parsing, JSON, or
-runtime-specific host APIs. Adapters own parsing and serialization and
-translate R NA to None at the boundary. Renderer-neutral scene types and
-shared SVG/RGBA rendering algorithms live here; JavaScript, CLI, R, and
-browser-specific package or host integration remain in their adapters.
+coordinates. The crate does not depend on R, extendr, Node.js, CLI parsing, external JSON
+crates, or runtime-specific host APIs. A small in-crate JSON reader supports
+the scene-v1 parser; host adapters still own runtime value conversion and
+serialization. The shared parser validates scene-v1 matrix identity, values,
+geometry, and metadata, while `matrix_to_scene_v1` and `scene_v1_to_scene`
+provide the initial deterministic construction path. Full scene-v1 presentation
+semantics and schema-conformance coverage remain in progress. PNG encoding is
+not implemented.
 
-The core is still incomplete: it does not yet provide the scene-v1 parser
-or matrix-to-scene builder, and PNG encoding is not implemented.
+
+## Scene-v1 construction
+
+The scene module exposes three related operations:
+
+- `parse_scene_v1_matrix(json)` validates the scene-v1 matrix identity, values, cell coordinates, layout dimensions, colors, and supported optional metadata, then returns normalized matrix data.
+- `matrix_to_scene_v1(matrix, options)` builds a deterministic renderer-neutral scene from normalized matrix data.
+- `scene_v1_to_scene(json, fallback_cell_method)` combines the established scene-v1 layout and metadata with the shared matrix builder. Explicit cell methods take precedence over encoding kinds, then the document-level glyph method, then the adapter fallback.
+
+Cell annotations, significance policy, typed legend entries, cluster-region geometry, and figure-text lines are transferred into the scene where the current renderer-neutral types can represent them. This is not yet complete scene-v1 presentation fidelity: plotmath, multiline wrapping/collision layout, and some accessibility metadata are not represented by the current scene/renderers. Column-label orientation and per-label rotation are retained in the renderer-neutral text scene and emitted by SVG; the RGBA bitmap fallback currently ignores text rotation. The shared conversion applies document-level label font family, size, and weight; `truncate` and `omit` collision policies are applied using a deterministic cell-relative width, while `preserve` and `wrap` currently leave labels unchanged. SVG retains label and figure-text font family/weight/style; the RGBA bitmap fallback does not reproduce those font attributes. Do not treat successful parsing as proof that every optional field is rendered identically by every backend.
 
 
 ## Portable targets
@@ -38,12 +49,12 @@ cargo check --locked --offline --all-targets --target wasm32-unknown-unknown
 cargo test --locked --offline
 ```
 
-The WebAssembly build check proves target portability of this Rust library; it
-does not create JavaScript exports or a browser package. The thin WASM binding
-and its loading/memory boundary are tracked separately in issue #142. Native
-unit tests execute the shared semantic test suite; the WebAssembly CI job also
-compiles those same tests for the target, without claiming a browser runtime
-test before the binding/runtime harness exists.
+The WebAssembly build check proves target portability of this Rust library.
+The repository also has thin Node-API and browser-WASM adapters that invoke the
+shared core; the browser smoke test exercises the matrix-to-SVG path. Issue
+#142 continues to track the broader WASM API and loading/memory boundary.
+Native unit tests execute the shared semantic test suite, and the WebAssembly
+CI job compiles those same tests for the target.
 
 
 ## Direct scene renderers
@@ -59,7 +70,7 @@ viewport clipping, text annotations, straight alpha compositing, and
 letterboxed scaling. It emits an owned top-left-origin sRGB RGBA8 buffer with
 the stride and optional DPI metadata defined by renderer-output-v1.
 
-The current bitmap text fallback is a built-in 5x7 ASCII font; unsupported
+SVG text retains scene-v1 font family, weight, and style attributes. The RGBA renderer does not have a font engine and continues to use a built-in 5x7 ASCII bitmap font; unsupported
 characters use a visible replacement glyph. It is intentionally not a
 font-engine replacement and does not claim plotmath shaping or font-family
 fidelity. Each render is limited to 128 MiB of pixel storage. PNG encoding is
