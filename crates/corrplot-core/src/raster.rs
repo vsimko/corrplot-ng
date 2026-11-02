@@ -511,7 +511,37 @@ impl Canvas {
     }
 
     fn draw_text(&mut self, text: &str, x: f64, y: f64, font_size: f64, color: RgbaColor, anchor: TextAnchor) {
-        self.draw_text_rotated(text, x, y, font_size, color, anchor, 0.0);
+        let cell = font_size * self.scale / 7.0;
+        if cell <= 0.0 || !cell.is_finite() { return; }
+        for (line_index, line) in text.split('\\n').enumerate() {
+            let width = line.chars().count() as f64 * 6.0 * cell - cell;
+            let (x, line_y) = self.point(x, y + line_index as f64 * font_size * 1.2);
+            let start_x = match anchor {
+                TextAnchor::Start => x,
+                TextAnchor::Middle => x - width / 2.0,
+                TextAnchor::End => x - width,
+            };
+            for (index, character) in line.chars().enumerate() {
+                let rows = bitmap_glyph(character);
+                for (row, bits) in rows.iter().enumerate() {
+                    for column in 0..5 {
+                        if bits & (1 << (4 - column)) != 0 {
+                            let left = start_x + (index as f64 * 6.0 + column as f64) * cell;
+                            let top = line_y + row as f64 * cell;
+                            let right = left + cell;
+                            let bottom = top + cell;
+                            let x0 = left.floor().max(0.0) as isize;
+                            let y0 = top.floor().max(0.0) as isize;
+                            let x1 = right.ceil().min(self.width as f64) as isize;
+                            let y1 = bottom.ceil().min(self.height as f64) as isize;
+                            for py in y0..y1 {
+                                for px in x0..x1 { self.blend_pixel(px, py, color); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn draw_text_rotated(
@@ -524,6 +554,12 @@ impl Canvas {
         anchor: TextAnchor,
         rotation_degrees: f64,
     ) {
+        if rotation_degrees.rem_euclid(360.0).abs() < f64::EPSILON
+            || (rotation_degrees.rem_euclid(360.0) - 360.0).abs() < f64::EPSILON
+        {
+            self.draw_text(text, x, y, font_size, color, anchor);
+            return;
+        }
         let cell = font_size * self.scale / 7.0;
         if cell <= 0.0 || !cell.is_finite() { return; }
         let (anchor_x, anchor_y) = self.point(x, y);
