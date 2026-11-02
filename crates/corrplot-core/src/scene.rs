@@ -379,6 +379,13 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
             })
         } else { None };
         let encoding = cell.get("encoding").map(|value| as_object(value, &format!("{path}.encoding"))).transpose()?;
+        let method_value = cell.get("method")
+            .or_else(|| encoding.and_then(|object| object.get("kind")))
+            .or_else(|| root.get("glyph_method"));
+        let effective_method = match method_value {
+            Some(value) => scene_v1_cell_method(as_string(value, &format!("{path}.method"))?, &format!("{path}.method"))?,
+            None => cell_method,
+        };
         let color = if value.is_none() { missing } else if let Some(crate::json::Value::String(hex)) = encoding.and_then(|object| object.get("color")).or_else(|| cell.get("color")) {
             parse_scene_v1_hex_color(hex)?
         } else if let Some(value) = value {
@@ -386,9 +393,11 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         } else { missing };
         if value.is_none() {
             target.fill = missing;
-        } else if cell_method == CellMethod::Color {
+        } else if effective_method == CellMethod::Color {
             target.fill = color;
         }
+        let max_abs = matrix.values.iter().flatten().flatten().map(|value| value.abs()).fold(0.0_f64, f64::max);
+        target.glyph = value.map(|raw| scene_v1_make_glyph(raw, effective_method, color, target.size, matrix.semantics, max_abs));
         if let Some(glyph) = &mut target.glyph {
             set_scene_glyph_color(glyph, color);
             if let Some(encoding) = encoding {
@@ -422,6 +431,52 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
     Ok(scene)
 }
 
+
+fn scene_v1_cell_method(value: &str, path: &str) -> Result<CellMethod, SceneBuildError> {
+    match value {
+        "circle" => Ok(CellMethod::Circle),
+        "square" => Ok(CellMethod::Square),
+        "ellipse" => Ok(CellMethod::Ellipse),
+        "number" => Ok(CellMethod::Number),
+        "shade" => Ok(CellMethod::Shade),
+        "color" => Ok(CellMethod::Color),
+        "pie" => Ok(CellMethod::Pie),
+        _ => Err(SceneBuildError::new("input.scene.invalid_value", "unsupported cell method", path)),
+    }
+}
+
+fn scene_v1_make_glyph(
+    value: f64,
+    method: CellMethod,
+    color: RgbaColor,
+    size: f64,
+    semantics: MatrixSemantics,
+    max_abs: f64,
+) -> CellGlyph {
+    let denominator = match semantics {
+        MatrixSemantics::Correlation => 1.0,
+        MatrixSemantics::GeneralNumeric => max_abs,
+    };
+    let magnitude = if denominator == 0.0 { 0.0 } else { (value.abs() / denominator).clamp(0.0, 1.0) };
+    let black = RgbaColor { red: 35, green: 35, blue: 35, alpha: 255 };
+    match method {
+        CellMethod::Circle => CellGlyph::Circle { radius: magnitude * size * 0.43, color },
+        CellMethod::Square => CellGlyph::Square { side: magnitude * size * 0.86, color },
+        CellMethod::Ellipse => CellGlyph::Ellipse {
+            rx: size * 0.43,
+            ry: (size * 0.43 * (1.0 - magnitude)).max(size * 0.015),
+            rotation_degrees: if value > 0.0 { -45.0 } else if value < 0.0 { 45.0 } else { 0.0 },
+            color,
+        },
+        CellMethod::Number => CellGlyph::Number { text: format!("{value:.3}"), font_size: 12.0, color: black },
+        CellMethod::Shade => CellGlyph::Shade { color },
+        CellMethod::Color => CellGlyph::Color,
+        CellMethod::Pie => {
+            let sign = if value < 0.0 { -1.0 } else { 1.0 };
+            CellGlyph::Pie { radius: size * 0.43, start_radians: -std::f64::consts::FRAC_PI_2, end_radians: -std::f64::consts::FRAC_PI_2 + sign * std::f64::consts::TAU * magnitude, color }
+        }
+    }
+}
 
 fn append_scene_v1_significance_policy(
     scene: &mut Scene,
