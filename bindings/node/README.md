@@ -1,57 +1,55 @@
-# Native Node.js binding (first slice)
+# Native Node.js binding
 
 This package is a thin Node-API adapter over the repository's shared
-`crates/corrplot-core` Rust library. It does not implement matrix validation
-or rendering semantics in JavaScript.
+`crates/corrplot-core` Rust library. Matrix validation, scene construction,
+diagnostics, and rendering semantics remain in Rust.
 
 ## Implemented operations
 
 - `validateMatrix(input)` calls the shared Rust matrix validator.
-- `renderSceneSvg(scene, options)` converts a typed scene object and invokes
-  the shared Rust SVG renderer.
+- `renderSceneSvg(scene, options)` invokes the shared Rust SVG renderer.
 - `renderSceneRgba(scene, options)` invokes the shared Rust RGBA renderer and
   returns an owned Node Buffer with dimensions, stride, pixel format, alpha,
   color-space, and optional DPI metadata.
-- `renderMatrixSvg(sceneV1Json, method)` parses the matrix-bearing portion of
-  scene-v1 JSON, constructs the normalized matrix scene, and renders SVG
-  entirely through the shared Rust core. Supported methods are circle,
-  square, ellipse, number, shade, color, and pie.
+- `renderMatrixSvg(sceneV1Json, method)` parses scene-v1 JSON, constructs the
+  normalized matrix scene, and renders SVG through the shared Rust core.
 - `getRendererCapabilities()` returns the core's capability-v1 declaration.
 
 Errors are exposed as `CorrplotError` instances with a diagnostic-v1 record.
-Matrix values and scene fields are converted into Rust-owned values. The RGBA
-pixel vector is moved into the returned Node Buffer, avoiding a second pixel
-buffer copy at the Rust/Node ownership boundary. The caller owns the returned
-buffer and may retain or modify it independently of the Rust renderer.
+The RGBA pixel vector is moved into the returned Node Buffer, avoiding a
+second pixel-buffer copy at the Rust/Node ownership boundary.
 
-## Build and test
+## Installation and supported binaries
 
-Requirements: Node.js 22, 24, or 26, npm, and the Rust 1.78+ toolchain.
+The package selects a platform-specific optional dependency at runtime.
+Prebuilt packages use the stable Node-API ABI and support:
 
-From this directory:
+| Platform package | OS / architecture | libc / ABI |
+| --- | --- | --- |
+| `@corrplot-ng/native-node-linux-x64-gnu` | Linux x64 | glibc |
+| `@corrplot-ng/native-node-darwin-x64` | macOS x64 | Darwin |
+| `@corrplot-ng/native-node-darwin-arm64` | macOS arm64 | Darwin |
+| `@corrplot-ng/native-node-win32-x64-msvc` | Windows x64 | MSVC |
 
-~~~
-npm test
-~~~
+Linux musl, 32-bit systems, and other CPU architectures are not claimed.
+A source checkout can build the addon locally with Rust 1.78+, Node.js
+22/24/26, and npm using `npm run build`; consumers of a published binary
+package do not need Cargo or a Rust toolchain.
 
-The test command builds the addon, runs the native tests, then creates an npm
-tarball, installs it into a clean temporary project with lifecycle scripts
-disabled, and imports it without invoking Cargo. This verifies that the
-prepackaged native binary is present and loadable without a Rust toolchain at
-runtime.
+The clean-install smoke test installs the base package and its matching
+platform package into a temporary project with lifecycle scripts disabled.
 
-The build produces `index.node` for the current OS and architecture. The
-resulting addon can be loaded by Node.js without a Rust toolchain at runtime.
-When packaging a release, `prepack` builds the host-native addon and includes
-it in the package archive. A source checkout therefore needs Rust to build;
-a packaged release needs only a compatible Node.js runtime.
+## Building release packages
 
-The initial CI platform matrix is Linux x64, macOS x64/arm64 runners, and
-Windows x64, with Node.js 22, 24, and 26. Other architectures are not yet
-claimed. Separate platform-specific prebuilt package publishing remains future
-release work; this source-build package is not yet a published npm release.
+The `.github/workflows/build-node-prebuilt-packages.yml` workflow builds
+platform-specific npm tarballs on native GitHub-hosted runners and uploads
+them as workflow artifacts. Publish the four platform packages first, then
+publish `@corrplot-ng/native-node` so its optional dependencies can resolve.
+Publishing requires the repository maintainer's npm registry credentials;
+the workflow builds and packages artifacts but does not publish them.
 
 ## Scope boundary
 
-The Rust core now also provides an initial scene-v1 matrix parser and deterministic matrix-to-scene builder. The Node and WASM bindings expose the same end-to-end matrix-to-SVG operation. The parser intentionally validates only the matrix-bearing subset; full scene-v1 presentation semantics are not yet implemented. Scene construction and the unified asynchronous TypeScript facade
-remain follow-up work in #141 and #145.
+This is the native Node backend, not the unified cross-runtime TypeScript
+facade. Backend selection and shared browser/native API design remain in
+issue #145. The WASM and direct Canvas work remain in issues #142 and #144.
