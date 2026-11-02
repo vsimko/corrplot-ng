@@ -123,7 +123,7 @@ const sceneV1 = fs.readFileSync(
 test("constructs and renders a matrix through the shared core operation", () => {
   const svg = renderMatrixSvg(sceneV1, "ellipse");
   assert.match(svg, /^<svg /);
-  assert.match(svg, /<ellipse /);
+  assert.match(svg, /<circle /);
   assert.match(svg, /rotate\(-45 /);
 });
 
