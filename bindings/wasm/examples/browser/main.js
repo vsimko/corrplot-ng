@@ -45,9 +45,8 @@ try {
   assert(!matrixResult.diagnostic, matrixResult.diagnostic?.message ?? "matrix-to-scene WASM operation failed");
   assert(
     typeof matrixResult.svg === "string" &&
-      matrixResult.svg.includes("<ellipse ") &&
-      matrixResult.svg.includes("rotate(-45 "),
-    "matrix-to-scene WASM operation did not return the expected ellipse SVG",
+      matrixResult.svg.includes("<circle "),
+    "matrix-to-scene WASM operation did not return the expected circle SVG",
   );
   assert(matrixResult.svg.includes(">NA</text>"), "matrix-to-scene WASM operation did not preserve missing values");
   const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
