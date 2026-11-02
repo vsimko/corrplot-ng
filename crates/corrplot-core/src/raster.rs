@@ -21,6 +21,8 @@ pub struct SceneText {
     pub text: String,
     pub x: f64,
     pub y: f64,
+    /// Counter-clockwise rotation around the text anchor, in degrees.
+    pub rotation_degrees: f64,
     /// Logical scene units for the full seven-row bitmap font.
     pub font_size: f64,
     pub font_family: String,
@@ -222,6 +224,7 @@ impl Scene {
         for (index, text) in self.texts.iter().enumerate() {
             if !text.x.is_finite() || !text.y.is_finite()
                 || !text.font_size.is_finite() || text.font_size <= 0.0
+                || !text.rotation_degrees.is_finite()
             {
                 return Err(OutputValidationError::invalid_options(format!(
                     "scene text {index} has invalid position or font size",
@@ -322,7 +325,7 @@ pub fn render_rgba(
     }
     draw_scene_legend_rgba(&mut canvas, scene);
     for text in &scene.texts {
-        canvas.draw_text(&text.text, text.x, text.y, text.font_size, text.color, text.anchor);
+        canvas.draw_text(&text.text, text.x, text.y, text.font_size, text.color, text.anchor); // RGBA bitmap fallback does not rotate text.
     }
 
     Ok(RgbaBuffer {
@@ -663,8 +666,8 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::End => "end",
             };
             out.push_str(&format!(
-                "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
-                text.x, text.y, anchor, escape_xml(font_family), text.font_size,
+                "<text x=\"{}\" y=\"{}\" transform=\"rotate({} {} {})\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
+                text.x, text.y, text.rotation_degrees, text.x, text.y, anchor, escape_xml(font_family), text.font_size,
                 escape_xml(&text.font_weight), escape_xml(&text.font_style),
                 color_hex(text.color), alpha(text.color), escape_xml(&text.text)
             ));
@@ -752,7 +755,7 @@ mod tests {
             legend: vec![],
             cluster_regions: vec![],
             texts: vec![SceneText {
-                text: "A".into(), x: 10.0, y: 10.0, font_size: 10.0,
+                text: "A".into(), x: 10.0, y: 10.0, rotation_degrees: 0.0, font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
