@@ -101,6 +101,7 @@ pub struct SceneTextInput {
     pub font_size: f64,
     pub color: RgbaColorInput,
     pub anchor: String,
+    pub rotation_degrees: Option<f64>,
 }
 
 #[napi(object)]
@@ -280,7 +281,8 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             font_size: text.font_size,
             color: rgba(text.color, &format!("texts[{index}].color"))?,
             anchor,
-            font_family: String::new(),
+            rotation_degrees: text.rotation_degrees.unwrap_or(0.0),
+            font_family: String::new()
             font_weight: "normal".into(),
             font_style: "normal".into(),
         });
