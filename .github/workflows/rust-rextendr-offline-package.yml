@@ -147,7 +147,17 @@ jobs:
             R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --release
             native_dir="prototypes/rust-rextendr/.ci-rust-target/release"
           fi
-          native_library="$(find "$native_dir" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\\.(so|dylib|dll)      - name: Report optimized installed package and native library sizes
+          native_library="$(find "$native_dir" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\\.(so|dylib|dll)$' | head -n 1 || true)"
+          if [[ -z "$native_library" ]]; then
+            echo "Native extendr cdylib not found in $native_dir" >&2
+            find "$native_dir" -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_R_LIBRARY=$native_library" >> "$GITHUB_ENV"
+          echo "Native R cdylib: $native_library ($(wc -c < "$native_library" | tr -d ' ') bytes)"
+          cargo tree --manifest-path "$manifest" --edges normal > native-r-cargo-tree.txt
+          cp experiments/wasm-r/native-r/Cargo.lock native-r-Cargo.lock
+      - name: Report optimized installed package and native library sizes
         shell: bash
         run: |
           set -euxo pipefail
@@ -317,80 +327,3 @@ jobs:
           name: rust-r-footprint-${{ matrix.os }}
           path: size-results/
           if-no-files-found: error
- | head -n 1 || true)"
-          if [[ -z "$native_library" ]]; then
-            echo "Native extendr cdylib not found in $native_dir" >&2
-            find "$native_dir" -maxdepth 1 -type f -print
-            exit 1
-          fi
-          echo "NATIVE_R_LIBRARY=$native_library" >> "$GITHUB_ENV"
-          echo "Native R cdylib: $native_library ($(wc -c < "$native_library" | tr -d ' ') bytes)"
-          cargo tree --manifest-path "$manifest" --edges normal > native-r-cargo-tree.txt
-          cp experiments/wasm-r/native-r/Cargo.lock native-r-Cargo.lock
-      - name: Report optimized installed package and native library sizes
-        shell: bash
-        run: |
-          set -euxo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import subprocess
-
-          package_dir = Path(subprocess.check_output(
-              ["Rscript", "-e", "cat(normalizePath(find.package('corrplotngrustspike')))"],
-              text=True,
-          ).strip())
-          target_dir = Path("prototypes/rust-rextendr/.ci-rust-target/release")
-
-          def report(label, paths):
-              paths = [path for path in paths if path.is_file()]
-              total = sum(path.stat().st_size for path in paths)
-              print(f"{label}: {total:,} bytes ({total / 1024 / 1024:.2f} MiB)")
-              for path in sorted(paths, key=lambda item: item.stat().st_size, reverse=True):
-                  print(f"  {path.name}: {path.stat().st_size:,} bytes")
-
-          report("Installed package", list(package_dir.rglob("*")))
-          report("Installed native libraries", list((package_dir / "libs").rglob("*")))
-          report("Rust static library build artifacts", list(target_dir.glob("*corrplotngrustspike*")))
-          print(f"Installed package path: {package_dir}")
-          PY
-      - name: Inspect retained native-library sections and symbols
-        shell: bash
-        run: python3 prototypes/rust-rextendr/inspect-native-library.py
-      - name: Experimentally strip debug data from a temporary installed library
-        shell: bash
-        run: python3 prototypes/rust-rextendr/experiment-strip-debug.py
-      - name: Build and inspect the actual R source tarball
-        shell: bash
-        run: |
-          set -euxo pipefail
-          R CMD build --no-build-vignettes --no-manual prototypes/rust-rextendr/.ci-r-package
-          tarball=corrplotngrustspike_0.1.0.tar.gz
-          test -s "$tarball"
-          # R CMD build runs rextendr's clean target, which removes the expanded
-          # vendor tree. Restore it into the source archive so R CMD check can
-          # compile the package offline from the actual tarball.
-          unpack_dir="$(mktemp -d)"
-          tar -xzf "$tarball" -C "$unpack_dir"
-          tar -xJf "$unpack_dir/corrplotngrustspike/src/rust/vendor.tar.xz" -C "$unpack_dir/corrplotngrustspike/src"
-          rm "$tarball"
-          tar -czf "$tarball" -C "$unpack_dir" corrplotngrustspike
-          tar -tzf "$tarball" > source-tarball-files.txt
-          echo "R source tarball size: $(wc -c < "$tarball") bytes"
-          grep -qx 'corrplotngrustspike/inst/licenses/extendr-MIT.txt' source-tarball-files.txt
-          grep -qx 'corrplotngrustspike/inst/licenses/README.md' source-tarball-files.txt
-          grep -qx 'corrplotngrustspike/src/rust/Cargo.lock' source-tarball-files.txt
-          grep -qx 'corrplotngrustspike/src/rust/vendor.tar.xz' source-tarball-files.txt
-          # Cargo vendor uses the package name as the directory; verify the
-          # extendr-api manifest exists in the expanded source archive.
-          test -s "$unpack_dir/corrplotngrustspike/src/rust/vendor/extendr-api/Cargo.toml"
-          echo "R source tarball contains extendr license notices, Cargo.lock, and expanded vendored Rust sources."
-      - name: Check the built R source package
-        shell: bash
-        env:
-          # Keep the CRAN-style checks deterministic in CI; remote incoming
-          # checks depend on CRAN availability and are tested separately.
-          _R_CHECK_CRAN_INCOMING_: "false"
-          _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
-        run: |
-          set -euxo pipefail
-          R CMD check --as-cran --no-manual corrplotngrustspike_0.1.0.tar.gz
