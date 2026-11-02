@@ -647,7 +647,7 @@ fn append_scene_v1_text_annotations(
         let font_size = as_number(required(annotation, "font_size", &path)?, &format!("{path}.font_size"))?;
         let font_weight = as_string(required(annotation, "font_weight", &path)?, &format!("{path}.font_weight"))?.to_string();
         let font_style = as_string(required(annotation, "font_style", &path)?, &format!("{path}.font_style"))?.to_string();
-        scene.texts.push(SceneText { text, x, y, font_size, font_family: "sans-serif".into(), font_weight, font_style, color, anchor: TextAnchor::Middle });
+        scene.texts.push(SceneText { text, x, y, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
     }
     Ok(())
 }
@@ -1292,22 +1292,22 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
                 p_value: None, normalized_value: None, significance: None, confidence_interval: None,
             });
             if visible && value.is_none() {
-                texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into() });
+                texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
             }
         }
     }
 
     for (index, label) in input.labels.iter().enumerate() {
         let center = TOP_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0;
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into() });
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if !options.title.is_empty() {
-        texts.push(SceneText { text: options.title.clone(), x: width / 2.0, y: 12.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText { text: options.title.clone(), x: width / 2.0, y: 12.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if let Some(annotation) = &options.annotation {
         if !annotation.is_empty() {
-            texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into() });
+            texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
         }
     }
     // The current renderer Scene type has no accessibility metadata fields.
