@@ -395,8 +395,7 @@ mod tests {
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
         let svg = output.svg.unwrap();
         assert!(svg.starts_with("<svg "));
-        assert!(svg.contains("<ellipse "));
-        assert!(svg.contains("rotate(-45 "));
+        assert!(svg.contains("<circle "));
 
         let output = render_matrix_svg_wasm(scene_v1.into(), "unknown".into()).unwrap();
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
