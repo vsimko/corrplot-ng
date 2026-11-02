@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - experiment/rust-rextendr-offline-package
+      - experiment/rust-binary-size-matrix
     paths:
       - ".github/workflows/rust-rextendr-offline-package.yml"
       - "prototypes/rust-rextendr/**"
