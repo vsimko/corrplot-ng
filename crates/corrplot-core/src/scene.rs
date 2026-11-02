@@ -424,6 +424,7 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
     }
     append_scene_v1_text_annotations(&mut scene, root)?;
+    append_scene_v1_figure_text(&mut scene, root)?;
     append_scene_v1_significance_policy(&mut scene, root)?;
     append_scene_v1_legend(&mut scene, root)?;
     append_scene_v1_cluster_regions(&mut scene, root)?;
@@ -566,6 +567,41 @@ fn validate_scene_text_annotation_bounds(
                     format!("{path}.{field}"),
                 ).with_cell(row, column));
             }
+        }
+    }
+    Ok(())
+}
+
+fn append_scene_v1_figure_text(
+    scene: &mut Scene,
+    root: &std::collections::BTreeMap<String, crate::json::Value>,
+) -> Result<(), SceneBuildError> {
+    let Some(value) = root.get("figure_text") else { return Ok(()); };
+    let black = RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 };
+    for (index, item) in as_array(value, "figure_text")?.iter().enumerate() {
+        let path = format!("figure_text[{index}]");
+        let figure = as_object(item, &path)?;
+        let x = as_number(required(figure, "x", &path)?, &format!("{path}.x"))?;
+        let y = as_number(required(figure, "y", &path)?, &format!("{path}.y"))?;
+        let font_size = as_number(required(figure, "font_size", &path)?, &format!("{path}.font_size"))?;
+        let line_height = as_number(required(figure, "line_height", &path)?, &format!("{path}.line_height"))?;
+        let alignment = as_string(required(figure, "alignment", &path)?, &format!("{path}.alignment"))?;
+        let anchor = match alignment {
+            "left" => TextAnchor::Start,
+            "center" => TextAnchor::Middle,
+            "right" => TextAnchor::End,
+            _ => return Err(SceneBuildError::new("input.scene.invalid_value", "unsupported figure text alignment", format!("{path}.alignment"))),
+        };
+        let lines = as_array(required(figure, "lines", &path)?, &format!("{path}.lines"))?;
+        for (line_index, line) in lines.iter().enumerate() {
+            scene.texts.push(SceneText {
+                text: as_string(line, &format!("{path}.lines[{line_index}]"))?.to_string(),
+                x,
+                y: y + line_index as f64 * line_height,
+                font_size,
+                color: black,
+                anchor,
+            });
         }
     }
     Ok(())
@@ -1368,6 +1404,21 @@ mod tests {
         assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Square { .. })));
         assert!(matches!(&scene.cells[1].glyph, Some(CellGlyph::Pie { .. })));
         assert!(matches!(&scene.cells[2].glyph, Some(CellGlyph::Number { .. })));
+    }
+
+    #[test]
+    fn scene_v1_to_scene_lays_out_figure_text_lines() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace(
+                "\"annotation\": \"Prototype annotation: synthetic example only\",",
+                "\"annotation\": \"Prototype annotation: synthetic example only\",\"figure_text\":[{\"role\":\"caption\",\"text\":\"A caption\\nsecond line\",\"lines\":[\"A caption\",\"second line\"],\"alignment\":\"center\",\"font_family\":\"sans\",\"font_size\":10,\"font_weight\":\"normal\",\"font_style\":\"normal\",\"line_height\":12,\"spacing_after\":2,\"x\":180,\"y\":350}]",
+            );
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        assert!(scene.texts.iter().any(|text| text.text == "A caption"
+            && text.x == 180.0 && text.y == 350.0 && text.font_size == 10.0
+            && text.anchor == TextAnchor::Middle));
+        assert!(scene.texts.iter().any(|text| text.text == "second line"
+            && text.x == 180.0 && text.y == 362.0 && text.anchor == TextAnchor::Middle));
     }
 
     #[test]
