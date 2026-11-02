@@ -1,7 +1,18 @@
 name: Rust rextendr offline package install
 
 on:
+  push:
+    branches:
+      - experiment/rust-rextendr-offline-package
+      - experiment/rust-binary-size-matrix
+    paths:
+      - ".github/workflows/rust-rextendr-offline-package.yml"
+      - "prototypes/rust-rextendr/**"
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "prototypes/rust-rextendr/**"
+      - ".github/workflows/rust-rextendr-offline-package.yml"
 
 permissions:
   contents: read
@@ -126,6 +137,7 @@ jobs:
       - name: Test Rust function from R
         run: Rscript -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
       - name: Build the current native extendr cdylib for a same-run comparison
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           set -euxo pipefail
@@ -156,6 +168,7 @@ jobs:
           cargo tree --manifest-path "$manifest" --edges normal > native-r-cargo-tree.txt
           cp experiments/wasm-r/native-r/Cargo.lock native-r-Cargo.lock
       - name: Report optimized installed package and native library sizes
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           set -euxo pipefail
@@ -182,9 +195,11 @@ jobs:
           print(f"Installed package path: {package_dir}")
           PY
       - name: Inspect retained native-library sections and symbols
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: python3 prototypes/rust-rextendr/inspect-native-library.py
       - name: Experimentally strip debug data from a temporary installed library
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: python3 prototypes/rust-rextendr/experiment-strip-debug.py
       - name: Build and inspect the actual R source tarball
@@ -223,6 +238,7 @@ jobs:
           set -euxo pipefail
           R CMD check --as-cran --no-manual corrplotngrustspike_0.1.0.tar.gz
       - name: Produce machine-readable size and build manifest
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           set -euxo pipefail
@@ -349,6 +365,7 @@ jobs:
           PY
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload reproducible size measurements
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: rust-r-footprint-${{ matrix.os }}
