@@ -124,6 +124,8 @@ fn build_scene_json_rust(
     Ok(out)
 }
 
+/// Parse scene-v1 and render SVG through the shared Rust scene and SVG renderer.
+/// @export
 #[extendr]
 fn render_scene_svg_rust(scene_json: &str) -> std::result::Result<String, String> {
     let scene = scene_v1_to_scene(scene_json, CellMethod::Circle)
