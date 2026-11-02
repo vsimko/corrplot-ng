@@ -513,7 +513,7 @@ impl Canvas {
     fn draw_text(&mut self, text: &str, x: f64, y: f64, font_size: f64, color: RgbaColor, anchor: TextAnchor) {
         let cell = font_size * self.scale / 7.0;
         if cell <= 0.0 || !cell.is_finite() { return; }
-        for (line_index, line) in text.split('\\n').enumerate() {
+        for (line_index, line) in text.split('\n').enumerate() {
             let width = line.chars().count() as f64 * 6.0 * cell - cell;
             let (x, line_y) = self.point(x, y + line_index as f64 * font_size * 1.2);
             let start_x = match anchor {
@@ -565,7 +565,7 @@ impl Canvas {
         let (anchor_x, anchor_y) = self.point(x, y);
         let radians = rotation_degrees.to_radians();
         let (sin, cos) = radians.sin_cos();
-        for (line_index, line) in text.split('\\n').enumerate() {
+        for (line_index, line) in text.split('\n').enumerate() {
             let width = line.chars().count() as f64 * 6.0 * cell - cell;
             let start_x = match anchor {
                 TextAnchor::Start => anchor_x,
