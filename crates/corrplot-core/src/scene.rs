@@ -1595,13 +1595,23 @@ mod tests {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
-        assert!(scene.texts.iter().any(|text| text.text == "A caption" && text.semantic_role.as_deref() == Some("caption")));
             && text.x == 50.0 && text.y == 90.0 && text.font_size == 10.0
             && text.anchor == TextAnchor::Middle
-            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));
+            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"
+            && text.semantic_role.as_deref() == Some("caption")));
         assert!(scene.texts.iter().any(|text| text.text == "second line"
             && text.x == 50.0 && text.y == 102.0 && text.anchor == TextAnchor::Middle
-            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));
+            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"
+            && text.semantic_role.as_deref() == Some("caption")));
+
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("data-semantic-role=\"caption\""));
+        assert!(svg.contains("aria-label=\"caption: A caption\""));
     }
 
     #[test]
