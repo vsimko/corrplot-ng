@@ -8,10 +8,20 @@ benchmark_repeated <- function(invoke) {
   if (!is.finite(target_seconds) || target_seconds <= 0) stop("CORRPLOT_BENCH_TARGET_SECONDS must be > 0")
 
   invisible(replicate(5L, invoke(), simplify = FALSE))
+
+  # Windows' elapsed clock can have a coarser resolution than the fast calls
+  # being benchmarked. Grow the pilot batch until the clock advances enough
+  # to produce a stable per-call estimate; otherwise a zero-duration pilot
+  # would incorrectly hit the 2,000,000-call cap for every sample.
   pilot_calls <- 20L
-  started <- proc.time()[["elapsed"]]
-  for (i in seq_len(pilot_calls)) response <- invoke()
-  pilot_seconds <- proc.time()[["elapsed"]] - started
+  repeat {
+    started <- proc.time()[["elapsed"]]
+    for (i in seq_len(pilot_calls)) response <- invoke()
+    pilot_seconds <- proc.time()[["elapsed"]] - started
+    if (pilot_seconds >= 0.1 || pilot_calls >= 1000000L) break
+    pilot_calls <- min(pilot_calls * 2L, 1000000L)
+  }
+
   calls_per_sample <- max(1L, min(2000000L,
     as.integer(ceiling(target_seconds / max(pilot_seconds / pilot_calls, 1e-6)))))
 
