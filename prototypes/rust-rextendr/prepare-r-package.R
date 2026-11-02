@@ -159,23 +159,8 @@ writeLines(c(
   "  .Call(wrap__build_scene_json_rust, labels, matrix, annotation)",
   "}"
 ), wrapper_file)
-
-render_wrapper_file <- file.path(pkg_dir, "R", "render_scene_svg_rust.R")
-writeLines(c(
-  "#' Render scene-v1 JSON as SVG through the shared Rust core.",
-  "#' @param scene_json A single scene-v1 JSON document.",
-  "#' @return A single SVG string.",
-  "#' @export",
-  "render_scene_svg_rust <- function(scene_json) {",
-  "  .Call(wrap__render_scene_svg_rust, scene_json)",
-  "}"
-), render_wrapper_file)
-
 if (!any(grepl("^export\\(build_scene_json_rust\\)$", namespace_lines))) {
   namespace_lines <- c(namespace_lines, "export(build_scene_json_rust)")
-}
-if (!any(grepl("^export\\(render_scene_svg_rust\\)$", namespace_lines))) {
-  namespace_lines <- c(namespace_lines, "export(render_scene_svg_rust)")
 }
 writeLines(namespace_lines, namespace_file)
 
@@ -204,15 +189,6 @@ writeLines(c(
   "stopifnot(is.character(scene), length(scene) == 1L)",
   "}"
 ), file.path(man_dir, "build_scene_json_rust.Rd"))
-writeLines(c(
-  "\\name{render_scene_svg_rust}",
-  "\\alias{render_scene_svg_rust}",
-  "\\title{Render Scene-V1 JSON as SVG}",
-  "\\description{Parses scene-v1 JSON and renders it through the shared Rust SVG renderer.}",
-  "\\usage{render_scene_svg_rust(scene_json)}",
-  "\\arguments{\\item{scene_json}{A single scene-v1 JSON document.}}",
-  "\\value{A character vector of length one containing SVG markup.}"
-), file.path(man_dir, "render_scene_svg_rust.Rd"))
 
 test_dir <- file.path(pkg_dir, "tests", "testthat")
 dir.create(test_dir, recursive = TRUE)
