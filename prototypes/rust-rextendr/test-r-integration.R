@@ -21,6 +21,7 @@ stopifnot(
   length(scene_svg) == 1L,
   grepl("<svg ", scene_svg, fixed = TRUE),
   grepl("A caption", scene_svg, fixed = TRUE),
+  grepl('data-semantic-role="caption"', scene_svg, fixed = TRUE),
   grepl("second line", scene_svg, fixed = TRUE)
 )
 cat("Shared scene-v1 construction fixture passed through Rust/rextendr.\n")

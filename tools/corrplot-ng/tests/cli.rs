@@ -336,6 +336,7 @@ fn cli_renders_shared_scene_v1_construction_fixture() {
     let svg = String::from_utf8(output.stdout).unwrap();
     assert!(svg.starts_with("<svg "));
     assert!(svg.contains("A caption"));
+    assert!(svg.contains("data-semantic-role=\"caption\""));
     assert!(svg.contains("second line"));
 }
 

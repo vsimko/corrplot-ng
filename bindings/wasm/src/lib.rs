@@ -427,6 +427,7 @@ mod tests {
         let svg = output.svg.unwrap();
         assert!(svg.starts_with("<svg "));
         assert!(svg.contains("A caption"));
+        assert!(svg.contains("data-semantic-role=\"caption\""));
         assert!(svg.contains("second line"));
     }
 
