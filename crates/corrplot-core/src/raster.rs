@@ -511,7 +511,7 @@ impl Canvas {
     fn draw_text(&mut self, text: &str, x: f64, y: f64, font_size: f64, color: RgbaColor, anchor: TextAnchor) {
         let cell = font_size * self.scale / 7.0;
         if cell <= 0.0 || !cell.is_finite() { return; }
-        for (line_index, line) in text.split('\\n').enumerate() {
+        for (line_index, line) in text.split('\n').enumerate() {
             let width = line.chars().count() as f64 * 6.0 * cell - cell;
             let (x, line_y) = self.point(x, y + line_index as f64 * font_size * 1.2);
             let start_x = match anchor {
@@ -667,7 +667,7 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::Middle => "middle",
                 TextAnchor::End => "end",
             };
-            let text_content = text.text.split('\\n').enumerate().map(|(index, line)| {
+            let text_content = text.text.split('\n').enumerate().map(|(index, line)| {
                 let dy = if index == 0 { 0.0 } else { text.font_size * 1.2 };
                 format!("<tspan x=\"{}\" dy=\"{}\">{}</tspan>", text.x, dy, escape_xml(line))
             }).collect::<String>();

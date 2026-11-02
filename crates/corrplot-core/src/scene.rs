@@ -1475,11 +1475,11 @@ mod tests {
             .replace("\"alpha\"", "\"a very long variable label\"")
             .replace(
                 "\"glyph_method\": \"circle\",",
-                "\"typography\": {\"label_font_family\": \"sans-serif\", \"label_font_size\": 10, \"label_font_weight\": \"normal\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"wrap\"},\\n  \"glyph_method\": \"circle\",",
+                "\"typography\": {\"label_font_family\": \"sans-serif\", \"label_font_size\": 10, \"label_font_weight\": \"normal\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"wrap\"},\n  \"glyph_method\": \"circle\",",
             );
         let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
         let row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap();
-        assert!(row_label.text.contains('\\n'));
+        assert!(row_label.text.contains('\n'));
         assert!(row_label.text.lines().all(|line| line.chars().count() <= 12));
 
         let plotmath_source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
