@@ -265,7 +265,9 @@ jobs:
               with path.open("rb") as stream:
                   for chunk in iter(lambda: stream.read(1024 * 1024), b""):
                       digest.update(chunk)
-              return {"path": str(path), "bytes": path.stat().st_size,
+              size = path.stat().st_size
+              return {"path": str(path), "bytes": size,
+                      "mib": round(size / 1024 / 1024, 4),
                       "sha256": digest.hexdigest()}
 
           report = {
@@ -289,6 +291,7 @@ jobs:
               "artifacts": {
                   "legacy_installed_r_package": {
                       "bytes": sum(p.stat().st_size for p in installed_files),
+                      "mib": round(sum(p.stat().st_size for p in installed_files) / 1024 / 1024, 4),
                       "files": len(installed_files)
                   },
                   "legacy_installed_native_libraries": [describe(p) for p in installed_native],
@@ -330,186 +333,7 @@ jobs:
       - name: Upload reproducible size measurements
         uses: actions/upload-artifact@v4
         with:
-          name: rust-r-footprint-${{ matrix.os }}
+          name: rust-r-footprint-\${{ matrix.os }}
           path: size-results/
           if-no-files-found: error
- | head -n 1 || true)"
-          if [[ -z "$native_library" ]]; then
-            echo "Native extendr cdylib not found in $native_dir" >&2
-            find "$native_dir" -maxdepth 1 -type f -print
-            exit 1
-          fi
-          echo "NATIVE_R_LIBRARY=$native_library" >> "$GITHUB_ENV"
-          echo "Native R cdylib: $native_library ($(wc -c < "$native_library" | tr -d ' ') bytes)"
-          cargo tree --manifest-path "$manifest" --edges normal > native-r-cargo-tree.txt
-          cp experiments/wasm-r/native-r/Cargo.lock native-r-Cargo.lock
-      - name: Report optimized installed package and native library sizes
-        shell: bash
-        run: |
-          set -euxo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import subprocess
 
-          package_dir = Path(subprocess.check_output(
-              ["Rscript", "-e", "cat(normalizePath(find.package('corrplotngrustspike')))"],
-              text=True,
-          ).strip())
-          target_dir = Path("prototypes/rust-rextendr/.ci-rust-target/release")
-
-          def report(label, paths):
-              paths = [path for path in paths if path.is_file()]
-              total = sum(path.stat().st_size for path in paths)
-              print(f"{label}: {total:,} bytes ({total / 1024 / 1024:.2f} MiB)")
-              for path in sorted(paths, key=lambda item: item.stat().st_size, reverse=True):
-                  print(f"  {path.name}: {path.stat().st_size:,} bytes")
-
-          report("Installed package", list(package_dir.rglob("*")))
-          report("Installed native libraries", list((package_dir / "libs").rglob("*")))
-          report("Rust static library build artifacts", list(target_dir.glob("*corrplotngrustspike*")))
-          print(f"Installed package path: {package_dir}")
-          PY
-      - name: Inspect retained native-library sections and symbols
-        shell: bash
-        run: python3 prototypes/rust-rextendr/inspect-native-library.py
-      - name: Experimentally strip debug data from a temporary installed library
-        shell: bash
-        run: python3 prototypes/rust-rextendr/experiment-strip-debug.py
-      - name: Build and inspect the actual R source tarball
-        shell: bash
-        run: |
-          set -euxo pipefail
-          R CMD build --no-build-vignettes --no-manual prototypes/rust-rextendr/.ci-r-package
-          tarball=corrplotngrustspike_0.1.0.tar.gz
-          test -s "$tarball"
-          # R CMD build runs rextendr's clean target, which removes the expanded
-          # vendor tree. Restore it into the source archive so R CMD check can
-          # compile the package offline from the actual tarball.
-          unpack_dir="$(mktemp -d)"
-          tar -xzf "$tarball" -C "$unpack_dir"
-          tar -xJf "$unpack_dir/corrplotngrustspike/src/rust/vendor.tar.xz" -C "$unpack_dir/corrplotngrustspike/src"
-          rm "$tarball"
-          tar -czf "$tarball" -C "$unpack_dir" corrplotngrustspike
-          tar -tzf "$tarball" > source-tarball-files.txt
-          echo "R source tarball size: $(wc -c < "$tarball") bytes"
-          grep -qx 'corrplotngrustspike/inst/licenses/extendr-MIT.txt' source-tarball-files.txt
-          grep -qx 'corrplotngrustspike/inst/licenses/README.md' source-tarball-files.txt
-          grep -qx 'corrplotngrustspike/src/rust/Cargo.lock' source-tarball-files.txt
-          grep -qx 'corrplotngrustspike/src/rust/vendor.tar.xz' source-tarball-files.txt
-          # Cargo vendor uses the package name as the directory; verify the
-          # extendr-api manifest exists in the expanded source archive.
-          test -s "$unpack_dir/corrplotngrustspike/src/rust/vendor/extendr-api/Cargo.toml"
-          echo "R source tarball contains extendr license notices, Cargo.lock, and expanded vendored Rust sources."
-      - name: Check the built R source package
-        shell: bash
-        env:
-          # Keep the CRAN-style checks deterministic in CI; remote incoming
-          # checks depend on CRAN availability and are tested separately.
-          _R_CHECK_CRAN_INCOMING_: "false"
-          _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
-        run: |
-          set -euxo pipefail
-          R CMD check --as-cran --no-manual corrplotngrustspike_0.1.0.tar.gz
-      - name: Produce machine-readable size and build manifest
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p size-results
-          python3 - <<'PY'
-          import hashlib
-          import json
-          import os
-          from pathlib import Path
-          import platform
-          import subprocess
-
-          def command(args):
-              result = subprocess.run(args, text=True, stdout=subprocess.PIPE,
-                                      stderr=subprocess.STDOUT, check=False)
-              return result.stdout.strip()
-
-          package = Path(command([
-              "Rscript", "-e",
-              "cat(normalizePath(find.package('corrplotngrustspike')))"
-          ]))
-          native_r = Path(os.environ["NATIVE_R_LIBRARY"])
-          source_tarball = Path("corrplotngrustspike_0.1.0.tar.gz")
-          installed_files = [p for p in package.rglob("*") if p.is_file()]
-          installed_native = [
-              p for p in (package / "libs").rglob("*")
-              if p.is_file() and p.suffix.lower() in {".so", ".dylib", ".dll"}
-          ]
-
-          def describe(path):
-              digest = hashlib.sha256()
-              with path.open("rb") as stream:
-                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                      digest.update(chunk)
-              return {"path": str(path), "bytes": path.stat().st_size,
-                      "sha256": digest.hexdigest()}
-
-          report = {
-              "platform": platform.platform(),
-              "machine": platform.machine(),
-              "runner_os": os.environ.get("RUNNER_OS"),
-              "target_triple": (
-                  "x86_64-pc-windows-gnu" if os.environ.get("RUNNER_OS") == "Windows"
-                  else "x86_64-apple-darwin" if os.environ.get("RUNNER_OS") == "macOS"
-                  else "x86_64-unknown-linux-gnu"
-              ),
-              "rustc_vv": command(["rustc", "-Vv"]),
-              "cargo_version": command(["cargo", "-V"]),
-              "r_version": command(["R", "--version"]).splitlines()[0],
-              "r_cc": command(["R", "CMD", "config", "CC"]),
-              "r_shlib_ldflags": command(["R", "CMD", "config", "SHLIB_LDFLAGS"]),
-              "release_profile": True,
-              "legacy_build_time_debug_stripping": os.environ.get("CORRPLOT_REXTENDR_STRIP_DEBUG"),
-              "legacy_extendr_version": "0.9.0",
-              "native_experiment_extendr_requirement": "0.8 (Cargo semver requirement; resolved version recorded in Cargo.lock)",
-              "artifacts": {
-                  "legacy_installed_r_package": {
-                      "bytes": sum(p.stat().st_size for p in installed_files),
-                      "files": len(installed_files)
-                  },
-                  "legacy_installed_native_libraries": [describe(p) for p in installed_native],
-                  "current_native_extendr_cdylib": describe(native_r),
-                  "legacy_r_source_tarball": describe(source_tarball)
-              }
-          }
-          Path("size-results/size-report.json").write_text(
-              json.dumps(report, indent=2) + "\n", encoding="utf-8"
-          )
-          Path("size-results/rustc-vv.txt").write_text(report["rustc_vv"] + "\n", encoding="utf-8")
-          Path("size-results/native-r-cargo-tree.txt").write_text(
-              Path("native-r-cargo-tree.txt").read_text(encoding="utf-8"), encoding="utf-8"
-          )
-          Path("size-results/native-r-Cargo.lock").write_bytes(Path("native-r-Cargo.lock").read_bytes())
-          print(json.dumps(report, indent=2))
-          PY
-          {
-            echo "### Cross-platform Rust/R footprint"
-            echo
-            python3 - <<'PY'
-          import json
-          from pathlib import Path
-          r = json.loads(Path("size-results/size-report.json").read_text(encoding="utf-8"))
-          print("| Artifact | Exact size |")
-          print("|---|---:|")
-          for label, value in [
-              ("Legacy installed R package", r["artifacts"]["legacy_installed_r_package"]["bytes"]),
-              ("Legacy installed native library", sum(x["bytes"] for x in r["artifacts"]["legacy_installed_native_libraries"])),
-              ("Current native extendr cdylib", r["artifacts"]["current_native_extendr_cdylib"]["bytes"]),
-              ("Legacy R source tarball", r["artifacts"]["legacy_r_source_tarball"]["bytes"]),
-          ]:
-              print(f"| {label} | {value:,} bytes |")
-          print()
-          print(f"Platform: {r['platform']}; target: {r['target_triple']}")
-          print(f"Rust: {r['rustc_vv'].splitlines()[0]}; {r['cargo_version']}; {r['r_version']}")
-          PY
-          } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload reproducible size measurements
-        uses: actions/upload-artifact@v4
-        with:
-          name: rust-r-footprint-${{ matrix.os }}
-          path: size-results/
-          if-no-files-found: error
