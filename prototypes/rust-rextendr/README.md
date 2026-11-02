@@ -8,7 +8,11 @@ that shared crate rather than by a copied Rust implementation.
 
 The exported `build_scene_json_rust(labels, matrix, annotation)` function
 preserves missing values as JSON `null`, emits cells in row-major order, and
-uses the same geometry and style constants as the other candidates.
+uses the same geometry and style constants as the other candidates. The
+`render_scene_svg_rust(scene_json)` function also parses scene-v1 and renders
+SVG by calling `scene_v1_to_scene` and `SceneSvgRenderer` from the shared core.
+Its integration smoke test consumes the same construction fixture as the
+Node and WebAssembly adapters.
 
 CI generates a disposable R package with `prepare-r-package.R`, compiles it
 with the Rust stable toolchain, and installs it for the shared benchmark

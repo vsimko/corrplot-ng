@@ -325,6 +325,21 @@ fn scene_v1_json_file_is_auto_detected_and_rendered() {
 }
 
 #[test]
+fn cli_renders_shared_scene_v1_construction_fixture() {
+    let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../prototypes/shared-svg/scene-v1-construction.example.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
+        .args(["render", "--input"]).arg(&scene)
+        .args(["--format", "svg"])
+        .output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let svg = String::from_utf8(output.stdout).unwrap();
+    assert!(svg.starts_with("<svg "));
+    assert!(svg.contains("A caption"));
+    assert!(svg.contains("second line"));
+}
+
+#[test]
 fn scene_v1_json_can_be_read_from_stdin_with_explicit_format() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../prototypes/shared-svg/scene-v1.example.json");
