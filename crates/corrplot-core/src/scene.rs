@@ -1576,10 +1576,10 @@ mod tests {
           "significance":{"mode":"stars","thresholds":[0.05,0.01],"symbol":"*"},
           "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
           "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
-          "cells":[{"row":0,"column":0,"value":0.5,"x":10,"y":20,"center_x":15,"center_y":25,"size":10,
+          "cells":[{"row":0,"column":0,"value":1.0,"x":10,"y":20,"center_x":15,"center_y":25,"size":10,
             "p_value":0.02,"normalized_value":0.75,
             "significance":{"p_value":0.02,"status":"significant","annotation":"*","blank":false},
-            "confidence_interval":{"lower":0.1,"upper":0.8,"x1":11,"x2":19,"y":24,"cap_height":2,"stroke_width":1.5,"color":"#2166ac"}}]
+            "confidence_interval":{"lower":0.8,"upper":1.0,"x1":11,"x2":19,"y":24,"cap_height":2,"stroke_width":1.5,"color":"#2166ac"}}]
         }"##;
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert_eq!(scene.significance, Some(SceneSignificancePolicy {
@@ -1592,7 +1592,7 @@ mod tests {
             p_value: Some(0.02), status: "significant".into(), annotation: Some("*".into()), blank: false,
         }));
         assert_eq!(cell.confidence_interval, Some(SceneConfidenceInterval {
-            lower: 0.1, upper: 0.8, x1: 11.0, x2: 19.0, y: 24.0,
+            lower: 0.8, upper: 1.0, x1: 11.0, x2: 19.0, y: 24.0,
             cap_height: 2.0, stroke_width: 1.5,
             color: RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 },
         }));
