@@ -68,19 +68,19 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
   const double height = top + n * cell + 64.0;
 
   std::ostringstream out;
-  out << "{\\"schema_version\\":1,\\"kind\\":\\"correlation_plot\\","
-      << "\\"width\\":" << number(width) << ",\\"height\\":" << number(height)
-      << ",\\"labels\\":[";
+  out << "{\"schema_version\":1,\"kind\":\"correlation_plot\","
+      << "\"width\":" << number(width) << ",\"height\":" << number(height)
+      << ",\"labels\":[";
   for (int i = 0; i < n; ++i) {
     if (i) out << ',';
     const std::string label = Rcpp::as<std::string>(labels[i]);
-    out << "{\\"text\\":\\"" << json_escape(label)
-        << "\\",\\"row_x\\":" << number(left - 12.0)
-        << ",\\"row_y\\":" << number(top + i * cell + cell / 2.0)
-        << ",\\"column_x\\":" << number(left + i * cell + cell / 2.0)
-        << ",\\"column_y\\":" << number(top - 16.0) << "}";
+    out << "{\"text\":\"" << json_escape(label)
+        << "\",\"row_x\":" << number(left - 12.0)
+        << ",\"row_y\":" << number(top + i * cell + cell / 2.0)
+        << ",\"column_x\":" << number(left + i * cell + cell / 2.0)
+        << ",\"column_y\":" << number(top - 16.0) << "}";
   }
-  out << "],\\"cells\\":[";
+  out << "],\"cells\":[";
   bool first = true;
   for (int row = 0; row < n; ++row) {
     for (int column = 0; column < n; ++column) {
@@ -93,20 +93,20 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
       }
       if (!first) out << ',';
       first = false;
-      out << "{\\"row\\":" << row << ",\\"column\\":" << column
-          << ",\\"value\\":";
+      out << "{\"row\":" << row << ",\"column\":" << column
+          << ",\"value\":";
       if (R_IsNA(value)) out << "null";
       else out << number(value);
-      out << ",\\"x\\":" << number(left + column * cell)
-          << ",\\"y\\":" << number(top + row * cell)
-          << ",\\"center_x\\":" << number(left + column * cell + cell / 2.0)
-          << ",\\"center_y\\":" << number(top + row * cell + cell / 2.0)
-          << ",\\"size\\":84}";
+      out << ",\"x\":" << number(left + column * cell)
+          << ",\"y\":" << number(top + row * cell)
+          << ",\"center_x\":" << number(left + column * cell + cell / 2.0)
+          << ",\"center_y\":" << number(top + row * cell + cell / 2.0)
+          << ",\"size\":84}";
     }
   }
-  out << "],\\"annotation\\":\\"" << json_escape(annotation)
-      << "\\",\\"style\\":{\\"positive_color\\":\\"#2166ac\\","
-      << "\\"negative_color\\":\\"#b2182b\\",\\"zero_color\\":\\"#bdbdbd\\","
-      << "\\"missing_fill\\":\\"#f2f2f2\\",\\"grid_color\\":\\"#e0e0e0\\"}}";
+  out << "],\"annotation\":\"" << json_escape(annotation)
+      << "\",\"style\":{\"positive_color\":\"#2166ac\","
+      << "\"negative_color\":\"#b2182b\",\"zero_color\":\"#bdbdbd\","
+      << "\"missing_fill\":\"#f2f2f2\",\"grid_color\":\"#e0e0e0\"}}";
   return out.str();
 }
