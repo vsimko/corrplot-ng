@@ -4,14 +4,24 @@
   "description": "Native Node-API adapter for the corrplot-ng Rust core",
   "main": "index.js",
   "types": "index.d.ts",
-  "files": ["index.js", "index.d.ts", "index.node", "README.md"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
   "scripts": {
     "build": "node scripts/build-native.mjs",
     "test": "npm run build && node --test && node scripts/test-pack.mjs",
-    "prepack": "npm run build"
+    "package:prebuilt": "node scripts/package-prebuilt.mjs"
   },
   "engines": {
     "node": "^22 || ^24 || ^26"
+  },
+  "optionalDependencies": {
+    "@corrplot-ng/native-node-linux-x64-gnu": "0.1.0",
+    "@corrplot-ng/native-node-darwin-x64": "0.1.0",
+    "@corrplot-ng/native-node-darwin-arm64": "0.1.0",
+    "@corrplot-ng/native-node-win32-x64-msvc": "0.1.0"
   },
   "license": "MIT"
 }
