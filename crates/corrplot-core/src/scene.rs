@@ -252,13 +252,25 @@ pub fn parse_scene_v1_matrix(source: &str) -> Result<NormalizedMatrixV1, SceneBu
         column: error.column,
     })?;
 
-    let display_type = root.get("display_type")
-        .and_then(|value| as_string(value, "display_type").ok())
-        .and_then(DisplayType::parse)
-        .unwrap_or(DisplayType::Full);
+    let display_type = match root.get("display_type") {
+        None => DisplayType::Full,
+        Some(value) => {
+            let value = as_string(value, "display_type")?;
+            DisplayType::parse(value).ok_or_else(|| SceneBuildError::new(
+                "input.scene.invalid_value",
+                "display_type must be full, upper, lower or diagonal",
+                "display_type",
+            ))?
+        }
+    };
     let show_diagonal = match root.get("show_diagonal") {
+        None => true,
         Some(crate::json::Value::Bool(value)) => *value,
-        _ => true,
+        Some(_) => return Err(SceneBuildError::new(
+            "input.scene.invalid_type",
+            "show_diagonal must be a boolean",
+            "show_diagonal",
+        )),
     };
 
     Ok(NormalizedMatrixV1 {
@@ -1906,5 +1918,49 @@ mod tests {
         assert_eq!(error.code, "input.scene.unknown_field");
         assert_eq!(error.path, "$.unexpected");
     }
+
+    #[test]
+    fn scene_v1_parser_rejects_invalid_display_options_instead_of_defaulting() {
+        let source = r##"{
+          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
+          "title":"","description":"","annotation":"",
+          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
+          "labels":[{"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4}],
+          "cells":[{"row":0,"column":0,"value":1,"x":1,"y":1,"center_x":2,"center_y":2,"size":1}]
+        }"##;
+
+        let invalid_display_type = source.replace(
+            "\"title\":\"\"",
+            "\"title\":\"\",\"display_type\":\"sideways\"",
+        );
+        let error = parse_scene_v1_matrix(&invalid_display_type).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_value");
+        assert_eq!(error.path, "display_type");
+
+        let invalid_display_type_type = source.replace(
+            "\"title\":\"\"",
+            "\"title\":\"\",\"display_type\":true",
+        );
+        let error = parse_scene_v1_matrix(&invalid_display_type_type).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_type");
+        assert_eq!(error.path, "display_type");
+
+        let invalid_diagonal_type = source.replace(
+            "\"title\":\"\"",
+            "\"title\":\"\",\"show_diagonal\":\"yes\"",
+        );
+        let error = parse_scene_v1_matrix(&invalid_diagonal_type).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_type");
+        assert_eq!(error.path, "show_diagonal");
+
+        let valid_options = source.replace(
+            "\"title\":\"\"",
+            "\"title\":\"\",\"display_type\":\"upper\",\"show_diagonal\":false",
+        );
+        let matrix = parse_scene_v1_matrix(&valid_options).unwrap();
+        assert_eq!(matrix.display_type, DisplayType::Upper);
+        assert!(!matrix.show_diagonal);
+    }
+
 
 }
