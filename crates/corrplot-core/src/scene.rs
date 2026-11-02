@@ -1385,21 +1385,7 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_honors_root_encoding_and_per_cell_glyph_methods() {
-        let source = r##"{
-          "schema_version":1,"kind":"correlation_plot","width":100,"height":100,
-          "title":"","description":"","annotation":"","glyph_method":"number",
-          "style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"},
-          "labels":[
-            {"text":"a","row_x":1,"row_y":2,"column_x":3,"column_y":4},
-            {"text":"b","row_x":1,"row_y":2,"column_x":3,"column_y":4}
-          ],
-          "cells":[
-            {"row":0,"column":0,"value":1,"x":1,"y":1,"center_x":2,"center_y":2,"size":10,"encoding":{"kind":"square","magnitude":1,"sign":1,"color":"#2166ac","width":8}},
-            {"row":0,"column":1,"value":0.5,"x":11,"y":1,"center_x":12,"center_y":2,"size":10,"method":"pie","encoding":{"kind":"square","magnitude":0.5,"sign":1,"color":"#2166ac","radius":4}},
-            {"row":1,"column":0,"value":0.5,"x":1,"y":11,"center_x":2,"center_y":12,"size":10},
-            {"row":1,"column":1,"value":1,"x":11,"y":11,"center_x":12,"center_y":12,"size":10}
-          ]
-        }"##;
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Square { .. })));
         assert!(matches!(&scene.cells[1].glyph, Some(CellGlyph::Pie { .. })));
@@ -1408,12 +1394,8 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_lays_out_figure_text_lines() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
-            .replace(
-                "\"annotation\": \"Prototype annotation: synthetic example only\",",
-                "\"annotation\": \"Prototype annotation: synthetic example only\",\"figure_text\":[{\"role\":\"caption\",\"text\":\"A caption\\nsecond line\",\"lines\":[\"A caption\",\"second line\"],\"alignment\":\"center\",\"font_family\":\"sans\",\"font_size\":10,\"font_weight\":\"normal\",\"font_style\":\"normal\",\"line_height\":12,\"spacing_after\":2,\"x\":180,\"y\":350}]",
-            );
-        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
+        let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
             && text.x == 180.0 && text.y == 350.0 && text.font_size == 10.0
             && text.anchor == TextAnchor::Middle));
