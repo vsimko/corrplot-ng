@@ -732,10 +732,14 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::Middle => "middle",
                 TextAnchor::End => "end",
             };
-            let text_content = text.text.split('\n').enumerate().map(|(index, line)| {
-                let dy = if index == 0 { 0.0 } else { text.font_size * 1.2 };
-                format!("<tspan x=\"{}\" dy=\"{}\">{}</tspan>", text.x, dy, escape_xml(line))
-            }).collect::<String>();
+            let text_content = if text.text.contains('\n') {
+                text.text.split('\n').enumerate().map(|(index, line)| {
+                    let dy = if index == 0 { 0.0 } else { text.font_size * 1.2 };
+                    format!("<tspan x=\"{}\" dy=\"{}\">{}</tspan>", text.x, dy, escape_xml(line))
+                }).collect::<String>()
+            } else {
+                escape_xml(&text.text)
+            };
             let semantic_attrs = text.semantic_role.as_ref().map(|role| format!(
                 " data-semantic-role=\"{}\" aria-label=\"{}: {}\"",
                 escape_xml(role), escape_xml(role), escape_xml(&text.text)
