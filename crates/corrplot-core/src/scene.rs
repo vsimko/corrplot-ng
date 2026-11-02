@@ -302,8 +302,9 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
     scene.height = as_number(required(root, "height", "$")?, "height")?;
     let labels = as_array(required(root, "labels", "$")?, "labels")?;
     // Missing-cell annotations are emitted before the row/column labels by
-    // matrix_to_scene_v1. Keep their prefix out of label indexing.
-    let label_start = scene.texts.iter().take_while(|text| text.text == "NA").count();
+    // matrix_to_scene_v1. Count only visible missing cells: hidden missing
+    // cells do not emit an NA annotation and therefore do not occupy a text slot.
+    let label_start = scene.cells.iter().filter(|cell| cell.visible && cell.glyph.is_none()).count();
     for (index, item) in labels.iter().enumerate() {
         let path = format!("labels[{index}]");
         let label = as_object(item, &path)?;
