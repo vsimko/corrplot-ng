@@ -21,6 +21,17 @@ semantics and schema-conformance coverage remain in progress. PNG encoding is
 not implemented.
 
 
+## Scene-v1 construction
+
+The scene module exposes three related operations:
+
+- `parse_scene_v1_matrix(json)` validates the scene-v1 matrix identity, values, cell coordinates, layout dimensions, colors, and supported optional metadata, then returns normalized matrix data.
+- `matrix_to_scene_v1(matrix, options)` builds a deterministic renderer-neutral scene from normalized matrix data.
+- `scene_v1_to_scene(json, fallback_cell_method)` combines the established scene-v1 layout and metadata with the shared matrix builder. Explicit cell methods take precedence over encoding kinds, then the document-level glyph method, then the adapter fallback.
+
+Cell annotations, significance policy, typed legend entries, cluster-region geometry, and figure-text lines are transferred into the scene where the current renderer-neutral types can represent them. This is not yet complete scene-v1 presentation fidelity: plotmath, full font-family/weight/style handling, detailed label orientation/collision, and some accessibility metadata are not represented by the current scene/renderers. Do not treat successful parsing as proof that every optional field is rendered identically by every backend.
+
+
 ## Portable targets
 
 The crate is compiled from the same source for native targets and
