@@ -273,6 +273,27 @@ jobs:
                       "mib": round(size / 1024 / 1024, 4),
                       "sha256": digest.hexdigest()}
 
+          import re
+
+          lock_text = Path("native-r-Cargo.lock").read_text(encoding="utf-8")
+          extendr_match = re.search(
+              r'(?ms)^\\[\\[package\\]\\]\\nname = "extendr-api"\\nversion = "([^"]+)"',
+              lock_text,
+          )
+          if not extendr_match:
+              raise RuntimeError("Could not resolve extendr-api version from native Cargo.lock")
+          runner_os = os.environ.get("RUNNER_OS")
+          legacy_strip_requested = os.environ.get("CORRPLOT_REXTENDR_STRIP_DEBUG", "").lower() == "true"
+          legacy_strip_flag = {
+              "Linux": "-Wl,--strip-debug",
+              "macOS": "-Wl,-S",
+          }.get(runner_os)
+          legacy_strip_effective = legacy_strip_requested and legacy_strip_flag is not None
+          current_native_linker_flag = {
+              "Linux": "-C link-arg=-Wl,--strip-debug",
+              "macOS": "-C link-arg=-Wl,-S",
+          }.get(runner_os)
+
           report = {
               "platform": platform.platform(),
               "machine": platform.machine(),
@@ -288,9 +309,14 @@ jobs:
               "r_cc": command(["R", "CMD", "config", "CC"]),
               "r_shlib_ldflags": command(["R", "CMD", "config", "SHLIB_LDFLAGS"]),
               "release_profile": True,
-              "legacy_build_time_debug_stripping": os.environ.get("CORRPLOT_REXTENDR_STRIP_DEBUG"),
+              "legacy_build_time_debug_stripping": {
+                  "requested": legacy_strip_requested,
+                  "effective": legacy_strip_effective,
+                  "linker_flag": legacy_strip_flag
+              },
               "legacy_extendr_version": "0.9.0",
-              "native_experiment_extendr_requirement": "0.8 (Cargo semver requirement; resolved version recorded in Cargo.lock)",
+              "current_native_extendr_api_resolved_version": extendr_match.group(1),
+              "current_native_cdylib_linker_flag": current_native_linker_flag,
               "artifacts": {
                   "legacy_installed_r_package": {
                       "bytes": sum(p.stat().st_size for p in installed_files),
