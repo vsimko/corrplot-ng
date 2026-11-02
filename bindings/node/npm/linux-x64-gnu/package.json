@@ -1,0 +1,17 @@
+{
+  "name": "@corrplot-ng/native-node-linux-x64-gnu",
+  "version": "0.1.0",
+  "description": "Prebuilt Node-API binary for linux-x64-gnu",
+  "main": "index.node",
+  "files": [
+    "index.node"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "license": "MIT",
+  "libc": "glibc"
+}
