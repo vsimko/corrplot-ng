@@ -316,6 +316,23 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         scene.texts[label_start + index * 2].y = row_y;
         scene.texts[label_start + index * 2 + 1].x = column_x;
         scene.texts[label_start + index * 2 + 1].y = column_y;
+        let orientation = root.get("typography")
+            .and_then(|value| as_object(value, "typography").ok())
+            .and_then(|typography| typography.get("column_label_orientation"))
+            .and_then(|value| as_string(value, "typography.column_label_orientation").ok())
+            .unwrap_or("vertical");
+        let column_text = &mut scene.texts[label_start + index * 2 + 1];
+        if orientation == "horizontal" {
+            column_text.anchor = TextAnchor::Middle;
+            column_text.rotation_degrees = 0.0;
+        } else {
+            let rotation = match label.get("column_rotation") {
+                Some(value) => as_number(value, &format!("{path}.column_rotation"))?,
+                None => 90.0,
+            };
+            column_text.anchor = TextAnchor::Start;
+            column_text.rotation_degrees = -rotation;
+        }
         if matches!(label.get("row_visible"), Some(crate::json::Value::Bool(false))) {
             scene.texts[label_start + index * 2].text.clear();
         }
@@ -641,6 +658,7 @@ fn append_scene_v1_figure_text(
                 text: as_string(line, &format!("{path}.lines[{line_index}]"))?.to_string(),
                 x,
                 y: y + line_index as f64 * line_height,
+                rotation_degrees: 0.0,
                 font_size,
                 font_family: font_family.clone(),
                 font_weight: font_weight.clone(),
@@ -687,7 +705,7 @@ fn append_scene_v1_text_annotations(
         let font_size = as_number(required(annotation, "font_size", &path)?, &format!("{path}.font_size"))?;
         let font_weight = as_string(required(annotation, "font_weight", &path)?, &format!("{path}.font_weight"))?.to_string();
         let font_style = as_string(required(annotation, "font_style", &path)?, &format!("{path}.font_style"))?.to_string();
-        scene.texts.push(SceneText { text, x, y, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
+        scene.texts.push(SceneText { text, x, y, rotation_degrees: 0.0, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
     }
     Ok(())
 }
@@ -1332,22 +1350,22 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
                 p_value: None, normalized_value: None, significance: None, confidence_interval: None,
             });
             if visible && value.is_none() {
-                texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+                texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
             }
         }
     }
 
     for (index, label) in input.labels.iter().enumerate() {
         let center = TOP_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0;
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if !options.title.is_empty() {
-        texts.push(SceneText { text: options.title.clone(), x: width / 2.0, y: 12.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText { text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if let Some(annotation) = &options.annotation {
         if !annotation.is_empty() {
-            texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+            texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
         }
     }
     // The current renderer Scene type has no accessibility metadata fields.
