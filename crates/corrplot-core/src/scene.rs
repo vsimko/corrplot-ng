@@ -1481,6 +1481,13 @@ mod tests {
         let row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap();
         assert!(row_label.text.contains('\n'));
         assert!(row_label.text.lines().all(|line| line.chars().count() <= 12));
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("<tspan"));
 
         let plotmath_source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
             .replace(
