@@ -277,7 +277,7 @@ jobs:
 
           lock_text = Path("native-r-Cargo.lock").read_text(encoding="utf-8")
           extendr_match = re.search(
-              r'(?ms)^\\[\\[package\\]\\]\\nname = "extendr-api"\\nversion = "([^"]+)"',
+              r'(?ms)^\[\[package\]\]\nname = "extendr-api"\nversion = "([^"]+)"',
               lock_text,
           )
           if not extendr_match:
