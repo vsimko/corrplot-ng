@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -28,6 +29,14 @@ std::string json_escape(const std::string& value) {
   return out.str();
 }
 
+std::size_t utf8_character_count(const std::string& value) {
+  std::size_t count = 0;
+  for (unsigned char ch : value) {
+    if ((ch & 0xC0) != 0x80) ++count;
+  }
+  return count;
+}
+
 std::string number(double value) {
   std::ostringstream out;
   out << std::setprecision(15) << value;
@@ -44,26 +53,34 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
     Rcpp::stop("labels and matrix dimensions must agree and be non-empty");
   }
 
+  double max_label_width = 0.0;
+  for (int i = 0; i < n; ++i) {
+    if (labels[i] == NA_STRING) Rcpp::stop("labels cannot be NA");
+    const std::string label = Rcpp::as<std::string>(labels[i]);
+    max_label_width = std::max(
+        max_label_width, static_cast<double>(utf8_character_count(label)) * 13.0 * 0.6);
+  }
+
   const double cell = 84.0;
-  const double left = 104.0;
-  const double top = 76.0;
+  const double left = std::max(104.0, std::trunc(max_label_width + 24.0));
+  const double top = std::max(76.0, std::trunc(max_label_width + 32.0));
   const double width = left + n * cell + 24.0;
   const double height = top + n * cell + 64.0;
 
   std::ostringstream out;
-  out << "{\"schema_version\":1,\"kind\":\"correlation_plot\","
-      << "\"width\":" << number(width) << ",\"height\":" << number(height)
-      << ",\"labels\":[";
+  out << "{\\"schema_version\\":1,\\"kind\\":\\"correlation_plot\\","
+      << "\\"width\\":" << number(width) << ",\\"height\\":" << number(height)
+      << ",\\"labels\\":[";
   for (int i = 0; i < n; ++i) {
     if (i) out << ',';
-    if (labels[i] == NA_STRING) Rcpp::stop("labels cannot be NA");
     const std::string label = Rcpp::as<std::string>(labels[i]);
-    out << "{\"text\":\"" << json_escape(label)
-        << "\",\"row_x\":92,\"row_y\":" << number(top + i * cell + cell / 2.0)
-        << ",\"column_x\":" << number(left + i * cell + cell / 2.0)
-        << ",\"column_y\":60}";
+    out << "{\\"text\\":\\"" << json_escape(label)
+        << "\\",\\"row_x\\":" << number(left - 12.0)
+        << ",\\"row_y\\":" << number(top + i * cell + cell / 2.0)
+        << ",\\"column_x\\":" << number(left + i * cell + cell / 2.0)
+        << ",\\"column_y\\":" << number(top - 16.0) << "}";
   }
-  out << "],\"cells\":[";
+  out << "],\\"cells\\":[";
   bool first = true;
   for (int row = 0; row < n; ++row) {
     for (int column = 0; column < n; ++column) {
@@ -76,20 +93,20 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
       }
       if (!first) out << ',';
       first = false;
-      out << "{\"row\":" << row << ",\"column\":" << column
-          << ",\"value\":";
+      out << "{\\"row\\":" << row << ",\\"column\\":" << column
+          << ",\\"value\\":";
       if (R_IsNA(value)) out << "null";
       else out << number(value);
-      out << ",\"x\":" << number(left + column * cell)
-          << ",\"y\":" << number(top + row * cell)
-          << ",\"center_x\":" << number(left + column * cell + cell / 2.0)
-          << ",\"center_y\":" << number(top + row * cell + cell / 2.0)
-          << ",\"size\":84}";
+      out << ",\\"x\\":" << number(left + column * cell)
+          << ",\\"y\\":" << number(top + row * cell)
+          << ",\\"center_x\\":" << number(left + column * cell + cell / 2.0)
+          << ",\\"center_y\\":" << number(top + row * cell + cell / 2.0)
+          << ",\\"size\\":84}";
     }
   }
-  out << "],\"annotation\":\"" << json_escape(annotation)
-      << "\",\"style\":{\"positive_color\":\"#2166ac\","
-      << "\"negative_color\":\"#b2182b\",\"zero_color\":\"#bdbdbd\","
-      << "\"missing_fill\":\"#f2f2f2\",\"grid_color\":\"#e0e0e0\"}}";
+  out << "],\\"annotation\\":\\"" << json_escape(annotation)
+      << "\\",\\"style\\":{\\"positive_color\\":\\"#2166ac\\","
+      << "\\"negative_color\\":\\"#b2182b\\",\\"zero_color\\":\\"#bdbdbd\\","
+      << "\\"missing_fill\\":\\"#f2f2f2\\",\\"grid_color\\":\\"#e0e0e0\\"}}";
   return out.str();
 }
