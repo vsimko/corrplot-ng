@@ -15,8 +15,9 @@ build_scene_v1_r <- function(labels, matrix, annotation = "") {
   }
 
   cell <- 84
-  left <- 104
-  top <- 76
+  max_label_width <- max(nchar(labels, type = "chars") * 13 * 0.6)
+  left <- max(104, as.integer(max_label_width + 24))
+  top <- max(76, as.integer(max_label_width + 32))
   cells <- lapply(seq_len(n * n), function(k) {
     row <- (k - 1L) %/% n
     column <- (k - 1L) %% n
@@ -31,9 +32,9 @@ build_scene_v1_r <- function(labels, matrix, annotation = "") {
   })
   label_items <- lapply(seq_len(n), function(i) {
     list(
-      text = labels[[i]], row_x = 92,
+      text = labels[[i]], row_x = left - 12,
       row_y = top + (i - 1L) * cell + cell / 2,
-      column_x = left + (i - 1L) * cell + cell / 2, column_y = 60
+      column_x = left + (i - 1L) * cell + cell / 2, column_y = top - 16
     )
   })
   list(
