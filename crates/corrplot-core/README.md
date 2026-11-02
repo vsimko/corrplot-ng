@@ -70,7 +70,7 @@ viewport clipping, text annotations, straight alpha compositing, and
 letterboxed scaling. It emits an owned top-left-origin sRGB RGBA8 buffer with
 the stride and optional DPI metadata defined by renderer-output-v1.
 
-The current bitmap text fallback is a built-in 5x7 ASCII font; unsupported
+SVG text retains scene-v1 font family, weight, and style attributes. The RGBA renderer does not have a font engine and continues to use a built-in 5x7 ASCII bitmap font; unsupported
 characters use a visible replacement glyph. It is intentionally not a
 font-engine replacement and does not claim plotmath shaping or font-family
 fidelity. Each render is limited to 128 MiB of pixel storage. PNG encoding is
