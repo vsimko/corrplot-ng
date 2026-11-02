@@ -648,9 +648,14 @@ impl Renderer<Scene> for SceneSvgRenderer {
             ));
         };
         let unit = svg.unit.as_str();
+        let accessibility_label = if scene.description.is_empty() {
+            String::new()
+        } else {
+            format!(" aria-label=\"{}\"", escape_xml(&scene.description))
+        };
         let mut out = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\">",
-            svg.width, unit, svg.height, unit, scene.width, scene.height
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\"{}>",
+            svg.width, unit, svg.height, unit, scene.width, scene.height, accessibility_label
         );
         out.push_str(&format!(
             "<rect width=\"100%\" height=\"100%\" fill=\"{}\" fill-opacity=\"{}\"/>",
