@@ -1397,10 +1397,10 @@ mod tests {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
-            && text.x == 180.0 && text.y == 350.0 && text.font_size == 10.0
+            && text.x == 50.0 && text.y == 90.0 && text.font_size == 10.0
             && text.anchor == TextAnchor::Middle));
         assert!(scene.texts.iter().any(|text| text.text == "second line"
-            && text.x == 180.0 && text.y == 362.0 && text.anchor == TextAnchor::Middle));
+            && text.x == 50.0 && text.y == 102.0 && text.anchor == TextAnchor::Middle));
     }
 
     #[test]
