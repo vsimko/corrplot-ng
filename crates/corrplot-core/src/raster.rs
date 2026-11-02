@@ -656,6 +656,7 @@ impl Renderer<Scene> for SceneSvgRenderer {
         }
         append_scene_legend_svg(&mut out, scene, &svg.font_family);
         for text in &scene.texts {
+            let font_family = if text.font_family.is_empty() { &svg.font_family } else { &text.font_family };
             let anchor = match text.anchor {
                 TextAnchor::Start => "start",
                 TextAnchor::Middle => "middle",
@@ -663,7 +664,7 @@ impl Renderer<Scene> for SceneSvgRenderer {
             };
             out.push_str(&format!(
                 "<text x=\"{}\" y=\"{}\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
-                text.x, text.y, anchor, escape_xml(&text.font_family), text.font_size,
+                text.x, text.y, anchor, escape_xml(font_family), text.font_size,
                 escape_xml(&text.font_weight), escape_xml(&text.font_style),
                 color_hex(text.color), alpha(text.color), escape_xml(&text.text)
             ));
@@ -754,7 +755,7 @@ mod tests {
                 text: "A".into(), x: 10.0, y: 10.0, font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
-                font_family: "sans-serif".into(), font_weight: "normal".into(), font_style: "normal".into(),
+                font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
             }],
         }
     }
