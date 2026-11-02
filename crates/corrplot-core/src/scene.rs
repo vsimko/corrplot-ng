@@ -1486,6 +1486,11 @@ mod tests {
         ).unwrap();
         let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
         assert!(svg.contains("<tspan"));
+        let rgba = crate::raster::RgbaRenderer.render(
+            &scene,
+            &OutputOptions::Rgba(crate::output::RasterOptions::new(100, 100)),
+        ).unwrap();
+        assert!(matches!(rgba, RenderOutput::Rgba(_)));
 
         let plotmath_source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
             .replace(
