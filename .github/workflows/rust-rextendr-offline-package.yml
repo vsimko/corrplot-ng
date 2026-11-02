@@ -159,8 +159,11 @@ jobs:
             find "$native_dir" -maxdepth 1 -type f -print
             exit 1
           fi
-          echo "NATIVE_R_LIBRARY=$native_library" >> "$GITHUB_ENV"
-          echo "Native R cdylib: $native_library ($(wc -c < "$native_library" | tr -d ' ') bytes)"
+          mkdir -p "$GITHUB_WORKSPACE/size-results"
+          native_snapshot="$GITHUB_WORKSPACE/size-results/$(basename "$native_library")"
+          cp "$native_library" "$native_snapshot"
+          echo "NATIVE_R_LIBRARY=$native_snapshot" >> "$GITHUB_ENV"
+          echo "Native R cdylib snapshot: $native_snapshot ($(wc -c < "$native_snapshot" | tr -d ' ') bytes)"
           cargo tree --manifest-path "$manifest" --edges normal > native-r-cargo-tree.txt
           cp experiments/wasm-r/native-r/Cargo.lock native-r-Cargo.lock
       - name: Report optimized installed package and native library sizes
