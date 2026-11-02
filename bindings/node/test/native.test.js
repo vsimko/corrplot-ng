@@ -127,6 +127,18 @@ test("constructs and renders a matrix through the shared core operation", () => 
   assert.match(svg, /rotate\(-45 /);
 });
 
+const sceneV1Construction = fs.readFileSync(
+  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1-construction.example.json"),
+  "utf8",
+);
+
+test("renders shared scene-v1 glyph and figure-text semantics through Node", () => {
+  const svg = renderMatrixSvg(sceneV1Construction, "circle");
+  assert.match(svg, /^<svg /);
+  assert.match(svg, /A caption/);
+  assert.match(svg, /second line/);
+});
+
 test("maps invalid matrix construction options to diagnostic-v1", () => {
   assert.throws(
     () => renderMatrixSvg(sceneV1, "unknown"),
