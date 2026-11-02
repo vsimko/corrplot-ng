@@ -1409,9 +1409,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
             texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
         }
     }
-    // The current renderer Scene type has no accessibility metadata fields.
-    let _description = &options.description;
-    let scene = Scene { width, height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() };
+    let scene = Scene { width, height, description: options.description.clone(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() };
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
 }
@@ -1505,6 +1503,7 @@ mod tests {
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert_eq!((scene.width, scene.height), (380.0, 392.0));
         assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
+        assert_eq!(scene.description, "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.");
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
         assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
         let first_row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End && text.text == "alpha").unwrap();

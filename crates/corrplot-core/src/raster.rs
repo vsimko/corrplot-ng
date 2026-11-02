@@ -117,6 +117,8 @@ pub struct SceneCell {
 pub struct Scene {
     pub width: f64,
     pub height: f64,
+    /// Accessible long description retained from scene-v1.
+    pub description: String,
     pub cells: Vec<SceneCell>,
     pub texts: Vec<SceneText>,
     /// Plot-wide significance annotation policy from scene-v1.
@@ -600,6 +602,9 @@ impl Renderer<Scene> for SceneSvgRenderer {
             color_hex(svg.background),
             alpha(svg.background),
         ));
+        if !scene.description.is_empty() {
+            out.push_str(&format!("<desc>{}</desc>", escape_xml(&scene.description)));
+        }
         for cell in &scene.cells {
             if !cell.visible { continue; }
             out.push_str(&format!(
@@ -735,6 +740,7 @@ mod tests {
         Scene {
             width: 100.0,
             height: 100.0,
+            description: String::new(),
             cells: vec![
                 SceneCell {
                     x: 20.0, y: 20.0, size: 30.0, visible: true,
