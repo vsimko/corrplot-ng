@@ -280,6 +280,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         };
         texts.push(SceneText {
             text: text.text,
+            semantic_role: None,
             x: text.x,
             y: text.y,
             font_size: text.font_size,
@@ -292,7 +293,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
+    Ok(Scene { width: input.width, height: input.height, description: String::new(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[wasm_bindgen(js_name = "renderSceneSvg")]
@@ -426,6 +427,7 @@ mod tests {
         let svg = output.svg.unwrap();
         assert!(svg.starts_with("<svg "));
         assert!(svg.contains("A caption"));
+        assert!(svg.contains("data-semantic-role=\"caption\""));
         assert!(svg.contains("second line"));
     }
 

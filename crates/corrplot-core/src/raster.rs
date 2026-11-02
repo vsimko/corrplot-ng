@@ -19,6 +19,8 @@ pub enum TextAnchor {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SceneText {
     pub text: String,
+    /// Optional semantic role retained from scene-v1 annotations and figure text.
+    pub semantic_role: Option<String>,
     pub x: f64,
     pub y: f64,
     /// Counter-clockwise rotation around the text anchor, in degrees.
@@ -117,6 +119,8 @@ pub struct SceneCell {
 pub struct Scene {
     pub width: f64,
     pub height: f64,
+    /// Accessible long description retained from scene-v1.
+    pub description: String,
     pub cells: Vec<SceneCell>,
     pub texts: Vec<SceneText>,
     /// Plot-wide significance annotation policy from scene-v1.
@@ -325,7 +329,7 @@ pub fn render_rgba(
     }
     draw_scene_legend_rgba(&mut canvas, scene);
     for text in &scene.texts {
-        canvas.draw_text(&text.text, text.x, text.y, text.font_size, text.color, text.anchor); // RGBA bitmap fallback does not rotate text.
+        canvas.draw_text_rotated(&text.text, text.x, text.y, text.font_size, text.color, text.anchor, text.rotation_degrees);
     }
 
     Ok(RgbaBuffer {
@@ -511,26 +515,81 @@ impl Canvas {
     fn draw_text(&mut self, text: &str, x: f64, y: f64, font_size: f64, color: RgbaColor, anchor: TextAnchor) {
         let cell = font_size * self.scale / 7.0;
         if cell <= 0.0 || !cell.is_finite() { return; }
-        let width = text.chars().count() as f64 * 6.0 * cell - cell;
-        let (x, y) = self.point(x, y);
-        let start_x = match anchor {
-            TextAnchor::Start => x,
-            TextAnchor::Middle => x - width / 2.0,
-            TextAnchor::End => x - width,
-        };
-        for (index, character) in text.chars().enumerate() {
-            let rows = bitmap_glyph(character);
-            for (row, bits) in rows.iter().enumerate() {
-                for column in 0..5 {
-                    if bits & (1 << (4 - column)) != 0 {
-                        let left = start_x + (index as f64 * 6.0 + column as f64) * cell;
-                        let top = y + row as f64 * cell;
-                        let right = left + cell;
-                        let bottom = top + cell;
+        for (line_index, line) in text.split('\n').enumerate() {
+            let width = line.chars().count() as f64 * 6.0 * cell - cell;
+            let (x, line_y) = self.point(x, y + line_index as f64 * font_size * 1.2);
+            let start_x = match anchor {
+                TextAnchor::Start => x,
+                TextAnchor::Middle => x - width / 2.0,
+                TextAnchor::End => x - width,
+            };
+            for (index, character) in line.chars().enumerate() {
+                let rows = bitmap_glyph(character);
+                for (row, bits) in rows.iter().enumerate() {
+                    for column in 0..5 {
+                        if bits & (1 << (4 - column)) != 0 {
+                            let left = start_x + (index as f64 * 6.0 + column as f64) * cell;
+                            let top = line_y + row as f64 * cell;
+                            let right = left + cell;
+                            let bottom = top + cell;
+                            let x0 = left.floor().max(0.0) as isize;
+                            let y0 = top.floor().max(0.0) as isize;
+                            let x1 = right.ceil().min(self.width as f64) as isize;
+                            let y1 = bottom.ceil().min(self.height as f64) as isize;
+                            for py in y0..y1 {
+                                for px in x0..x1 { self.blend_pixel(px, py, color); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn draw_text_rotated(
+        &mut self,
+        text: &str,
+        x: f64,
+        y: f64,
+        font_size: f64,
+        color: RgbaColor,
+        anchor: TextAnchor,
+        rotation_degrees: f64,
+    ) {
+        if rotation_degrees.rem_euclid(360.0).abs() < f64::EPSILON
+            || (rotation_degrees.rem_euclid(360.0) - 360.0).abs() < f64::EPSILON
+        {
+            self.draw_text(text, x, y, font_size, color, anchor);
+            return;
+        }
+        let cell = font_size * self.scale / 7.0;
+        if cell <= 0.0 || !cell.is_finite() { return; }
+        let (anchor_x, anchor_y) = self.point(x, y);
+        let radians = rotation_degrees.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        for (line_index, line) in text.split('\n').enumerate() {
+            let width = line.chars().count() as f64 * 6.0 * cell - cell;
+            let start_x = match anchor {
+                TextAnchor::Start => anchor_x,
+                TextAnchor::Middle => anchor_x - width / 2.0,
+                TextAnchor::End => anchor_x - width,
+            };
+            for (index, character) in line.chars().enumerate() {
+                let rows = bitmap_glyph(character);
+                for (row, bits) in rows.iter().enumerate() {
+                    for column in 0..5 {
+                        if bits & (1 << (4 - column)) == 0 { continue; }
+                        let local_x = start_x - anchor_x + (index as f64 * 6.0 + column as f64 + 0.5) * cell;
+                        let local_y = (line_index as f64 * font_size * 1.2 + row as f64) * self.scale
+                            + cell / 2.0;
+                        let center_x = anchor_x + local_x * cos - local_y * sin;
+                        let center_y = anchor_y + local_x * sin + local_y * cos;
+                        let left = center_x - cell / 2.0;
+                        let top = center_y - cell / 2.0;
                         let x0 = left.floor().max(0.0) as isize;
                         let y0 = top.floor().max(0.0) as isize;
-                        let x1 = right.ceil().min(self.width as f64) as isize;
-                        let y1 = bottom.ceil().min(self.height as f64) as isize;
+                        let x1 = (left + cell).ceil().min(self.width as f64) as isize;
+                        let y1 = (top + cell).ceil().min(self.height as f64) as isize;
                         for py in y0..y1 {
                             for px in x0..x1 { self.blend_pixel(px, py, color); }
                         }
@@ -589,15 +648,23 @@ impl Renderer<Scene> for SceneSvgRenderer {
             ));
         };
         let unit = svg.unit.as_str();
+        let accessibility_label = if scene.description.is_empty() {
+            String::new()
+        } else {
+            format!(" aria-label=\"{}\"", escape_xml(&scene.description))
+        };
         let mut out = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\">",
-            svg.width, unit, svg.height, unit, scene.width, scene.height
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\"{}>",
+            svg.width, unit, svg.height, unit, scene.width, scene.height, accessibility_label
         );
         out.push_str(&format!(
             "<rect width=\"100%\" height=\"100%\" fill=\"{}\" fill-opacity=\"{}\"/>",
             color_hex(svg.background),
             alpha(svg.background),
         ));
+        if !scene.description.is_empty() {
+            out.push_str(&format!("<desc>{}</desc>", escape_xml(&scene.description)));
+        }
         for cell in &scene.cells {
             if !cell.visible { continue; }
             out.push_str(&format!(
@@ -665,11 +732,23 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::Middle => "middle",
                 TextAnchor::End => "end",
             };
+            let text_content = if text.text.contains('\n') {
+                text.text.split('\n').enumerate().map(|(index, line)| {
+                    let dy = if index == 0 { 0.0 } else { text.font_size * 1.2 };
+                    format!("<tspan x=\"{}\" dy=\"{}\">{}</tspan>", text.x, dy, escape_xml(line))
+                }).collect::<String>()
+            } else {
+                escape_xml(&text.text)
+            };
+            let semantic_attrs = text.semantic_role.as_ref().map(|role| format!(
+                " data-semantic-role=\"{}\" aria-label=\"{}: {}\"",
+                escape_xml(role), escape_xml(role), escape_xml(&text.text)
+            )).unwrap_or_default();
             out.push_str(&format!(
-                "<text x=\"{}\" y=\"{}\" transform=\"rotate({} {} {})\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
+                "<text x=\"{}\" y=\"{}\" transform=\"rotate({} {} {})\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\"{}>{}</text>",
                 text.x, text.y, text.rotation_degrees, text.x, text.y, anchor, escape_xml(font_family), text.font_size,
                 escape_xml(&text.font_weight), escape_xml(&text.font_style),
-                color_hex(text.color), alpha(text.color), escape_xml(&text.text)
+                color_hex(text.color), alpha(text.color), semantic_attrs, text_content
             ));
         }
         out.push_str("</svg>");
@@ -729,6 +808,7 @@ mod tests {
         Scene {
             width: 100.0,
             height: 100.0,
+            description: String::new(),
             cells: vec![
                 SceneCell {
                     x: 20.0, y: 20.0, size: 30.0, visible: true,
@@ -755,7 +835,8 @@ mod tests {
             legend: vec![],
             cluster_regions: vec![],
             texts: vec![SceneText {
-                text: "A".into(), x: 10.0, y: 10.0, rotation_degrees: 0.0, font_size: 10.0,
+                text: "A".into(), semantic_role: None, x: 10.0, y: 10.0, rotation_degrees: 0.0,
+                font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
@@ -834,6 +915,17 @@ mod tests {
         assert_eq!(buffer.dpi, Some(144.0));
         assert_eq!(buffer.alpha_mode, AlphaMode::Straight);
         assert_eq!(buffer.color_space, ColorSpace::Srgb);
+    }
+
+    #[test]
+    fn renders_rotated_scene_text_in_rgba() {
+        let scene = sample_scene();
+        let mut rotated = scene.clone();
+        rotated.texts[0].rotation_degrees = 90.0;
+        let options = RasterOptions::new(100, 100);
+        let plain = render_rgba(&scene, options).unwrap();
+        let rotated = render_rgba(&rotated, options).unwrap();
+        assert_ne!(plain.pixels, rotated.pixels);
     }
 
     #[test]

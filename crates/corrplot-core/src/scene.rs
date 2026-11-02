@@ -378,10 +378,10 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
                             label_text.text = label_text.text.chars().take(keep).collect::<String>();
                             label_text.text.push('…');
                         }
-                        // "preserve" intentionally allows overlap. "wrap"
-                        // requires multiline/rotated text layout not represented
-                        // by the current renderer-neutral SceneText contract.
-                        "preserve" | "wrap" => {}
+                        "wrap" => {
+                            label_text.text = wrap_label_text(&label_text.text, max_chars);
+                        }
+                        "preserve" => {}
                         _ => unreachable!("typography policy was validated by the parser"),
                     }
                 }
@@ -650,6 +650,7 @@ fn append_scene_v1_figure_text(
     for (index, item) in as_array(value, "figure_text")?.iter().enumerate() {
         let path = format!("figure_text[{index}]");
         let figure = as_object(item, &path)?;
+        let role = as_string(required(figure, "role", &path)?, &format!("{path}.role"))?.to_string();
         let x = as_number(required(figure, "x", &path)?, &format!("{path}.x"))?;
         let y = as_number(required(figure, "y", &path)?, &format!("{path}.y"))?;
         let font_size = as_number(required(figure, "font_size", &path)?, &format!("{path}.font_size"))?;
@@ -667,6 +668,7 @@ fn append_scene_v1_figure_text(
         let lines = as_array(required(figure, "lines", &path)?, &format!("{path}.lines"))?;
         for (line_index, line) in lines.iter().enumerate() {
             scene.texts.push(SceneText {
+                semantic_role: Some(role.clone()),
                 text: as_string(line, &format!("{path}.lines[{line_index}]"))?.to_string(),
                 x,
                 y: y + line_index as f64 * line_height,
@@ -710,6 +712,7 @@ fn append_scene_v1_text_annotations(
         let x = as_number(required(cell, "center_x", &cell_path)?, &format!("{cell_path}.center_x"))?;
         let y = as_number(required(cell, "center_y", &cell_path)?, &format!("{cell_path}.center_y"))?;
         let text = as_string(required(annotation, "text", &path)?, &format!("{path}.text"))?.to_string();
+        let role = as_string(required(annotation, "role", &path)?, &format!("{path}.role"))?.to_string();
         let color = scene_v1_annotation_color(
             as_string(required(annotation, "color", &path)?, &format!("{path}.color"))?,
             &format!("{path}.color"),
@@ -717,7 +720,8 @@ fn append_scene_v1_text_annotations(
         let font_size = as_number(required(annotation, "font_size", &path)?, &format!("{path}.font_size"))?;
         let font_weight = as_string(required(annotation, "font_weight", &path)?, &format!("{path}.font_weight"))?.to_string();
         let font_style = as_string(required(annotation, "font_style", &path)?, &format!("{path}.font_style"))?.to_string();
-        scene.texts.push(SceneText { text, x, y, rotation_degrees: 0.0, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
+        scene.texts.push(SceneText {
+                semantic_role: Some(role.clone()), text, x, y, rotation_degrees: 0.0, font_size, font_family: String::new(), font_weight, font_style, color, anchor: TextAnchor::Middle });
     }
     Ok(())
 }
@@ -806,8 +810,37 @@ fn validate_scene_label_metadata(label: &std::collections::BTreeMap<String, crat
         if as_string(required(plotmath, "source", &plotmath_path)?, &format!("{plotmath_path}.source"))?.is_empty() {
             return Err(SceneBuildError::new("input.scene.invalid_value", "plotmath source must not be empty", format!("{plotmath_path}.source")));
         }
+        return Err(SceneBuildError::new(
+            "input.scene.invalid_value",
+            "plotmath labels are not yet supported by the shared renderer-neutral scene",
+            format!("{path}.plotmath"),
+        ));
     }
     Ok(())
+}
+
+fn wrap_label_text(text: &str, max_chars: usize) -> String {
+    let max_chars = max_chars.max(1);
+    let mut lines = Vec::new();
+    let mut line = String::new();
+    for word in text.split_whitespace() {
+        let chars: Vec<char> = word.chars().collect();
+        if !line.is_empty() && line.chars().count() + 1 + chars.len() > max_chars {
+            lines.push(std::mem::take(&mut line));
+        }
+        if chars.len() <= max_chars {
+            if !line.is_empty() { line.push(' '); }
+            line.push_str(word);
+        } else {
+            for chunk in chars.chunks(max_chars) {
+                if !line.is_empty() { lines.push(std::mem::take(&mut line)); }
+                line.extend(chunk);
+                lines.push(std::mem::take(&mut line));
+            }
+        }
+    }
+    if !line.is_empty() { lines.push(line); }
+    lines.join("\n")
 }
 
 fn validate_scene_cell_metadata(cell: &std::collections::BTreeMap<String, crate::json::Value>, path: &str) -> Result<(), SceneBuildError> {
@@ -1362,27 +1395,30 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
                 p_value: None, normalized_value: None, significance: None, confidence_interval: None,
             });
             if visible && value.is_none() {
-                texts.push(SceneText { text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+                texts.push(SceneText {
+                semantic_role: None, text: "NA".into(), x: x + CELL_SIZE / 2.0, y: y + CELL_SIZE / 2.0 - 5.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
             }
         }
     }
 
     for (index, label) in input.labels.iter().enumerate() {
         let center = TOP_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0;
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
-        texts.push(SceneText { text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText {
+                semantic_role: None, text: label.clone(), x: LEFT_MARGIN - 12.0, y: center - LABEL_FONT_SIZE / 2.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::End, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText {
+                semantic_role: None, text: label.clone(), x: LEFT_MARGIN + index as f64 * pitch + CELL_SIZE / 2.0, y: TOP_MARGIN - LABEL_FONT_SIZE - 8.0, rotation_degrees: 0.0, font_size: LABEL_FONT_SIZE, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if !options.title.is_empty() {
-        texts.push(SceneText { text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+        texts.push(SceneText {
+                semantic_role: None, text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if let Some(annotation) = &options.annotation {
         if !annotation.is_empty() {
-            texts.push(SceneText { text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+            texts.push(SceneText {
+                semantic_role: None, text: annotation.clone(), x: LEFT_MARGIN, y: height - BOTTOM_MARGIN + 2.0, rotation_degrees: 0.0, font_size: 10.0, color: black, anchor: TextAnchor::Start, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
         }
     }
-    // The current renderer Scene type has no accessibility metadata fields.
-    let _description = &options.description;
-    let scene = Scene { width, height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() };
+    let scene = Scene { width, height, description: options.description.clone(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() };
     scene.validate().map_err(|error| SceneBuildError::new(error.code, error.message, "scene"))?;
     Ok(scene)
 }
@@ -1441,11 +1477,56 @@ mod tests {
     }
 
     #[test]
+    fn scene_v1_to_scene_wraps_long_labels_and_rejects_plotmath() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace("\"alpha\"", "\"a very long variable label\"")
+            .replace(
+                "\"glyph_method\": \"circle\",",
+                "\"typography\": {\"label_font_family\": \"sans-serif\", \"label_font_size\": 10, \"label_font_weight\": \"normal\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"wrap\"},\n  \"glyph_method\": \"circle\",",
+            );
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        let row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap();
+        assert!(row_label.text.contains('\n'));
+        assert!(row_label.text.lines().all(|line| line.chars().count() <= 12));
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("<tspan"));
+        let rgba = crate::raster::RgbaRenderer.render(
+            &scene,
+            &OutputOptions::Rgba(crate::output::RasterOptions::new(100, 100)),
+        ).unwrap();
+        assert!(matches!(rgba, RenderOutput::Rgba(_)));
+
+        let plotmath_source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace(
+                "\"text\": \"alpha\",",
+                "\"text\": \"alpha\", \"plotmath\": {\"prefix\": \"=\", \"source\": \"alpha\"},",
+            );
+        let error = parse_scene_v1_matrix(&plotmath_source).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_value");
+        assert_eq!(error.path, "labels[0].plotmath");
+    }
+
+    #[test]
     fn scene_v1_to_scene_preserves_title_annotation_geometry_and_palette() {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert_eq!((scene.width, scene.height), (380.0, 392.0));
         assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
+        assert_eq!(scene.description, "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.");
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("<desc>Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.</desc>"));
+        assert!(svg.contains("role=\"img\""));
+        assert!(svg.contains("aria-label=\"Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.\""));
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
         assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
         let first_row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End && text.text == "alpha").unwrap();
@@ -1518,10 +1599,21 @@ mod tests {
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
             && text.x == 50.0 && text.y == 90.0 && text.font_size == 10.0
             && text.anchor == TextAnchor::Middle
-            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));
+            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"
+            && text.semantic_role.as_deref() == Some("caption")));
         assert!(scene.texts.iter().any(|text| text.text == "second line"
             && text.x == 50.0 && text.y == 102.0 && text.anchor == TextAnchor::Middle
-            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));
+            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"
+            && text.semantic_role.as_deref() == Some("caption")));
+
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("data-semantic-role=\"caption\""));
+        assert!(svg.contains("aria-label=\"caption: A caption\""));
     }
 
     #[test]

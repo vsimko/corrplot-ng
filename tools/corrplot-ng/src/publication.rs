@@ -822,6 +822,7 @@ impl Publication {
         let grid = color("#e0e0e0");
         let mut texts = Vec::new();
         texts.push(SceneText {
+            semantic_role: None,
             text: title.to_owned(), x: 120.0, y: 28.0,
             font_size: self.base_size * 1.5, color: black, anchor: TextAnchor::Start,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(), rotation_degrees: 0.0,
@@ -830,11 +831,13 @@ impl Publication {
             let center_y = top + index as f64 * cell_size + cell_size / 2.0;
             let center_x = left + index as f64 * cell_size + cell_size / 2.0;
             texts.push(SceneText {
+            semantic_role: None,
                 text: label.clone(), x: left - 12.0, y: center_y,
                 font_size: self.base_size, color: black, anchor: TextAnchor::End,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(), rotation_degrees: 0.0,
             });
             texts.push(SceneText {
+            semantic_role: None,
                 text: label.clone(), x: center_x, y: top - 12.0,
                 font_size: self.base_size, color: black, anchor: TextAnchor::Middle,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(), rotation_degrees: 0.0,
@@ -883,6 +886,7 @@ impl Publication {
                 if let Some(value) = value {
                     if visible && (self.method == "number" || self.show_values) {
                         texts.push(SceneText {
+            semantic_role: None,
                             text: format!("{value}"), x: center_x, y: center_y - self.base_size / 2.0,
                             font_size: self.base_size, color: white, anchor: TextAnchor::Middle,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(), rotation_degrees: 0.0,
@@ -891,7 +895,7 @@ impl Publication {
                 }
             }
         }
-        Scene { width, height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() }
+        Scene { width, height, description: String::new(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() }
     }
 
     pub fn svg_output_options(&self) -> Result<OutputOptions, String> {

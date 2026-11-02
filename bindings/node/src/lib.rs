@@ -276,6 +276,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         };
         texts.push(SceneText {
             text: text.text,
+            semantic_role: None,
             x: text.x,
             y: text.y,
             font_size: text.font_size,
@@ -288,7 +289,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
+    Ok(Scene { width: input.width, height: input.height, description: String::new(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[napi(js_name = "renderSceneSvg")]

@@ -1,4 +1,7 @@
 use corrplot_core::{validate_matrix, MatrixKind};
+use corrplot_core::scene::{scene_v1_to_scene, CellMethod};
+use corrplot_core::raster::SceneSvgRenderer;
+use corrplot_core::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
 
 use extendr_api::prelude::*;
 
@@ -121,6 +124,19 @@ fn build_scene_json_rust(
     Ok(out)
 }
 
+/// Parse scene-v1 and render SVG through the shared Rust scene and SVG renderer.
+/// @export
+#[extendr]
+fn render_scene_svg_rust(scene_json: &str) -> std::result::Result<String, String> {
+    let scene = scene_v1_to_scene(scene_json, CellMethod::Circle)
+        .map_err(|error| format!("{error:?}"))?;
+    let options = OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels));
+    match SceneSvgRenderer.render(&scene, &options).map_err(|error| format!("{error:?}"))? {
+        RenderOutput::Svg(svg) => Ok(svg),
+        _ => Err("shared scene renderer returned a non-SVG output".to_string()),
+    }
+}
+
 #[extendr]
 fn scene_cell_count(n_labels: i32) -> i32 {
     if n_labels <= 0 { return 0; }
@@ -130,5 +146,6 @@ fn scene_cell_count(n_labels: i32) -> i32 {
 extendr_module! {
     mod corrplotngrustspike;
     fn build_scene_json_rust;
+    fn render_scene_svg_rust;
     fn scene_cell_count;
 }

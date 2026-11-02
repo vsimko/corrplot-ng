@@ -1,4 +1,6 @@
-use corrplot_core::output::{RenderOutput, Renderer};
+use corrplot_core::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+use corrplot_core::raster::SceneSvgRenderer;
+use corrplot_core::scene::{scene_v1_to_scene, CellMethod};
 use corrplot_core::{validate_matrix, MatrixKind};
 use std::env;
 use std::fs;
@@ -616,6 +618,18 @@ fn run() -> Result<(), String> {
                 }
                 "render" => {
                     let output = match opts.format {
+                        Format::Svg if input_format == InputFormat::SceneJson => {
+                            let scene = scene_v1_to_scene(&source, CellMethod::Circle)
+                                .map_err(|error| format!("{} at {}: {}", error.code, error.path, error.message))?;
+                            let output_options = OutputOptions::Svg(
+                                SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)
+                            );
+                            match SceneSvgRenderer.render(&scene, &output_options)
+                                .map_err(|error| error.to_string())? {
+                                RenderOutput::Svg(svg) => svg,
+                                _ => return Err("shared scene renderer returned a non-SVG output".into()),
+                            }
+                        }
                         Format::Svg => svg(&matrix, &opts.title, &opts.method, kind),
                         Format::SceneJson => scene_json(&matrix, &opts.title, &opts.method, kind),
                         Format::NormalizedJson => normalized_matrix_json(&matrix, normalized_source_format(input_format)),

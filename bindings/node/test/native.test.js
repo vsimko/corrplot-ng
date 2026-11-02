@@ -135,6 +135,7 @@ test("renders shared scene-v1 glyph and figure-text semantics through Node", () 
   const svg = renderMatrixSvg(sceneV1Construction, "circle");
   assert.match(svg, /^<svg /);
   assert.match(svg, /A caption/);
+  assert.match(svg, /data-semantic-role=\"caption\"/);
   assert.match(svg, /second line/);
 });
 
