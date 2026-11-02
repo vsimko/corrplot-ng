@@ -320,6 +320,41 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         }
     }
 
+    // Apply the document-level label typography to the row/column label
+    // entries created by the shared matrix builder. SVG preserves these font
+    // attributes; the RGBA bitmap renderer intentionally remains a fallback.
+    if let Some(value) = root.get("typography") {
+        let typography = as_object(value, "typography")?;
+        let font_family = as_string(required(typography, "label_font_family", "typography")?, "typography.label_font_family")?.to_string();
+        let font_size = as_number(required(typography, "label_font_size", "typography")?, "typography.label_font_size")?;
+        let font_weight = as_string(required(typography, "label_font_weight", "typography")?, "typography.label_font_weight")?.to_string();
+        let collision = as_string(required(typography, "label_collision", "typography")?, "typography.label_collision")?;
+        let max_width = scene.cells.first().map(|cell| cell.size * 0.9).unwrap_or(font_size * 5.0);
+        let max_chars = ((max_width / (font_size * 0.6)).floor() as usize).max(1);
+        for index in 0..labels.len() {
+            for label_text in [&mut scene.texts[index * 2], &mut scene.texts[index * 2 + 1]] {
+                label_text.font_family = font_family.clone();
+                label_text.font_size = font_size;
+                label_text.font_weight = font_weight.clone();
+                if label_text.text.chars().count() > max_chars {
+                    match collision {
+                        "omit" => label_text.text.clear(),
+                        "truncate" => {
+                            let keep = max_chars.saturating_sub(1);
+                            label_text.text = label_text.text.chars().take(keep).collect::<String>();
+                            label_text.text.push('…');
+                        }
+                        // "preserve" intentionally allows overlap. "wrap"
+                        // requires multiline/rotated text layout not represented
+                        // by the current renderer-neutral SceneText contract.
+                        "preserve" | "wrap" => {}
+                        _ => unreachable!("typography policy was validated by the parser"),
+                    }
+                }
+            }
+        }
+    }
+
     let style = as_object(required(root, "style", "$")?, "style")?;
     let positive = scene_v1_color(required(style, "positive_color", "style")?, "style.positive_color")?;
     let negative = scene_v1_color(required(style, "negative_color", "style")?, "style.negative_color")?;
@@ -1328,6 +1363,26 @@ mod tests {
             source_indices: vec![0, 1, 2], semantics: MatrixSemantics::Correlation,
             display_type: DisplayType::Full, show_diagonal: true,
         }
+    }
+
+    #[test]
+    fn scene_v1_to_scene_applies_label_typography_and_collision_policy() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace("\"alpha\"", "\"a-very-long-variable-label\"")
+            .replace(
+                "\"glyph_method\": \"circle\",",
+                "\"typography\": {\"label_font_family\": \"serif\", \"label_font_size\": 10, \"label_font_weight\": \"bold\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"truncate\"},\n  \"glyph_method\": \"circle\",",
+            );
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        assert_eq!(scene.texts[0].font_family, "serif");
+        assert_eq!(scene.texts[0].font_size, 10.0);
+        assert_eq!(scene.texts[0].font_weight, "bold");
+        assert!(scene.texts[0].text.ends_with('…'));
+        assert!(scene.texts[0].text.chars().count() <= 12);
+
+        let omit_source = source.replace("\"label_collision\": \"truncate\"", "\"label_collision\": \"omit\"");
+        let omitted = scene_v1_to_scene(&omit_source, CellMethod::Circle).unwrap();
+        assert!(omitted.texts[0].text.is_empty());
     }
 
     #[test]
