@@ -836,6 +836,7 @@ mod tests {
             cluster_regions: vec![],
             texts: vec![SceneText {
                 text: "A".into(), semantic_role: None, x: 10.0, y: 10.0, rotation_degrees: 0.0,
+                font_size: 10.0,
                 color: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
                 anchor: TextAnchor::Start,
                 font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into(),
