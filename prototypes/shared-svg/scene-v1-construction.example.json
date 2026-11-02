@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "kind": "correlation_plot",
+  "width": 100,
+  "height": 100,
+  "title": "Scene-v1 construction fixture",
+  "description": "Shared regression fixture for glyph precedence and figure text",
+  "annotation": "",
+  "glyph_method": "number",
+  "style": {
+    "positive_color": "#2166ac",
+    "negative_color": "#b2182b",
+    "zero_color": "#bdbdbd",
+    "missing_fill": "#f2f2f2",
+    "grid_color": "#e0e0e0"
+  },
+  "labels": [
+    {
+      "text": "a",
+      "row_x": 1,
+      "row_y": 2,
+      "column_x": 3,
+      "column_y": 4
+    },
+    {
+      "text": "b",
+      "row_x": 1,
+      "row_y": 2,
+      "column_x": 3,
+      "column_y": 4
+    }
+  ],
+  "cells": [
+    {
+      "row": 0,
+      "column": 0,
+      "value": 1,
+      "x": 1,
+      "y": 1,
+      "center_x": 6,
+      "center_y": 6,
+      "size": 10,
+      "encoding": {
+        "kind": "square",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "width": 8
+      }
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "value": 0.5,
+      "x": 11,
+      "y": 1,
+      "center_x": 16,
+      "center_y": 6,
+      "size": 10,
+      "method": "pie",
+      "encoding": {
+        "kind": "square",
+        "magnitude": 0.5,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 4
+      }
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "value": 0.5,
+      "x": 1,
+      "y": 11,
+      "center_x": 6,
+      "center_y": 16,
+      "size": 10
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "value": 1,
+      "x": 11,
+      "y": 11,
+      "center_x": 16,
+      "center_y": 16,
+      "size": 10
+    }
+  ],
+  "figure_text": [
+    {
+      "role": "caption",
+      "text": "A caption\nsecond line",
+      "lines": [
+        "A caption",
+        "second line"
+      ],
+      "alignment": "center",
+      "font_family": "sans",
+      "font_size": 10,
+      "font_weight": "normal",
+      "font_style": "normal",
+      "line_height": 12,
+      "spacing_after": 2,
+      "x": 50,
+      "y": 90
+    }
+  ]
+}
