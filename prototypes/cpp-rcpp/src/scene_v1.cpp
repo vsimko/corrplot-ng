@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -28,6 +29,14 @@ std::string json_escape(const std::string& value) {
   return out.str();
 }
 
+std::size_t utf8_character_count(const std::string& value) {
+  std::size_t count = 0;
+  for (unsigned char ch : value) {
+    if ((ch & 0xC0) != 0x80) ++count;
+  }
+  return count;
+}
+
 std::string number(double value) {
   std::ostringstream out;
   out << std::setprecision(15) << value;
@@ -44,9 +53,17 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
     Rcpp::stop("labels and matrix dimensions must agree and be non-empty");
   }
 
+  double max_label_width = 0.0;
+  for (int i = 0; i < n; ++i) {
+    if (labels[i] == NA_STRING) Rcpp::stop("labels cannot be NA");
+    const std::string label = Rcpp::as<std::string>(labels[i]);
+    max_label_width = std::max(
+        max_label_width, static_cast<double>(utf8_character_count(label)) * 13.0 * 0.6);
+  }
+
   const double cell = 84.0;
-  const double left = 104.0;
-  const double top = 76.0;
+  const double left = std::max(104.0, std::trunc(max_label_width + 24.0));
+  const double top = std::max(76.0, std::trunc(max_label_width + 32.0));
   const double width = left + n * cell + 24.0;
   const double height = top + n * cell + 64.0;
 
@@ -56,12 +73,12 @@ std::string build_scene_json_cpp(Rcpp::CharacterVector labels,
       << ",\"labels\":[";
   for (int i = 0; i < n; ++i) {
     if (i) out << ',';
-    if (labels[i] == NA_STRING) Rcpp::stop("labels cannot be NA");
     const std::string label = Rcpp::as<std::string>(labels[i]);
     out << "{\"text\":\"" << json_escape(label)
-        << "\",\"row_x\":92,\"row_y\":" << number(top + i * cell + cell / 2.0)
+        << "\",\"row_x\":" << number(left - 12.0)
+        << ",\"row_y\":" << number(top + i * cell + cell / 2.0)
         << ",\"column_x\":" << number(left + i * cell + cell / 2.0)
-        << ",\"column_y\":60}";
+        << ",\"column_y\":" << number(top - 16.0) << "}";
   }
   out << "],\"cells\":[";
   bool first = true;

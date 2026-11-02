@@ -1,0 +1,295 @@
+name: WASM from R experiment
+
+on:
+  pull_request:
+    paths:
+      - "experiments/wasm-r/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/test-wasm-r-experiment.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: wasm-r-experiment-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  shared-wasi-module:
+    name: Same WASI module in Node and R (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            wasmtime_archive: wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz
+            wasmtime_sha256: e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d
+          - os: macos-15-intel
+            wasmtime_archive: wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz
+            wasmtime_sha256: b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5
+          - os: windows-latest
+            wasmtime_archive: wasmtime-v50.0.1-x86_64-mingw-c-api.zip
+            wasmtime_sha256: 9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install Rust target
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-wasip1 wasm32-unknown-unknown
+          if [[ "$RUNNER_OS" == "Windows" ]]; then rustup target add x86_64-pc-windows-gnu; fi
+
+      - name: Build shared-core WASI module
+        run: |
+          CARGO_TARGET_DIR=experiments/wasm-r/wasm-host/target cargo build \
+            --manifest-path experiments/wasm-r/wasm-host/Cargo.toml \
+            --target wasm32-wasip1 \
+            --release
+
+      - name: Build host-neutral embedded ABI module
+        run: |
+          CARGO_TARGET_DIR=experiments/wasm-r/wasm-abi/target cargo build \
+            --manifest-path experiments/wasm-r/wasm-abi/Cargo.toml \
+            --target wasm32-unknown-unknown \
+            --release
+
+      - name: Locate WASM artifacts
+        run: |
+          WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-host/target/wasm32-wasip1/release" -maxdepth 1 -type f -name "*.wasm" -print -quit)"
+          EMBEDDED_WASM_MODULE="$(find "$GITHUB_WORKSPACE/experiments/wasm-r/wasm-abi/target/wasm32-unknown-unknown/release" -maxdepth 1 -type f -name "*.wasm" -print -quit)"
+          if [[ -z "$WASM_MODULE" || -z "$EMBEDDED_WASM_MODULE" ]]; then
+            echo "WASM artifacts not found; available files:"
+            find experiments/wasm-r/wasm-host/target experiments/wasm-r/wasm-abi/target -type f -name "*.wasm" -print
+            exit 1
+          fi
+          echo "WASI module: $WASM_MODULE"
+          echo "Embedded ABI module: $EMBEDDED_WASM_MODULE"
+          echo "WASM_MODULE=$WASM_MODULE" >> "$GITHUB_ENV"
+          echo "EMBEDDED_WASM_MODULE=$EMBEDDED_WASM_MODULE" >> "$GITHUB_ENV"
+
+      - name: Install Wasmtime CLI (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          set -euo pipefail
+          VERSION=50.0.1
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            ARCHIVE="wasmtime-v${VERSION}-x86_64-macos.tar.xz"
+          else
+            ARCHIVE="wasmtime-v${VERSION}-x86_64-linux.tar.xz"
+          fi
+          URL="https://github.com/bytecodealliance/wasmtime/releases/download/v${VERSION}/${ARCHIVE}"
+          curl -fsSL "$URL" -o "/tmp/$ARCHIVE"
+          mkdir -p "$RUNNER_TEMP/wasmtime-cli"
+          tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C "$RUNNER_TEMP/wasmtime-cli"
+          echo "$RUNNER_TEMP/wasmtime-cli" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/wasmtime-cli/wasmtime" --version
+
+      - name: Install Wasmtime CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "50.0.1"
+          $archive = "wasmtime-v$version-x86_64-windows.zip"
+          $zip = Join-Path $env:RUNNER_TEMP $archive
+          $dest = Join-Path $env:RUNNER_TEMP "wasmtime-cli"
+          Invoke-WebRequest -Uri "https://github.com/bytecodealliance/wasmtime/releases/download/v$version/$archive" -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          $exe = Get-ChildItem $dest -Filter wasmtime.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw "wasmtime.exe not found" }
+          $exe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & $exe.FullName --version
+
+      - name: Install pinned Wasmtime C API (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          set -euo pipefail
+          VERSION=50.0.1
+          ARCHIVE="${{ matrix.wasmtime_archive }}"
+          URL="https://github.com/bytecodealliance/wasmtime/releases/download/v${VERSION}/${ARCHIVE}"
+          curl -fsSL "$URL" -o "/tmp/$ARCHIVE"
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${{ matrix.wasmtime_sha256 }}  /tmp/$ARCHIVE" | sha256sum -c -
+          else
+            echo "${{ matrix.wasmtime_sha256 }}  /tmp/$ARCHIVE" | shasum -a 256 -c -
+          fi
+          mkdir -p /tmp/wasmtime-c-api
+          if [[ "$ARCHIVE" == *.zip ]]; then
+            unzip -q "/tmp/$ARCHIVE" -d /tmp/wasmtime-c-api
+            ROOT="$(find /tmp/wasmtime-c-api -mindepth 1 -maxdepth 1 -type d -print -quit)"
+            if [[ -n "$ROOT" ]]; then
+              mv "$ROOT"/* /tmp/wasmtime-c-api/
+              rmdir "$ROOT"
+            fi
+          else
+            tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C /tmp/wasmtime-c-api
+          fi
+          echo "WASMTIME_C_API_ROOT=/tmp/wasmtime-c-api" >> "$GITHUB_ENV"
+
+      - name: Install pinned Wasmtime C API (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "50.0.1"
+          $archive = "${{ matrix.wasmtime_archive }}"
+          $expected = "${{ matrix.wasmtime_sha256 }}"
+          $zip = Join-Path $env:RUNNER_TEMP $archive
+          $dest = Join-Path $env:RUNNER_TEMP "wasmtime-c-api"
+          Invoke-WebRequest -Uri "https://github.com/bytecodealliance/wasmtime/releases/download/v$version/$archive" -OutFile $zip
+          $actual = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Wasmtime C API SHA-256 mismatch: $actual" }
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          $rootDir = Get-ChildItem $dest -Directory | Select-Object -First 1
+          $root = if ($rootDir) { $rootDir.FullName } else { $dest }
+          if (-not (Test-Path (Join-Path $root "include/wasmtime.h"))) { throw "Wasmtime C API headers not found" }
+          "WASMTIME_C_API_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          (Join-Path $root "lib") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Get-ChildItem (Join-Path $root "lib")
+
+      - name: Install R system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install R experiment dependencies
+        run: |
+          Rscript -e 'install.packages(c("jsonlite", "digest", "V8"), repos = "https://cloud.r-project.org")'
+          Rscript -e 'stopifnot(requireNamespace("V8", quietly = TRUE), requireNamespace("curl", quietly = TRUE))'
+
+      - name: Build native Rust R binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            R_HOME="$(R RHOME)" cargo build --manifest-path experiments/wasm-r/native-r/Cargo.toml --target x86_64-pc-windows-gnu --release
+          else
+            R_HOME="$(R RHOME)" cargo build --manifest-path experiments/wasm-r/native-r/Cargo.toml --release
+          fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then NATIVE_DIR="experiments/wasm-r/native-r/target/x86_64-pc-windows-gnu/release"; else NATIVE_DIR="experiments/wasm-r/native-r/target/release"; fi
+          NATIVE_LIBRARY="$(find "$NATIVE_DIR" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)$' | head -n 1 || true)"
+          if [[ -z "$NATIVE_LIBRARY" ]]; then
+            echo "Native Rust R library not found"
+            find "$NATIVE_DIR" -maxdepth 1 -type f -print
+            exit 1
+          fi
+          echo "NATIVE_LIBRARY=$NATIVE_LIBRARY" >> "$GITHUB_ENV"
+          echo "NATIVE_LIBRARY_BYTES=$(wc -c < "$NATIVE_LIBRARY" | tr -d ' ')" >> "$GITHUB_ENV"
+
+      - name: Run identical fixtures and collect benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          mkdir -p "$RESULTS_DIR"
+          echo "fixture,backend,calls,samples,mean_ms,ci95_lower_ms,ci95_upper_ms,artifact_bytes" > "$RESULTS_DIR/benchmark.csv"
+          # 512x512 is 16x the element count of the previous 128x128 largest fixture.
+          python3 - <<'PY'
+          import json
+          n = 512
+          fixture = {
+              "labels": ["v%04d" % i for i in range(n)],
+              "rows": n,
+              "columns": n,
+              "values": [None if (i * 17 + j * 13) % 997 == 0 else ((i * 31 + j * 17) % 2001 - 1000) / 100.0 for i in range(n) for j in range(n)],
+              "kind": "general_numeric",
+          }
+          with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
+              json.dump(fixture, stream, separators=(",", ":"))
+          PY
+          for FIXTURE in experiments/wasm-r/fixtures/*.json; do
+            NAME="$(basename "$FIXTURE" .json)"
+            node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
+            Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
+            node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
+            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
+            Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
+            Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
+            python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
+          import csv, json, os, pathlib, sys
+          name, directory, native_bytes, wasm_path = sys.argv[1:]
+          root = pathlib.Path(directory)
+          def read(prefix):
+              with (root / f"{prefix}-{name}.json").open(encoding="utf-8") as stream:
+                  return json.load(stream)
+          node, wasi_r = read("node"), read("r-wasi")
+          node_embedded = read("node-embedded")
+          wasmtime, v8 = read("r-wasmtime"), read("r-v8")
+          native = read("r-native-rust")
+          native_r = read("r-native-reference")
+          assert node["wasmSha256"] == wasi_r["wasmSha256"]
+          assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
+          assert node["response"] == wasi_r["response"]
+          assert node_embedded["wasmSha256"] == wasmtime["wasmSha256"]
+          assert node_embedded["fixtureSha256"] == wasmtime["fixtureSha256"]
+          assert node_embedded["response"] == wasmtime["response"] == v8["response"] == native["response"] == native_r["response"]
+          print(f"{name}: parity passed")
+          rows = [
+              ("V8", v8, os.path.getsize(wasm_path)),
+              ("Wasmtime", wasmtime, os.path.getsize(wasm_path)),
+              ("Native Rust", native, int(native_bytes)),
+              ("Native R reference", native_r, 0),
+          ]
+          with (root / "benchmark.csv").open("a", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              for backend, result, size in rows:
+                  writer.writerow([name, backend, result.get("calls", ""), result.get("sampleCount", ""), result.get("meanPerCallMs", result.get("perCallMs", "")), result.get("ci95LowerMs", ""), result.get("ci95UpperMs", ""), size])
+          print(f"{name}: " + "; ".join(f"{backend}={result.get('meanPerCallMs', result.get('perCallMs', float('nan'))):.5f} ms/call (95% CI {result.get('ci95LowerMs', float('nan')):.5f}–{result.get('ci95UpperMs', float('nan')):.5f})" for backend, result, _ in rows))
+          PY
+          done
+
+      - name: Measure runtime and artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
+          {
+            echo "Platform: $(uname -s)-$(uname -m)"
+            echo "R: $(R --version | head -n 1)"
+            echo "V8 package:"
+            Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
+            echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
+            echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
+            echo "Wasmtime shared library bytes: $(find "$WASMTIME_C_API_ROOT/lib" -maxdepth 1 -type f -name '*wasmtime*' -exec wc -c {} \; | awk '{s+=$1} END {print s+0}')"
+          } > "$RESULTS_DIR/runtime-sizes.txt"
+          cat "$RESULTS_DIR/runtime-sizes.txt"
+          {
+            echo "### R backend benchmark"
+            echo
+            echo "Fixture/backend timings are measured in the CI process after warm-up. These are exploratory microbenchmarks."
+            echo
+            echo "| Fixture | Backend | Calls | Samples | Mean ms/call | 95% CI (ms/call) | Artifact bytes |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+            python3 - "$RESULTS_DIR/benchmark.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], newline="", encoding="utf-8") as stream:
+              for row in csv.DictReader(stream):
+                  print(f"| {row['fixture']} | {row['backend']} | {row['calls']} | {row['samples']} | {float(row['mean_ms']):.5f} | [{float(row['ci95_lower_ms']):.5f}, {float(row['ci95_upper_ms']):.5f}] | {row['artifact_bytes']} |")
+          PY
+            echo
+            echo "Runtime sizes"
+            echo
+            cat "$RESULTS_DIR/runtime-sizes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          path: ${{ runner.temp }}/corrplot-r-benchmarks/
+          if-no-files-found: error
