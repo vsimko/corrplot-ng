@@ -1,0 +1,16 @@
+{
+  "name": "@corrplot-ng/native-node-darwin-arm64",
+  "version": "0.1.0",
+  "description": "Prebuilt Node-API binary for darwin-arm64",
+  "main": "index.node",
+  "files": [
+    "index.node"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "license": "MIT"
+}
