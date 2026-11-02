@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - experiment/rust-rextendr-offline-package
+      - experiment/rust-binary-size-matrix
     paths:
       - ".github/workflows/rust-rextendr-offline-package.yml"
       - "prototypes/rust-rextendr/**"
@@ -23,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-15-intel, windows-latest]
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
       CARGO_BUILD_JOBS: 2
@@ -135,6 +136,36 @@ jobs:
           R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
       - name: Test Rust function from R
         run: Rscript -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
+      - name: Build the current native extendr cdylib for a same-run comparison
+        shell: bash
+        run: |
+          set -euxo pipefail
+          manifest=experiments/wasm-r/native-r/Cargo.toml
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            export RUSTFLAGS="-C link-arg=-Wl,--strip-debug"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            export RUSTFLAGS="-C link-arg=-Wl,-S"
+          fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --target x86_64-pc-windows-gnu --release
+            native_dir="prototypes/rust-rextendr/.ci-rust-target/x86_64-pc-windows-gnu/release"
+          else
+            R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --release
+            native_dir="prototypes/rust-rextendr/.ci-rust-target/release"
+          fi
+          native_library="$(find "$native_dir" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)$' | head -n 1 || true)"
+          if [[ -z "$native_library" ]]; then
+            echo "Native extendr cdylib not found in $native_dir" >&2
+            find "$native_dir" -maxdepth 1 -type f -print
+            exit 1
+          fi
+          mkdir -p "$GITHUB_WORKSPACE/size-results"
+          native_snapshot="$GITHUB_WORKSPACE/size-results/$(basename "$native_library")"
+          cp "$native_library" "$native_snapshot"
+          echo "NATIVE_R_LIBRARY=$native_snapshot" >> "$GITHUB_ENV"
+          echo "Native R cdylib snapshot: $native_snapshot ($(wc -c < "$native_snapshot" | tr -d ' ') bytes)"
+          cargo tree --manifest-path "$manifest" --edges normal > native-r-cargo-tree.txt
+          cp experiments/wasm-r/native-r/Cargo.lock native-r-Cargo.lock
       - name: Report optimized installed package and native library sizes
         shell: bash
         run: |
@@ -202,3 +233,136 @@ jobs:
         run: |
           set -euxo pipefail
           R CMD check --as-cran --no-manual corrplotngrustspike_0.1.0.tar.gz
+      - name: Produce machine-readable size and build manifest
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p size-results
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import platform
+          import subprocess
+
+          def command(args):
+              result = subprocess.run(args, text=True, stdout=subprocess.PIPE,
+                                      stderr=subprocess.STDOUT, check=False)
+              return result.stdout.strip()
+
+          package = Path(command([
+              "Rscript", "-e",
+              "cat(normalizePath(find.package('corrplotngrustspike')))"
+          ]))
+          native_r = Path(os.environ["NATIVE_R_LIBRARY"])
+          source_tarball = Path("corrplotngrustspike_0.1.0.tar.gz")
+          installed_files = [p for p in package.rglob("*") if p.is_file()]
+          installed_native = [
+              p for p in (package / "libs").rglob("*")
+              if p.is_file() and p.suffix.lower() in {".so", ".dylib", ".dll"}
+          ]
+
+          def describe(path):
+              digest = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              size = path.stat().st_size
+              return {"path": str(path), "bytes": size,
+                      "mib": round(size / 1024 / 1024, 4),
+                      "sha256": digest.hexdigest()}
+
+          import re
+
+          lock_text = Path("native-r-Cargo.lock").read_text(encoding="utf-8")
+          extendr_match = re.search(
+              r'(?ms)^\[\[package\]\]\nname = "extendr-api"\nversion = "([^"]+)"',
+              lock_text,
+          )
+          if not extendr_match:
+              raise RuntimeError("Could not resolve extendr-api version from native Cargo.lock")
+          runner_os = os.environ.get("RUNNER_OS")
+          legacy_strip_requested = os.environ.get("CORRPLOT_REXTENDR_STRIP_DEBUG", "").lower() == "true"
+          legacy_strip_flag = {
+              "Linux": "-Wl,--strip-debug",
+              "macOS": "-Wl,-S",
+          }.get(runner_os)
+          legacy_strip_effective = legacy_strip_requested and legacy_strip_flag is not None
+          current_native_linker_flag = {
+              "Linux": "-C link-arg=-Wl,--strip-debug",
+              "macOS": "-C link-arg=-Wl,-S",
+          }.get(runner_os)
+
+          report = {
+              "platform": platform.platform(),
+              "machine": platform.machine(),
+              "runner_os": os.environ.get("RUNNER_OS"),
+              "target_triple": (
+                  "x86_64-pc-windows-gnu" if os.environ.get("RUNNER_OS") == "Windows"
+                  else "x86_64-apple-darwin" if os.environ.get("RUNNER_OS") == "macOS"
+                  else "x86_64-unknown-linux-gnu"
+              ),
+              "rustc_vv": command(["rustc", "-Vv"]),
+              "cargo_version": command(["cargo", "-V"]),
+              "r_version": command(["R", "--version"]).splitlines()[0],
+              "r_cc": command(["R", "CMD", "config", "CC"]),
+              "r_shlib_ldflags": command(["R", "CMD", "config", "SHLIB_LDFLAGS"]),
+              "release_profile": True,
+              "legacy_build_time_debug_stripping": {
+                  "requested": legacy_strip_requested,
+                  "effective": legacy_strip_effective,
+                  "linker_flag": legacy_strip_flag
+              },
+              "legacy_extendr_version": "0.9.0",
+              "current_native_extendr_api_resolved_version": extendr_match.group(1),
+              "current_native_cdylib_linker_flag": current_native_linker_flag,
+              "artifacts": {
+                  "legacy_installed_r_package": {
+                      "bytes": sum(p.stat().st_size for p in installed_files),
+                      "mib": round(sum(p.stat().st_size for p in installed_files) / 1024 / 1024, 4),
+                      "files": len(installed_files)
+                  },
+                  "legacy_installed_native_libraries": [describe(p) for p in installed_native],
+                  "current_native_extendr_cdylib": describe(native_r),
+                  "legacy_r_source_tarball": describe(source_tarball)
+              }
+          }
+          Path("size-results/size-report.json").write_text(
+              json.dumps(report, indent=2) + "\n", encoding="utf-8"
+          )
+          Path("size-results/rustc-vv.txt").write_text(report["rustc_vv"] + "\n", encoding="utf-8")
+          Path("size-results/native-r-cargo-tree.txt").write_text(
+              Path("native-r-cargo-tree.txt").read_text(encoding="utf-8"), encoding="utf-8"
+          )
+          Path("size-results/native-r-Cargo.lock").write_bytes(Path("native-r-Cargo.lock").read_bytes())
+          print(json.dumps(report, indent=2))
+          PY
+          {
+            echo "### Cross-platform Rust/R footprint"
+            echo
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path("size-results/size-report.json").read_text(encoding="utf-8"))
+          print("| Artifact | Exact size |")
+          print("|---|---:|")
+          for label, value in [
+              ("Legacy installed R package", r["artifacts"]["legacy_installed_r_package"]["bytes"]),
+              ("Legacy installed native library", sum(x["bytes"] for x in r["artifacts"]["legacy_installed_native_libraries"])),
+              ("Current native extendr cdylib", r["artifacts"]["current_native_extendr_cdylib"]["bytes"]),
+              ("Legacy R source tarball", r["artifacts"]["legacy_r_source_tarball"]["bytes"]),
+          ]:
+              print(f"| {label} | {value:,} bytes |")
+          print()
+          print(f"Platform: {r['platform']}; target: {r['target_triple']}")
+          print(f"Rust: {r['rustc_vv'].splitlines()[0]}; {r['cargo_version']}; {r['r_version']}")
+          PY
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload reproducible size measurements
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-r-footprint-${{ matrix.os }}
+          path: size-results/
+          if-no-files-found: error
+
