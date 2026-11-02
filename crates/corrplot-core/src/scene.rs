@@ -1504,6 +1504,13 @@ mod tests {
         assert_eq!((scene.width, scene.height), (380.0, 392.0));
         assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
         assert_eq!(scene.description, "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.");
+        use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
+        let svg = crate::raster::SceneSvgRenderer.render(
+            &scene,
+            &OutputOptions::Svg(SvgOptions::new(scene.width, scene.height, SvgUnit::Pixels)),
+        ).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("<desc>Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.</desc>"));
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
         assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
         let first_row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End && text.text == "alpha").unwrap();

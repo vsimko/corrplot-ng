@@ -327,7 +327,7 @@ pub fn render_rgba(
     }
     draw_scene_legend_rgba(&mut canvas, scene);
     for text in &scene.texts {
-        canvas.draw_text(&text.text, text.x, text.y, text.font_size, text.color, text.anchor); // RGBA bitmap fallback does not rotate text.
+        canvas.draw_text_rotated(&text.text, text.x, text.y, text.font_size, text.color, text.anchor, text.rotation_degrees);
     }
 
     Ok(RgbaBuffer {
@@ -511,32 +511,49 @@ impl Canvas {
     }
 
     fn draw_text(&mut self, text: &str, x: f64, y: f64, font_size: f64, color: RgbaColor, anchor: TextAnchor) {
+        self.draw_text_rotated(text, x, y, font_size, color, anchor, 0.0);
+    }
+
+    fn draw_text_rotated(
+        &mut self,
+        text: &str,
+        x: f64,
+        y: f64,
+        font_size: f64,
+        color: RgbaColor,
+        anchor: TextAnchor,
+        rotation_degrees: f64,
+    ) {
         let cell = font_size * self.scale / 7.0;
         if cell <= 0.0 || !cell.is_finite() { return; }
-        for (line_index, line) in text.split('\n').enumerate() {
+        let (anchor_x, anchor_y) = self.point(x, y);
+        let radians = rotation_degrees.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        for (line_index, line) in text.split('\\n').enumerate() {
             let width = line.chars().count() as f64 * 6.0 * cell - cell;
-            let (x, line_y) = self.point(x, y + line_index as f64 * font_size * 1.2);
             let start_x = match anchor {
-                TextAnchor::Start => x,
-                TextAnchor::Middle => x - width / 2.0,
-                TextAnchor::End => x - width,
+                TextAnchor::Start => anchor_x,
+                TextAnchor::Middle => anchor_x - width / 2.0,
+                TextAnchor::End => anchor_x - width,
             };
             for (index, character) in line.chars().enumerate() {
                 let rows = bitmap_glyph(character);
                 for (row, bits) in rows.iter().enumerate() {
                     for column in 0..5 {
-                        if bits & (1 << (4 - column)) != 0 {
-                            let left = start_x + (index as f64 * 6.0 + column as f64) * cell;
-                            let top = line_y + row as f64 * cell;
-                            let right = left + cell;
-                            let bottom = top + cell;
-                            let x0 = left.floor().max(0.0) as isize;
-                            let y0 = top.floor().max(0.0) as isize;
-                            let x1 = right.ceil().min(self.width as f64) as isize;
-                            let y1 = bottom.ceil().min(self.height as f64) as isize;
-                            for py in y0..y1 {
-                                for px in x0..x1 { self.blend_pixel(px, py, color); }
-                            }
+                        if bits & (1 << (4 - column)) == 0 { continue; }
+                        let local_x = start_x - anchor_x + (index as f64 * 6.0 + column as f64 + 0.5) * cell;
+                        let local_y = (line_index as f64 * font_size * 1.2 + row as f64) * self.scale
+                            + cell / 2.0;
+                        let center_x = anchor_x + local_x * cos - local_y * sin;
+                        let center_y = anchor_y + local_x * sin + local_y * cos;
+                        let left = center_x - cell / 2.0;
+                        let top = center_y - cell / 2.0;
+                        let x0 = left.floor().max(0.0) as isize;
+                        let y0 = top.floor().max(0.0) as isize;
+                        let x1 = (left + cell).ceil().min(self.width as f64) as isize;
+                        let y1 = (top + cell).ceil().min(self.height as f64) as isize;
+                        for py in y0..y1 {
+                            for px in x0..x1 { self.blend_pixel(px, py, color); }
                         }
                     }
                 }
@@ -846,6 +863,17 @@ mod tests {
         assert_eq!(buffer.dpi, Some(144.0));
         assert_eq!(buffer.alpha_mode, AlphaMode::Straight);
         assert_eq!(buffer.color_space, ColorSpace::Srgb);
+    }
+
+    #[test]
+    fn renders_rotated_scene_text_in_rgba() {
+        let scene = sample_scene();
+        let mut rotated = scene.clone();
+        rotated.texts[0].rotation_degrees = 90.0;
+        let options = RasterOptions::new(100, 100);
+        let plain = render_rgba(&scene, options).unwrap();
+        let rotated = render_rgba(&rotated, options).unwrap();
+        assert_ne!(plain.pixels, rotated.pixels);
     }
 
     #[test]
