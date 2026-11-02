@@ -282,7 +282,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             color: rgba(text.color, &format!("texts[{index}].color"))?,
             anchor,
             rotation_degrees: text.rotation_degrees.unwrap_or(0.0),
-            font_family: String::new()
+            font_family: String::new(),
             font_weight: "normal".into(),
             font_style: "normal".into(),
         });
