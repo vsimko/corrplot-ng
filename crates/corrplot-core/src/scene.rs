@@ -332,7 +332,8 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
         let max_width = scene.cells.first().map(|cell| cell.size * 0.9).unwrap_or(font_size * 5.0);
         let max_chars = ((max_width / (font_size * 0.6)).floor() as usize).max(1);
         for index in 0..labels.len() {
-            for label_text in [&mut scene.texts[index * 2], &mut scene.texts[index * 2 + 1]] {
+            for text_index in [index * 2, index * 2 + 1] {
+                let label_text = &mut scene.texts[text_index];
                 label_text.font_family = font_family.clone();
                 label_text.font_size = font_size;
                 label_text.font_weight = font_weight.clone();
