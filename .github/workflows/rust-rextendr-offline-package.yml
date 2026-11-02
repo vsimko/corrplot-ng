@@ -336,7 +336,7 @@ jobs:
       - name: Upload reproducible size measurements
         uses: actions/upload-artifact@v4
         with:
-          name: rust-r-footprint-\${{ matrix.os }}
+          name: rust-r-footprint-${{ matrix.os }}
           path: size-results/
           if-no-files-found: error
 
