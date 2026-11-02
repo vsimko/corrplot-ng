@@ -7,7 +7,7 @@
 
 ## Context
 
-ADR 0001 selects Rust as the authoritative implementation of shared correlation and visualization semantics. Merged PR #180 proves that the native CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. The core now includes typed-scene SVG and direct RGBA renderers, but it does not yet implement the scene-v1 parser or matrix-to-scene builder.
+ADR 0001 selects Rust as the authoritative implementation of shared correlation and visualization semantics. Merged PR #180 proves that the native CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. The core also has typed-scene SVG and direct RGBA renderers. PR #237 adds the dependency-free scene-v1 parser and the initial normalized-matrix/scene-v1 construction path; full presentation-semantic coverage and conformance to every optional scene-v1 field remain in progress.
 
 The project intends to expose the same shared implementation to Node.js and browser applications. Those environments have different loading, memory, packaging, and host-integration requirements. They must not acquire separate implementations of matrix validation, ordering, scene construction, or rendering semantics.
 
@@ -27,9 +27,9 @@ This decision defines the cross-runtime boundary. It does not implement Node bin
 
 The implementation has four layers:
 
-1. **Rust core — `crates/corrplot-core`:** owns common validation, normalization, ordering, scene construction, layout, and shared rendering algorithms as they are implemented. It must remain independent of Node.js, browser DOM APIs, filesystem access, CLI process handling, and graphics-device state.
-2. **Native Node binding — `bindings/node/` (initial implementation):** a thin Node-API (N-API) adapter using the Rust `napi` ecosystem. It currently exposes matrix validation, typed-scene SVG/RGBA rendering, renderer capabilities, and diagnostic-v1 mapping. It does not yet expose scene construction or a complete plot-level API.
-3. **Browser WASM binding — planned `bindings/wasm/`:** a thin `wasm32-unknown-unknown` adapter using `wasm-bindgen` or an equivalent maintained tool. It should expose the same core operations and diagnostic meanings as the native binding.
+1. **Rust core — `crates/corrplot-core`:** owns common validation, the initial scene-v1 parser and matrix-to-scene construction path, normalization, ordering, layout, and shared rendering algorithms as they are implemented. It must remain independent of Node.js, browser DOM APIs, filesystem access, CLI process handling, and graphics-device state.
+2. **Native Node binding — `bindings/node/` (initial implementation):** a thin Node-API (N-API) adapter using the Rust `napi` ecosystem. It exposes matrix validation, typed-scene SVG/RGBA rendering, renderer capabilities, diagnostic-v1 mapping, and the initial shared-core matrix-to-SVG operation. It is not yet a complete plot-level API.
+3. **Browser WASM binding — `bindings/wasm/`:** a thin `wasm32-unknown-unknown` adapter. It exposes the initial shared-core matrix-to-SVG operation and has a browser smoke test; broader operation and diagnostic parity with the native binding remains follow-up work.
 4. **TypeScript facade — planned `packages/typescript/`:** owns the public TypeScript types, runtime entry points, backend selection, and host-specific convenience APIs. It must not reimplement correlation, normalization, ordering, scene construction, or rendering algorithms.
 
 These paths describe the target package boundary. They are not a request to create empty packages or move existing files in this design issue.
