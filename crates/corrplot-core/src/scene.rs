@@ -1406,9 +1406,11 @@ mod tests {
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
             && text.x == 50.0 && text.y == 90.0 && text.font_size == 10.0
-            && text.anchor == TextAnchor::Middle));
+            && text.anchor == TextAnchor::Middle
+            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));
         assert!(scene.texts.iter().any(|text| text.text == "second line"
-            && text.x == 50.0 && text.y == 102.0 && text.anchor == TextAnchor::Middle));
+            && text.x == 50.0 && text.y == 102.0 && text.anchor == TextAnchor::Middle
+            && text.font_family == "serif" && text.font_weight == "bold" && text.font_style == "italic"));
     }
 
     #[test]
@@ -1418,7 +1420,7 @@ mod tests {
         let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| {
             text.text == "0.65" && text.x == 314.0 && text.y == 202.0
-                && text.font_size == 9.0
+                && text.font_size == 9.0 && text.font_weight == "bold" && text.font_style == "normal"
                 && text.color.red == 0 && text.color.green == 0
                 && text.color.blue == 0 && text.color.alpha == 255
                 && text.anchor == TextAnchor::Middle
