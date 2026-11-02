@@ -1399,7 +1399,8 @@ mod tests {
         assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
         assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
-        assert_eq!((scene.texts[0].x, scene.texts[0].y), (92.0, 118.0));
+        let first_row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End && text.text == "alpha").unwrap();
+        assert_eq!((first_row_label.x, first_row_label.y), (92.0, 118.0));
         assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Circle { radius, color })
             if *radius == 36.12 && *color == RgbaColor { red: 33, green: 102, blue: 172, alpha: 255 }));
     }
