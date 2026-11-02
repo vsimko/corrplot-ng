@@ -89,6 +89,7 @@ pub struct SceneTextInput {
     pub font_size: f64,
     pub color: RgbaColorInput,
     pub anchor: String,
+    pub rotation_degrees: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -287,6 +288,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             font_family: String::new(),
             font_weight: "normal".into(),
             font_style: "normal".into(),
+            rotation_degrees: text.rotation_degrees.unwrap_or(0.0),
         });
     }
 
