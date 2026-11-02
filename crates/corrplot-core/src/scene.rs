@@ -1525,6 +1525,8 @@ mod tests {
         ).unwrap();
         let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
         assert!(svg.contains("<desc>Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.</desc>"));
+        assert!(svg.contains("role=\"img\""));
+        assert!(svg.contains("aria-label=\"Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.\""));
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
         assert_eq!((scene.cells[0].x, scene.cells[0].y, scene.cells[0].size), (104.0, 76.0, 84.0));
         let first_row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End && text.text == "alpha").unwrap();
