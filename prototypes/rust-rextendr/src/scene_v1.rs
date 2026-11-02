@@ -117,7 +117,7 @@ fn build_scene_json_rust(
     }
     out.push_str(r#"],"annotation":""#);
     out.push_str(&json_escape(annotation));
-    out.push_str(r#"","style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"}}"#);
+    out.push_str(r##"","style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"}}"##);
     Ok(out)
 }
 
