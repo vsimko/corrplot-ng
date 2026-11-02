@@ -64,33 +64,32 @@ fn build_scene_json_rust(
     let cell = 84.0_f64;
     let left = 104.0_f64.max((max_label_width + 24.0).trunc());
     let top = 76.0_f64.max((max_label_width + 32.0).trunc());
-    // extendr exposes the R NA sentinel as an optional value.
     let width = left + n as f64 * cell + 24.0;
     let height = top + n as f64 * cell + 64.0;
 
     let mut out = String::with_capacity(n * n * 160 + n * 100 + 256);
-    out.push_str("{\\"schema_version\\":1,\\"kind\\":\\"correlation_plot\\",\\"width\\":");
+    out.push_str(r#"{"schema_version":1,"kind":"correlation_plot","width":"#);
     out.push_str(&json_number(width));
-    out.push_str(",\\"height\\":");
+    out.push_str(r#","height":"#);
     out.push_str(&json_number(height));
-    out.push_str(",\\"labels\\":[");
+    out.push_str(r#","labels":["#);
     for i in 0..n {
         if i > 0 { out.push(','); }
         let label = labels.elt(i);
-        out.push_str("{\\"text\\":\\"");
+        out.push_str(r#"{"text":""#);
         out.push_str(&json_escape(label.as_ref()));
-        out.push_str("\",\\"row_x\\":");
+        out.push_str(r#"","row_x":"#);
         out.push_str(&json_number(left - 12.0));
-        out.push_str(",\\"row_y\\":");
+        out.push_str(r#","row_y":"#);
         out.push_str(&json_number(top + i as f64 * cell + cell / 2.0));
-        out.push_str(",\\"column_x\\":");
+        out.push_str(r#","column_x":"#);
         out.push_str(&json_number(left + i as f64 * cell + cell / 2.0));
-        out.push_str(",\\"column_y\\":");
+        out.push_str(r#","column_y":"#);
         out.push_str(&json_number(top - 16.0));
         out.push('}');
     }
 
-    out.push_str("],\\"cells\\":[");
+    out.push_str(r#"],"cells":["#);
     let mut first = true;
     for row in 0..n {
         for column in 0..n {
@@ -98,27 +97,27 @@ fn build_scene_json_rust(
             let is_missing = value.to_bits() == na_real_bits;
             if !first { out.push(','); }
             first = false;
-            out.push_str("{\\"row\\":");
+            out.push_str(r#"{"row":"#);
             out.push_str(&row.to_string());
-            out.push_str(",\\"column\\":");
+            out.push_str(r#","column":"#);
             out.push_str(&column.to_string());
-            out.push_str(",\\"value\\":");
+            out.push_str(r#","value":"#);
             if is_missing { out.push_str("null"); }
             else { out.push_str(&json_number(value)); }
-            out.push_str(",\\"x\\":");
+            out.push_str(r#","x":"#);
             out.push_str(&json_number(left + column as f64 * cell));
-            out.push_str(",\\"y\\":");
+            out.push_str(r#","y":"#);
             out.push_str(&json_number(top + row as f64 * cell));
-            out.push_str(",\\"center_x\\":");
+            out.push_str(r#","center_x":"#);
             out.push_str(&json_number(left + column as f64 * cell + cell / 2.0));
-            out.push_str(",\\"center_y\\":");
+            out.push_str(r#","center_y":"#);
             out.push_str(&json_number(top + row as f64 * cell + cell / 2.0));
-            out.push_str(",\\"size\\":84}");
+            out.push_str(r#","size":84}"#);
         }
     }
-    out.push_str("],\\"annotation\\":\\"");
+    out.push_str(r#"],"annotation":""#);
     out.push_str(&json_escape(annotation));
-    out.push_str("\",\\"style\\":{\\"positive_color\\":\\"#2166ac\\",\\"negative_color\\":\\"#b2182b\\",\\"zero_color\\":\\"#bdbdbd\\",\\"missing_fill\\":\\"#f2f2f2\\",\\"grid_color\\":\\"#e0e0e0\\"}}");
+    out.push_str(r#"","style":{"positive_color":"#2166ac","negative_color":"#b2182b","zero_color":"#bdbdbd","missing_fill":"#f2f2f2","grid_color":"#e0e0e0"}}"#);
     Ok(out)
 }
 
