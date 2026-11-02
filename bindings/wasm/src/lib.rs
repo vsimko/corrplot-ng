@@ -284,7 +284,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             font_size: text.font_size,
             color: rgba(text.color, &format!("texts[{index}].color"))?,
             anchor,
-            font_family: "sans-serif".into(),
+            font_family: String::new(),
             font_weight: "normal".into(),
             font_style: "normal".into(),
         });
@@ -457,7 +457,7 @@ mod tests {
             width: 100.0,
             height: 100.0,
             unit: "px".into(),
-            font_family: "sans-serif".into(),
+            font_family: String::new(),
             font_size_pt: 10.0,
             background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
         };
