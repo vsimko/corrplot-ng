@@ -378,10 +378,10 @@ pub fn scene_v1_to_scene(source: &str, cell_method: CellMethod) -> Result<Scene,
                             label_text.text = label_text.text.chars().take(keep).collect::<String>();
                             label_text.text.push('…');
                         }
-                        // "preserve" intentionally allows overlap. "wrap"
-                        // requires multiline/rotated text layout not represented
-                        // by the current renderer-neutral SceneText contract.
-                        "preserve" | "wrap" => {}
+                        "wrap" => {
+                            label_text.text = wrap_label_text(&label_text.text, max_chars);
+                        }
+                        "preserve" => {}
                         _ => unreachable!("typography policy was validated by the parser"),
                     }
                 }
@@ -806,8 +806,37 @@ fn validate_scene_label_metadata(label: &std::collections::BTreeMap<String, crat
         if as_string(required(plotmath, "source", &plotmath_path)?, &format!("{plotmath_path}.source"))?.is_empty() {
             return Err(SceneBuildError::new("input.scene.invalid_value", "plotmath source must not be empty", format!("{plotmath_path}.source")));
         }
+        return Err(SceneBuildError::new(
+            "input.scene.invalid_value",
+            "plotmath labels are not yet supported by the shared renderer-neutral scene",
+            format!("{path}.plotmath"),
+        ));
     }
     Ok(())
+}
+
+fn wrap_label_text(text: &str, max_chars: usize) -> String {
+    let max_chars = max_chars.max(1);
+    let mut lines = Vec::new();
+    let mut line = String::new();
+    for word in text.split_whitespace() {
+        let chars: Vec<char> = word.chars().collect();
+        if !line.is_empty() && line.chars().count() + 1 + chars.len() > max_chars {
+            lines.push(std::mem::take(&mut line));
+        }
+        if chars.len() <= max_chars {
+            if !line.is_empty() { line.push(' '); }
+            line.push_str(word);
+        } else {
+            for chunk in chars.chunks(max_chars) {
+                if !line.is_empty() { lines.push(std::mem::take(&mut line)); }
+                line.extend(chunk);
+                lines.push(std::mem::take(&mut line));
+            }
+        }
+    }
+    if !line.is_empty() { lines.push(line); }
+    lines.join("\n")
 }
 
 fn validate_scene_cell_metadata(cell: &std::collections::BTreeMap<String, crate::json::Value>, path: &str) -> Result<(), SceneBuildError> {
@@ -1438,6 +1467,29 @@ mod tests {
         let omit_source = source.replace("\"label_collision\": \"truncate\"", "\"label_collision\": \"omit\"");
         let omitted = scene_v1_to_scene(&omit_source, CellMethod::Circle).unwrap();
         assert!(omitted.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap().text.is_empty());
+    }
+
+    #[test]
+    fn scene_v1_to_scene_wraps_long_labels_and_rejects_plotmath() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace("\"alpha\"", "\"a very long variable label\"")
+            .replace(
+                "\"glyph_method\": \"circle\",",
+                "\"typography\": {\"label_font_family\": \"sans-serif\", \"label_font_size\": 10, \"label_font_weight\": \"normal\", \"column_label_orientation\": \"horizontal\", \"label_collision\": \"wrap\"},\\n  \"glyph_method\": \"circle\",",
+            );
+        let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
+        let row_label = scene.texts.iter().find(|text| text.anchor == TextAnchor::End).unwrap();
+        assert!(row_label.text.contains('\\n'));
+        assert!(row_label.text.lines().all(|line| line.chars().count() <= 12));
+
+        let plotmath_source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+            .replace(
+                "\"text\": \"alpha\",",
+                "\"text\": \"alpha\", \"plotmath\": {\"prefix\": \"=\", \"source\": \"alpha\"},",
+            );
+        let error = parse_scene_v1_matrix(&plotmath_source).unwrap_err();
+        assert_eq!(error.code, "input.scene.invalid_value");
+        assert_eq!(error.path, "labels[0].plotmath");
     }
 
     #[test]

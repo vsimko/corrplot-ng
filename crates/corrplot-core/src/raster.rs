@@ -511,28 +511,30 @@ impl Canvas {
     fn draw_text(&mut self, text: &str, x: f64, y: f64, font_size: f64, color: RgbaColor, anchor: TextAnchor) {
         let cell = font_size * self.scale / 7.0;
         if cell <= 0.0 || !cell.is_finite() { return; }
-        let width = text.chars().count() as f64 * 6.0 * cell - cell;
-        let (x, y) = self.point(x, y);
-        let start_x = match anchor {
-            TextAnchor::Start => x,
-            TextAnchor::Middle => x - width / 2.0,
-            TextAnchor::End => x - width,
-        };
-        for (index, character) in text.chars().enumerate() {
-            let rows = bitmap_glyph(character);
-            for (row, bits) in rows.iter().enumerate() {
-                for column in 0..5 {
-                    if bits & (1 << (4 - column)) != 0 {
-                        let left = start_x + (index as f64 * 6.0 + column as f64) * cell;
-                        let top = y + row as f64 * cell;
-                        let right = left + cell;
-                        let bottom = top + cell;
-                        let x0 = left.floor().max(0.0) as isize;
-                        let y0 = top.floor().max(0.0) as isize;
-                        let x1 = right.ceil().min(self.width as f64) as isize;
-                        let y1 = bottom.ceil().min(self.height as f64) as isize;
-                        for py in y0..y1 {
-                            for px in x0..x1 { self.blend_pixel(px, py, color); }
+        for (line_index, line) in text.split('\\n').enumerate() {
+            let width = line.chars().count() as f64 * 6.0 * cell - cell;
+            let (x, line_y) = self.point(x, y + line_index as f64 * font_size * 1.2);
+            let start_x = match anchor {
+                TextAnchor::Start => x,
+                TextAnchor::Middle => x - width / 2.0,
+                TextAnchor::End => x - width,
+            };
+            for (index, character) in line.chars().enumerate() {
+                let rows = bitmap_glyph(character);
+                for (row, bits) in rows.iter().enumerate() {
+                    for column in 0..5 {
+                        if bits & (1 << (4 - column)) != 0 {
+                            let left = start_x + (index as f64 * 6.0 + column as f64) * cell;
+                            let top = line_y + row as f64 * cell;
+                            let right = left + cell;
+                            let bottom = top + cell;
+                            let x0 = left.floor().max(0.0) as isize;
+                            let y0 = top.floor().max(0.0) as isize;
+                            let x1 = right.ceil().min(self.width as f64) as isize;
+                            let y1 = bottom.ceil().min(self.height as f64) as isize;
+                            for py in y0..y1 {
+                                for px in x0..x1 { self.blend_pixel(px, py, color); }
+                            }
                         }
                     }
                 }
@@ -665,11 +667,15 @@ impl Renderer<Scene> for SceneSvgRenderer {
                 TextAnchor::Middle => "middle",
                 TextAnchor::End => "end",
             };
+            let text_content = text.text.split('\\n').enumerate().map(|(index, line)| {
+                let dy = if index == 0 { 0.0 } else { text.font_size * 1.2 };
+                format!("<tspan x=\"{}\" dy=\"{}\">{}</tspan>", text.x, dy, escape_xml(line))
+            }).collect::<String>();
             out.push_str(&format!(
                 "<text x=\"{}\" y=\"{}\" transform=\"rotate({} {} {})\" text-anchor=\"{}\" dominant-baseline=\"hanging\" font-family=\"{}\" font-size=\"{}\" font-weight=\"{}\" font-style=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
                 text.x, text.y, text.rotation_degrees, text.x, text.y, anchor, escape_xml(font_family), text.font_size,
                 escape_xml(&text.font_weight), escape_xml(&text.font_style),
-                color_hex(text.color), alpha(text.color), escape_xml(&text.text)
+                color_hex(text.color), alpha(text.color), text_content
             ));
         }
         out.push_str("</svg>");
