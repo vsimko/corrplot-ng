@@ -837,7 +837,7 @@ mod tests {
         let buffer = render_rgba(&scene, options).unwrap();
         let background = (0 * buffer.stride_bytes) + 0;
         assert_eq!(&buffer.pixels[background..background + 4], &[0, 0, 0, 0]);
-        let center = ((35 * buffer.stride_bytes) + 35 * 4);
+        let center = (35 * buffer.stride_bytes) + 35 * 4;
         assert_eq!(&buffer.pixels[center..center + 4], &[20, 80, 160, 255]);
     }
 
@@ -857,14 +857,19 @@ mod tests {
         let color = RgbaColor { red: 220, green: 20, blue: 60, alpha: 255 };
         scene.cells.extend([
             SceneCell { x: 10.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
+                p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                 glyph: Some(CellGlyph::Square { side: 10.0, color }) },
             SceneCell { x: 30.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
+                p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                 glyph: Some(CellGlyph::Ellipse { rx: 6.0, ry: 3.0, rotation_degrees: 25.0, color }) },
             SceneCell { x: 50.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
+                p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                 glyph: Some(CellGlyph::Pie { radius: 6.0, start_radians: 0.0, end_radians: 2.0, color }) },
             SceneCell { x: 70.0, y: 60.0, size: 15.0, visible: true, fill: RgbaColor::WHITE, stroke: color,
+                p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                 glyph: Some(CellGlyph::Shade { color }) },
             SceneCell { x: 85.0, y: 60.0, size: 10.0, visible: true, fill: color, stroke: color,
+                p_value: None, normalized_value: None, significance: None, confidence_interval: None,
                 glyph: Some(CellGlyph::Color) },
         ]);
         let buffer = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
