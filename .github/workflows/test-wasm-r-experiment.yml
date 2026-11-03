@@ -217,7 +217,10 @@ jobs:
             node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
             Rscript experiments/wasm-r/r/run.R "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/r-wasi-$NAME.json"
             node experiments/wasm-r/node/run-embedded.mjs "$EMBEDDED_WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-embedded-$NAME.json"
-            WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME.json"
+            for RUN_INDEX in 1 2 3; do
+              WASMTIME_C_API_ROOT="$WASMTIME_C_API_ROOT" Rscript experiments/wasm-r/r/run-embedded.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-wasmtime-$NAME-run-$RUN_INDEX.json"
+            done
+            cp "$RESULTS_DIR/r-wasmtime-$NAME-run-1.json" "$RESULTS_DIR/r-wasmtime-$NAME.json"
             Rscript experiments/wasm-r/r/run-v8.R "$EMBEDDED_WASM_MODULE" "$FIXTURE" "$RESULTS_DIR/r-v8-$NAME.json"
             Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
             Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
@@ -233,6 +236,29 @@ jobs:
           wasmtime, v8 = read("r-wasmtime"), read("r-v8")
           native = read("r-native-rust")
           native_r = read("r-native-reference")
+          embedded_runs = []
+          for run_index in range(1, 4):
+              with (root / f"r-wasmtime-{name}-run-{run_index}.json").open(encoding="utf-8") as stream:
+                  embedded_runs.append(json.load(stream))
+          for result in embedded_runs:
+              assert result["wasmSha256"] == node_embedded["wasmSha256"]
+              assert result["fixtureSha256"] == node_embedded["fixtureSha256"]
+              assert result["response"] == node_embedded["response"]
+              assert result["transfer"]["phaseTimings"]["guestExecutionNs"]["medianNs"] >= 0
+              assert result["memory"]["processPeakRssBytesAfterFirstCall"] >= 0
+          with (root / f"r-wasmtime-repeatability-{name}.json").open("w", encoding="utf-8") as stream:
+              json.dump({
+                  "fixture": name,
+                  "independent_process_runs": 3,
+                  "runs": [{
+                      "cold_start": result["coldStart"],
+                      "peak_rss_bytes": result["memory"]["processPeakRssBytesAfterFirstCall"],
+                      "wasm_linear_memory_bytes": result["memory"]["wasmLinearMemoryBytesAfterFirstCall"],
+                      "phase_timings": result["transfer"]["phaseTimings"],
+                  } for result in embedded_runs],
+                  "note": "Separate Rscript processes on one CI runner; not independent machine-level trials."
+              }, stream, indent=2)
+              stream.write("\n")
           assert node["wasmSha256"] == wasi_r["wasmSha256"]
           assert node["fixtureSha256"] == wasi_r["fixtureSha256"]
           assert node["response"] == wasi_r["response"]

@@ -52,7 +52,7 @@ main <- function() {
   cppflags <- paste0("-I", quote_flag_path(include))
   ldflags <- paste0("-L", quote_flag_path(lib))
   linker_flags <- if (.Platform$OS.type == "windows") {
-    "-lwasmtime"
+    c("-lwasmtime", "-lpsapi")
   } else if (identical(Sys.info()[["sysname"]], "Darwin")) {
     c(paste0("-Wl,-rpath,", quote_flag_path(lib)), "-lwasmtime")
   } else {
@@ -109,22 +109,37 @@ main <- function() {
   request <- rawToChar(fixture_raw)
   invoke <- function() .Call("corrplot_wasm_validate", wasm, request)
   rss_before_init <- process_rss_bytes()
+  peak_rss_before_init <- .Call("corrplot_wasm_peak_rss_bytes")
   init_started <- proc.time()[["elapsed"]]
   .Call("corrplot_wasm_initialize", wasm)
   initialization_ms <- (proc.time()[["elapsed"]] - init_started) * 1000
   rss_after_init <- process_rss_bytes()
+  peak_rss_after_init <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_init <- .Call("corrplot_wasm_memory_bytes")
 
   first_started <- proc.time()[["elapsed"]]
   first_response_json <- invoke()
   first_call_ms <- (proc.time()[["elapsed"]] - first_started) * 1000
   rss_after_first_call <- process_rss_bytes()
+  peak_rss_after_first_call <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_first_call <- .Call("corrplot_wasm_memory_bytes")
+  first_timed <- .Call("corrplot_wasm_validate_timed", wasm, request)
+  if (!identical(first_timed$response, first_response_json)) stop("timed and ordinary cold responses differ", call. = FALSE)
 
   script_arg <- grep("^--file=", commandArgs(), value = TRUE)
   source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
   metrics <- benchmark_repeated(invoke)
   response_json <- invoke()
+  phase_keys <- c("allocNs", "inputCopyNs", "guestExecutionNs", "inputFreeNs", "outputCopyNs", "outputFreeNs")
+  phase_samples <- lapply(phase_keys, function(key) {
+    samples <- vapply(seq_len(10L), function(i) {
+      measured <- .Call("corrplot_wasm_validate_timed", wasm, request)
+      if (!identical(measured$response, response_json)) stop("timed and ordinary Wasmtime responses differ", call. = FALSE)
+      measured[[key]]
+    }, numeric(1))
+    list(samplesNs = as.list(samples), medianNs = stats::median(samples), iqrNs = stats::IQR(samples))
+  })
+  names(phase_samples) <- phase_keys
   response <- jsonlite::fromJSON(response_json, simplifyVector = FALSE)
   first_response <- jsonlite::fromJSON(first_response_json, simplifyVector = FALSE)
   if (!identical(first_response, response)) stop("cold and repeated Wasmtime responses differ", call. = FALSE)
@@ -144,13 +159,18 @@ main <- function() {
       processRssBytesAfterFirstCall = rss_after_first_call,
       processRssDeltaAfterInitializationBytes = rss_after_init - rss_before_init,
       processRssDeltaAfterFirstCallBytes = rss_after_first_call - rss_before_init,
+      processPeakRssBytesBeforeInitialization = peak_rss_before_init,
+      processPeakRssBytesAfterInitialization = peak_rss_after_init,
+      processPeakRssBytesAfterFirstCall = peak_rss_after_first_call,
+      peakRssNote = "Process-lifetime high-water mark; includes R and Wasmtime allocations and is not a WASM-only memory measure.",
       wasmLinearMemoryBytesAfterInitialization = wasm_memory_after_init,
       wasmLinearMemoryBytesAfterFirstCall = wasm_memory_after_first_call
     ),
     transfer = list(
       requestBytes = length(fixture_raw),
       responseBytes = nchar(response_json, type = "bytes"),
-      note = "R-to-WASM input and WASM-to-R output copies occur inside the C shim; phase-level copy timing is not yet instrumented."
+      phaseTimings = phase_samples,
+      phaseTimingNote = "Nanosecond timings from the embedded C shim; each phase is sampled separately after warm-up. They are instrumentation measurements, not additive substitutes for end-to-end call latency."
     ),
     calls = metrics$calls,
   callsPerSample = metrics$callsPerSample,
