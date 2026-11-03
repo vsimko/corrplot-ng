@@ -13,6 +13,7 @@ on:
   pull_request:
     paths:
       - "prototypes/rust-rextendr/**"
+      - "crates/corrplot-core/**"
       - ".github/workflows/rust-rextendr-offline-package.yml"
 
 permissions:
