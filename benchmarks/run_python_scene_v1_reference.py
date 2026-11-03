@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import json
+import os
 import platform
 import statistics
 import sys
@@ -18,6 +19,18 @@ from export_native_fixtures import project_scene_v1
 TARGET_SAMPLE_MS = 100.0
 SAMPLES = 30
 WARMUPS = 5
+
+
+def run_metadata() -> dict[str, str | None]:
+    return {
+        "commit_sha": os.getenv("GITHUB_SHA"),
+        "run_id": os.getenv("GITHUB_RUN_ID"),
+        "run_attempt": os.getenv("GITHUB_RUN_ATTEMPT"),
+        "runner_os": os.getenv("RUNNER_OS") or platform.system(),
+        "runner_arch": os.getenv("RUNNER_ARCH") or platform.machine(),
+        "runner_image_os": os.getenv("ImageOS"),
+        "runner_image_version": os.getenv("ImageVersion"),
+    }
 
 
 def measure(operation: Callable[[], object], stress: bool = False) -> dict[str, object]:
@@ -87,6 +100,7 @@ def main() -> None:
             results.append({
                 "workload": case["id"], "candidate": "Python",
                 "status": "passed", "measurement": measurement,
+                "input_sha256": case["input_sha256"],
                 "scene_cells": len(expected["cells"]),
                 "scene_json_bytes": len(encoded.encode("utf-8")),
                 **measure(operation, stress=case["id"] in ("B03", "B04")),
@@ -95,6 +109,7 @@ def main() -> None:
     payload = {
         "schema_version": 3, "suite": "corrplot-ng-cross-language-scene-v1",
         "candidate": "Python",
+        "run_metadata": run_metadata(),
         "environment": {
             "python": sys.version, "platform": platform.platform(),
             "machine": platform.machine(), "processor": platform.processor(),
