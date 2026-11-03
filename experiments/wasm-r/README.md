@@ -136,10 +136,7 @@ JavaScript runtime glue.
 - Installation and runtime dependency matrix for Windows, macOS, and Linux.
 - Native R adapter baseline using the same fixtures.
 
-The Node runners now report first-call and memory/transfer snapshots. Equivalent
-R-side cold-start and memory snapshots, peak-memory sampling, and separately
-instrumented R-to-WASM transfer timings remain open acceptance work; the Node
-metrics do not substitute for them.
+The Node runners report first-call and memory/transfer snapshots. The embedded R/Wasmtime runner now separates module initialization from the first validation call and records R-process RSS snapshots plus Wasmtime linear-memory size after initialization and first call. These RSS values are snapshots, not peak-memory measurements. The R runner reports request/response byte counts, but phase-level input-copy, guest-execution, and output-copy timings inside the C shim remain open acceptance work; independent-run repeatability and peak-memory sampling also remain outstanding. Node metrics do not substitute for R-host measurements.
 
 Do not use this first JSON/stdin process path as the final high-throughput
 interface; it is a feasibility baseline.

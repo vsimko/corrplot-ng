@@ -143,3 +143,17 @@ SEXP corrplot_wasm_shutdown(void) {
   shutdown_host();
   return R_NilValue;
 }
+
+
+/* Explicit initialization lets the R runner separate module startup from its
+ * first validation call. These helpers are intentionally read-only. */
+SEXP corrplot_wasm_initialize(SEXP module_path_sexp) {
+  const char *module_path = CHAR(STRING_ELT(module_path_sexp, 0));
+  ensure_module(module_path);
+  return R_NilValue;
+}
+
+SEXP corrplot_wasm_memory_bytes(void) {
+  if (g_context == NULL) Rf_error("WASM module is not initialized");
+  return Rf_ScalarReal((double)wasmtime_memory_data_size(g_context, &g_memory.of.memory));
+}
