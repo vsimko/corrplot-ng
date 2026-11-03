@@ -13,15 +13,23 @@ for (package in c("jsonlite", "digest")) {
     stop("missing R package: ", package, call. = FALSE)
   }
 }
+script_arg <- grep("^--file=", commandArgs(), value = TRUE)
+source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
+rss_before_load <- process_rss_bytes()
+load_started <- proc.time()[["elapsed"]]
 dyn.load(library_path)
+load_ms <- (proc.time()[["elapsed"]] - load_started) * 1000
+rss_after_load <- process_rss_bytes()
 
 fixture_raw <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
 request <- rawToChar(fixture_raw)
 invoke <- function() .Call("wrap__corrplot_validate_json", request)
-script_arg <- grep("^--file=", commandArgs(), value = TRUE)
-source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
-metrics <- benchmark_repeated(invoke)
+first_call_started <- proc.time()[["elapsed"]]
 response_json <- invoke()
+first_call_ms <- (proc.time()[["elapsed"]] - first_call_started) * 1000
+rss_after_first_call <- process_rss_bytes()
+metrics <- benchmark_repeated(invoke)
+rss_after_benchmark <- process_rss_bytes()
 
 result <- list(
   runtime = R.version.string,
@@ -29,6 +37,18 @@ result <- list(
   libraryBytes = file.info(library_path)$size,
   librarySha256 = digest::digest(library_path, algo = "sha256", file = TRUE),
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
+  coldStart = list(
+    libraryLoadMs = load_ms,
+    firstCallMs = first_call_ms
+  ),
+  memory = list(
+    processRssBytesBeforeLoad = rss_before_load,
+    processRssBytesAfterLoad = rss_after_load,
+    processRssBytesAfterFirstCall = rss_after_first_call,
+    processRssBytesAfterBenchmark = rss_after_benchmark,
+    processRssDeltaAfterFirstCallBytes = rss_after_first_call - rss_before_load,
+    processRssDeltaAfterBenchmarkBytes = rss_after_benchmark - rss_before_load
+  ),
   calls = metrics$calls,
   callsPerSample = metrics$callsPerSample,
   sampleCount = metrics$sampleCount,
