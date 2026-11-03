@@ -8,6 +8,7 @@ const {
   renderSceneSvg,
   renderSceneRgba,
   renderMatrixSvg,
+  renderMatrixRgba,
   validateMatrix,
 } = require("../index.js");
 
@@ -130,6 +131,44 @@ const sceneV1Construction = fs.readFileSync(
   path.join(__dirname, "../../../prototypes/shared-svg/scene-v1-construction.example.json"),
   "utf8",
 );
+
+test("constructs and rasterizes a matrix through the shared Rust core", () => {
+  const output = renderMatrixRgba(sceneV1, "circle", {
+    widthPx: 380,
+    heightPx: 392,
+    dpi: 96,
+    background: white,
+  });
+  assert.ok(Buffer.isBuffer(output.pixels));
+  assert.equal(output.widthPx, 380);
+  assert.equal(output.heightPx, 392);
+  assert.equal(output.strideBytes, 380 * 4);
+  assert.equal(output.pixelFormat, "rgba8");
+  assert.equal(output.alphaMode, "straight");
+  assert.equal(output.colorSpace, "srgb");
+  assert.equal(output.dpi, 96);
+  const pixel = (x, y) => Array.from(output.pixels.subarray((y * output.widthPx + x) * 4, (y * output.widthPx + x) * 4 + 4));
+  assert.deepEqual(pixel(146, 118), [33, 102, 172, 255]);
+  assert.deepEqual(pixel(314, 118), [178, 24, 43, 255]);
+  assert.deepEqual(pixel(280, 180), [242, 242, 242, 255]);
+});
+
+test("maps invalid matrix RGBA options to diagnostic-v1", () => {
+  assert.throws(
+    () => renderMatrixRgba(sceneV1, "circle", {
+      widthPx: 0,
+      heightPx: 392,
+      background: white,
+    }),
+    (error) => {
+      assert.ok(error instanceof CorrplotError);
+      assert.equal(error.diagnostic.schema_version, 1);
+      assert.equal(error.diagnostic.code, "renderer.output.invalid_options");
+      assert.equal(error.diagnostic.stage, "renderer");
+      return true;
+    },
+  );
+});
 
 test("renders shared scene-v1 glyph and figure-text semantics through Node", () => {
   const svg = renderMatrixSvg(sceneV1Construction, "circle");
