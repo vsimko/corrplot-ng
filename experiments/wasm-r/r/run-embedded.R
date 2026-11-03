@@ -85,20 +85,73 @@ main <- function() {
   dyn.load(shared)
   on.exit(.Call("corrplot_wasm_shutdown"), add = TRUE)
 
+  # Capture the R process footprint with platform-native tools. Values are
+  # snapshots (not peak RSS) and are kept distinct from WASM linear memory.
+  process_rss_bytes <- function() {
+    sysname <- Sys.info()[["sysname"]]
+    if (identical(sysname, "Linux") && file.exists("/proc/self/statm")) {
+      fields <- scan("/proc/self/statm", what = integer(), quiet = TRUE)
+      return(as.numeric(fields[[2]]) * as.numeric(system("getconf PAGESIZE", intern = TRUE)))
+    }
+    if (identical(sysname, "Darwin")) {
+      value <- suppressWarnings(system2("ps", c("-o", "rss=", "-p", Sys.getpid()), stdout = TRUE))
+      if (length(value) && is.finite(as.numeric(trimws(value[[1]])))) return(as.numeric(trimws(value[[1]])) * 1024)
+    }
+    if (.Platform$OS.type == "windows") {
+      value <- suppressWarnings(system2("powershell", c("-NoProfile", "-Command",
+        "(Get-Process -Id $PID).WorkingSet64"), stdout = TRUE))
+      if (length(value) && is.finite(as.numeric(value[[1]]))) return(as.numeric(value[[1]]))
+    }
+    NA_real_
+  }
+
   fixture_raw <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
   request <- rawToChar(fixture_raw)
   invoke <- function() .Call("corrplot_wasm_validate", wasm, request)
+  rss_before_init <- process_rss_bytes()
+  init_started <- proc.time()[["elapsed"]]
+  .Call("corrplot_wasm_initialize", wasm)
+  initialization_ms <- (proc.time()[["elapsed"]] - init_started) * 1000
+  rss_after_init <- process_rss_bytes()
+  wasm_memory_after_init <- .Call("corrplot_wasm_memory_bytes")
+
+  first_started <- proc.time()[["elapsed"]]
+  first_response_json <- invoke()
+  first_call_ms <- (proc.time()[["elapsed"]] - first_started) * 1000
+  rss_after_first_call <- process_rss_bytes()
+  wasm_memory_after_first_call <- .Call("corrplot_wasm_memory_bytes")
+
   script_arg <- grep("^--file=", commandArgs(), value = TRUE)
   source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
   metrics <- benchmark_repeated(invoke)
   response_json <- invoke()
   response <- jsonlite::fromJSON(response_json, simplifyVector = FALSE)
+  first_response <- jsonlite::fromJSON(first_response_json, simplifyVector = FALSE)
+  if (!identical(first_response, response)) stop("cold and repeated Wasmtime responses differ", call. = FALSE)
 
   result <- list(
     runtime = R.version.string,
     wasmtime = "C API (embedded)",
     wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
     fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
+    coldStart = list(
+      initializationMs = initialization_ms,
+      firstCallMs = first_call_ms
+    ),
+    memory = list(
+      processRssBytesBeforeInitialization = rss_before_init,
+      processRssBytesAfterInitialization = rss_after_init,
+      processRssBytesAfterFirstCall = rss_after_first_call,
+      processRssDeltaAfterInitializationBytes = rss_after_init - rss_before_init,
+      processRssDeltaAfterFirstCallBytes = rss_after_first_call - rss_before_init,
+      wasmLinearMemoryBytesAfterInitialization = wasm_memory_after_init,
+      wasmLinearMemoryBytesAfterFirstCall = wasm_memory_after_first_call
+    ),
+    transfer = list(
+      requestBytes = length(fixture_raw),
+      responseBytes = nchar(response_json, type = "bytes"),
+      note = "R-to-WASM input and WASM-to-R output copies occur inside the C shim; phase-level copy timing is not yet instrumented."
+    ),
     calls = metrics$calls,
   callsPerSample = metrics$callsPerSample,
   sampleCount = metrics$sampleCount,
