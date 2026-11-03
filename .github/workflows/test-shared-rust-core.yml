@@ -53,6 +53,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            crates/corrplot-core -> target
+            tools/corrplot-ng -> target
+            prototypes/rust-rextendr -> target
+          shared-key: shared-core-stable
       - name: Compile shared core and its tests for WebAssembly
         run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
       - name: Build shared core for WebAssembly
@@ -67,6 +74,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.78.0
         with:
           targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            crates/corrplot-core -> target
+            tools/corrplot-ng -> target
+            prototypes/rust-rextendr -> target
+          shared-key: shared-core-msrv
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: "4.4"
