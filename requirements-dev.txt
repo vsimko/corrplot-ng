@@ -1,2 +1,2 @@
 # Python test and schema-validation dependency used by CI and local checks.
-jsonschema>=4.0,<5
+jsonschema>=4.26.0,<5
