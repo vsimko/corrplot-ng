@@ -9,7 +9,7 @@ test("backend packages are optional peers, never installed as facade dependencie
   assert.equal(manifest.dependencies, undefined);
   assert.equal(manifest.optionalDependencies, undefined);
 
-  for (const name of ["@corrplot-ng/native-node", "@corrplot-ng/browser-wasm"]) {
+  for (const name of ["@corrplot-ng/native-node", "@corrplot-ng/wasm"]) {
     assert.equal(manifest.peerDependencies?.[name], "0.1.0");
     assert.equal(manifest.peerDependenciesMeta?.[name]?.optional, true);
   }
