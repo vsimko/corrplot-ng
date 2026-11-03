@@ -1,11 +1,14 @@
-import init, {
+import init, * as wasm from "../../pkg/corrplot_ng_wasm.js";
+import { createBrowserAdapter, createCorrplotEngine } from "../../../../packages/typescript/src/browser.js";
+
+const {
   getRendererCapabilities,
   renderSceneSvg,
   renderSceneRgba,
   renderMatrixSvg,
   renderMatrixRgba,
   validateMatrix,
-} from "../../pkg/corrplot_ng_wasm.js";
+} = wasm;
 
 const status = document.querySelector("#status");
 const figure = document.querySelector("#figure");
@@ -28,6 +31,7 @@ function assertPixel(pixels, width, x, y, expected, label) {
 
 try {
   await init();
+  const engine = await createCorrplotEngine({ adapter: createBrowserAdapter(wasm) });
 
   const validation = validateMatrix({
     labels: ["alpha", "beta"],
@@ -96,6 +100,9 @@ try {
   );
 
   const capabilities = JSON.parse(getRendererCapabilities());
+  const browserCapabilities = engine.getRendererCapabilities();
+  assert(browserCapabilities.output_formats.includes("canvas"), "browser capabilities did not advertise direct Canvas");
+
   const scene = {
     width: 10,
     height: 10,
@@ -188,8 +195,36 @@ try {
   assertPixel(matrixContext.getImageData(146, 118, 1, 1).data, 1, 0, 0, [33, 102, 172, 255], "matrix Canvas positive cell");
   assertPixel(matrixContext.getImageData(314, 118, 1, 1).data, 1, 0, 0, [178, 24, 43, 255], "matrix Canvas negative cell");
 
-  figure.replaceChildren(image, canvas, matrixCanvas);
-  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA semantics and browser pixel checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
+  const directCanvas = document.createElement("canvas");
+  const directOutput = engine.render(matrixSceneV1, {
+    format: "canvas",
+    canvas: directCanvas,
+    width: 380,
+    height: 392,
+    devicePixelRatio: 2,
+    background: white,
+  });
+  assert(directOutput.widthPx === 760 && directOutput.heightPx === 784, "direct Canvas did not apply the requested device-pixel ratio");
+  const directContext = directCanvas.getContext("2d");
+  assert(directContext, "direct Canvas context is unavailable");
+  assertPixel(directContext.getImageData(292, 236, 1, 1).data, 1, 0, 0, [33, 102, 172, 255], "direct Canvas positive cell");
+  assertPixel(directContext.getImageData(628, 236, 1, 1).data, 1, 0, 0, [178, 24, 43, 255], "direct Canvas negative cell");
+
+  if (typeof OffscreenCanvas === "function") {
+    const offscreen = new OffscreenCanvas(1, 1);
+    const offscreenOutput = engine.render(matrixSceneV1, {
+      format: "canvas",
+      canvas: offscreen,
+      width: 380,
+      height: 392,
+      devicePixelRatio: 1,
+      background: white,
+    });
+    assert(offscreenOutput.canvas === offscreen && offscreen.width === 380 && offscreen.height === 392, "OffscreenCanvas rendering failed");
+  }
+
+  figure.replaceChildren(image, canvas, matrixCanvas, directCanvas);
+  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA and direct Canvas/DPR checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
 } catch (error) {
   status.textContent = `WASM smoke test failed: ${error.message}`;
   status.setAttribute("aria-live", "assertive");
