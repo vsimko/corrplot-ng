@@ -60,7 +60,7 @@ foundations are implemented:
 - **Correctness and compatibility checks:** shared fixture validation,
   normalized-input contract tests, R compatibility tests against a pinned
   upstream reference, scene/SVG tests, native CLI tests, and SVG
-  interoperability checks. Performance benchmarks are scheduled or manually dispatched and remain
+  interoperability checks. Performance benchmarks are manually dispatched and remain
   separate from routine pull-request CI.
 
 The implementation evidence is reflected in the merged work on scene-v1,
