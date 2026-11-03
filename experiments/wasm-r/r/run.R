@@ -24,6 +24,26 @@ writeBin(input, input_file)
 version <- system2(wasmtime, "--version", stdout = TRUE, stderr = TRUE)
 if (!length(version)) version <- "external Wasmtime"
 
+process_rss_bytes <- function() {
+  sysname <- Sys.info()[["sysname"]]
+  if (identical(sysname, "Linux") && file.exists("/proc/self/statm")) {
+    fields <- scan("/proc/self/statm", what = integer(), quiet = TRUE)
+    page_size <- suppressWarnings(as.numeric(system("getconf PAGESIZE", intern = TRUE)))
+    if (length(fields) >= 2L && is.finite(page_size)) return(as.numeric(fields[[2]]) * page_size)
+  }
+  if (identical(sysname, "Darwin")) {
+    value <- suppressWarnings(system2("ps", c("-o", "rss=", "-p", Sys.getpid()), stdout = TRUE))
+    if (length(value) && is.finite(as.numeric(trimws(value[[1]])))) return(as.numeric(trimws(value[[1]])) * 1024)
+  }
+  if (.Platform$OS.type == "windows") {
+    value <- suppressWarnings(system2("powershell", c("-NoProfile", "-Command",
+      paste0("(Get-Process -Id ", Sys.getpid(), ").WorkingSet64")), stdout = TRUE))
+    if (length(value) && is.finite(as.numeric(value[[1]]))) return(as.numeric(value[[1]]))
+  }
+  NA_real_
+}
+
+rss_before <- process_rss_bytes()
 started <- proc.time()[["elapsed"]]
 status <- system2(
   command = wasmtime,
@@ -33,6 +53,7 @@ status <- system2(
   stderr = error_file
 )
 elapsed <- proc.time()[["elapsed"]] - started
+rss_after <- process_rss_bytes()
 
 stderr <- if (file.exists(error_file)) paste(readLines(error_file, warn = FALSE), collapse = "\n") else ""
 if (!identical(status, 0L)) {
@@ -49,5 +70,12 @@ cat(jsonlite::toJSON(list(
   wasmSha256 = wasm_hash,
   fixtureSha256 = fixture_hash,
   elapsedMs = round(elapsed * 1000, 3),
+  coldProcessMs = round(elapsed * 1000, 3),
+  inputBytes = length(input),
+  outputBytes = file.info(output_file)$size,
+  parentRssBeforeBytes = rss_before,
+  parentRssAfterBytes = rss_after,
+  parentRssDeltaBytes = rss_after - rss_before,
+  memoryMeasurementNote = "RSS snapshots describe the parent R process, not the spawned Wasmtime child; they are not peak-memory measurements.",
   response = response
 ), auto_unbox = TRUE, pretty = TRUE), "\n")
