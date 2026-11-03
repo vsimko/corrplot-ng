@@ -1,0 +1,10 @@
+{
+  "name": "@corrplot-ng/browser-wasm",
+  "version": "0.1.0",
+  "description": "Browser WebAssembly binding for corrplot-ng",
+  "type": "module",
+  "files": ["pkg"],
+  "exports": { ".": "./pkg/corrplot_ng_wasm.js" },
+  "scripts": { "build": "wasm-pack build --target web --release --out-dir pkg" },
+  "license": "MIT"
+}
