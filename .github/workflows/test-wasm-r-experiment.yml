@@ -17,11 +17,11 @@ permissions:
 
 jobs:
   shared-wasi-module:
-    name: Same WASI module in Node and R (${{ matrix.os }})
+    name: Same WASI module in Node and R (${{ matrix.os }}, run ${{ matrix.repeat_index }})
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ github.event_name == 'pull_request' && fromJSON('[{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d"}]') || fromJSON('[{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d"},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5"},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4"}]') }}
+        include: ${{ github.event_name == 'pull_request' && fromJSON('[{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":1}]') || fromJSON('[{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":1},{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":2},{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":3},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5","repeat_index":1},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5","repeat_index":2},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5","repeat_index":3},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4","repeat_index":1},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4","repeat_index":2},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4","repeat_index":3}]') }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -287,6 +287,7 @@ jobs:
           RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
           {
             echo "Platform: $(uname -s)-$(uname -m)"
+            echo "Independent runner repetition: ${{ matrix.repeat_index }}"
             echo "R: $(R --version | head -n 1)"
             echo "V8 package:"
             # shellcheck disable=SC2016
@@ -318,6 +319,6 @@ jobs:
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7
         with:
-          name: corrplot-r-backend-benchmarks-${{ matrix.os }}
+          name: corrplot-r-backend-benchmarks-${{ matrix.os }}-${{ matrix.repeat_index }}
           path: ${{ runner.temp }}/corrplot-r-benchmarks/
           if-no-files-found: error
