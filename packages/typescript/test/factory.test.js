@@ -22,8 +22,8 @@ test("validates and renders through the injected backend", () => {
 });
 
 test("converts backend validation diagnostics to CorrplotError", () => {
-  const engine = createEngine(adapter({ validateMatrix: () => ({ valid: false, diagnostic: { schema_version: 1, code: "input.matrix.invalid", severity: "error", stage: "input", message: "bad matrix" } }) }), "injected");
-  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.invalid");
+  const engine = createEngine(adapter({ validateMatrix: () => ({ valid: false, diagnostic: { schema_version: 1, code: "input.matrix.invalid_shape", severity: "error", stage: "input", message: "bad matrix" } }) }), "injected");
+  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.invalid_shape");
 });
 
 test("converts renderer diagnostics to CorrplotError", () => {
@@ -44,10 +44,10 @@ test("dispose is idempotent and prevents later operations", () => {
   engine.dispose();
   engine.dispose();
   assert.equal(calls, 1);
-  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "runtime.disposed");
+  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "configuration.invalid_field");
 });
 
-test("normalizes diagnostics thrown by the native adapter", () => {
+test("normalizes diagnostics thrown by a native-style adapter", () => {
   const nativeError = new Error("bad input");
   nativeError.diagnostic = { schema_version: 1, code: "input.matrix.not_symmetric", severity: "error", stage: "input", message: "bad input" };
   const engine = createEngine(adapter({ validateMatrix: () => { throw nativeError; } }), "injected");
