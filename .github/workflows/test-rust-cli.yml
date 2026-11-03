@@ -4,8 +4,6 @@ on:
   pull_request:
     paths:
       - "tools/corrplot-ng/**"
-      - "prototypes/shared-svg/**"
-      - "prototypes/rust-rextendr/**"
       - "crates/corrplot-core/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
@@ -17,8 +15,6 @@ on:
       - "docs/cli-installation.md"
       - "tools/corrplot-ng/**"
       - "crates/corrplot-core/**"
-      - "prototypes/rust-rextendr/**"
-      - "prototypes/shared-svg/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
       - ".github/workflows/test-rust-cli.yml"
