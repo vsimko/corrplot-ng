@@ -27,7 +27,7 @@ jobs:
   test:
     name: WASM Node smoke (Node ${{ matrix.node }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -71,20 +71,27 @@ jobs:
       - name: Install Playwright
         if: matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install Firefox and WebKit
+        if: matrix.node == 26
+        run: npx playwright install --with-deps firefox webkit
       - name: Verify preinstalled Chrome
         if: matrix.node == 26
         run: google-chrome --version
-      - name: Run browser WebAssembly smoke test
+      - name: Run browser WebAssembly smoke tests in Chromium, Firefox, and WebKit
         if: matrix.node == 26
         env:
           DEBUG: pw:api
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/corrplot-http.log 2>&1 &
-          trap 'kill "$!" 2>/dev/null || true' EXIT
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for _ in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:4173/bindings/wasm/examples/browser/index.html >/dev/null; then
               break
             fi
             sleep 1
           done
-          node bindings/wasm/examples/browser/smoke.test.mjs
+          for browser in chromium firefox webkit; do
+            echo "Running browser smoke test: $browser"
+            CORRPLOT_BROWSER="$browser" node bindings/wasm/examples/browser/smoke.test.mjs
+          done

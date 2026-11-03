@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
-const browser = await chromium.launch({ channel: "chrome", headless: true });
+const browserName = process.env.CORRPLOT_BROWSER ?? "chromium";
+const browserTypes = { chromium, firefox, webkit };
+const browserType = browserTypes[browserName];
+assert(browserType, `unsupported CORRPLOT_BROWSER "${browserName}"`);
+
+const launchOptions = { headless: true };
+if (browserName === "chromium") launchOptions.channel = "chrome";
+
+const browser = await browserType.launch(launchOptions);
 try {
   const page = await browser.newPage();
   const pageErrors = [];
@@ -22,7 +30,7 @@ try {
   const statusText = await page.locator("#status").textContent();
   assert(
     statusText?.startsWith("WASM ready;"),
-    `browser WASM initialization failed: ${statusText}; page errors: ${pageErrors.join(" | ") || "none"}`,
+    `${browserName} WASM initialization failed: ${statusText}; page errors: ${pageErrors.join(" | ") || "none"}`,
   );
 
   const svg = page.locator("#figure img");
@@ -66,7 +74,7 @@ try {
   });
   assert.deepEqual(pageErrors, [], "browser page raised an uncaught error");
 
-  console.log("Browser WASM smoke passed: SVG decoded and Canvas pixels match.");
+  console.log(`${browserName} WASM smoke passed: SVG decoded and Canvas pixels match.`);
 } finally {
   await browser.close();
 }
