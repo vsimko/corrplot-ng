@@ -42,7 +42,7 @@ export function createEngine(adapter, backend) {
 
   let disposed = false;
   const ensureActive = () => {
-    if (disposed) fail("runtime.disposed", "runtime", "corrplot engine has been disposed", "engine");
+    if (disposed) fail("configuration.invalid_field", "configuration", "corrplot engine has been disposed", "engine");
   };
 
   return Object.freeze({
@@ -51,10 +51,13 @@ export function createEngine(adapter, backend) {
       ensureActive();
       const result = invoke(() => adapter.validateMatrix(input));
       if (result && typeof result === "object" && "valid" in result) {
-        if (!result.valid) unwrap(result);
+        if (!result.valid) {
+          if (result.diagnostic) unwrap(result);
+          fail("input.matrix.invalid_shape", "input", "matrix validation failed", "matrix");
+        }
         return true;
       }
-      if (result === false) fail("input.matrix.invalid", "input", "matrix validation failed", "matrix");
+      if (result === false) fail("input.matrix.invalid_shape", "input", "matrix validation failed", "matrix");
       return true;
     },
     render(sceneV1Json, options) {
@@ -64,7 +67,9 @@ export function createEngine(adapter, backend) {
       }
       const method = options?.method ?? "circle";
       if (options?.format === "svg") {
-        return unwrap(invoke(() => adapter.renderMatrixSvg(sceneV1Json, method)), "svg");
+        const svg = unwrap(invoke(() => adapter.renderMatrixSvg(sceneV1Json, method)), "svg");
+        if (typeof svg !== "string") fail("renderer.output.format_mismatch", "export", "SVG backend did not return an SVG string", "output.svg");
+        return svg;
       }
       if (options?.format === "rgba") {
         const { widthPx, heightPx, dpi, background } = options;
@@ -72,8 +77,8 @@ export function createEngine(adapter, backend) {
           fail("configuration.invalid_field", "configuration", "RGBA output requires positive integer widthPx/heightPx and a background color", "output");
         }
         const output = unwrap(invoke(() => adapter.renderMatrixRgba(sceneV1Json, method, { widthPx, heightPx, dpi, background })));
-        if (!(output?.pixels instanceof Uint8Array)) {
-          fail("renderer.output.invalid_buffer", "export", "RGBA backend did not return JavaScript-owned Uint8Array pixels", "output.pixels");
+        if (!(output?.pixels instanceof Uint8Array) || output.widthPx !== widthPx || output.heightPx !== heightPx || !Number.isInteger(output.strideBytes) || output.strideBytes < widthPx * 4 || output.pixels.byteLength !== output.strideBytes * heightPx) {
+          fail("renderer.output.invalid_buffer", "export", "RGBA backend returned an invalid owned pixel buffer or metadata", "output.pixels");
         }
         return output;
       }
@@ -90,6 +95,11 @@ export function createEngine(adapter, backend) {
       if (adapter.dispose) invoke(() => adapter.dispose());
     },
   });
+}
+
+export function backendInitializationFailed(backend, cause) {
+  const detail = cause instanceof Error ? cause.message : String(cause);
+  fail("configuration.invalid_field", "configuration", `could not initialize '${backend}' backend: ${detail}`, "backend");
 }
 
 export function backendUnavailable(requested, available) {
