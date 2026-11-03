@@ -60,12 +60,12 @@ jobs:
         working-directory: bindings/wasm
         run: wasm-pack build --target web --release --out-dir pkg
       - name: Measure WASM size, initialization, and renderer baselines
-        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         env:
           CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/wasm-baseline.json
         run: node bindings/wasm/benchmarks/measure.mjs
       - name: Upload WASM baseline artifact
-        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         uses: actions/upload-artifact@v7
         with:
           name: wasm-baseline-node-${{ matrix.node }}-${{ github.run_id }}
