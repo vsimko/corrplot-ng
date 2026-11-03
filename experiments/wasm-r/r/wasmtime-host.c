@@ -235,48 +235,6 @@ SEXP corrplot_wasm_peak_rss_bytes(void) {
 }
 
 
-  const char *module_path = CHAR(STRING_ELT(module_path_sexp, 0));
-  const char *json = CHAR(STRING_ELT(json_sexp, 0));
-  size_t json_len = strlen(json);
-  ensure_module(module_path);
-
-  wasmtime_val_t args[2], results[1];
-  args[0].kind = WASMTIME_I32;
-  args[0].of.i32 = (int32_t)json_len;
-  call_export(&g_alloc, args, 1, results, 1, "call corrplot_alloc");
-  uint32_t input_ptr = (uint32_t)results[0].of.i32;
-  uint8_t *memory = wasmtime_memory_data(g_context, &g_memory.of.memory);
-  size_t memory_len = wasmtime_memory_data_size(g_context, &g_memory.of.memory);
-  if (input_ptr == 0 || input_ptr > memory_len || json_len > memory_len - input_ptr)
-    Rf_error("WASM input buffer is outside linear memory");
-  memcpy(memory + input_ptr, json, json_len);
-
-  args[0].kind = WASMTIME_I32; args[0].of.i32 = (int32_t)input_ptr;
-  args[1].kind = WASMTIME_I32; args[1].of.i32 = (int32_t)json_len;
-  call_export(&g_validate, args, 2, results, 1, "call corrplot_validate_json");
-  uint64_t packed = (uint64_t)results[0].of.i64;
-
-  args[0].kind = WASMTIME_I32; args[0].of.i32 = (int32_t)input_ptr;
-  args[1].kind = WASMTIME_I32; args[1].of.i32 = (int32_t)json_len;
-  call_export(&g_free, args, 2, NULL, 0, "free WASM input");
-
-  uint32_t output_ptr = (uint32_t)(packed & UINT64_C(0xffffffff));
-  uint32_t output_len = (uint32_t)(packed >> 32);
-  memory = wasmtime_memory_data(g_context, &g_memory.of.memory);
-  memory_len = wasmtime_memory_data_size(g_context, &g_memory.of.memory);
-  if (output_ptr == 0 || output_len == 0 || output_ptr > memory_len || output_len > memory_len - output_ptr)
-    Rf_error("WASM output buffer is outside linear memory");
-
-  char *output = (char *)R_alloc((size_t)output_len + 1, 1);
-  memcpy(output, memory + output_ptr, output_len);
-  output[output_len] = '\0';
-
-  args[0].kind = WASMTIME_I32; args[0].of.i32 = (int32_t)output_ptr;
-  args[1].kind = WASMTIME_I32; args[1].of.i32 = (int32_t)output_len;
-  call_export(&g_free, args, 2, NULL, 0, "free WASM output");
-  return Rf_mkString(output);
-}
-
 SEXP corrplot_wasm_shutdown(void) {
   shutdown_host();
   return R_NilValue;
