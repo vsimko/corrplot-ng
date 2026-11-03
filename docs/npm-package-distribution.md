@@ -1,6 +1,6 @@
 # npm package distribution and release preparation
 
-**Status:** Planned architecture; implementation tracked by #290–#293.  
+**Status:** Workspace and non-publishing staging infrastructure are being implemented under #290.  
 **Publication status:** Explicitly deferred. No package in this plan is authorized for public npm publication yet.
 
 ## Goals
@@ -9,15 +9,33 @@ Prepare a coherent TypeScript ecosystem for Node.js and browser consumers while 
 
 The shared API contract and semantics should be consistent across runtimes. That does not require one physical npm package or one dependency graph containing every backend.
 
+## Workspace
+
+The repository root is a private npm workspace, not a publishable package. Its workspace globs include the existing Node binding, all four platform-specific native packages, browser WASM binding, and initial TypeScript facade. Working bindings remain in their current directories; no package relocation is required.
+
+Install and validate locally with:
+
+```sh
+npm install --ignore-scripts
+npm ls --workspaces --depth=0
+npm test
+npm run pack:dry-run
+```
+
+The workspace uses Changesets for independent package versions and coordinated changelogs. Add a changeset for consumer-visible package changes with `npm run changeset`; do not add changesets for repository-only maintenance that does not alter published package contents.
+
+The planned `@corrplot-ng/core`, React, and Vue packages are not yet present. They join through the workspace globs when their implementation issues (#145, #291, and #292) establish their manifests and public contracts. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
+
 ## Target package topology
 
 | Package | Responsibility | Runtime dependencies |
 | --- | --- | --- |
-| `@corrplot-ng/core` | Public TypeScript types, diagnostics, and runtime-neutral contracts | None |
+| `@corrplot-ng/core` | Public TypeScript types, diagnostics, and runtime-neutral contracts | None; planned |
 | `@corrplot-ng/wasm` | Browser execution backend and WASM assets | WASM/browser only |
 | `@corrplot-ng/native-node` | Node.js execution backend | Node-API addon and matching platform package |
-| `@corrplot-ng/react` | Optional React components/hooks | React peer dependency and browser API |
-| `@corrplot-ng/vue` | Optional Vue components/composables | Vue peer dependency and browser API |
+| `@corrplot-ng/react` | Optional React components/hooks | React peer dependency and browser API; planned |
+| `@corrplot-ng/vue` | Optional Vue components/composables | Vue peer dependency and browser API; planned |
+| `@corrplot-ng/typescript` | Initial runtime-selecting facade | Optional peer dependencies for the Node and WASM backends |
 
 The Node package already has an implementation under `bindings/node/` and platform-specific package names. Preserve these names unless a separate migration is reviewed. Do not rename or recreate working native package artifacts as part of package-workspace preparation.
 
@@ -38,19 +56,17 @@ The current architecture and API contract remain governed by [ADR 0002](adr/0002
 
 ## Coordinated versioning and build pipeline
 
-Use Changesets or a maintained equivalent to support independent package versions, dependency-aware version bumps, and generated changelogs. Packages may share a release train without being forced to use identical version numbers.
+Use Changesets for independent package versions, dependency-aware version bumps, and generated changelogs. Packages may share a release train without being forced to use identical version numbers.
 
-The non-publishing workflow should:
+The pull-request workspace workflow validates manifests, workspace links, Node binding tests, TypeScript facade tests, WASM tests/build, and package contents. The manual **Stage npm package tarballs (no publishing)** workflow:
 
-1. Validate workspace manifests, package names, dependency ranges, exports, and peer dependencies.
-2. Build Rust Node/WASM bindings and TypeScript packages on their supported targets.
-3. Run shared semantic, API, type, and runtime-isolation tests.
-4. Run package-specific clean-install smoke tests.
-5. Run `npm pack --dry-run` and stage actual tarballs as CI artifacts.
-6. Record package versions, dependency graph, tarball checksums, and build evidence.
-7. Preserve a deterministic dependency order so a future publication workflow can use the staged release plan.
+1. Builds each native platform package on its matching GitHub-hosted runner.
+2. Builds the browser WASM package.
+3. Stages the WASM and Node base package tarballs after the platform binaries.
+4. Stages the TypeScript facade after its runtime backends.
+5. Assembles all seven tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
 
-The workflow must not run `npm publish`, must not use npm credentials, must not request OIDC publication permissions, and must not publish automatically from tags. The current stage is build/test/package only.
+The staging workflow must remain non-publishing: it must not run `npm publish`, use npm credentials, request OIDC publication permissions, or publish automatically from tags. The current stage is build/test/package only.
 
 ## Future publication order
 
@@ -60,6 +76,7 @@ When a public release is explicitly approved, the intended order is:
 2. Browser WASM package and Node platform-specific native packages.
 3. Main Node package after its platform packages are available.
 4. React and Vue integrations after their browser-facing dependencies.
+5. The existing TypeScript facade, if retained, after its optional runtime backends.
 
 The exact order must be derived from the actual package dependency graph at release time, not hard-coded if the topology changes.
 
