@@ -40,9 +40,10 @@ wasm-pack build --target web --release --out-dir pkg
 The browser build is ESM and initializes asynchronously. Serve this directory
 over HTTP (not `file://`) and open
 [`examples/browser/index.html`](examples/browser/index.html) to run the
-browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output, verifies
-representative raster pixels and the Canvas copy, and confirms that a later WASM
-call does not mutate the previously returned JavaScript-owned pixel buffer.
+browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output, verifies positive,
+negative, and missing-cell colors in both the returned pixel buffer and a real
+browser Canvas, and confirms that a later WASM call does not mutate the
+previously returned JavaScript-owned pixel buffer.
 
 After building, run `node benchmarks/measure.mjs` from this directory to
 report the raw/gzip/Brotli WASM module size, cold initialization time, available
