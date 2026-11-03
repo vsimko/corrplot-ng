@@ -75,6 +75,11 @@ try {
       (matrixCenter[0] !== 255 || matrixCenter[1] !== 255 || matrixCenter[2] !== 255),
     "matrix-to-RGBA WASM operation did not rasterize the first diagonal cell",
   );
+
+  // Pin the fixture's positive, negative, and missing-cell semantics in the browser.
+  assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 146, 118, [33, 102, 172, 255], "positive cell");
+  assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 314, 118, [178, 24, 43, 255], "negative cell");
+  assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 280, 180, [242, 242, 242, 255], "missing-cell fill");
   const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
   const invalidMethodDiagnostic = invalidMatrixResult.diagnostic;
   assert(
@@ -168,8 +173,23 @@ try {
   );
   assertPixel(context.getImageData(80, 80, 1, 1).data, 1, 0, 0, [0, 0, 0, 255], "canvas circle center");
 
-  figure.replaceChildren(image, canvas);
-  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix-to-scene, SVG and RGBA checks passed (${rgba.pixels.byteLength} bytes)`;
+  const matrixCanvas = document.createElement("canvas");
+  matrixCanvas.id = "matrix-rgba-canvas";
+  matrixCanvas.width = matrixRgba.widthPx;
+  matrixCanvas.height = matrixRgba.heightPx;
+  matrixCanvas.setAttribute("aria-label", "A 3 by 3 correlation matrix rendered as RGBA by the Rust WebAssembly backend");
+  const matrixContext = matrixCanvas.getContext("2d");
+  assert(matrixContext, "matrix Canvas 2D context is unavailable");
+  matrixContext.putImageData(
+    new ImageData(new Uint8ClampedArray(matrixRgba.pixels), matrixRgba.widthPx, matrixRgba.heightPx),
+    0,
+    0,
+  );
+  assertPixel(matrixContext.getImageData(146, 118, 1, 1).data, 1, 0, 0, [33, 102, 172, 255], "matrix Canvas positive cell");
+  assertPixel(matrixContext.getImageData(314, 118, 1, 1).data, 1, 0, 0, [178, 24, 43, 255], "matrix Canvas negative cell");
+
+  figure.replaceChildren(image, canvas, matrixCanvas);
+  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA semantics and browser pixel checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
 } catch (error) {
   status.textContent = `WASM smoke test failed: ${error.message}`;
   status.setAttribute("aria-live", "assertive");
