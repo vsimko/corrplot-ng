@@ -1,0 +1,16 @@
+# TypeScript facade
+
+The facade selects one execution backend at module resolution time: native Node-API in Node.js or browser WebAssembly in browser builds. It never silently falls back to a different backend.
+
+```ts
+import { createCorrplotEngine } from "@corrplot-ng/typescript";
+
+const engine = await createCorrplotEngine({ backend: "auto" });
+engine.validate({ labels: ["a"], rows: 1, columns: 1, values: [1], kind: "correlation" });
+const svg = engine.render(sceneV1Json, { format: "svg", method: "circle" });
+engine.dispose();
+```
+
+The initial facade exposes matrix validation, scene-v1 matrix-to-SVG, scene-v1 matrix-to-RGBA, renderer capabilities, and idempotent disposal. The current `render` input is the matrix-bearing scene-v1 JSON string accepted by the existing Rust adapters; it is not yet a general normalized-matrix plotting API. RGBA results contain JavaScript-owned `Uint8Array` pixels. Direct Canvas is not advertised until the browser adapter in #144 is implemented.
+
+`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. Tests and advanced integrations may inject an adapter through `adapter`.

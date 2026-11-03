@@ -33,6 +33,8 @@ jobs:
           filters: |
             foundation:
               - 'tests/**'
+              - 'packages/typescript/**'
+              - 'bindings/wasm/package.json'
               - 'benchmarks/compare_runs.py'
               - 'benchmarks/test_compare_runs.py'
               - 'benchmarks/run_shared_core.py'
@@ -63,10 +65,16 @@ jobs:
           python-version: "3.12"
       - name: Install scene schema validator
         run: python -m pip install -r requirements-dev.txt
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
       - name: Validate local development command syntax
         run: bash -n scripts/dev-check.sh
       - name: Run quick foundation checks through the local entry point
         run: bash scripts/dev-check.sh quick
+      - name: Test TypeScript facade core
+        run: node --test packages/typescript/test/*.test.js
       - name: Test benchmark run comparison
         run: python -m unittest discover -s benchmarks -p 'test_compare_runs.py' -v
 
