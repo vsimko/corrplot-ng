@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import statistics
 import sys
@@ -76,6 +77,18 @@ def make_cases(include_stress: bool = False) -> dict[str, dict[str, Any]]:
 def canonical_hash(value: Any) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def run_metadata() -> dict[str, str | None]:
+    return {
+        "commit_sha": os.getenv("GITHUB_SHA"),
+        "run_id": os.getenv("GITHUB_RUN_ID"),
+        "run_attempt": os.getenv("GITHUB_RUN_ATTEMPT"),
+        "runner_os": os.getenv("RUNNER_OS") or platform.system(),
+        "runner_arch": os.getenv("RUNNER_ARCH") or platform.machine(),
+        "runner_image_os": os.getenv("ImageOS"),
+        "runner_image_version": os.getenv("ImageVersion"),
+    }
 
 
 def validate_scene(case_id: str, config: dict[str, Any], scene: dict[str, Any]) -> None:
@@ -157,6 +170,7 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
             "workload": case_id,
             "status": "passed",
             "measurement": "core_only_scene_construction",
+            "input_sha256": canonical_hash(config),
             "first_call_ms": first_ms,
             **summarize(samples),
             "samples_ms": samples,
@@ -182,6 +196,7 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
             "workload": "B08",
             "status": "passed",
             "measurement": "svg_serialization_only",
+            "input_sha256": canonical_hash(cases["B02"]),
             "first_call_ms": first_ms,
             **summarize(samples),
             "samples_ms": samples,
@@ -202,6 +217,7 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
         "include_stress": include_stress,
         "warmup_iterations": 3,
         "correctness_gate": "semantic assertions before timing",
+        "run_metadata": run_metadata(),
         "environment": {
             "python": sys.version,
             "implementation": platform.python_implementation(),
