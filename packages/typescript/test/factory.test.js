@@ -46,3 +46,10 @@ test("dispose is idempotent and prevents later operations", () => {
   assert.equal(calls, 1);
   assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "runtime.disposed");
 });
+
+test("normalizes diagnostics thrown by the native adapter", () => {
+  const nativeError = new Error("bad input");
+  nativeError.diagnostic = { schema_version: 1, code: "input.matrix.not_symmetric", severity: "error", stage: "input", message: "bad input" };
+  const engine = createEngine(adapter({ validateMatrix: () => { throw nativeError; } }), "injected");
+  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.not_symmetric");
+});
