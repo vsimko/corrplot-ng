@@ -33,54 +33,65 @@ The Python scene/SVG prototype supports seven publication glyph methods. The cur
 
 ### Prerequisites
 
-- Git
-- Python 3.10 or later
-- R 4.x
-- Rust stable toolchain (for the native CLI)
+- Git and Bash (Linux, macOS, WSL, or Git Bash on Windows)
+- Python 3.10+ and `jsonschema`
+- R 4.x with `corrplot` 0.95, `testthat`, `jsonlite`, and `png`
+- Rust stable toolchain (for the native CLI and Node/WASM bindings)
+- Node.js 22+ and npm (for the native Node binding)
+- `wasm-pack` (for browser-WASM checks)
 
-Install the R packages used by the package and compatibility tests:
-
-```sh
-R -q -e 'install.packages(c("corrplot", "testthat", "jsonlite", "png"), repos = "https://cloud.r-project.org")'
-```
-
-Install the Python schema validator used by the prototype tests:
+Install the Python and R packages used by the local checks:
 
 ```sh
-python -m pip install jsonschema
+python3 -m pip install jsonschema
+Rscript -e 'install.packages(c("corrplot", "testthat", "jsonlite", "png"), repos = "https://cloud.r-project.org")'
 ```
 
-### Run tests
+### Unified local commands
 
-From the repository root:
+Run commands from the repository root through `bash scripts/dev-check.sh`:
 
 ```sh
-# Shared fixture integrity
-python -m unittest discover -s tests -v
+# Fast Python foundation checks, including fixture/schema and SVG validation
+bash scripts/dev-check.sh quick
 
-# Normalized-matrix v1 schema and semantic tests
-python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+# Focused checks for an individual component
+bash scripts/dev-check.sh test-r
+bash scripts/dev-check.sh test-r-legacy
+bash scripts/dev-check.sh test-rust-cli
+bash scripts/dev-check.sh test-node
+bash scripts/dev-check.sh test-wasm
 
-# Python scene/SVG prototype
-python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+# Full locally supported correctness suite
+bash scripts/dev-check.sh test-all
 
-# R package, including adapter and legacy regression tests
-R CMD check implementations/r
+# Builds
+bash scripts/dev-check.sh build-cli
+bash scripts/dev-check.sh build-node
 
-# Native Rust CLI tests and release build (offline, locked dependencies)
-cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
-cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+# Explicitly opt-in performance measurements
+bash scripts/dev-check.sh benchmarks
+bash scripts/dev-check.sh benchmarks-stress
 ```
 
-For a local CLI smoke test after building:
+`quick` runs the Python foundation checks without stress benchmarks. The
+focused commands run the corresponding component checks; `test-all` combines
+the quick, R, native CLI, Node, browser-WASM, and pinned legacy-oracle checks.
+The R checks require the pinned `corrplot` 0.95 reference. Browser-WASM checks
+require `wasm-pack`. The experimental WASM/R host workflow additionally
+depends on the pinned Wasmtime C API and remains a separate opt-in workflow.
 
-```sh
-tools/corrplot-ng/target/release/corrplot-ng --help
-tools/corrplot-ng/target/release/corrplot-ng render --config prototypes/publication-config-v1/examples/basic.json --output /tmp/corrplot-ng.svg
-python scripts/validate_svg.py /tmp/corrplot-ng.svg
-```
+The benchmark commands write result files under the system temporary
+directory. Stress workloads are never included in `quick` or `test-all`;
+run `benchmarks-stress` only when explicitly measuring the 500x500 and
+1000x1000 workloads. Set `PYTHON=/path/to/python` to select a non-default
+Python executable.
 
-The current CI workflows run path-filtered correctness checks. Performance benchmarks run on a schedule or by manual dispatch; they are not part of ordinary pull-request CI. See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
+The script is a Bash entry point; native Windows PowerShell is not supported.
+Use WSL or Git Bash on Windows. Individual CI workflows still provide the
+authoritative multi-platform checks.
+
+See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
 
 ## Citation
 
