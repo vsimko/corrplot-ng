@@ -53,6 +53,13 @@ jobs:
           rustup default stable
           rustup target add wasm32-wasip1 wasm32-unknown-unknown
           if [[ "$RUNNER_OS" == "Windows" ]]; then rustup target add x86_64-pc-windows-gnu; fi
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            experiments/wasm-r/wasm-host -> target
+            experiments/wasm-r/wasm-abi -> target
+            experiments/wasm-r/native-r -> target
+          shared-key: wasm-r-experiment
 
       - name: Build shared-core WASI module
         run: |
