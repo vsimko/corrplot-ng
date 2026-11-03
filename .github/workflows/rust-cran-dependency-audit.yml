@@ -8,6 +8,7 @@ on:
       - "prototypes/rust-rextendr/Cargo.lock"
       - "prototypes/rust-rextendr/deny.toml"
       - "prototypes/rust-rextendr/src/**"
+      - "crates/corrplot-core/Cargo.toml"
       - ".github/workflows/rust-cran-dependency-audit.yml"
   # Full vendoring and offline-build audit, weekly.
   schedule:
