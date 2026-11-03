@@ -14,6 +14,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "docs/cli-installation.md"
       - "tools/corrplot-ng/**"
       - "crates/corrplot-core/**"
       - "prototypes/rust-rextendr/**"
