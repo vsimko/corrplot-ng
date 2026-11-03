@@ -1,0 +1,104 @@
+version: 2
+
+updates:
+  # Keep third-party GitHub Actions references current. Non-breaking updates
+  # are grouped; major updates and security updates remain individually visible.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    groups:
+      github-actions-nonbreaking:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # Cargo projects with ordinary version-update automation. Group by
+  # dependency name across directories to avoid duplicate PRs for shared crates.
+  - package-ecosystem: cargo
+    directories:
+      - /bindings/node
+      - /bindings/wasm
+      - /crates/corrplot-core
+      - /experiments/wasm-r/native-r
+      - /experiments/wasm-r/wasm-abi
+      - /experiments/wasm-r/wasm-host
+      - /tools/corrplot-ng
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:30"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 10
+    groups:
+      cargo-nonbreaking:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+        group-by: dependency-name
+
+  # The rextendr prototype deliberately pins extendr-api 0.9.0 in both
+  # Cargo.toml and the generated-package preparation/CRAN audit path. Keep
+  # routine version updates manual and coordinated; security updates remain
+  # eligible because the zero limit applies only to version-update PRs.
+  - package-ecosystem: cargo
+    directory: /prototypes/rust-rextendr
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:30"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 0
+
+  # The only npm dependencies currently declared are this project's own
+  # platform packages. Ignore them until the platform packages are published;
+  # future external npm dependencies in this manifest will be maintained.
+  - package-ecosystem: npm
+    directory: /bindings/node
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "@corrplot-ng/native-node-linux-x64-gnu"
+      - dependency-name: "@corrplot-ng/native-node-darwin-x64"
+      - dependency-name: "@corrplot-ng/native-node-darwin-arm64"
+      - dependency-name: "@corrplot-ng/native-node-win32-x64-msvc"
+    groups:
+      npm-nonbreaking:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # jsonschema is the only Python package dependency currently declared.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:30"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 3
+    groups:
+      python-nonbreaking:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

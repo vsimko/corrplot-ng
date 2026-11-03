@@ -43,7 +43,7 @@ The Python scene/SVG prototype supports seven publication glyph methods. The cur
 Install the Python and R packages used by the local checks:
 
 ```sh
-python3 -m pip install jsonschema
+python3 -m pip install -r requirements-dev.txt
 Rscript -e 'install.packages(c("corrplot", "testthat", "jsonlite", "png"), repos = "https://cloud.r-project.org")'
 ```
 
