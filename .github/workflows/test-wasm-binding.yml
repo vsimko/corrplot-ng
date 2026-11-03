@@ -77,9 +77,8 @@ jobs:
           DEBUG: pw:api
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/corrplot-http.log 2>&1 &
-          # The PID is referenced from the EXIT trap below.
-          # shellcheck disable=SC2034
           server_pid=$!
+          : "$server_pid" # The EXIT trap consumes this PID.
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:4173/bindings/wasm/examples/browser/index.html >/dev/null; then
