@@ -21,6 +21,24 @@ export interface RgbaOutput {
   pixelFormat: "rgba8"; alphaMode: "straight"; colorSpace: "srgb";
   dpi?: number; pixels: Uint8Array;
 }
+export interface CanvasRenderOptions {
+  format: "canvas";
+  method?: "circle" | "square" | "ellipse" | "number" | "shade" | "color" | "pie";
+  canvas?: HTMLCanvasElement | OffscreenCanvas;
+  context?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  width: number;
+  height: number;
+  devicePixelRatio?: number;
+  background?: RgbaColor | null;
+  clear?: boolean;
+}
+export interface CanvasRenderResult {
+  canvas: HTMLCanvasElement | OffscreenCanvas;
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  widthPx: number;
+  heightPx: number;
+  devicePixelRatio: number;
+}
 export interface DiagnosticV1 {
   schema_version: 1; code: string; severity: "error" | "warning";
   stage: string; message: string; path?: string; row?: number; column?: number;
@@ -38,6 +56,7 @@ export interface Engine {
   validate(input: MatrixInput): true;
   render(sceneV1Json: string, options: SvgRenderOptions): string;
   render(sceneV1Json: string, options: RgbaRenderOptions): RgbaOutput;
+  render(sceneV1Json: string, options: CanvasRenderOptions): CanvasRenderResult;
   getRendererCapabilities(): unknown;
   dispose(): void;
 }
