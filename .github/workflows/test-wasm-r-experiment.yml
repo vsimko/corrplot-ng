@@ -192,6 +192,9 @@ jobs:
 
       - name: Run identical fixtures and collect benchmark results
         shell: bash
+        env:
+          CORRPLOT_BENCH_SAMPLES: ${{ github.event_name == 'pull_request' && '3' || '10' }}
+          CORRPLOT_BENCH_TARGET_SECONDS: ${{ github.event_name == 'pull_request' && '0.1' || '1' }}
         run: |
           set -euo pipefail
           RESULTS_DIR="$RUNNER_TEMP/corrplot-r-benchmarks"
