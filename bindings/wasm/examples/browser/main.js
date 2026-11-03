@@ -1,5 +1,6 @@
 import init, * as wasm from "../../pkg/corrplot_ng_wasm.js";
-import { createBrowserAdapter, createCorrplotEngine } from "../../../../packages/typescript/src/browser.js";
+import { createBrowserAdapter } from "../../../../packages/typescript/src/browser-adapter.js";
+import { createCorrplotEngine } from "../../../../packages/typescript/src/browser.js";
 
 const {
   getRendererCapabilities,
