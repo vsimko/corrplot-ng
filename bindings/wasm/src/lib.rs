@@ -919,7 +919,7 @@ fn scene_canvas_commands(scene: &Scene) -> CanvasSceneCommands {
             entry.label.clone(), legend_x + 11.0, legend_y, 8.0, black, TextAnchor::Start,
             0.0, "sans-serif".into(), "normal".into(), "normal".into(),
         ));
-        legend_x += 18.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
+        legend_x += 21.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
     }
 
     for text in &scene.texts {
