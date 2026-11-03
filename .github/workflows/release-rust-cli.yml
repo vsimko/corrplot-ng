@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/corrplot-ng/**"
+      - "crates/corrplot-core/**"
       - "benchmarks/cli_release_audit.py"
       - ".github/workflows/release-rust-cli.yml"
   push:
