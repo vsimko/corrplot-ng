@@ -65,6 +65,9 @@ jobs:
           path: ${{ runner.temp }}/wasm-baseline.json
           if-no-files-found: error
           retention-days: 90
+      - name: Verify browser WASM npm package contents
+        working-directory: bindings/wasm
+        run: npm pack --dry-run
       - name: Install Playwright
         if: matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1
