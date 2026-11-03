@@ -67,7 +67,7 @@ jobs:
       - name: Install wasm-pack
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Install workspace dependencies without lifecycle scripts
-        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+        run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
       - name: Build browser WASM package
         working-directory: bindings/wasm
         run: npm run build
