@@ -26,6 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/corrplot-ng -> target
+          shared-key: release-cli
       - name: Check release tag matches package version
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: bash
@@ -102,6 +106,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/corrplot-ng -> target
+          shared-key: release-cli
       - name: Check release tag matches package version
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: bash
@@ -168,6 +176,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/corrplot-ng -> target
+          shared-key: release-cli
       - name: Check release tag matches package version
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: pwsh
