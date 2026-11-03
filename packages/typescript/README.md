@@ -2,6 +2,18 @@
 
 The facade selects one execution backend at module resolution time: native Node-API in Node.js or browser WebAssembly in browser builds. It never silently falls back to a different backend.
 
+Install the facade together with only the backend required by the target runtime:
+
+```sh
+# Node.js
+npm install @corrplot-ng/typescript @corrplot-ng/native-node
+
+# Browser
+npm install @corrplot-ng/typescript @corrplot-ng/browser-wasm
+```
+
+The backend packages are optional peer dependencies, not ordinary dependencies. npm therefore does not install both backends when the facade is installed. A Node.js application does not need the browser WASM package, and a browser application does not need native Node binaries. The runtime-specific export loads only its matching backend.
+
 ```ts
 import { createCorrplotEngine } from "@corrplot-ng/typescript";
 
