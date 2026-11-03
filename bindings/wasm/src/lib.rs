@@ -710,3 +710,128 @@ pub fn render_matrix_svg_wasm(scene_v1_json: String, method: String) -> Result<J
     };
     to_js(&result)
 }
+
+
+/// End-to-end matrix construction through the shared Rust core and RGBA renderer.
+#[wasm_bindgen(js_name = "renderMatrixRgba")]
+pub fn render_matrix_rgba_wasm(
+    scene_v1_json: String,
+    method: String,
+    options_input: JsValue,
+) -> Result<JsValue, JsValue> {
+    let method = match cell_method(&method) {
+        Ok(method) => method,
+        Err(error) => return rgba_failure(error),
+    };
+    let scene = match scene_v1_to_scene(&scene_v1_json, method) {
+        Ok(scene) => scene,
+        Err(error) => return rgba_failure(scene_build_diagnostic(error)),
+    };
+    let options: RgbaOptionsInput = match from_js(options_input, "options") {
+        Ok(options) => options,
+        Err(error) => return rgba_failure(error),
+    };
+    let background = match rgba(options.background, "output.background") {
+        Ok(background) => background,
+        Err(error) => return rgba_failure(error),
+    };
+    let raster = RasterOptions {
+        width_px: options.width_px,
+        height_px: options.height_px,
+        dpi: options.dpi,
+        background,
+    };
+
+    match RgbaRenderer.render(&scene, &OutputOptions::Rgba(raster)) {
+        Ok(RenderOutput::Rgba(buffer)) => {
+            let stride_bytes = match u32::try_from(buffer.stride_bytes) {
+                Ok(stride) => stride,
+                Err(_) => return rgba_failure(diagnostic(
+                    "renderer.output.invalid_buffer",
+                    "export",
+                    "RGBA stride cannot be represented by the WebAssembly binding",
+                    Some("output.strideBytes"),
+                )),
+            };
+            // Return JS-owned bytes so the result remains valid after later WASM calls.
+            let pixels = Uint8Array::from(buffer.pixels.as_slice());
+            rgba_result(RgbaMetadata {
+                width_px: Some(buffer.width_px),
+                height_px: Some(buffer.height_px),
+                stride_bytes: Some(stride_bytes),
+                pixel_format: Some("rgba8".to_string()),
+                alpha_mode: Some("straight".to_string()),
+                color_space: Some("srgb".to_string()),
+                dpi: buffer.dpi,
+                diagnostic: None,
+            }, Some(pixels))
+        }
+        Ok(_) => rgba_failure(diagnostic(
+            "renderer.output.format_mismatch",
+            "export",
+            "RGBA renderer returned a non-RGBA output",
+            Some("output"),
+        )),
+        Err(error) => rgba_failure(diagnostic(error.code, "renderer", error.message, Some("output"))),
+    }
+}
+
+#[cfg(test)]
+mod matrix_rgba_tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    fn renders_scene_v1_matrix_to_owned_rgba_pixels() {
+        let fixture = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let options = RgbaOptionsInput {
+            width_px: 380,
+            height_px: 392,
+            dpi: Some(96.0),
+            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+        };
+        let output = render_matrix_rgba_wasm(
+            fixture.into(),
+            "circle".into(),
+            serde_wasm_bindgen::to_value(&options).unwrap(),
+        ).unwrap();
+        let pixels = Reflect::get(&output, &JsValue::from_str("pixels")).unwrap()
+            .dyn_into::<Uint8Array>().unwrap();
+        assert_eq!(pixels.length(), 380 * 392 * 4);
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("widthPx")).unwrap().as_f64(), Some(380.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("heightPx")).unwrap().as_f64(), Some(392.0));
+        assert_eq!(Reflect::get(&output, &JsValue::from_str("strideBytes")).unwrap().as_f64(), Some(380.0 * 4.0));
+        let diagnostic = Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap();
+        assert!(diagnostic.is_undefined() || diagnostic.is_null());
+
+        // The positive diagonal cell has a visible glyph at its center.
+        let offset = (118 * 380 + 146) * 4;
+        let center = Array::from(&pixels.subarray(offset as u32, offset as u32 + 4));
+        assert_eq!(center.length(), 4);
+        assert_eq!(center.get(3).as_f64(), Some(255.0));
+        assert!(center.get(0).as_f64() != Some(255.0) || center.get(1).as_f64() != Some(255.0) || center.get(2).as_f64() != Some(255.0));
+    }
+
+    #[wasm_bindgen_test]
+    fn maps_invalid_matrix_rgba_options_to_diagnostic_v1() {
+        let fixture = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let options = RgbaOptionsInput {
+            width_px: 0,
+            height_px: 392,
+            dpi: None,
+            background: RgbaColorInput { red: 255, green: 255, blue: 255, alpha: 255 },
+        };
+        let output = render_matrix_rgba_wasm(
+            fixture.into(),
+            "circle".into(),
+            serde_wasm_bindgen::to_value(&options).unwrap(),
+        ).unwrap();
+        let diagnostic: DiagnosticV1 = serde_wasm_bindgen::from_value(
+            Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap()
+        ).unwrap();
+        assert_eq!(diagnostic.schema_version, 1);
+        assert_eq!(diagnostic.code, "renderer.output.invalid_options");
+        assert_eq!(diagnostic.stage, "renderer");
+        assert!(Reflect::get(&output, &JsValue::from_str("pixels")).unwrap().is_null());
+    }
+}
