@@ -2,7 +2,7 @@ use napi::bindgen_prelude::Buffer;
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
 use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
-use corrplot_core::scene::{scene_v1_to_scene, CellMethod};
+use corrplot_core::scene::{matrix_to_scene_v1, scene_v1_to_scene, CellMethod, DisplayType, MatrixSemantics, NormalizedMatrixV1, SceneBuildOptions};
 use napi_derive::napi;
 
 #[napi(object)]
@@ -108,8 +108,38 @@ pub struct SceneTextInput {
 pub struct SceneInput {
     pub width: f64,
     pub height: f64,
+    pub description: Option<String>,
     pub cells: Vec<SceneCellInput>,
     pub texts: Vec<SceneTextInput>,
+}
+
+#[napi(object)]
+pub struct SceneBuildOptionsInput {
+    pub cell_method: Option<String>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub annotation: Option<String>,
+    pub display_type: Option<String>,
+    pub show_diagonal: Option<bool>,
+}
+
+impl Default for SceneBuildOptionsInput {
+    fn default() -> Self {
+        Self {
+            cell_method: None,
+            title: None,
+            description: None,
+            annotation: None,
+            display_type: None,
+            show_diagonal: None,
+        }
+    }
+}
+
+#[napi(object)]
+pub struct SceneResult {
+    pub scene: Option<SceneInput>,
+    pub diagnostic: Option<DiagnosticV1>,
 }
 
 #[napi(object)]
@@ -289,7 +319,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, description: String::new(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
+    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[napi(js_name = "renderSceneSvg")]
@@ -444,6 +474,176 @@ fn cell_method(value: &str) -> Result<CellMethod, DiagnosticV1> {
             format!("unsupported cell method '{other}'"),
             Some("cellMethod"),
         )),
+    }
+}
+
+fn rgba_input(color: &RgbaColor) -> RgbaColorInput {
+    RgbaColorInput {
+        red: color.red as u32,
+        green: color.green as u32,
+        blue: color.blue as u32,
+        alpha: color.alpha as u32,
+    }
+}
+
+fn glyph_input(glyph: CellGlyph) -> CellGlyphInput {
+    let mut input = CellGlyphInput {
+        kind: String::new(),
+        radius: None,
+        side: None,
+        rx: None,
+        ry: None,
+        rotation_degrees: None,
+        start_radians: None,
+        end_radians: None,
+        text: None,
+        font_size: None,
+        color: None,
+    };
+    match glyph {
+        CellGlyph::Circle { radius, color } => {
+            input.kind = "circle".into();
+            input.radius = Some(radius);
+            input.color = Some(rgba_input(&color));
+        }
+        CellGlyph::Square { side, color } => {
+            input.kind = "square".into();
+            input.side = Some(side);
+            input.color = Some(rgba_input(&color));
+        }
+        CellGlyph::Ellipse { rx, ry, rotation_degrees, color } => {
+            input.kind = "ellipse".into();
+            input.rx = Some(rx);
+            input.ry = Some(ry);
+            input.rotation_degrees = Some(rotation_degrees);
+            input.color = Some(rgba_input(&color));
+        }
+        CellGlyph::Pie { radius, start_radians, end_radians, color } => {
+            input.kind = "pie".into();
+            input.radius = Some(radius);
+            input.start_radians = Some(start_radians);
+            input.end_radians = Some(end_radians);
+            input.color = Some(rgba_input(&color));
+        }
+        CellGlyph::Number { text, font_size, color } => {
+            input.kind = "number".into();
+            input.text = Some(text);
+            input.font_size = Some(font_size);
+            input.color = Some(rgba_input(&color));
+        }
+        CellGlyph::Shade { color } => {
+            input.kind = "shade".into();
+            input.color = Some(rgba_input(&color));
+        }
+        CellGlyph::Color => input.kind = "color".into(),
+    }
+    input
+}
+
+fn scene_input(scene: Scene) -> SceneInput {
+    let cells = scene.cells.into_iter().map(|cell| SceneCellInput {
+        x: cell.x,
+        y: cell.y,
+        size: cell.size,
+        visible: cell.visible,
+        fill: rgba_input(&cell.fill),
+        stroke: rgba_input(&cell.stroke),
+        glyph: cell.glyph.map(glyph_input),
+    }).collect();
+    let texts = scene.texts.into_iter().map(|text| SceneTextInput {
+        text: text.text,
+        x: text.x,
+        y: text.y,
+        font_size: text.font_size,
+        color: rgba_input(&text.color),
+        anchor: match text.anchor {
+            TextAnchor::Start => "start",
+            TextAnchor::Middle => "middle",
+            TextAnchor::End => "end",
+        }.into(),
+        rotation_degrees: Some(text.rotation_degrees),
+    }).collect();
+    SceneInput {
+        width: scene.width,
+        height: scene.height,
+        description: Some(scene.description),
+        cells,
+        texts,
+    }
+}
+
+fn build_matrix_scene(input: MatrixInput, options: SceneBuildOptionsInput) -> Result<Scene, DiagnosticV1> {
+    let semantics = match input.kind.as_str() {
+        "correlation" => MatrixSemantics::Correlation,
+        "general_numeric" => MatrixSemantics::GeneralNumeric,
+        other => return Err(diagnostic(
+            "configuration.invalid_field",
+            "configuration",
+            format!("unsupported matrix kind '{other}'"),
+            Some("kind"),
+        )),
+    };
+    let rows = input.rows as usize;
+    let columns = input.columns as usize;
+    if rows == 0 || rows != columns {
+        return Err(diagnostic(
+            "input.matrix.invalid_shape",
+            "input",
+            "scene construction requires a non-empty square matrix",
+            Some("matrix"),
+        ));
+    }
+    let expected = rows.checked_mul(columns).ok_or_else(|| diagnostic(
+        "input.matrix.invalid_shape",
+        "input",
+        "matrix dimensions overflow",
+        Some("matrix"),
+    ))?;
+    if input.values.len() != expected {
+        return Err(diagnostic(
+            "input.matrix.invalid_shape",
+            "input",
+            format!("matrix has {} values; expected {expected}", input.values.len()),
+            Some("values"),
+        ));
+    }
+    let values = input.values.chunks(columns).map(|row| row.to_vec()).collect();
+    let display_type = match options.display_type.as_deref().unwrap_or("full") {
+        "full" => DisplayType::Full,
+        "upper" => DisplayType::Upper,
+        "lower" => DisplayType::Lower,
+        "diagonal" => DisplayType::Diagonal,
+        other => return Err(diagnostic(
+            "input.scene.invalid_value",
+            "input",
+            format!("unsupported display type '{other}'"),
+            Some("displayType"),
+        )),
+    };
+    let method = cell_method(options.cell_method.as_deref().unwrap_or("circle"))?;
+    let normalized = NormalizedMatrixV1 {
+        schema_version: 1,
+        kind: "normalized_matrix".into(),
+        labels: input.labels,
+        values,
+        source_indices: (0..rows).collect(),
+        semantics,
+        display_type,
+        show_diagonal: options.show_diagonal.unwrap_or(true),
+    };
+    matrix_to_scene_v1(&normalized, &SceneBuildOptions {
+        cell_method: method,
+        title: options.title.unwrap_or_default(),
+        description: options.description.unwrap_or_default(),
+        annotation: options.annotation.filter(|value| !value.is_empty()),
+    }).map_err(scene_build_diagnostic)
+}
+
+#[napi(js_name = "createScene")]
+pub fn create_scene_native(input: MatrixInput, options: Option<SceneBuildOptionsInput>) -> SceneResult {
+    match build_matrix_scene(input, options.unwrap_or_default()) {
+        Ok(scene) => SceneResult { scene: Some(scene_input(scene)), diagnostic: None },
+        Err(diagnostic) => SceneResult { scene: None, diagnostic: Some(diagnostic) },
     }
 }
 
