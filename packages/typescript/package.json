@@ -27,9 +27,17 @@
     }
   },
   "files": ["src", "README.md"],
-  "dependencies": {
+  "peerDependencies": {
     "@corrplot-ng/native-node": "0.1.0",
     "@corrplot-ng/browser-wasm": "0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@corrplot-ng/native-node": {
+      "optional": true
+    },
+    "@corrplot-ng/browser-wasm": {
+      "optional": true
+    }
   },
   "engines": { "node": "^22 || ^24 || ^26" },
   "license": "MIT"
