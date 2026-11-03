@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CorrplotError } from "../src/factory.js";
+import { CorrplotError, createEngine } from "../src/factory.js";
+import { createBrowserAdapter } from "../src/browser-adapter.js";
 import { drawCanvasCommands } from "../src/canvas.js";
 
 function mockCanvas() {
@@ -77,6 +78,35 @@ test("rejects unsupported drawing commands with a diagnostic", () => {
   const { canvas } = mockCanvas();
   assert.throws(
     () => drawCanvasCommands({ ...scene, commands: [{ op: "webgl" }] }, { canvas, width: 10, height: 10 }),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.unsupported_feature",
+  );
+});
+
+test("browser facade exposes Canvas and reports it as a supported output", () => {
+  const wasm = {
+    validateMatrix: () => true,
+    renderMatrixSvg: () => "<svg />",
+    renderMatrixRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels: new Uint8Array(4) }),
+    renderMatrixCanvasCommands: () => ({ scene, diagnostic: null }),
+    getRendererCapabilities: () => JSON.stringify({ output_formats: ["svg", "rgba"] }),
+  };
+  const engine = createEngine(createBrowserAdapter(wasm), "wasm");
+  const { canvas } = mockCanvas();
+  const result = engine.render("{}", { format: "canvas", canvas, width: 100, height: 50, devicePixelRatio: 2 });
+  assert.equal(result.widthPx, 200);
+  assert.ok(engine.getRendererCapabilities().output_formats.includes("canvas"));
+});
+
+test("non-browser backends reject Canvas output explicitly", () => {
+  const adapter = {
+    validateMatrix: () => true,
+    renderMatrixSvg: () => "<svg />",
+    renderMatrixRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels: new Uint8Array(4) }),
+    getRendererCapabilities: () => ({}),
+  };
+  const engine = createEngine(adapter, "injected");
+  assert.throws(
+    () => engine.render("{}", { format: "canvas", width: 100, height: 50 }),
     error => error instanceof CorrplotError && error.diagnostic.code === "renderer.unsupported_feature",
   );
 });
