@@ -1,3 +1,9 @@
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#elif !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <R.h>
 #include <Rinternals.h>
 #include <wasmtime.h>
@@ -7,7 +13,6 @@
 #include <string.h>
 #include <math.h>
 #if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
 #else
