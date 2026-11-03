@@ -72,7 +72,7 @@ const svg = api.renderSceneSvg(
 assert.match(svg, /^<svg /);
 console.log("Prebuilt tarball clean-install smoke test passed.");
 `;
-  const smokePath = join(temporaryRoot, "smoke.cjs");
+  const smokePath = join(installDirectory, "smoke.cjs");
   writeFileSync(smokePath, smoke);
   execFileSync(process.execPath, [smokePath], {
     cwd: installDirectory,
