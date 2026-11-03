@@ -22,6 +22,7 @@ const { memory, corrplot_alloc, corrplot_free, corrplot_validate_json } = instan
 if (!(memory instanceof WebAssembly.Memory)) {
   throw new Error("module does not export linear memory");
 }
+const wasmLinearMemoryBytesAfterInstantiation = memory.buffer.byteLength;
 
 const emptyPhases = () => ({
   allocationMs: 0,
@@ -110,7 +111,7 @@ console.log(JSON.stringify({
     processRssDeltaAfterInstantiationBytes: rssAfterInstantiation - rssBeforeInstantiation,
     processRssDeltaAfterFirstCallBytes: rssAfterFirstCall - rssBeforeInstantiation,
     processRssDeltaAfterBenchmarkBytes: rssAfterBenchmark - rssBeforeInstantiation,
-    wasmLinearMemoryBytesAfterInstantiation: memory.buffer.byteLength,
+    wasmLinearMemoryBytesAfterInstantiation,
     wasmLinearMemoryBytesAfterFirstCall,
     wasmLinearMemoryBytesAfterBenchmark,
   },
