@@ -43,7 +43,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: bindings/wasm -> target
-          cache-bin: wasm-pack
           shared-key: wasm-binding
       - name: Install wasm-pack
         run: cargo install wasm-pack --version 0.13.1 --locked
