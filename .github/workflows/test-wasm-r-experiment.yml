@@ -1,6 +1,11 @@
 name: WASM from R experiment
 
 on:
+  pull_request:
+    paths:
+      - "experiments/wasm-r/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/test-wasm-r-experiment.yml"
   workflow_dispatch:
 
 concurrency:
