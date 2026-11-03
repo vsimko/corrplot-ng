@@ -28,7 +28,7 @@ The planned `@corrplot-ng/core`, React, and Vue packages are not yet present. Is
 
 ## Current implementation status — 2026-11-04
 
-The workspace and release-preparation infrastructure tracked by #290 are implemented. The current installable package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, and `@corrplot-ng/typescript`. The root workspace remains private.
+The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, and `@corrplot-ng/typescript`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
 
 The native Node and browser WASM packages expose matrix validation, typed-scene SVG/RGBA operations, matrix-bearing scene-v1 SVG/RGBA operations, renderer capabilities, and diagnostic-v1 errors. The TypeScript facade is an initial subset: it validates `MatrixInput`, renders a matrix-bearing scene-v1 JSON string to SVG or RGBA, returns renderer capabilities, supports adapter injection, and disposes the backend. It does not yet expose `createScene()` or a direct normalized-matrix-to-render operation; that remaining API work is tracked by #145.
 
