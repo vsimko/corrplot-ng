@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { brotliCompressSync, gzipSync } from "node:zlib";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
@@ -108,6 +108,8 @@ assert.ok(matrixRgba.pixels instanceof Uint8Array);
 assert.equal(matrixRgba.pixels.byteLength, matrixRgba.strideBytes * matrixRgba.heightPx);
 
 const results = {
+  measuredAt: new Date().toISOString(),
+  sourceCommit: process.env.GITHUB_SHA ?? null,
   runtime: process.version,
   platform: process.platform,
   architecture: process.arch,
@@ -138,3 +140,8 @@ const results = {
 
 console.log("WASM baseline (informational; no performance gate):");
 console.log(JSON.stringify(results, null, 2));
+
+const outputPath = process.env.CORRPLOT_BENCHMARK_OUTPUT;
+if (outputPath) {
+  writeFileSync(outputPath, `${JSON.stringify(results, null, 2)}\n`);
+}
