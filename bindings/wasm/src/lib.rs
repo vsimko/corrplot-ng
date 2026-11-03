@@ -806,10 +806,12 @@ mod matrix_rgba_tests {
 
         // The positive diagonal cell has a visible glyph at its center.
         let offset = (118 * 380 + 146) * 4;
-        let center = Array::from(&pixels.subarray(offset as u32, offset as u32 + 4));
-        assert_eq!(center.length(), 4);
-        assert_eq!(center.get(3).as_f64(), Some(255.0));
-        assert!(center.get(0).as_f64() != Some(255.0) || center.get(1).as_f64() != Some(255.0) || center.get(2).as_f64() != Some(255.0));
+        assert_eq!(pixels.get_index(offset as u32 + 3), 255);
+        assert!(
+            pixels.get_index(offset as u32) != 255 ||
+            pixels.get_index(offset as u32 + 1) != 255 ||
+            pixels.get_index(offset as u32 + 2) != 255
+        );
     }
 
     #[wasm_bindgen_test]
