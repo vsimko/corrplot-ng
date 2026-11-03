@@ -5,6 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <psapi.h>
+#else
+#include <sys/resource.h>
+#include <time.h>
+#endif
 
 /* Keep one Wasmtime engine/store/instance alive for repeated .Call invocations. */
 static wasm_engine_t *g_engine = NULL;
@@ -96,7 +105,136 @@ static void ensure_module(const char *module_path) {
   strcpy(g_module_path, module_path);
 }
 
+typedef struct {
+  uint64_t alloc_ns;
+  uint64_t input_copy_ns;
+  uint64_t guest_execution_ns;
+  uint64_t input_free_ns;
+  uint64_t output_copy_ns;
+  uint64_t output_free_ns;
+} phase_timings_t;
+
+static uint64_t monotonic_ns(void) {
+#if defined(_WIN32)
+  LARGE_INTEGER counter, frequency;
+  QueryPerformanceCounter(&counter);
+  QueryPerformanceFrequency(&frequency);
+  return (uint64_t)((counter.QuadPart * UINT64_C(1000000000)) / frequency.QuadPart);
+#else
+  struct timespec value;
+  if (clock_gettime(CLOCK_MONOTONIC, &value) != 0) return 0;
+  return (uint64_t)value.tv_sec * UINT64_C(1000000000) + (uint64_t)value.tv_nsec;
+#endif
+}
+
+static char *validate_json(const char *module_path, const char *json,
+                           phase_timings_t *timings, size_t *output_len) {
+  size_t json_len = strlen(json);
+  ensure_module(module_path);
+
+  wasmtime_val_t args[2], results[1];
+  uint64_t started = monotonic_ns();
+  args[0].kind = WASMTIME_I32;
+  args[0].of.i32 = (int32_t)json_len;
+  call_export(&g_alloc, args, 1, results, 1, "call corrplot_alloc");
+  uint32_t input_ptr = (uint32_t)results[0].of.i32;
+  if (timings != NULL) timings->alloc_ns = monotonic_ns() - started;
+
+  uint8_t *memory = wasmtime_memory_data(g_context, &g_memory.of.memory);
+  size_t memory_len = wasmtime_memory_data_size(g_context, &g_memory.of.memory);
+  if (input_ptr == 0 || input_ptr > memory_len || json_len > memory_len - input_ptr)
+    Rf_error("WASM input buffer is outside linear memory");
+
+  started = monotonic_ns();
+  memcpy(memory + input_ptr, json, json_len);
+  if (timings != NULL) timings->input_copy_ns = monotonic_ns() - started;
+
+  args[0].kind = WASMTIME_I32; args[0].of.i32 = (int32_t)input_ptr;
+  args[1].kind = WASMTIME_I32; args[1].of.i32 = (int32_t)json_len;
+  started = monotonic_ns();
+  call_export(&g_validate, args, 2, results, 1, "call corrplot_validate_json");
+  if (timings != NULL) timings->guest_execution_ns = monotonic_ns() - started;
+  uint64_t packed = (uint64_t)results[0].of.i64;
+
+  args[0].kind = WASMTIME_I32; args[0].of.i32 = (int32_t)input_ptr;
+  args[1].kind = WASMTIME_I32; args[1].of.i32 = (int32_t)json_len;
+  started = monotonic_ns();
+  call_export(&g_free, args, 2, NULL, 0, "free WASM input");
+  if (timings != NULL) timings->input_free_ns = monotonic_ns() - started;
+
+  uint32_t output_ptr = (uint32_t)(packed & UINT64_C(0xffffffff));
+  uint32_t output_size = (uint32_t)(packed >> 32);
+  memory = wasmtime_memory_data(g_context, &g_memory.of.memory);
+  memory_len = wasmtime_memory_data_size(g_context, &g_memory.of.memory);
+  if (output_ptr == 0 || output_size == 0 || output_ptr > memory_len || output_size > memory_len - output_ptr)
+    Rf_error("WASM output buffer is outside linear memory");
+
+  started = monotonic_ns();
+  char *output = (char *)R_alloc((size_t)output_size + 1, 1);
+  memcpy(output, memory + output_ptr, output_size);
+  output[output_size] = '\0';
+  if (timings != NULL) timings->output_copy_ns = monotonic_ns() - started;
+  if (output_len != NULL) *output_len = output_size;
+
+  args[0].kind = WASMTIME_I32; args[0].of.i32 = (int32_t)output_ptr;
+  args[1].kind = WASMTIME_I32; args[1].of.i32 = (int32_t)output_size;
+  started = monotonic_ns();
+  call_export(&g_free, args, 2, NULL, 0, "free WASM output");
+  if (timings != NULL) timings->output_free_ns = monotonic_ns() - started;
+  return output;
+}
+
 SEXP corrplot_wasm_validate(SEXP module_path_sexp, SEXP json_sexp) {
+  phase_timings_t timings = {0};
+  char *output = validate_json(CHAR(STRING_ELT(module_path_sexp, 0)),
+                               CHAR(STRING_ELT(json_sexp, 0)), &timings, NULL);
+  return Rf_mkString(output);
+}
+
+SEXP corrplot_wasm_validate_timed(SEXP module_path_sexp, SEXP json_sexp) {
+  phase_timings_t timings = {0};
+  char *output = validate_json(CHAR(STRING_ELT(module_path_sexp, 0)),
+                               CHAR(STRING_ELT(json_sexp, 0)), &timings, NULL);
+  const char *labels[] = {"response", "allocNs", "inputCopyNs", "guestExecutionNs",
+                          "inputFreeNs", "outputCopyNs", "outputFreeNs"};
+  double values[] = {(double)timings.alloc_ns, (double)timings.input_copy_ns,
+                     (double)timings.guest_execution_ns, (double)timings.input_free_ns,
+                     (double)timings.output_copy_ns, (double)timings.output_free_ns};
+  SEXP result = PROTECT(Rf_allocVector(VECSXP, 7));
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 7));
+  SET_VECTOR_ELT(result, 0, Rf_mkString(output));
+  for (int i = 0; i < 6; i++) {
+    SET_STRING_ELT(names, i + 1, Rf_mkChar(labels[i + 1]));
+    SET_VECTOR_ELT(result, i + 1, Rf_ScalarReal(values[i]));
+  }
+  SET_STRING_ELT(names, 0, Rf_mkChar(labels[0]));
+  Rf_setAttrib(result, R_NamesSymbol, names);
+  UNPROTECT(2);
+  return result;
+}
+
+static double peak_rss_bytes(void) {
+#if defined(_WIN32)
+  PROCESS_MEMORY_COUNTERS counters;
+  counters.cb = sizeof(counters);
+  if (!GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) return NA_REAL;
+  return (double)counters.PeakWorkingSetSize;
+#else
+  struct rusage usage;
+  if (getrusage(RUSAGE_SELF, &usage) != 0) return NA_REAL;
+#if defined(__APPLE__)
+  return (double)usage.ru_maxrss;
+#else
+  return (double)usage.ru_maxrss * 1024.0;
+#endif
+#endif
+}
+
+SEXP corrplot_wasm_peak_rss_bytes(void) {
+  return Rf_ScalarReal(peak_rss_bytes());
+}
+
+
   const char *module_path = CHAR(STRING_ELT(module_path_sexp, 0));
   const char *json = CHAR(STRING_ELT(json_sexp, 0));
   size_t json_len = strlen(json);
