@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "bindings/wasm/**"
+      - "packages/typescript/**"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
   push:
