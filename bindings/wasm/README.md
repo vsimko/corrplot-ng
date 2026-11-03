@@ -74,11 +74,11 @@ Applications can transfer the owned RGBA result to their own Canvas adapter,
 but device-pixel-ratio policy, resizing, and OffscreenCanvas lifecycle remain
 the responsibility of that adapter.
 
-The only automated real-browser smoke environment currently configured in CI
-is the preinstalled Google Chrome on Ubuntu 24.04. Node 24 and 26 both run the
-WASM tests and baseline measurements; the browser smoke currently runs on
-Node 26. This is a tested CI configuration, not a claim of a comprehensive
-browser compatibility matrix.
+The browser smoke suite now runs against Chromium, Firefox, and WebKit on
+Ubuntu 24.04 using Playwright. Node 24 and 26 both run the WASM tests and
+package checks; the browser matrix runs on Node 26. This is a focused engine
+compatibility check, not a claim of coverage across every browser version,
+operating system, or mobile device.
 
 ## Scope boundary
 
