@@ -39,6 +39,7 @@ const matrix = {
   values: [1, 0.5, 0.5, 1],
   kind: "correlation",
 };
+const cellMethods = ["circle", "square", "ellipse", "number", "shade", "color", "pie"];
 
 function unwrapSvg(result) {
   assert.equal(result.diagnostic ?? null, null);
@@ -98,20 +99,24 @@ test("Node and WASM render identical RGBA bytes for typed scenes", () => {
   assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels);
 });
 
-test("Node and WASM construct identical matrix SVG", () => {
-  const nativeSvg = native.renderMatrixSvg(sceneV1, "ellipse");
-  const wasmSvg = unwrapSvg(wasm.renderMatrixSvg(sceneV1, "ellipse"));
-  assert.equal(wasmSvg, nativeSvg);
+test("Node and WASM construct identical matrix SVG for every supported cell method", () => {
+  for (const method of cellMethods) {
+    const nativeSvg = native.renderMatrixSvg(sceneV1, method);
+    const wasmSvg = unwrapSvg(wasm.renderMatrixSvg(sceneV1, method));
+    assert.equal(wasmSvg, nativeSvg, `SVG output differs for ${method}`);
+  }
 });
 
-test("Node and WASM construct identical matrix RGBA bytes and metadata", () => {
-  const nativeOutput = native.renderMatrixRgba(sceneV1, "circle", rgbaOptions);
-  const wasmOutput = wasm.renderMatrixRgba(sceneV1, "circle", rgbaOptions);
-  assert.equal(wasmOutput.diagnostic ?? null, null);
-  for (const key of ["widthPx", "heightPx", "strideBytes", "pixelFormat", "alphaMode", "colorSpace", "dpi"]) {
-    assert.equal(wasmOutput[key], nativeOutput[key], key);
+test("Node and WASM construct identical matrix RGBA output for every supported cell method", () => {
+  for (const method of cellMethods) {
+    const nativeOutput = native.renderMatrixRgba(sceneV1, method, rgbaOptions);
+    const wasmOutput = wasm.renderMatrixRgba(sceneV1, method, rgbaOptions);
+    assert.equal(wasmOutput.diagnostic ?? null, null, `WASM RGBA failed for ${method}`);
+    for (const key of ["widthPx", "heightPx", "strideBytes", "pixelFormat", "alphaMode", "colorSpace", "dpi"]) {
+      assert.equal(wasmOutput[key], nativeOutput[key], `${method}: ${key}`);
+    }
+    assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels, `RGBA bytes differ for ${method}`);
   }
-  assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels);
 });
 
 test("Node and WASM expose the same renderer capabilities", () => {
@@ -122,6 +127,14 @@ test("Node and WASM return the same diagnostic for unsupported matrix methods", 
   const nativeDiagnostic = diagnosticFrom(() => native.renderMatrixSvg(sceneV1, "unknown"));
   const wasmDiagnostic = wasm.renderMatrixSvg(sceneV1, "unknown").diagnostic;
   assert.deepEqual(wasmDiagnostic, nativeDiagnostic);
+});
+
+test("Node and WASM return the same diagnostic for malformed scene-v1 JSON", () => {
+  const nativeDiagnostic = diagnosticFrom(() => native.renderMatrixSvg("{", "circle"));
+  const wasmDiagnostic = wasm.renderMatrixSvg("{", "circle").diagnostic;
+  assert.deepEqual(wasmDiagnostic, nativeDiagnostic);
+  assert.equal(wasmDiagnostic.code, "input.scene.invalid_json");
+  assert.equal(wasmDiagnostic.path, "$");
 });
 
 test("Node and WASM return the same diagnostic for invalid RGBA options", () => {
