@@ -35,6 +35,8 @@ def environment_key(environment: dict[str, Any]) -> dict[str, Any]:
         "machine": machine,
         "processor": environment.get("processor") or None,
         "cpu_count": environment.get("cpu_count"),
+        "runner_os": environment.get("runner_os"),
+        "runner_arch": environment.get("runner_arch"),
     }
 
 
@@ -126,7 +128,7 @@ def compare_runs(paths: list[Path]) -> dict[str, Any]:
         "schema_version": 1,
         "suite": SUPPORTED_SUITE,
         "comparison_policy": {
-            "environment": "same Python implementation and major/minor, OS family, machine, processor, and CPU count",
+            "environment": "same Python implementation and major/minor, OS family, machine, processor, CPU count, and GitHub runner OS/architecture",
             "workload": "same deterministic input SHA-256 and generator seed",
             "measurement": "same workload and measurement label; only passed correctness-gated results",
             "baseline": "first input file; positive change means slower median",
