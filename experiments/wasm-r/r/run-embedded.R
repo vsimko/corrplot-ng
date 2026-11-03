@@ -118,12 +118,13 @@ main <- function() {
   wasm_memory_after_init <- .Call("corrplot_wasm_memory_bytes")
 
   first_started <- proc.time()[["elapsed"]]
-  first_timed <- .Call("corrplot_wasm_validate_timed", wasm, request)
-  first_response_json <- first_timed$response
+  first_response_json <- invoke()
   first_call_ms <- (proc.time()[["elapsed"]] - first_started) * 1000
   rss_after_first_call <- process_rss_bytes()
   peak_rss_after_first_call <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_first_call <- .Call("corrplot_wasm_memory_bytes")
+  first_timed <- .Call("corrplot_wasm_validate_timed", wasm, request)
+  if (!identical(first_timed$response, first_response_json)) stop("timed and ordinary cold responses differ", call. = FALSE)
 
   script_arg <- grep("^--file=", commandArgs(), value = TRUE)
   source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
