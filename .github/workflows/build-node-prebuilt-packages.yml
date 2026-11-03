@@ -45,7 +45,7 @@ jobs:
           CORRPLOT_NODE_PLATFORM_PACKAGE: ${{ matrix.package }}
           CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/node-prebuilt
         run: npm run package:prebuilt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: corrplot-node-${{ matrix.package }}
           path: ${{ runner.temp }}/node-prebuilt/*.tgz

@@ -101,7 +101,7 @@ jobs:
       - name: Archive vendored sources
         working-directory: prototypes/rust-rextendr
         run: tar -cJf vendor.tar.xz vendor
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: rust-cran-dependency-audit
           path: |

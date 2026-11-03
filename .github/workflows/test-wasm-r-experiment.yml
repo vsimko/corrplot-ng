@@ -290,7 +290,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: corrplot-r-backend-benchmarks-${{ matrix.os }}
           path: ${{ runner.temp }}/corrplot-r-benchmarks/
