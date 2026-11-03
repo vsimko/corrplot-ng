@@ -1,0 +1,55 @@
+name: Test Node and browser-WASM backend parity
+
+on:
+  pull_request:
+    paths:
+      - "bindings/node/**"
+      - "bindings/cross-backend/**"
+      - "bindings/wasm/**"
+      - "crates/corrplot-core/**"
+      - "prototypes/shared-svg/scene-v1.example.json"
+      - ".github/workflows/test-node-wasm-parity.yml"
+  push:
+    branches: [main]
+    paths:
+      - "bindings/node/**"
+      - "bindings/wasm/**"
+      - "crates/corrplot-core/**"
+      - "prototypes/shared-svg/scene-v1.example.json"
+      - ".github/workflows/test-node-wasm-parity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-node-wasm-parity-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    name: Node ${{ matrix.node }} backend parity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [24]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.13.1 --locked
+      - name: Build native Node-API backend
+        working-directory: bindings/node
+        run: npm run build
+      - name: Build Node-compatible WASM backend
+        working-directory: bindings/wasm
+        run: wasm-pack build --target nodejs --release --out-dir pkg-node
+      - name: Compare Node and WASM semantics, SVG, and RGBA output
+        run: node --test bindings/cross-backend/test-node-wasm-parity.cjs
