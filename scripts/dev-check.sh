@@ -67,7 +67,7 @@ need_node() {
 check_python_dependencies() {
   need_python
   "$PYTHON_BIN" -c 'import jsonschema' >/dev/null 2>&1 ||
-    fail "Python package 'jsonschema' is required. Install it with: $PYTHON_BIN -m pip install jsonschema"
+    fail "Python test dependencies are missing. Install them with: $PYTHON_BIN -m pip install -r requirements-dev.txt"
 }
 
 quick_checks() {
