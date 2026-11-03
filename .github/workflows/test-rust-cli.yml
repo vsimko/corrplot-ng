@@ -72,7 +72,7 @@ jobs:
           mkdir -p "$prefix/bin" "$prefix/work"
           install -m 0755 tools/corrplot-ng/target/release/corrplot-ng "$prefix/bin/corrplot-ng"
           cd "$prefix/work"
-          printf ',alpha,beta\\nalpha,1,0.5\\nbeta,0.5,1\\n' > matrix.csv
+          printf ',alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n' > matrix.csv
           "$prefix/bin/corrplot-ng" version
           "$prefix/bin/corrplot-ng" presets
           "$prefix/bin/corrplot-ng" capabilities > capabilities.json
