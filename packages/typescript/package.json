@@ -1,0 +1,22 @@
+{
+  "name": "@corrplot-ng/typescript",
+  "version": "0.1.0",
+  "description": "Backend-neutral TypeScript API for corrplot-ng",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "browser": "./src/browser.js",
+      "node": "./src/node.js",
+      "default": "./src/browser.js"
+    }
+  },
+  "files": ["src", "README.md"],
+  "dependencies": {
+    "@corrplot-ng/native-node": "0.1.0",
+    "@corrplot-ng/browser-wasm": "0.1.0"
+  },
+  "engines": { "node": "^22 || ^24 || ^26" },
+  "license": "MIT"
+}
