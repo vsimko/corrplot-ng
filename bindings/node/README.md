@@ -46,10 +46,13 @@ platform package into a temporary project with lifecycle scripts disabled.
 
 The `.github/workflows/build-node-prebuilt-packages.yml` workflow builds
 platform-specific npm tarballs on native GitHub-hosted runners and uploads
-them as workflow artifacts. Publish the four platform packages first, then
-publish `@corrplot-ng/native-node` so its optional dependencies can resolve.
-Publishing requires the repository maintainer's npm registry credentials;
-the workflow builds and packages artifacts but does not publish them.
+them as workflow artifacts. This is a build/package workflow only: it does
+not publish to npm. Public publication is intentionally deferred to a later
+maintainer-approved release (#293). When that work is prioritized, publish
+the platform packages before `@corrplot-ng/native-node` so its optional
+dependencies can resolve. The broader non-publishing package/release
+preparation is tracked by #290 and documented in
+[`docs/npm-package-distribution.md`](../../docs/npm-package-distribution.md).
 
 ## Scope boundary
 
