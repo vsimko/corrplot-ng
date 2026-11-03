@@ -99,7 +99,7 @@ main <- function() {
     }
     if (.Platform$OS.type == "windows") {
       value <- suppressWarnings(system2("powershell", c("-NoProfile", "-Command",
-        "(Get-Process -Id $PID).WorkingSet64"), stdout = TRUE))
+        `(Get-Process -Id ${Sys.getpid()}).WorkingSet64`), stdout = TRUE))
       if (length(value) && is.finite(as.numeric(value[[1]]))) return(as.numeric(value[[1]]))
     }
     NA_real_
