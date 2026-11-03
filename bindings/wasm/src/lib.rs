@@ -776,6 +776,191 @@ pub fn render_matrix_rgba_wasm(
     }
 }
 
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CanvasColor {
+    red: u8,
+    green: u8,
+    blue: u8,
+    alpha: u8,
+}
+
+impl From<RgbaColor> for CanvasColor {
+    fn from(color: RgbaColor) -> Self {
+        Self { red: color.red, green: color.green, blue: color.blue, alpha: color.alpha }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(tag = "op", rename_all = "camelCase")]
+enum CanvasCommand {
+    FillRect { x: f64, y: f64, width: f64, height: f64, color: CanvasColor },
+    StrokeRect { x: f64, y: f64, width: f64, height: f64, line_width: f64, color: CanvasColor },
+    Circle { cx: f64, cy: f64, radius: f64, color: CanvasColor },
+    Square { cx: f64, cy: f64, side: f64, color: CanvasColor },
+    Ellipse { cx: f64, cy: f64, rx: f64, ry: f64, rotation_degrees: f64, color: CanvasColor },
+    Pie { cx: f64, cy: f64, radius: f64, start_radians: f64, end_radians: f64, color: CanvasColor },
+    Line { x1: f64, y1: f64, x2: f64, y2: f64, line_width: f64, color: CanvasColor },
+    Text {
+        text: String,
+        x: f64,
+        y: f64,
+        font_size: f64,
+        color: CanvasColor,
+        anchor: String,
+        rotation_degrees: f64,
+        font_family: String,
+        font_weight: String,
+        font_style: String,
+    },
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CanvasSceneCommands {
+    width: f64,
+    height: f64,
+    description: String,
+    commands: Vec<CanvasCommand>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CanvasCommandsResult {
+    scene: Option<CanvasSceneCommands>,
+    diagnostic: Option<DiagnosticV1>,
+}
+
+fn canvas_text(
+    text: String,
+    x: f64,
+    y: f64,
+    font_size: f64,
+    color: RgbaColor,
+    anchor: TextAnchor,
+    rotation_degrees: f64,
+    font_family: String,
+    font_weight: String,
+    font_style: String,
+) -> CanvasCommand {
+    CanvasCommand::Text {
+        text,
+        x,
+        y,
+        font_size,
+        color: color.into(),
+        anchor: match anchor {
+            TextAnchor::Start => "start",
+            TextAnchor::Middle => "middle",
+            TextAnchor::End => "end",
+        }.to_string(),
+        rotation_degrees,
+        font_family,
+        font_weight,
+        font_style,
+    }
+}
+
+fn scene_canvas_commands(scene: &Scene) -> CanvasSceneCommands {
+    let mut commands = Vec::new();
+    for cell in &scene.cells {
+        if !cell.visible { continue; }
+        let x = cell.x;
+        let y = cell.y;
+        let size = cell.size;
+        let cx = x + size / 2.0;
+        let cy = y + size / 2.0;
+        commands.push(CanvasCommand::FillRect {
+            x, y, width: size, height: size, color: cell.fill.into(),
+        });
+        commands.push(CanvasCommand::StrokeRect {
+            x, y, width: size, height: size, line_width: 1.0, color: cell.stroke.into(),
+        });
+        match &cell.glyph {
+            Some(CellGlyph::Circle { radius, color }) => commands.push(CanvasCommand::Circle {
+                cx, cy, radius: *radius, color: (*color).into(),
+            }),
+            Some(CellGlyph::Square { side, color }) => commands.push(CanvasCommand::Square {
+                cx, cy, side: *side, color: (*color).into(),
+            }),
+            Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => commands.push(CanvasCommand::Ellipse {
+                cx, cy, rx: *rx, ry: *ry, rotation_degrees: *rotation_degrees, color: (*color).into(),
+            }),
+            Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => commands.push(CanvasCommand::Pie {
+                cx, cy, radius: *radius, start_radians: *start_radians, end_radians: *end_radians, color: (*color).into(),
+            }),
+            Some(CellGlyph::Number { text, font_size, color }) => commands.push(canvas_text(
+                text.clone(), cx, cy - font_size / 2.0, *font_size, *color, TextAnchor::Middle,
+                0.0, "sans-serif".into(), "normal".into(), "normal".into(),
+            )),
+            Some(CellGlyph::Shade { color }) => commands.push(CanvasCommand::Line {
+                x1: x, y1: y + size, x2: x + size, y2: y, line_width: 1.0, color: (*color).into(),
+            }),
+            Some(CellGlyph::Color) | None => {}
+        }
+    }
+
+    for region in &scene.cluster_regions {
+        commands.push(CanvasCommand::StrokeRect {
+            x: region.x, y: region.y, width: region.width, height: region.height,
+            line_width: region.line_width, color: region.color.into(),
+        });
+    }
+
+    let black = RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 };
+    let mut legend_x = 8.0;
+    let legend_y = scene.height - 13.0;
+    for entry in &scene.legend {
+        commands.push(CanvasCommand::FillRect {
+            x: legend_x, y: legend_y + 1.0, width: 7.0, height: 7.0, color: entry.color.into(),
+        });
+        commands.push(canvas_text(
+            entry.label.clone(), legend_x + 11.0, legend_y, 8.0, black, TextAnchor::Start,
+            0.0, "sans-serif".into(), "normal".into(), "normal".into(),
+        ));
+        legend_x += 18.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
+    }
+
+    for text in &scene.texts {
+        commands.push(canvas_text(
+            text.text.clone(), text.x, text.y, text.font_size, text.color, text.anchor,
+            text.rotation_degrees,
+            if text.font_family.is_empty() { "sans-serif".into() } else { text.font_family.clone() },
+            text.font_weight.clone(),
+            text.font_style.clone(),
+        ));
+    }
+
+    CanvasSceneCommands {
+        width: scene.width,
+        height: scene.height,
+        description: scene.description.clone(),
+        commands,
+    }
+}
+
+/// Return renderer-neutral Canvas 2D drawing commands from the shared Rust scene.
+/// Canvas and DOM objects remain owned by the browser adapter.
+#[wasm_bindgen(js_name = "renderMatrixCanvasCommands")]
+pub fn render_matrix_canvas_commands_wasm(scene_v1_json: String, method: String) -> Result<JsValue, JsValue> {
+    let method = match cell_method(&method) {
+        Ok(method) => method,
+        Err(error) => return to_js(&CanvasCommandsResult { scene: None, diagnostic: Some(error) }),
+    };
+    let scene = match scene_v1_to_scene(&scene_v1_json, method) {
+        Ok(scene) => scene,
+        Err(error) => return to_js(&CanvasCommandsResult {
+            scene: None,
+            diagnostic: Some(scene_build_diagnostic(error)),
+        }),
+    };
+    to_js(&CanvasCommandsResult {
+        scene: Some(scene_canvas_commands(&scene)),
+        diagnostic: None,
+    })
+}
+
 #[cfg(test)]
 mod matrix_rgba_tests {
     use super::*;
