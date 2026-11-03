@@ -60,8 +60,23 @@ export interface SceneTextInput {
 export interface SceneInput {
   width: number;
   height: number;
+  description?: string;
   cells: SceneCellInput[];
   texts: SceneTextInput[];
+}
+
+export interface SceneBuildOptionsInput {
+  cellMethod?: "circle" | "square" | "ellipse" | "number" | "shade" | "color" | "pie";
+  title?: string;
+  description?: string;
+  annotation?: string;
+  displayType?: "full" | "upper" | "lower" | "diagonal";
+  showDiagonal?: boolean;
+}
+
+export interface SceneResult {
+  scene?: SceneInput;
+  diagnostic?: DiagnosticV1;
 }
 
 export interface SvgOptionsInput {
@@ -97,6 +112,7 @@ export class CorrplotError extends Error {
 }
 
 export function validateMatrix(input: MatrixInput): true;
+export function createScene(input: MatrixInput, options?: SceneBuildOptionsInput): SceneResult;
 export function renderSceneSvg(scene: SceneInput, options: SvgOptionsInput): string;
 export function renderSceneRgba(scene: SceneInput, options: RgbaOptionsInput): RgbaOutput;
 export function renderMatrixSvg(sceneV1Json: string, method?: "circle" | "square" | "ellipse" | "number" | "shade" | "color" | "pie"): string;
