@@ -65,6 +65,7 @@ function validateMatrix(input) {
 function renderSceneSvg(scene, options) { return unwrap(native.renderSceneSvg(scene, options), "svg"); }
 function renderSceneRgba(scene, options) { return unwrap(native.renderSceneRgba(scene, options)); }
 function renderMatrixSvg(sceneV1Json, method = "circle") { return unwrap(native.renderMatrixSvg(sceneV1Json, method), "svg"); }
+function renderMatrixRgba(sceneV1Json, method = "circle", options) { return unwrap(native.renderMatrixRgba(sceneV1Json, method, options)); }
 function getRendererCapabilities() { return JSON.parse(native.getRendererCapabilities()); }
 
-module.exports = { CorrplotError, validateMatrix, renderSceneSvg, renderSceneRgba, renderMatrixSvg, getRendererCapabilities };
+module.exports = { CorrplotError, validateMatrix, renderSceneSvg, renderSceneRgba, renderMatrixSvg, renderMatrixRgba, getRendererCapabilities };
