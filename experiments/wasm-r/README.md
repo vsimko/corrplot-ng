@@ -190,3 +190,54 @@ remain explicit follow-up measurements.
 ## Benchmark results
 
 The initial R backend measurements (Linux x86-64 and macOS Intel) are recorded in [results/benchmark-2026-11-01.md](results/benchmark-2026-11-01.md), with machine-readable values in [results/benchmark-2026-11-01.csv](results/benchmark-2026-11-01.csv). They are exploratory warm-throughput measurements; cold-start, RSS and Windows remain open.
+
+
+## Provisional decision record — 2026-11-03
+
+**Recommendation: (B) native Rust integration for R, with WebAssembly retained for
+Node.js/browser consumers.** This is a distribution and runtime recommendation
+for the tested validation boundary, not approval to migrate the production R
+package.
+
+### Evidence
+
+- The same host-neutral `.wasm` module bytes were invoked from Node and R via
+  both process-based WASI and embedded Wasmtime. The embedded module hash and
+  semantic responses matched across Ubuntu, Intel macOS, and Windows.
+- The embedded module is approximately 144 KiB, but the R host runtime is much
+  larger: the measured Wasmtime shared library ranged from 65.5 MiB to
+  102.7 MiB, while the installed V8 package ranged from 34.5 MiB to 47.5 MiB.
+- In the single recorded CI run, the native Rust R binding was fastest for all
+  six fixtures on all three platforms. On the 512×512 fixture it took about
+  5.78 ms/call on Linux, 13.65 ms/call on Intel macOS, and 5.89 ms/call on
+  Windows; the Wasmtime and V8 paths were slower in that run.
+- The process-based WASI route proves portability and semantic parity, but its
+  process startup and JSON/stdin boundary make it a feasibility baseline, not
+  a suitable high-throughput matrix API.
+
+### Why not (A) WASM-only for R
+
+A portable module does not remove the host runtime requirement. Embedding
+Wasmtime or V8 adds a large platform-specific native dependency, and the
+measured warm validation path did not outperform the native Rust binding.
+CRAN suitability and the complete end-user installation footprint have not
+been established.
+
+### Remaining gates before any production decision
+
+The current measurements are insufficient for a release decision:
+
+1. Measure cold process startup and first-call initialization separately from
+   warm repeated-call throughput.
+2. Record peak process RSS and Wasmtime linear-memory high-water marks on each
+   supported platform.
+3. Instrument input copy, guest execution, and output copy separately rather
+   than reporting only end-to-end JSON-call time.
+4. Repeat the measurements across independent CI runs and verify the complete
+   installed dependency closure and CRAN implications.
+5. Record a final tested/untested platform matrix and the exact R/runtime
+   versions used.
+
+Until those gates are met, keep this as an isolated experiment. Do not replace
+the production R backend, claim CRAN compatibility, or make the WASM experiment
+a blocker for native Node/browser engineering.
