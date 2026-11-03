@@ -1,0 +1,122 @@
+name: Stage npm package tarballs (no publishing)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage-npm-packages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  native-platforms:
+    name: Build native package (${{ matrix.package }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: linux-x64-gnu
+            os: ubuntu-latest
+          - package: darwin-x64
+            os: macos-15-intel
+          - package: darwin-arm64
+            os: macos-15
+          - package: win32-x64-msvc
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: bindings/node -> target
+          shared-key: npm-native-addon
+      - name: Build native addon
+        working-directory: bindings/node
+        run: npm run build
+      - name: Package platform-specific binary
+        working-directory: bindings/node
+        env:
+          CORRPLOT_NODE_PLATFORM_PACKAGE: ${{ matrix.package }}
+          CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/npm-stage
+        run: npm run package:prebuilt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-native-${{ matrix.package }}
+          path: ${{ runner.temp }}/npm-stage/*.tgz
+          if-no-files-found: error
+          retention-days: 30
+
+  browser-and-facade:
+    name: Build browser and facade packages
+    runs-on: ubuntu-24.04
+    needs: native-platforms
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.13.1 --locked
+      - name: Install workspace dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Build browser WASM package
+        working-directory: bindings/wasm
+        run: npm run build
+      - name: Stage WASM tarball
+        working-directory: bindings/wasm
+        run: npm pack --pack-destination ${{ runner.temp }}
+      - name: Stage Node package after platform binaries
+        working-directory: bindings/node
+        run: npm pack --pack-destination ${{ runner.temp }}
+      - name: Stage TypeScript facade
+        working-directory: packages/typescript
+        run: npm pack --pack-destination ${{ runner.temp }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-runtime-packages
+          path: ${{ runner.temp }}/*.tgz
+          if-no-files-found: error
+          retention-days: 30
+
+  assemble:
+    name: Assemble ordered non-publishing release bundle
+    runs-on: ubuntu-24.04
+    needs: [native-platforms, browser-and-facade]
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: npm-*
+          path: dist
+          merge-multiple: true
+      - name: Verify staged package set and record checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find dist -maxdepth 1 -name '*.tgz' | wc -l)" -eq 7
+          cd dist
+          sha256sum *.tgz | sort -k2 > SHA256SUMS
+          cat > RELEASE-ORDER.txt <<'EOF'
+          Non-publishing staging order:
+          1. @corrplot-ng/native-node platform packages (four platform tarballs)
+          2. @corrplot-ng/wasm
+          3. @corrplot-ng/native-node
+          4. @corrplot-ng/typescript
+
+          This bundle is a CI artifact only. It is not published to npm.
+          EOF
+          sha256sum -c SHA256SUMS
+      - uses: actions/upload-artifact@v7
+        with:
+          name: corrplot-ng-npm-staging-bundle
+          path: dist/
+          if-no-files-found: error
+          retention-days: 90
