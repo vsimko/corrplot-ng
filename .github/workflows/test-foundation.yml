@@ -55,7 +55,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install scene schema validator
@@ -113,7 +113,7 @@ jobs:
       - name: Verify legacy semantic oracle and export scene input
         run: Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Verify legacy-to-scene bridge
