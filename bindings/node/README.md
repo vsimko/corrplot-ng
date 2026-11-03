@@ -13,6 +13,9 @@ diagnostics, and rendering semantics remain in Rust.
   color-space, and optional DPI metadata.
 - `renderMatrixSvg(sceneV1Json, method)` parses scene-v1 JSON, constructs the
   normalized matrix scene, and renders SVG through the shared Rust core.
+- `renderMatrixRgba(sceneV1Json, method, options)` uses the same shared
+  matrix-to-scene builder and raster renderer, returning an owned Node Buffer
+  with the standard RGBA metadata.
 - `getRendererCapabilities()` returns the core's capability-v1 declaration.
 
 Errors are exposed as `CorrplotError` instances with a diagnostic-v1 record.
