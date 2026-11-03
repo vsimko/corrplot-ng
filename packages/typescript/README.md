@@ -9,7 +9,7 @@ Install the facade together with only the backend required by the target runtime
 npm install @corrplot-ng/typescript @corrplot-ng/native-node
 
 # Browser
-npm install @corrplot-ng/typescript @corrplot-ng/browser-wasm
+npm install @corrplot-ng/typescript @corrplot-ng/wasm
 ```
 
 The backend packages are optional peer dependencies, not ordinary dependencies. npm therefore does not install both backends when the facade is installed. A Node.js application does not need the browser WASM package, and a browser application does not need native Node binaries. The runtime-specific export loads only its matching backend.
