@@ -74,3 +74,33 @@ Regular measurements use warmups and repeated samples with calibrated batches fo
 Every workload runs semantic checks before timing. Checks cover dimensions, cell ordering, values and null preservation, label order, generated-matrix symmetry, and deterministic scene/SVG serialization. A failed gate marks that workload as not comparable and prevents a performance claim.
 
 The shared-core runner reports first-call latency, steady-state median and IQR, SVG byte count, scene element count, and peak traced Python allocation as a documented memory proxy (not process RSS). Cross-language results record raw timing samples and environment metadata. Do not compare core-only and end-to-end measurements as if they were the same operation, and do not infer memory usage from output size.
+
+
+## Comparing repeated shared-core runs
+
+The shared-core result schema includes a SHA-256 fingerprint for each workload,
+the source commit and measurement timestamp, and the CI runner OS/architecture.
+To compare two or more runs from the same compatible environment, place the
+baseline first:
+
+```sh
+python benchmarks/compare_runs.py \
+  benchmark-results/baseline.json \
+  benchmark-results/latest.json \
+  --output benchmark-results/trend.json
+```
+
+The comparator rejects different generator seeds or incompatible Python,
+operating-system, architecture, processor, CPU-count, or runner metadata. It
+compares only correctness-passed results with the same workload fingerprint
+and measurement label. The JSON report retains every raw timing sample and
+reports median, IQR, minimum, maximum, and percentage change from the first
+input file. Positive change means the median became slower. Incompatible or
+missing workload groups are omitted rather than compared. This first
+implementation covers the shared-core suite only; cross-language suites and
+WASM host measurements remain separate because their schemas and operation
+boundaries are not interchangeable.
+
+The report is descriptive: it does not fail CI or declare a regression
+threshold. Establish thresholds only after enough compatible repeated runs
+have characterized normal runner noise.
