@@ -1,0 +1,16 @@
+{
+  "name": "@corrplot-ng/native-node-win32-x64-msvc",
+  "version": "0.1.0",
+  "description": "Prebuilt Node-API binary for win32-x64-msvc",
+  "main": "index.node",
+  "files": [
+    "index.node"
+  ],
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "license": "MIT"
+}

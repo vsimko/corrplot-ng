@@ -1,0 +1,50 @@
+name: Build Node prebuilt packages
+
+on:
+  pull_request:
+    paths:
+      - "bindings/node/**"
+      - "crates/corrplot-core/**"
+      - ".github/workflows/build-node-prebuilt-packages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: ${{ matrix.package }} prebuilt
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: linux-x64-gnu
+            os: ubuntu-latest
+          - package: darwin-x64
+            os: macos-15-intel
+          - package: darwin-arm64
+            os: macos-15
+          - package: win32-x64-msvc
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build native Node-API addon
+        working-directory: bindings/node
+        run: npm run build
+      - name: Package platform-specific npm binary
+        working-directory: bindings/node
+        env:
+          CORRPLOT_NODE_PLATFORM_PACKAGE: ${{ matrix.package }}
+          CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/node-prebuilt
+        run: npm run package:prebuilt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: corrplot-node-${{ matrix.package }}
+          path: ${{ runner.temp }}/node-prebuilt/*.tgz
+          if-no-files-found: error
+          retention-days: 30
