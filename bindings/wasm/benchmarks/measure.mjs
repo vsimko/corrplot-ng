@@ -4,6 +4,8 @@ import { brotliCompressSync, gzipSync } from "node:zlib";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import init, {
+  renderMatrixRgba,
+  renderMatrixSvg,
   renderSceneRgba,
   renderSceneSvg,
   validateMatrix,
@@ -35,6 +37,16 @@ const scene = {
     glyph: { kind: "circle", radius: 3, color: black },
   }],
   texts: [],
+};
+const sceneV1Json = readFileSync(
+  fileURLToPath(new URL("../../../prototypes/shared-svg/scene-v1.example.json", import.meta.url)),
+  "utf8",
+);
+const matrixRgbaOptions = {
+  widthPx: 380,
+  heightPx: 392,
+  dpi: 96,
+  background: white,
 };
 const svgOptions = {
   width: 256,
@@ -87,6 +99,13 @@ const rgba = renderSceneRgba(scene, rgbaOptions);
 assert.ok(rgba.diagnostic == null);
 assert.ok(rgba.pixels instanceof Uint8Array);
 assert.equal(rgba.pixels.byteLength, rgba.strideBytes * rgba.heightPx);
+const matrixSvg = renderMatrixSvg(sceneV1Json, "circle");
+assert.ok(matrixSvg.svg?.startsWith("<svg "));
+assert.ok(matrixSvg.diagnostic == null);
+const matrixRgba = renderMatrixRgba(sceneV1Json, "circle", matrixRgbaOptions);
+assert.ok(matrixRgba.diagnostic == null);
+assert.ok(matrixRgba.pixels instanceof Uint8Array);
+assert.equal(matrixRgba.pixels.byteLength, matrixRgba.strideBytes * matrixRgba.heightPx);
 
 const results = {
   runtime: process.version,
@@ -106,6 +125,8 @@ const results = {
     validateMatrix: measure(() => validateMatrix(matrix), 500, 25),
     renderSceneSvg256: measure(() => renderSceneSvg(scene, svgOptions), 100, 10),
     renderSceneRgba256: measure(() => renderSceneRgba(scene, rgbaOptions), 40, 5),
+    renderMatrixSvg380: measure(() => renderMatrixSvg(sceneV1Json, "circle"), 100, 10),
+    renderMatrixRgba380: measure(() => renderMatrixRgba(sceneV1Json, "circle", matrixRgbaOptions), 40, 5),
   },
   rgbaOutput: {
     widthPx: rgba.widthPx,
