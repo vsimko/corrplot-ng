@@ -103,7 +103,7 @@ jobs:
           set -euo pipefail
           test "$(find dist -maxdepth 1 -name '*.tgz' | wc -l)" -eq 7
           cd dist
-          sha256sum *.tgz | sort -k2 > SHA256SUMS
+          sha256sum -- ./*.tgz | sort -k2 > SHA256SUMS
           cat > RELEASE-ORDER.txt <<'EOF'
           Non-publishing staging order:
           1. @corrplot-ng/native-node platform packages (four platform tarballs)
