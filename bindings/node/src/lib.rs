@@ -345,35 +345,25 @@ pub fn get_renderer_capabilities_native() -> String {
     RENDERER_CAPABILITIES_V1.to_string()
 }
 
-#[napi(js_name = "renderSceneRgba")]
-pub fn render_scene_rgba_native(input: SceneInput, options: RgbaOptionsInput) -> RgbaResult {
-    let scene = match scene(input) {
-        Ok(scene) => scene,
-        Err(diagnostic) => return RgbaResult {
-            width_px: None,
-            height_px: None,
-            stride_bytes: None,
-            pixel_format: None,
-            alpha_mode: None,
-            color_space: None,
-            dpi: None,
-            pixels: None,
-            diagnostic: Some(diagnostic),
-        },
-    };
+
+fn rgba_error(diagnostic: DiagnosticV1) -> RgbaResult {
+    RgbaResult {
+        width_px: None,
+        height_px: None,
+        stride_bytes: None,
+        pixel_format: None,
+        alpha_mode: None,
+        color_space: None,
+        dpi: None,
+        pixels: None,
+        diagnostic: Some(diagnostic),
+    }
+}
+
+fn render_rgba_scene(scene: &Scene, options: RgbaOptionsInput) -> RgbaResult {
     let background = match rgba(options.background, "output.background") {
         Ok(background) => background,
-        Err(diagnostic) => return RgbaResult {
-            width_px: None,
-            height_px: None,
-            stride_bytes: None,
-            pixel_format: None,
-            alpha_mode: None,
-            color_space: None,
-            dpi: None,
-            pixels: None,
-            diagnostic: Some(diagnostic),
-        },
+        Err(diagnostic) => return rgba_error(diagnostic),
     };
     let raster = RasterOptions {
         width_px: options.width_px,
@@ -382,26 +372,16 @@ pub fn render_scene_rgba_native(input: SceneInput, options: RgbaOptionsInput) ->
         background,
     };
 
-    match RgbaRenderer.render(&scene, &OutputOptions::Rgba(raster)) {
+    match RgbaRenderer.render(scene, &OutputOptions::Rgba(raster)) {
         Ok(RenderOutput::Rgba(buffer)) => {
             let stride_bytes = match u32::try_from(buffer.stride_bytes) {
                 Ok(stride) => stride,
-                Err(_) => return RgbaResult {
-                    width_px: None,
-                    height_px: None,
-                    stride_bytes: None,
-                    pixel_format: None,
-                    alpha_mode: None,
-                    color_space: None,
-                    dpi: None,
-                    pixels: None,
-                    diagnostic: Some(diagnostic(
-                        "renderer.output.invalid_buffer",
-                        "export",
-                        "RGBA stride cannot be represented by the Node.js binding",
-                        Some("output.stride_bytes"),
-                    )),
-                },
+                Err(_) => return rgba_error(diagnostic(
+                    "renderer.output.invalid_buffer",
+                    "export",
+                    "RGBA stride cannot be represented by the Node.js binding",
+                    Some("output.stride_bytes"),
+                )),
             };
             RgbaResult {
                 width_px: Some(buffer.width_px),
@@ -417,36 +397,24 @@ pub fn render_scene_rgba_native(input: SceneInput, options: RgbaOptionsInput) ->
                 diagnostic: None,
             }
         }
-        Ok(_) => RgbaResult {
-            width_px: None,
-            height_px: None,
-            stride_bytes: None,
-            pixel_format: None,
-            alpha_mode: None,
-            color_space: None,
-            dpi: None,
-            pixels: None,
-            diagnostic: Some(diagnostic(
-                "renderer.output.format_mismatch",
-                "export",
-                "RGBA renderer returned a non-RGBA output",
-                Some("output"),
-            )),
-        },
-        Err(error) => RgbaResult {
-            width_px: None,
-            height_px: None,
-            stride_bytes: None,
-            pixel_format: None,
-            alpha_mode: None,
-            color_space: None,
-            dpi: None,
-            pixels: None,
-            diagnostic: Some(diagnostic(error.code, "renderer", error.message, Some("output"))),
-        },
+        Ok(_) => rgba_error(diagnostic(
+            "renderer.output.format_mismatch",
+            "export",
+            "RGBA renderer returned a non-RGBA output",
+            Some("output"),
+        )),
+        Err(error) => rgba_error(diagnostic(error.code, "renderer", error.message, Some("output"))),
     }
 }
 
+#[napi(js_name = "renderSceneRgba")]
+pub fn render_scene_rgba_native(input: SceneInput, options: RgbaOptionsInput) -> RgbaResult {
+    let scene = match scene(input) {
+        Ok(scene) => scene,
+        Err(diagnostic) => return rgba_error(diagnostic),
+    };
+    render_rgba_scene(&scene, options)
+}
 
 fn scene_build_diagnostic(error: corrplot_core::scene::SceneBuildError) -> DiagnosticV1 {
     DiagnosticV1 {
@@ -503,3 +471,22 @@ pub fn render_matrix_svg_native(scene_v1_json: String, method: String) -> SvgRes
         },
     }
 }
+
+/// End-to-end matrix construction through the shared Rust core and RGBA renderer.
+#[napi(js_name = "renderMatrixRgba")]
+pub fn render_matrix_rgba_native(
+    scene_v1_json: String,
+    method: String,
+    options: RgbaOptionsInput,
+) -> RgbaResult {
+    let method = match cell_method(&method) {
+        Ok(method) => method,
+        Err(error) => return rgba_error(error),
+    };
+    let scene = match scene_v1_to_scene(&scene_v1_json, method) {
+        Ok(scene) => scene,
+        Err(error) => return rgba_error(scene_build_diagnostic(error)),
+    };
+    render_rgba_scene(&scene, options)
+}
+
