@@ -40,10 +40,11 @@ npm run build
 The npm package `@corrplot-ng/browser-wasm` exports the generated browser ESM entry point from `pkg/`; run `npm pack --dry-run` to inspect the publishable package contents. The browser build is ESM and initializes asynchronously. Serve this directory
 over HTTP (not `file://`) and open
 [`examples/browser/index.html`](examples/browser/index.html) to run the
-browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output, verifies positive,
-negative, and missing-cell colors in both the returned pixel buffer and a real
-browser Canvas, and confirms that a later WASM call does not mutate the
-previously returned JavaScript-owned pixel buffer.
+browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output,
+exercises all seven supported cell methods, verifies positive, negative, and
+missing-cell colors in both the returned pixel buffer and a real browser
+Canvas, checks malformed scene-v1 diagnostics, and confirms that a later WASM
+call does not mutate the previously returned JavaScript-owned pixel buffer.
 
 After building, run `node benchmarks/measure.mjs` from this directory to
 report the raw/gzip/Brotli WASM module size, cold initialization time, available
@@ -74,7 +75,7 @@ Applications can transfer the owned RGBA result to their own Canvas adapter,
 but device-pixel-ratio policy, resizing, and OffscreenCanvas lifecycle remain
 the responsibility of that adapter.
 
-The browser smoke suite now runs against Chromium, Firefox, and WebKit on
+The browser smoke suite runs against Chromium, Firefox, and WebKit on
 Ubuntu 24.04 using Playwright. Node 24 and 26 both run the WASM tests and
 package checks; the browser matrix runs on Node 26. This is a focused engine
 compatibility check, not a claim of coverage across every browser version,
@@ -82,6 +83,10 @@ operating system, or mobile device.
 
 ## Scope boundary
 
-The Rust core now also provides an initial scene-v1 matrix parser and deterministic matrix-to-scene builder. The Node and WASM bindings expose the same end-to-end matrix-to-SVG operation. The parser intentionally validates only the matrix-bearing subset; full scene-v1 presentation semantics are not yet implemented. Full scene-v1 construction, automated browser conformance/visual
-tests, performance budgets, package publishing, and the unified TypeScript
-facade remain follow-up work in #142 and #145.
+The Rust core provides an initial scene-v1 matrix parser and deterministic
+matrix-to-scene builder. The Node and WASM bindings expose the same end-to-end
+matrix-to-SVG and matrix-to-RGBA operations. The parser intentionally validates
+only the matrix-bearing subset; full scene-v1 presentation semantics are not
+yet implemented. Broader cross-backend and browser conformance, performance
+budgets, package publishing, and the unified TypeScript facade remain follow-up
+work in #142 and #145.
