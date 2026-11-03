@@ -10,6 +10,7 @@ const {
   renderMatrixSvg,
   renderMatrixRgba,
   validateMatrix,
+  createScene,
 } = require("../index.js");
 
 const black = { red: 0, green: 0, blue: 0, alpha: 255 };
@@ -37,6 +38,51 @@ test("validates normalized correlation matrices in the shared Rust core", () => 
     values: [1, 0.5, 0.5, 1],
     kind: "correlation",
   }), true);
+});
+
+test("constructs a renderer-neutral scene from normalized matrix input", () => {
+  const result = createScene({
+    labels: ["alpha", "beta"],
+    rows: 2,
+    columns: 2,
+    values: [1, -0.5, -0.5, 1],
+    kind: "correlation",
+  }, {
+    cellMethod: "ellipse",
+    title: "Normalized matrix",
+    description: "Created by the shared scene builder.",
+    annotation: "fixture",
+  });
+
+  assert.equal(result.diagnostic, null);
+  assert.ok(result.scene);
+  assert.equal(result.scene.description, "Created by the shared scene builder.");
+  assert.equal(result.scene.cells.length, 4);
+  assert.ok(result.scene.texts.some((text) => text.text === "Normalized matrix"));
+
+  const svg = renderSceneSvg(result.scene, {
+    width: result.scene.width,
+    height: result.scene.height,
+    unit: "px",
+    fontFamily: "sans-serif",
+    fontSizePt: 10,
+    background: white,
+  });
+  assert.match(svg, /^<svg /);
+  assert.match(svg, /<ellipse /);
+});
+
+test("maps invalid normalized matrix scene construction to diagnostic-v1", () => {
+  const result = createScene({
+    labels: ["alpha", "beta"],
+    rows: 2,
+    columns: 1,
+    values: [1, 0.5],
+    kind: "correlation",
+  });
+  assert.equal(result.scene, null);
+  assert.equal(result.diagnostic.code, "input.matrix.invalid_shape");
+  assert.equal(result.diagnostic.stage, "input");
 });
 
 test("maps shared matrix errors to diagnostic-v1", () => {
