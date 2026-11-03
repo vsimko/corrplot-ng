@@ -175,6 +175,29 @@ cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo
 The CLI is a standalone application. Its implementation does not make Rust
 the selected production shared-core language; ADR 0001 defers that decision.
 
+### Local command entry point
+
+Use `bash scripts/dev-check.sh` from the repository root to run the same
+component checks locally without copying long CI command sequences:
+
+- `quick`: fixture integrity, capability-schema validation, normalized
+  matrix, shared SVG, publication-config, publication-SVG, and SVG artifact
+  checks used by the foundation workflow.
+- `test-r` and `test-r-legacy`: R package checks and the pinned legacy
+  semantic-oracle bridge.
+- `test-rust-cli`, `test-node`, and `test-wasm`: focused native CLI,
+  Node-API, and browser-WASM checks.
+- `test-all`: combines the locally supported correctness suites.
+- `build-cli` and `build-node`: release CLI and native Node addon builds.
+- `benchmarks` and `benchmarks-stress`: explicit regular and stress
+  measurement commands; neither is part of the quick or full correctness path.
+
+The script checks for required tools and reports actionable installation
+hints when a prerequisite is missing. It uses Bash and is supported on Linux,
+macOS, WSL, and Git Bash; native PowerShell is not supported. The separate
+WASM/R experiment needs its pinned Wasmtime C API and is not folded into
+`test-all`.
+
 ### 6. CI execution policy
 
 Routine pull-request CI is correctness-focused and path-filtered where
