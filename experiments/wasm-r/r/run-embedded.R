@@ -30,6 +30,10 @@ main <- function() {
 
   script_arg <- grep("^--file=", commandArgs(), value = TRUE)
   script_path <- sub("^--file=", "", script_arg[[1]])
+  source(file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "benchmark-utils.R"))
+  rss_before_host_setup <- process_rss_bytes()
+  host_setup_started <- proc.time()[["elapsed"]]
+
   source_file <- file.path(dirname(normalizePath(script_path, mustWork = TRUE)), "wasmtime-host.c")
   # Keep the temporary extension in the repository working directory on Windows.
   # R CMD SHLIB / MinGW mishandles drive-letter absolute output paths (it drops
@@ -83,15 +87,19 @@ main <- function() {
     wasmtime_handle <- dyn.load(wasmtime_library)
   }
   dyn.load(shared)
+  host_setup_ms <- (proc.time()[["elapsed"]] - host_setup_started) * 1000
+  rss_after_host_setup <- process_rss_bytes()
   on.exit(.Call("corrplot_wasm_shutdown"), add = TRUE)
 
   fixture_raw <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
   request <- rawToChar(fixture_raw)
   invoke <- function() .Call("corrplot_wasm_validate", wasm, request)
-  script_arg <- grep("^--file=", commandArgs(), value = TRUE)
-  source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
-  metrics <- benchmark_repeated(invoke)
+  first_call_started <- proc.time()[["elapsed"]]
   response_json <- invoke()
+  first_call_ms <- (proc.time()[["elapsed"]] - first_call_started) * 1000
+  rss_after_first_call <- process_rss_bytes()
+  metrics <- benchmark_repeated(invoke)
+  rss_after_benchmark <- process_rss_bytes()
   response <- jsonlite::fromJSON(response_json, simplifyVector = FALSE)
 
   result <- list(
@@ -99,6 +107,18 @@ main <- function() {
     wasmtime = "C API (embedded)",
     wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
     fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
+    coldStart = list(
+      hostCompileAndLoadMs = host_setup_ms,
+      firstCallMs = first_call_ms
+    ),
+    memory = list(
+      processRssBytesBeforeHostSetup = rss_before_host_setup,
+      processRssBytesAfterHostSetup = rss_after_host_setup,
+      processRssBytesAfterFirstCall = rss_after_first_call,
+      processRssBytesAfterBenchmark = rss_after_benchmark,
+      processRssDeltaAfterFirstCallBytes = rss_after_first_call - rss_before_host_setup,
+      processRssDeltaAfterBenchmarkBytes = rss_after_benchmark - rss_before_host_setup
+    ),
     calls = metrics$calls,
   callsPerSample = metrics$callsPerSample,
   sampleCount = metrics$sampleCount,
