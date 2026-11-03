@@ -6,6 +6,9 @@ const pixels = new Uint8Array([1, 2, 3, 4]);
 function adapter(overrides = {}) {
   return {
     validateMatrix: () => true,
+    createScene: () => ({ scene: { width: 10, height: 10, description: "test scene", cells: [], texts: [] }, diagnostic: null }),
+    renderSceneSvg: () => ({ svg: "<svg scene />", diagnostic: null }),
+    renderSceneRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels }),
     renderMatrixSvg: () => "<svg />",
     renderMatrixRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels }),
     getRendererCapabilities: () => JSON.stringify({ capability_schema_version: 1 }),
@@ -52,4 +55,37 @@ test("normalizes diagnostics thrown by a native-style adapter", () => {
   nativeError.diagnostic = { schema_version: 1, code: "input.matrix.not_symmetric", severity: "error", stage: "input", message: "bad input" };
   const engine = createEngine(adapter({ validateMatrix: () => { throw nativeError; } }), "injected");
   assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.not_symmetric");
+});
+
+test("creates and renders a renderer-neutral scene through the injected backend", () => {
+  const engine = createEngine(adapter(), "injected");
+  const scene = engine.createScene({
+    labels: ["alpha"],
+    rows: 1,
+    columns: 1,
+    values: [1],
+    kind: "correlation",
+  }, { title: "test" });
+  assert.equal(scene.description, "test scene");
+  assert.equal(engine.render(scene, { format: "svg" }), "<svg scene />");
+  const output = engine.render(scene, {
+    format: "rgba",
+    widthPx: 1,
+    heightPx: 1,
+    background: { red: 255, green: 255, blue: 255, alpha: 255 },
+  });
+  assert.equal(output.pixels, pixels);
+});
+
+test("converts scene-construction diagnostics to CorrplotError", () => {
+  const engine = createEngine(adapter({
+    createScene: () => ({
+      scene: null,
+      diagnostic: { schema_version: 1, code: "input.matrix.invalid_shape", severity: "error", stage: "input", message: "not square" },
+    }),
+  }), "injected");
+  assert.throws(
+    () => engine.createScene({ labels: [], rows: 0, columns: 0, values: [], kind: "correlation" }),
+    error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.invalid_shape",
+  );
 });
