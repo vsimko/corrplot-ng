@@ -8,37 +8,25 @@
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "browser": {
-        "types": "./src/index.d.ts",
-        "default": "./src/browser.js"
-      },
+      "browser": {"types": "./src/index.d.ts", "default": "./src/browser.js"},
       "node": {
-        "import": {
-          "types": "./src/index.d.ts",
-          "default": "./src/node.js"
-        },
-        "require": {
-          "types": "./src/index.d.cts",
-          "default": "./src/node.cjs"
-        }
+        "import": {"types": "./src/index.d.ts", "default": "./src/node.js"},
+        "require": {"types": "./src/index.d.cts", "default": "./src/node.cjs"}
       },
       "types": "./src/index.d.ts",
       "default": "./src/browser.js"
     }
   },
   "files": ["src", "README.md"],
+  "scripts": {"test": "node --test"},
   "peerDependencies": {
     "@corrplot-ng/native-node": "0.1.0",
     "@corrplot-ng/wasm": "0.1.0"
   },
   "peerDependenciesMeta": {
-    "@corrplot-ng/native-node": {
-      "optional": true
-    },
-    "@corrplot-ng/wasm": {
-      "optional": true
-    }
+    "@corrplot-ng/native-node": {"optional": true},
+    "@corrplot-ng/wasm": {"optional": true}
   },
-  "engines": { "node": "^22 || ^24 || ^26" },
+  "engines": {"node": "^22 || ^24 || ^26"},
   "license": "MIT"
 }
