@@ -34,6 +34,7 @@ jobs:
             foundation:
               - 'tests/**'
               - 'scripts/validate_svg.py'
+              - 'scripts/dev-check.sh'
               - 'prototypes/shared-svg/**'
               - 'prototypes/normalized-matrix-v1/**'
               - 'prototypes/publication-config-v1/**'
@@ -55,34 +56,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate JSON fixtures
-        run: python -m json.tool tests/fixtures/correlation-cases.json > /dev/null
-      - name: Run fixture integrity tests
-        run: python -m unittest discover -s tests -v
       - name: Install scene schema validator
         run: python -m pip install jsonschema
-      - name: Validate shared Rust renderer capability declaration
-        run: |
-          python - <<'PY'
-          import json
-          import jsonschema
-          from pathlib import Path
-          schema = json.loads(Path("prototypes/renderer-capabilities-v1.schema.json").read_text())
-          declaration = json.loads(Path("crates/corrplot-core/renderer-capabilities.json").read_text())
-          jsonschema.validate(declaration, schema)
-          PY
-      - name: Validate normalized matrix v1 contract and fixtures
-        run: python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
-      - name: Run shared SVG prototype tests
-        run: python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
-      - name: Validate generated Python SVG artifact
-        run: |
-          python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json > "$RUNNER_TEMP/shared-svg.svg"
-          python scripts/validate_svg.py "$RUNNER_TEMP/shared-svg.svg"
-      - name: Run publication configuration tests
-        run: python -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
-      - name: Run publication SVG export tests
-        run: python -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
+      - name: Validate local development command syntax
+        run: bash -n scripts/dev-check.sh
+      - name: Run quick foundation checks through the local entry point
+        run: bash scripts/dev-check.sh quick
 
   svg-interoperability:
     name: Rasterize a self-contained SVG with librsvg
