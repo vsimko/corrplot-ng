@@ -23,7 +23,7 @@ const scene = {
   texts: [],
 };
 const sceneV1 = fs.readFileSync(
-  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1.example.json"),
+  path.join(__dirname, "../../prototypes/shared-svg/scene-v1.example.json"),
   "utf8",
 );
 const rgbaOptions = {
