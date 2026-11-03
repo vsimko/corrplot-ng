@@ -1,6 +1,10 @@
-import errors from "./errors.cjs";
-
-export const { CorrplotError } = errors;
+export class CorrplotError extends Error {
+  constructor(diagnostic) {
+    super(diagnostic.message);
+    this.name = "CorrplotError";
+    this.diagnostic = Object.freeze({ ...diagnostic });
+  }
+}
 
 function fail(code, stage, message, path) {
   throw new CorrplotError({
