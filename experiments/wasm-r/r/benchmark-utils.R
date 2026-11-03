@@ -1,3 +1,11 @@
+
+# Best-effort current resident-set snapshot. This is not a peak-RSS sampler.
+process_rss_bytes <- function() {
+  if (!requireNamespace("ps", quietly = TRUE)) return(NA_real_)
+  info <- ps::ps_memory_info(ps::ps_handle())
+  as.numeric(info[["rss"]])
+}
+
 # Shared repeated-batch benchmark helper for the R runtime comparison.
 # Each sample is a separately timed batch in the same warmed process.
 # The 95% CI is a Student-t interval over batch-level per-call means (n=10).
