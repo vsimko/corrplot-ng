@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "bindings/node/**"
+      - "bindings/cross-backend/**"
       - "bindings/wasm/**"
       - "crates/corrplot-core/**"
       - "prototypes/shared-svg/scene-v1.example.json"
