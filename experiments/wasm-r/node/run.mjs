@@ -17,6 +17,7 @@ const version = spawnSync(runtime, ["--version"], { encoding: "utf8" });
 if (version.error || version.status !== 0) {
   throw new Error(`cannot execute ${runtime} --version: ${version.stderr || version.error}`);
 }
+const rssBefore = process.memoryUsage().rss;
 const started = performance.now();
 const child = spawnSync(runtime, ["run", modulePath], {
   input: request,
@@ -24,6 +25,7 @@ const child = spawnSync(runtime, ["run", modulePath], {
   maxBuffer: 16 * 1024 * 1024,
 });
 const elapsedMs = performance.now() - started;
+const rssAfter = process.memoryUsage().rss;
 
 if (child.error) throw child.error;
 if (child.status !== 0) {
@@ -35,6 +37,10 @@ console.log(JSON.stringify({
   runtime: version.stdout.trim(),
   wasmSha256: createHash("sha256").update(wasm).digest("hex"),
   fixtureSha256: createHash("sha256").update(request).digest("hex"),
+  coldProcessMs: Number(elapsedMs.toFixed(3)),
   elapsedMs: Number(elapsedMs.toFixed(3)),
+  inputBytes: request.byteLength,
+  outputBytes: Buffer.byteLength(child.stdout),
+  parentRssDeltaBytes: rssAfter - rssBefore,
   response,
 }, null, 2));
