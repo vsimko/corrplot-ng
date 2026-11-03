@@ -6,16 +6,20 @@ corrplot-ng explores a modern, renderer-neutral approach to correlation plots wh
 
 ## Current status
 
-The repository contains several working components with different maturity levels:
+The repository contains working components at different maturity levels:
 
 - **R package:** a provisional adapter. Its default `corrplot_ng()` path delegates to upstream `corrplot`; the experimental `engine = "scene"` path prepares renderer-neutral scene-v1 data. The package also provides normalized-matrix and file adapters, `cor.mtest()`, and palette/color-legend helpers.
 - **Normalized-matrix v1:** a language-neutral contract for already-computed square matrices, including labels, missing values, and source-index mappings. R matrix and CSV/TSV/JSON file adapters produce this representation.
-- **Python scene/SVG prototype:** a reference implementation that builds a renderer-neutral scene and exports deterministic SVG. It demonstrates the seven prototype glyph methods, but it is not a production shared core.
-- **Rust standalone CLI:** a compiled native executable that validates and renders supported publication configurations and matrix inputs to SVG. It has no Python or R runtime dependency and is tested on Linux, macOS, and Windows.
-- **Native Node.js binding:** an experimental N-API package in `bindings/node/` that calls the shared Rust matrix validator and typed-scene SVG/RGBA renderers. Its source-build package layout is tested on Node.js 22, 24, and 26 across Linux, macOS, and Windows; platform-specific prebuilt npm publishing and the unified TypeScript facade are not yet implemented.
-- **Scene-v1 and publication-config v1:** versioned interchange/configuration contracts used by the current prototypes and CLI.
+- **Python scene/SVG prototype:** a reference implementation that builds a renderer-neutral scene and exports deterministic SVG. It demonstrates seven prototype glyph methods, but it is not a production shared core.
+- **Rust shared core and CLI:** `crates/corrplot-core` is the strategic shared implementation. It provides matrix validation, an initial scene-v1 matrix parser and normalized-matrix-to-scene builder, and typed-scene SVG/RGBA rendering. The standalone CLI consumes this core and exports supported publication configurations and matrix inputs to SVG. Scene-v1 construction is incremental; complete presentation fidelity and full legacy feature coverage are not established.
+- **Native Node.js binding:** the experimental Node-API package in `bindings/node/` consumes the same Rust core. It exposes matrix validation, typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 to SVG/RGBA operations. The binding is tested on Node.js 22, 24, and 26; PR CI uses Linux x64 on Node 24, while comprehensive CI covers Linux, macOS, and Windows on all three Node versions.
+- **Browser WebAssembly binding:** `bindings/wasm/` compiles the same Rust core for `wasm32-unknown-unknown`. It exposes validation, typed-scene SVG/RGBA, and matrix-bearing scene-v1 to SVG/RGBA operations. Node-based binding tests run on Node 24/26; browser smoke tests cover Chromium, Firefox, and WebKit on Ubuntu. This is a focused browser integration, not full browser/API parity.
+- **TypeScript facade:** the initial `packages/typescript/` package provides runtime-specific Node and browser exports, backend selection, validation, matrix-to-SVG/RGBA rendering, renderer capabilities, diagnostics, and disposal. The broader intended public API and React/Vue adapters remain incomplete.
+- **Scene-v1 and publication-config v1:** versioned interchange/configuration contracts used by the current prototypes, bindings, and CLI.
 
-**Rust is the selected strategic shared-core implementation** under [ADR 0001](docs/adr/0001-shared-core-architecture.md). Merged PR #180 proves that the CLI and the disposable R/rextendr adapter call the same `crates/corrplot-core` matrix-validation operation. PR #184 records the current toolchain and package-size evidence. This is a focused proof, not a production R migration or a complete shared visualization engine. Production R rollout remains gated by CRAN guidance on the remaining vendor-metadata NOTE and installed package size, plus a controlled measurement of maintainer effort. C++/Rcpp remains a possible R-only fallback if Rust packaging proves unacceptable. The cross-runtime TypeScript architecture is specified in [ADR 0002](docs/adr/0002-cross-runtime-typescript-architecture.md). The Node-API and browser-WASM bindings are separate runtime backends; the unified TypeScript API, isolated package topology, and React/Vue adapters remain in progress. See the [npm package distribution plan](docs/npm-package-distribution.md). Package builds, tests, versioning, and tarball staging may be prepared before release, but public npm publication is explicitly deferred.
+**Rust is the selected strategic shared-core implementation** under [ADR 0001](docs/adr/0001-shared-core-architecture.md). The CLI, Node binding, browser-WASM binding, and disposable R/rextendr adapter consume the shared Rust core for the operations implemented in each integration. This is incremental shared implementation, not proof of full semantic parity or a complete visualization engine. Production R rollout remains gated by CRAN/package-footprint evidence and a controlled measurement of maintainer effort. C++/Rcpp remains a possible R-only fallback if Rust packaging proves unacceptable.
+
+The cross-runtime TypeScript architecture is specified in [ADR 0002](docs/adr/0002-cross-runtime-typescript-architecture.md). The native Node and browser-WASM bindings are separate runtime backends; the initial TypeScript facade exists, while broader API completeness, direct Canvas, and React/Vue adapters remain unfinished. See the [npm package distribution plan](docs/npm-package-distribution.md). Package builds, tests, versioning, and tarball staging may be prepared before release, but public npm publication is explicitly deferred.
 
 ## Architecture
 
@@ -27,7 +31,7 @@ See [the current architecture](docs/architecture.md), [ADR 0001](docs/adr/0001-s
 
 The original [R corrplot package](https://github.com/taiyun/corrplot) remains the reference for legacy behavior. The current R adapter preserves the legacy plotting path by delegation and has an experimental scene-preparation path. Automated tests cover selected legacy cases, normalized-input behavior, scene/SVG semantics, and saved raster references. These tests are representative, not exhaustive; full behavioral compatibility is not claimed.
 
-The Python scene/SVG prototype supports seven publication glyph methods. The current native CLI supports a smaller documented subset, including circle and number glyphs. Do not assume feature parity between the prototype, R adapter, and CLI.
+The Python scene/SVG prototype supports seven publication glyph methods. The current native CLI and Rust-backed bindings expose narrower, documented operation slices. Do not assume complete feature or presentation parity between the prototype, R adapter, CLI, Node, and browser-WASM integrations.
 
 ## Local development
 
@@ -36,8 +40,8 @@ The Python scene/SVG prototype supports seven publication glyph methods. The cur
 - Git and Bash (Linux, macOS, WSL, or Git Bash on Windows)
 - Python 3.10+ and `jsonschema`
 - R 4.x with `corrplot` 0.95, `testthat`, `jsonlite`, and `png`
-- Rust stable toolchain (for the native CLI and Node/WASM bindings)
-- Node.js 22+ and npm (for the native Node binding)
+- Rust 1.78+ toolchain (for the native CLI and Node/WASM bindings)
+- Node.js 22, 24, or 26 and npm (the versions currently covered by binding CI)
 - `wasm-pack` (for browser-WASM checks)
 
 Install the Python and R packages used by the local checks:
@@ -94,15 +98,15 @@ authoritative multi-platform checks.
 Performance benchmarks are run manually through the dedicated workflow;
 they are not part of ordinary pull-request CI.
 
-See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
+See the [testing strategy](docs/testing-strategy.md), [CI validation tiers](docs/ci-validation-tiers.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
 
 ## Citation
 
 For a released version, cite the exact corrplot-ng release identified by its
 Git tag and use the machine-readable metadata in
-[`CITATION.cff`](CITATION.cff). The repository-level citation metadata does
-not set a project version yet because the repository has not established a
-versioned project release; component package versions are not a substitute
+[`CITATION.cff`](CITATION.cff). The repository-level citation metadata
+does not set a project version yet because the repository has not established
+a versioned project release; component package versions are not a substitute
 for a corrplot-ng release version. The release process should add the release
 version and date to `CITATION.cff` when the first project release is tagged.
 
