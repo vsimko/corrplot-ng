@@ -12,6 +12,7 @@ const figure = document.querySelector("#figure");
 
 const black = { red: 0, green: 0, blue: 0, alpha: 255 };
 const white = { red: 255, green: 255, blue: 255, alpha: 255 };
+const cellMethods = ["circle", "square", "ellipse", "number", "shade", "color", "pie"];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -80,8 +81,40 @@ try {
   assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 146, 118, [33, 102, 172, 255], "positive cell");
   assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 314, 118, [178, 24, 43, 255], "negative cell");
   assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 280, 180, [242, 242, 242, 255], "missing-cell fill");
-  const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
-  const invalidMethodDiagnostic = invalidMatrixResult.diagnostic;
+
+  // Exercise every advertised cell method in the actual browser runtime.
+  for (const method of cellMethods) {
+    const svgOutput = renderMatrixSvg(matrixSceneV1, method);
+    assert(
+      typeof svgOutput.svg === "string" && !svgOutput.diagnostic,
+      `${method} matrix SVG failed: ${svgOutput.diagnostic?.message ?? "missing SVG output"}`,
+    );
+    const rgbaOutput = renderMatrixRgba(matrixSceneV1, method, {
+      widthPx: 96,
+      heightPx: 96,
+      dpi: 96,
+      background: white,
+    });
+    assert(
+      rgbaOutput.pixels instanceof Uint8Array &&
+        rgbaOutput.pixels.byteLength === rgbaOutput.strideBytes * rgbaOutput.heightPx &&
+        rgbaOutput.widthPx === 96 &&
+        rgbaOutput.heightPx === 96 &&
+        !rgbaOutput.diagnostic,
+      `${method} matrix RGBA failed: ${rgbaOutput.diagnostic?.message ?? "invalid pixel buffer"}`,
+    );
+  }
+
+  const invalidJsonResult = renderMatrixSvg("{", "circle");
+  assert(
+    invalidJsonResult.diagnostic?.code === "input.scene.invalid_json" &&
+      invalidJsonResult.diagnostic?.path === "$" &&
+      invalidJsonResult.svg == null,
+    "malformed scene-v1 JSON did not return the expected diagnostic-v1",
+  );
+
+  const invalidMethodResult = renderMatrixSvg(matrixSceneV1, "unknown");
+  const invalidMethodDiagnostic = invalidMethodResult.diagnostic;
   assert(
     invalidMethodDiagnostic?.schema_version === 1 &&
       invalidMethodDiagnostic?.code === "configuration.invalid_field" &&
@@ -91,7 +124,7 @@ try {
       invalidMethodDiagnostic?.path === "cellMethod" &&
       invalidMethodDiagnostic?.row == null &&
       invalidMethodDiagnostic?.column == null &&
-      invalidMatrixResult.svg == null,
+      invalidMethodResult.svg == null,
     "matrix-to-scene WASM operation did not return the complete expected diagnostic-v1",
   );
 
@@ -189,7 +222,7 @@ try {
   assertPixel(matrixContext.getImageData(314, 118, 1, 1).data, 1, 0, 0, [178, 24, 43, 255], "matrix Canvas negative cell");
 
   figure.replaceChildren(image, canvas, matrixCanvas);
-  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA semantics and browser pixel checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
+  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA semantics, all cell methods, diagnostics, and browser pixel checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
 } catch (error) {
   status.textContent = `WASM smoke test failed: ${error.message}`;
   status.setAttribute("aria-live", "assertive");
