@@ -56,6 +56,14 @@ Both runners report a module hash and the semantic response. Both runners calcul
 hashes reported by each runtime and verifies that both produced the same
 semantic response.
 
+The Node embedded runner also reports WASM compilation/instantiation time,
+first-call latency, input-copy/validation/output-copy phase timings, process
+RSS snapshots, and WASM linear-memory size before and after execution. The
+process-based Node runner reports end-to-end cold process time and request /
+response byte counts. Its RSS delta is for the parent Node process only; it is
+not a measurement of the spawned Wasmtime process. These are host-side
+measurements and should not be conflated with the corresponding R-side metrics.
+
 Use `CORRPLOT_WASMTIME` to select a non-default Wasmtime executable.
 
 ## Second implementation: in-process host-neutral ABI
@@ -127,6 +135,11 @@ JavaScript runtime glue.
 - Peak R/Node process memory and Wasmtime linear memory.
 - Installation and runtime dependency matrix for Windows, macOS, and Linux.
 - Native R adapter baseline using the same fixtures.
+
+The Node runners now report first-call and memory/transfer snapshots. Equivalent
+R-side cold-start and memory snapshots, peak-memory sampling, and separately
+instrumented R-to-WASM transfer timings remain open acceptance work; the Node
+metrics do not substitute for them.
 
 Do not use this first JSON/stdin process path as the final high-throughput
 interface; it is a feasibility baseline.
