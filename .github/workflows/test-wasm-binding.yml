@@ -53,12 +53,12 @@ jobs:
         working-directory: bindings/wasm
         run: wasm-pack build --target web --release --out-dir pkg
       - name: Measure WASM size, initialization, and renderer baselines
-        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        if: github.event_name == 'pull_request' || matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
         env:
           CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/wasm-baseline.json
         run: node bindings/wasm/benchmarks/measure.mjs
       - name: Upload WASM baseline artifact
-        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        if: github.event_name == 'pull_request' || matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
         uses: actions/upload-artifact@v7
         with:
           name: wasm-baseline-node-${{ matrix.node }}-${{ github.run_id }}
@@ -69,13 +69,13 @@ jobs:
         working-directory: bindings/wasm
         run: npm pack --dry-run
       - name: Install Playwright
-        if: matrix.node == 26
+        if: github.event_name == 'pull_request' || matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1
       - name: Verify preinstalled Chrome
-        if: matrix.node == 26
+        if: github.event_name == 'pull_request' || matrix.node == 26
         run: google-chrome --version
       - name: Run browser WebAssembly smoke test
-        if: matrix.node == 26
+        if: github.event_name == 'pull_request' || matrix.node == 26
         env:
           DEBUG: pw:api
         run: |
