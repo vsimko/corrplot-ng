@@ -12,7 +12,8 @@
   "scripts": {
     "build": "node scripts/build-native.mjs",
     "test": "npm run build && node --test && node scripts/test-pack.mjs",
-    "package:prebuilt": "node scripts/package-prebuilt.mjs"
+    "package:prebuilt": "node scripts/package-prebuilt.mjs",
+    "test:prebuilt": "node scripts/test-prebuilt-install.mjs"
   },
   "engines": {
     "node": "^22 || ^24 || ^26"
