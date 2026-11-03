@@ -42,6 +42,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Build native Node-API backend
         working-directory: bindings/node
         run: npm run build
