@@ -8,10 +8,12 @@ on:
     paths:
       - ".github/workflows/rust-rextendr-offline-package.yml"
       - "prototypes/rust-rextendr/**"
+      - "crates/corrplot-core/**"
   workflow_dispatch:
   pull_request:
     paths:
       - "prototypes/rust-rextendr/**"
+      - "crates/corrplot-core/**"
       - ".github/workflows/rust-rextendr-offline-package.yml"
 
 permissions:
