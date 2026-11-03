@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "prototypes/rust-rextendr/**"
+      - "crates/corrplot-core/**"
       - ".github/workflows/test-rust-windows-binary.yml"
       - "docs/cran-rust-dependency-audit-results.md"
   workflow_dispatch:
