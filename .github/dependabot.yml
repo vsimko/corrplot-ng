@@ -11,6 +11,10 @@ updates:
       time: "04:00"
       timezone: Europe/Berlin
     open-pull-requests-limit: 5
+    # This action uses Rust toolchain release tags, not semver action releases.
+    # Dependabot misreads those tags (e.g. 1.78.0 -> 1.120.0), so manage it manually.
+    ignore:
+      - dependency-name: dtolnay/rust-toolchain
     groups:
       github-actions-nonbreaking:
         applies-to: version-updates
