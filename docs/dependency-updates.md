@@ -30,6 +30,11 @@ The Cargo projects covered by routine version updates are
   packages, not external npm dependencies. Their versions must move together
   with the base package and prebuilt artifacts, so Dependabot ignores those
   references rather than proposing unresolvable registry updates.
+- The `dtolnay/rust-toolchain` GitHub Action is excluded from Dependabot
+  version updates. Its tags represent Rust toolchain releases rather than
+  ordinary semver action releases, which caused Dependabot to propose
+  nonexistent versions. Update the stable and pinned MSRV toolchains manually
+  and validate the affected Rust workflows.
 - Python packages are now declared in `requirements-dev.txt`. There is no
   separate `pyproject.toml` or Python packaging manifest.
 - R package dependencies are declared in the relevant `DESCRIPTION` files.
