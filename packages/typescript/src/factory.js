@@ -80,7 +80,7 @@ export function createEngine(adapter, backend) {
         fail("configuration.invalid_field", "configuration", "render input must be a renderer-neutral scene or a scene-v1 JSON string", "scene");
       }
       if (options?.format === "svg") {
-        const result = isSceneV1Json
+        const result = invoke(() => isSceneV1Json
           ? adapter.renderMatrixSvg(sceneOrSceneV1Json, method)
           : adapter.renderSceneSvg(sceneOrSceneV1Json, {
               width: options.width ?? sceneOrSceneV1Json.width,
@@ -89,8 +89,8 @@ export function createEngine(adapter, backend) {
               fontFamily: options.fontFamily ?? "",
               fontSizePt: options.fontSizePt ?? 10,
               background: options.background ?? { red: 255, green: 255, blue: 255, alpha: 255 },
-            });
-        const svg = unwrap(invoke(() => result), "svg");
+            }));
+        const svg = unwrap(result, "svg");
         if (typeof svg !== "string") fail("renderer.output.format_mismatch", "export", "SVG backend did not return an SVG string", "output.svg");
         return svg;
       }
