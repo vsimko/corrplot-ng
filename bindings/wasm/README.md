@@ -50,7 +50,10 @@ report the raw/gzip/Brotli WASM module size, cold initialization time, available
 WASM linear-memory size, process RSS delta, and median/p95 timings for matrix
 validation, SVG rendering, and RGBA rendering. The script uses fixed fixtures
 and iteration counts; results are informational baselines, not noisy
-per-pull-request performance gates. CI records them on Node.js 24 and 26.
+per-pull-request performance gates. A weekly scheduled run and manual
+`workflow_dispatch` run collect the report on Node.js 26 and upload a JSON
+artifact retained for 90 days. Node.js 24/26 correctness tests still run on
+pull requests.
 
 ## Browser threading and Canvas status
 
