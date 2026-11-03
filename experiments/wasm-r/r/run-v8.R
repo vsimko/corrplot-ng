@@ -16,6 +16,10 @@ for (package in c("V8", "jsonlite", "digest")) {
 
 wasm_bytes <- readBin(wasm, what = "raw", n = file.info(wasm)$size)
 fixture_bytes <- readBin(fixture, what = "raw", n = file.info(fixture)$size)
+script_arg <- grep("^--file=", commandArgs(), value = TRUE)
+source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
+rss_before_init <- process_rss_bytes()
+initialization_started <- proc.time()[["elapsed"]]
 
 ctx <- V8::v8()
 ctx$assign("corrplotWasmBytes", wasm_bytes)
@@ -46,12 +50,19 @@ invisible(ctx$eval("
     }
   };
 "))
+initialization_ms <- (proc.time()[["elapsed"]] - initialization_started) * 1000
+rss_after_init <- process_rss_bytes()
+wasm_memory_bytes_after_init <- as.numeric(ctx$eval("corrplotWasmInstance.exports.memory.buffer.byteLength"))
 
 invoke <- function() ctx$call("corrplotWasmRun")
-script_arg <- grep("^--file=", commandArgs(), value = TRUE)
-source(file.path(dirname(normalizePath(sub("^--file=", "", script_arg[[1]]), mustWork = TRUE)), "benchmark-utils.R"))
-metrics <- benchmark_repeated(invoke)
+first_call_started <- proc.time()[["elapsed"]]
 response_json <- invoke()
+first_call_ms <- (proc.time()[["elapsed"]] - first_call_started) * 1000
+rss_after_first_call <- process_rss_bytes()
+wasm_memory_bytes_after_first_call <- as.numeric(ctx$eval("corrplotWasmInstance.exports.memory.buffer.byteLength"))
+metrics <- benchmark_repeated(invoke)
+rss_after_benchmark <- process_rss_bytes()
+wasm_memory_bytes_after_benchmark <- as.numeric(ctx$eval("corrplotWasmInstance.exports.memory.buffer.byteLength"))
 
 result <- list(
   runtime = R.version.string,
@@ -59,6 +70,21 @@ result <- list(
   v8 = list(version = V8::engine_info()$version, numeric_version = as.character(V8::engine_info()$numeric_version)),
   wasmSha256 = digest::digest(wasm, algo = "sha256", file = TRUE),
   fixtureSha256 = digest::digest(fixture, algo = "sha256", file = TRUE),
+  coldStart = list(
+    initializationMs = initialization_ms,
+    firstCallMs = first_call_ms
+  ),
+  memory = list(
+    processRssBytesBeforeInit = rss_before_init,
+    processRssBytesAfterInit = rss_after_init,
+    processRssBytesAfterFirstCall = rss_after_first_call,
+    processRssBytesAfterBenchmark = rss_after_benchmark,
+    processRssDeltaAfterFirstCallBytes = rss_after_first_call - rss_before_init,
+    processRssDeltaAfterBenchmarkBytes = rss_after_benchmark - rss_before_init,
+    wasmLinearMemoryBytesAfterInit = wasm_memory_bytes_after_init,
+    wasmLinearMemoryBytesAfterFirstCall = wasm_memory_bytes_after_first_call,
+    wasmLinearMemoryBytesAfterBenchmark = wasm_memory_bytes_after_benchmark
+  ),
   calls = metrics$calls,
   callsPerSample = metrics$callsPerSample,
   sampleCount = metrics$sampleCount,
