@@ -67,6 +67,12 @@ export function createEngine(adapter, backend) {
         if (typeof svg !== "string") fail("renderer.output.format_mismatch", "export", "SVG backend did not return an SVG string", "output.svg");
         return svg;
       }
+      if (options?.format === "canvas") {
+        if (typeof adapter.renderMatrixCanvas !== "function") {
+          fail("renderer.unsupported_feature", "renderer", "Canvas output is unavailable in this backend", "output.format");
+        }
+        return invoke(() => adapter.renderMatrixCanvas(sceneV1Json, method, options));
+      }
       if (options?.format === "rgba") {
         const { widthPx, heightPx, dpi, background } = options;
         if (!Number.isInteger(widthPx) || widthPx <= 0 || !Number.isInteger(heightPx) || heightPx <= 0 || !background) {
