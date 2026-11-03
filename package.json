@@ -1,0 +1,20 @@
+{
+  "name": "corrplot-ng-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Private build workspace for Corrplot-ng npm packages",
+  "workspaces": ["bindings/node", "bindings/wasm", "packages/*"],
+  "scripts": {
+    "test:node": "npm run test --workspace=@corrplot-ng/native-node",
+    "test:typescript": "npm run test --workspace=@corrplot-ng/typescript",
+    "test": "npm run test:node && npm run test:typescript",
+    "pack:node": "npm pack --dry-run --workspace=@corrplot-ng/native-node",
+    "pack:wasm": "npm pack --dry-run --workspace=@corrplot-ng/wasm",
+    "pack:typescript": "npm pack --dry-run --workspace=@corrplot-ng/typescript",
+    "pack:dry-run": "npm run pack:node && npm run pack:wasm && npm run pack:typescript",
+    "changeset": "changeset",
+    "version-packages": "changeset version"
+  },
+  "devDependencies": {"@changesets/cli": "2.29.7"},
+  "engines": {"node": "^22 || ^24 || ^26", "npm": ">=10"}
+}
