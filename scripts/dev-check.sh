@@ -18,7 +18,7 @@ Quick and focused checks:
   test-rust-cli         Shared-core and native CLI tests plus release build
   test-node             Build the native Node addon and run its tests
   test-wasm             Test and build the browser WASM binding (requires wasm-pack)
-  test-all              Run quick, R, Rust CLI, Node, and legacy-oracle checks
+  test-all              Run quick, R, Rust CLI, Node, browser-WASM, and legacy-oracle checks
 
 Builds:
   build-cli             Build the native Rust CLI in release mode
