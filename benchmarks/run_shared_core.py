@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import statistics
 import sys
 import time
 import tracemalloc
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -155,6 +157,7 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
         first_ms, samples, peak = measure(operation, iterations)
         results.append({
             "workload": case_id,
+            "input_sha256": canonical_hash(config),
             "status": "passed",
             "measurement": "core_only_scene_construction",
             "first_call_ms": first_ms,
@@ -180,6 +183,7 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
         first_ms, samples, peak = measure(lambda: render_scene_svg(b02), iterations)
         results.append({
             "workload": "B08",
+            "input_sha256": canonical_hash({"source_workload": "B02", "scene_sha256": canonical_hash(b02)}),
             "status": "passed",
             "measurement": "svg_serialization_only",
             "first_call_ms": first_ms,
@@ -197,6 +201,8 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "suite": "corrplot-ng-initial-shared-core",
+        "measured_at": datetime.now(timezone.utc).isoformat(),
+        "source_commit": os.environ.get("GITHUB_SHA"),
         "seed": SEED,
         "iterations": iterations,
         "include_stress": include_stress,
@@ -208,7 +214,9 @@ def run(iterations: int, include_stress: bool = False) -> dict[str, Any]:
             "platform": platform.platform(),
             "machine": platform.machine(),
             "processor": platform.processor(),
-            "cpu_count": __import__("os").cpu_count(),
+            "cpu_count": os.cpu_count(),
+            "runner_os": os.environ.get("RUNNER_OS"),
+            "runner_arch": os.environ.get("RUNNER_ARCH"),
         },
         "inputs": serialized_inputs,
         "results": results,
