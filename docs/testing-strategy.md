@@ -25,11 +25,16 @@ The current implementation includes:
   experimental scene-v1 preparation path.
 - A language-neutral normalized-matrix v1 input contract with R and file
   adapters.
-- A Python scene/SVG prototype and an R scene-v1 consumer.
-- A standalone Rust CLI that consumes publication configuration and exports
-  SVG without Python or R at runtime.
-- Experimental C++/Rcpp and Rust/rextendr benchmark candidates. These are not
-  production shared-core bindings.
+- A Python scene/SVG reference prototype and an R scene-v1 consumer.
+- A Rust shared core with matrix validation, an initial matrix-bearing
+  scene-v1 parser/builder, and typed-scene SVG/RGBA rendering. The CLI,
+  Node-API, browser-WASM, and disposable R/rextendr consumers use this core
+  for their implemented operations.
+- An experimental Node-API binding and browser-WASM binding, plus an initial
+  TypeScript facade with runtime-specific backend selection.
+- Experimental C++/Rcpp and Rust/rextendr R-integration candidates; the
+  rextendr adapter is disposable evaluation infrastructure, not the
+  production R package.
 
 ## Test layers
 
@@ -111,10 +116,11 @@ python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
 Rscript prototypes/shared-svg/test_r_scene_consumer.R
 ```
 
-These checks establish contract and targeted semantic conformance. They do
-not establish that Python, R, Rust, C++, and future TypeScript/WASM
-implementations share one compiled implementation. Nor do they establish
-complete legacy API compatibility.
+These checks establish contract and targeted semantic conformance for the
+Python and R consumers. The Rust-backed CLI, Node, and WASM integrations use
+the same compiled core for the operations they expose; their dedicated tests
+are described below. None of these checks establishes complete scene-v1
+presentation fidelity or complete legacy API compatibility.
 
 ### 4. SVG structure, export, and interoperability
 
@@ -153,27 +159,55 @@ source locations. Tests check serialized diagnostic fields for representative
 R, Python, renderer, and CLI failures. See the
 [diagnostic catalogue](diagnostics.md).
 
-### 5. Native Rust CLI
+### 5. Shared Rust core and native CLI
 
-The standalone CLI is tested independently from the Python and R runtimes.
-Its Cargo manifest has no third-party dependencies. The CLI workflow runs
-locked, offline Rust tests and builds the release executable on Ubuntu,
-macOS, and Windows. On Ubuntu it also renders the example publication
-configuration and validates the resulting SVG.
+The dependency-free `crates/corrplot-core` library is the accepted strategic
+shared implementation under ADR 0001. It currently tests matrix validation,
+the matrix-bearing scene-v1 parser and normalized-matrix-to-scene builder,
+and typed-scene SVG/RGBA rendering. The CLI, Node, browser-WASM, and
+experimental R/rextendr integrations call this crate for their implemented
+operations. This is real shared compiled implementation, but not full
+scene-v1 semantic or presentation parity.
 
-The release workflow separately builds platform artifacts and runs
-executable smoke checks. Release packaging checks are not the same as the
-routine PR correctness matrix.
+The shared-core workflow verifies the repository-local rextendr dependency,
+compiles the core and its tests for `wasm32-unknown-unknown`, runs native core
+tests, and tests the declared Rust 1.78 MSRV. The CLI workflow runs locked,
+offline core/CLI tests and builds on Ubuntu, macOS, and Windows for
+comprehensive runs; PR validation uses Ubuntu. On Ubuntu it also renders and
+validates an SVG and tests the installed executable outside the checkout.
 
-Run the local CLI tests and build from the repository root:
+Run local core and CLI tests from the repository root:
 
 ```sh
+cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
 cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
 cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
 ```
 
-The CLI is a standalone application. Its implementation does not make Rust
-the selected production shared-core language; ADR 0001 defers that decision.
+The standalone CLI remains a thin application adapter. Production R rollout
+is separately gated by the CRAN and maintainer-workflow evidence in ADR 0001.
+
+### 6. Node, browser-WASM, and TypeScript integrations
+
+The native Node-API binding tests matrix validation, typed-scene SVG/RGBA,
+and matrix-bearing scene-v1 to SVG/RGBA operations against the shared Rust
+core. Its pull-request matrix is Linux x64 GNU on Node 24. Comprehensive
+runs cover Linux x64 GNU, macOS x64, macOS arm64, and Windows x64 on Node
+22, 24, and 26, including platform-package assembly checks.
+
+The browser-WASM binding compiles the same core for `wasm32-unknown-unknown`.
+Its Node-based binding tests and browser ESM build run on Node 24 for PRs;
+comprehensive runs use Node 24 and 26. Browser smoke coverage runs on Node
+26 against Chromium, Firefox, and WebKit. Weekly and manual runs also collect
+informational WASM size/initialization/rendering baselines; these are not
+per-PR performance gates.
+
+The initial TypeScript facade has tests in the foundation workflow. It
+selects the runtime-specific Node or WASM backend and currently exposes
+validation, matrix-to-SVG/RGBA rendering, capabilities, diagnostics, and
+disposal. Broader API completeness, direct Canvas, and React/Vue adapters
+remain unfinished. The binding READMEs document their operation and runtime
+boundaries.
 
 ### Local command entry point
 
@@ -202,21 +236,27 @@ The pull-request and comprehensive workflow mapping is maintained in
 [CI validation tiers](ci-validation-tiers.md). Workflow YAML is linted
 independently by `test-workflows.yml`, including manual-only workflows.
 
-### 6. CI execution policy
+### 7. CI execution policy
 
 Routine pull-request CI is correctness-focused and path-filtered where
 appropriate. Workflow concurrency cancels superseded runs for the same PR.
 
 | Workflow | Trigger and scope | Main checks |
 | --- | --- | --- |
-| [Test foundation](../.github/workflows/test-foundation.yml) | Pull requests, pushes to `main`, and manual dispatch; foundation paths are filtered | Shared fixture integrity, normalized-matrix contract, Python shared SVG and publication-config/SVG tests, SVG artifact validation, librsvg interoperability, and pinned legacy semantic bridge |
-| [R package checks](../.github/workflows/test-r.yml) | Pull requests, pushes to `main`, and manual dispatch; R package and related paths are filtered | Pinned `corrplot` reference, R scene consumer, and `R CMD check` |
-| [Native Rust CLI](../.github/workflows/test-rust-cli.yml) | Pull requests and pushes to `main` for CLI-relevant paths, plus manual dispatch | Offline Rust tests, release build on Ubuntu/macOS/Windows, and native SVG validation on Ubuntu |
+| [Test foundation](../.github/workflows/test-foundation.yml) | All PRs, pushes to `main`, and manual dispatch; component jobs run when foundation paths match | Shared fixture/schema and Python prototype checks, TypeScript facade tests, SVG validation and librsvg interoperability, pinned legacy oracle and legacy-to-scene bridge |
+| [R package checks](../.github/workflows/test-r.yml) | All PRs, pushes to `main`, and manual dispatch; R, scene-consumer, fixture, and schema paths are filtered | Pinned `corrplot` 0.95 reference, R scene consumer, and `R CMD check` |
+| [Shared Rust core](../.github/workflows/test-shared-rust-core.yml) | PRs and pushes to `main` for core, CLI, rextendr, or workflow paths; manual dispatch | Repository-local rextendr consumer, native core tests, WASM target compile, and Rust 1.78 MSRV checks |
+| [Native Rust CLI](../.github/workflows/test-rust-cli.yml) | PRs and pushes to `main` for CLI/core/publication-config/validator paths; manual dispatch | Core and CLI offline tests, Ubuntu PR build, comprehensive Ubuntu/macOS/Windows build, SVG validation, installed-outside-checkout smoke |
+| [Native Node binding](../.github/workflows/test-node-native.yml) | PRs and pushes to `main` for Node binding/core/workflow paths; manual dispatch | Linux x64 GNU + Node 24 on PRs; comprehensive Linux/macOS/Windows architecture matrix on Node 22/24/26; native tests and package assembly |
+| [Browser WASM binding](../.github/workflows/test-wasm-binding.yml) | PRs and pushes to `main` for WASM binding/core/workflow paths; manual dispatch and weekly schedule | Node 24 PR tests/build; Node 24/26 comprehensive tests, browser ESM package checks, Chromium/Firefox/WebKit smoke on Node 26; scheduled/manual informational baseline artifact |
 
-The foundation workflow runs fixture, SVG, and legacy-oracle jobs only when
-the relevant paths change (or on manual dispatch). The R workflow similarly
-filters package-related paths. The native CLI matrix is path-filtered and
-keeps the three supported CI operating systems.
+The foundation workflow's component jobs run only when their detected paths
+change (or on manual dispatch); its path filter also includes the initial
+TypeScript facade tests. The R workflow similarly filters package-related
+paths. Shared-core, CLI, Node, and WASM workflows have explicit path filters.
+The PR tier uses representative fast checks; comprehensive matrices and
+scheduled WASM baseline collection are intentionally broader. The detailed
+path-to-check mapping is maintained in [CI validation tiers](ci-validation-tiers.md).
 
 Performance measurements are not part of routine pull-request CI. The
 dedicated **Performance benchmarks** workflow is started manually using
@@ -227,11 +267,13 @@ matrix are separate opt-in inputs for manual runs. See
 workflow does not run a baseline-versus-candidate performance comparison on
 pull requests.
 
-### 7. Future test extensions
+### 8. Future test extensions
 
-Future TypeScript, Node native bindings, browser WASM, and Canvas work is
-tracked separately under issues #139–#146. These are not current test
-runners or supported production interfaces.
+The initial TypeScript, Node native, and browser-WASM slices now have test
+coverage, but their broader APIs and production support are not complete.
+Direct Canvas, worker orchestration, React/Vue adapters, full scene-v1
+presentation coverage, and wider cross-backend conformance remain future
+work tracked under issues #139–#146.
 
 When one of these interfaces is implemented:
 
@@ -264,8 +306,15 @@ Use precise terms when reporting results:
   validator and structural assertions.
 - **Pixel regression:** output matches saved raster references in the pinned
   graphics environment.
-- **Shared implementation parity:** multiple interfaces use the same
-  compiled implementation. The current repository does not claim this.
+- **Shared implementation reuse:** multiple interfaces call the same
+  compiled implementation for a stated operation. The CLI, Node, browser-WASM,
+  and disposable R/rextendr adapter currently reuse `crates/corrplot-core` for
+  the operations implemented by each consumer. This does not establish
+  complete semantic parity across their public APIs or renderers.
+- **Cross-runtime semantic parity:** independently exercised consumers
+  produce equivalent results and diagnostics for the same fixtures. Coverage
+  is limited to the operations and fixtures actually tested; full parity is
+  not established.
 
 Track compatibility per behavior:
 
