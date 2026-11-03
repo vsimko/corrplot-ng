@@ -17,6 +17,16 @@ function fail(code, stage, message, path) {
   });
 }
 
+function invoke(operation) {
+  try {
+    return operation();
+  } catch (error) {
+    if (error instanceof CorrplotError) throw error;
+    if (error?.diagnostic) throw new CorrplotError(error.diagnostic);
+    throw error;
+  }
+}
+
 function unwrap(result, field) {
   if (result?.diagnostic) throw new CorrplotError(result.diagnostic);
   if (field === undefined) return result;
@@ -39,7 +49,7 @@ export function createEngine(adapter, backend) {
     backend,
     validate(input) {
       ensureActive();
-      const result = adapter.validateMatrix(input);
+      const result = invoke(() => adapter.validateMatrix(input));
       if (result && typeof result === "object" && "valid" in result) {
         if (!result.valid) unwrap(result);
         return true;
@@ -54,14 +64,14 @@ export function createEngine(adapter, backend) {
       }
       const method = options?.method ?? "circle";
       if (options?.format === "svg") {
-        return unwrap(adapter.renderMatrixSvg(sceneV1Json, method), "svg");
+        return unwrap(invoke(() => adapter.renderMatrixSvg(sceneV1Json, method)), "svg");
       }
       if (options?.format === "rgba") {
         const { widthPx, heightPx, dpi, background } = options;
         if (!Number.isInteger(widthPx) || widthPx <= 0 || !Number.isInteger(heightPx) || heightPx <= 0 || !background) {
           fail("configuration.invalid_field", "configuration", "RGBA output requires positive integer widthPx/heightPx and a background color", "output");
         }
-        const output = unwrap(adapter.renderMatrixRgba(sceneV1Json, method, { widthPx, heightPx, dpi, background }));
+        const output = unwrap(invoke(() => adapter.renderMatrixRgba(sceneV1Json, method, { widthPx, heightPx, dpi, background })));
         if (!(output?.pixels instanceof Uint8Array)) {
           fail("renderer.output.invalid_buffer", "export", "RGBA backend did not return JavaScript-owned Uint8Array pixels", "output.pixels");
         }
@@ -71,13 +81,13 @@ export function createEngine(adapter, backend) {
     },
     getRendererCapabilities() {
       ensureActive();
-      const value = adapter.getRendererCapabilities();
+      const value = invoke(() => adapter.getRendererCapabilities());
       return typeof value === "string" ? JSON.parse(value) : value;
     },
     dispose() {
       if (disposed) return;
       disposed = true;
-      adapter.dispose?.();
+      if (adapter.dispose) invoke(() => adapter.dispose());
     },
   });
 }
