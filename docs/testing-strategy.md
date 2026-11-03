@@ -198,6 +198,10 @@ macOS, WSL, and Git Bash; native PowerShell is not supported. The separate
 WASM/R experiment needs its pinned Wasmtime C API and is not folded into
 `test-all`.
 
+The pull-request and comprehensive workflow mapping is maintained in
+[CI validation tiers](ci-validation-tiers.md). Workflow YAML is linted
+independently by `test-workflows.yml`, including manual-only workflows.
+
 ### 6. CI execution policy
 
 Routine pull-request CI is correctness-focused and path-filtered where
