@@ -16,6 +16,9 @@ conversion; matrix validation and SVG/RGBA rendering remain in Rust.
   scene-v1 JSON, constructs the normalized matrix scene, and renders SVG
   entirely through the shared Rust core. Supported methods are circle,
   square, ellipse, number, shade, color, and pie.
+- `renderMatrixRgba(sceneV1Json, method, options)` uses the same Rust scene
+  construction path and raster renderer, returning JavaScript-owned RGBA pixels
+  with the same metadata and lifetime guarantees as `renderSceneRgba`.
 - `getRendererCapabilities()` returns the core capability-v1 JSON string.
 
 Results use diagnostic-v1 records. Input objects are deserialized into
@@ -37,8 +40,8 @@ wasm-pack build --target web --release --out-dir pkg
 The browser build is ESM and initializes asynchronously. Serve this directory
 over HTTP (not `file://`) and open
 [`examples/browser/index.html`](examples/browser/index.html) to run the
-browser smoke example. The page checks the SVG result envelope, verifies
-representative RGBA pixels and the Canvas copy, and confirms that a later WASM
+browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output, verifies
+representative raster pixels and the Canvas copy, and confirms that a later WASM
 call does not mutate the previously returned JavaScript-owned pixel buffer.
 
 After building, run `node benchmarks/measure.mjs` from this directory to
