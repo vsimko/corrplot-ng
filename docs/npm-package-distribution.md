@@ -11,12 +11,12 @@ The shared API contract and semantics should be consistent across runtimes. That
 
 ## Workspace
 
-The repository root is a private npm workspace, not a publishable package. Its workspace globs include the existing Node binding, all four platform-specific native packages, browser WASM binding, and initial TypeScript facade. Working bindings remain in their current directories; no package relocation is required.
+The repository root is a private npm workspace, not a publishable package. Its workspace globs include the existing Node binding, browser WASM binding, and initial TypeScript facade. The four platform-specific native packages remain optional dependencies of the Node package but are deliberately not npm workspaces: their `os`/`cpu` constraints must not make a cross-platform workspace install fail. Their tarballs are built separately on matching runners. Working bindings remain in their current directories; no package relocation is required.
 
 Install and validate locally with:
 
 ```sh
-npm install --ignore-scripts
+npm install --ignore-scripts --omit=optional
 npm ls --workspaces --depth=0
 npm test
 npm run pack:dry-run
