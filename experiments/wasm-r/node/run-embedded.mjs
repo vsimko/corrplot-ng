@@ -71,7 +71,7 @@ const firstOutputBytes = invoke();
 const firstCallMs = performance.now() - firstCallStarted;
 const firstCallPhases = { ...phases };
 const rssAfterFirstCall = process.memoryUsage().rss;
-const wasmMemoryBytesAfterFirstCall = memory.buffer.byteLength;
+const wasmLinearMemoryBytesAfterFirstCall = memory.buffer.byteLength;
 
 phases = emptyPhases();
 invoke(); // warm-up before the repeated-call sample
@@ -83,7 +83,7 @@ for (let i = 0; i < calls; i++) outputBytes = invoke();
 const elapsedMs = performance.now() - repeatedStarted;
 const repeatedPhases = { ...phases };
 const rssAfterBenchmark = process.memoryUsage().rss;
-const wasmMemoryBytesAfterBenchmark = memory.buffer.byteLength;
+const wasmLinearMemoryBytesAfterBenchmark = memory.buffer.byteLength;
 const response = JSON.parse(new TextDecoder().decode(outputBytes));
 const firstResponse = JSON.parse(new TextDecoder().decode(firstOutputBytes));
 if (JSON.stringify(firstResponse) !== JSON.stringify(response)) {
