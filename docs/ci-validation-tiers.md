@@ -38,7 +38,7 @@ every pull request:
 | Native Node binding on four OS/architectures and Node 22/24/26 | `test-node-native.yml`: manual dispatch and push to `main` |
 | Browser WASM on Node 24 and 26, including browser smoke and baseline artifact | `test-wasm-binding.yml`: manual dispatch, weekly schedule, and push to `main` |
 | WASM-in-R experiment on Ubuntu, Intel macOS, and Windows with pinned Wasmtime C API | `test-wasm-r-experiment.yml`: manual dispatch |
-| Generated rextendr offline package on Ubuntu, Intel macOS, and Windows | `rust-rextendr-offline-package.yml`: manual dispatch; the pull request still runs Ubuntu and the separate Windows binary smoke |
+| Generated rextendr offline package on Ubuntu, Intel macOS, and Windows | `rust-rextendr-offline-package.yml`: manual dispatch or pushes to the two experiment branches; the pull request still runs Ubuntu and the separate Windows binary smoke |
 | Prebuilt Node package artifact matrix | `build-node-prebuilt-packages.yml`: manual dispatch |
 | Native CLI release packaging and archive audit | `release-rust-cli.yml`: manual dispatch or `cli-v*` tag |
 | Full Cargo vendor/offline audit | `rust-cran-dependency-audit.yml`: weekly schedule or manual dispatch |
