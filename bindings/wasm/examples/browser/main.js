@@ -3,6 +3,7 @@ import init, {
   renderSceneSvg,
   renderSceneRgba,
   renderMatrixSvg,
+  renderMatrixRgba,
   validateMatrix,
 } from "../../pkg/corrplot_ng_wasm.js";
 
@@ -49,6 +50,31 @@ try {
     "matrix-to-scene WASM operation did not return the expected circle SVG",
   );
   assert(matrixResult.svg.includes(">NA</text>"), "matrix-to-scene WASM operation did not preserve missing values");
+
+  const matrixRgba = renderMatrixRgba(matrixSceneV1, "circle", {
+    widthPx: 380,
+    heightPx: 392,
+    dpi: 96,
+    background: white,
+  });
+  assert(!matrixRgba.diagnostic, matrixRgba.diagnostic?.message ?? "matrix-to-RGBA WASM operation failed");
+  assert(
+    matrixRgba.pixels instanceof Uint8Array &&
+      matrixRgba.pixels.byteLength === matrixRgba.strideBytes * matrixRgba.heightPx &&
+      matrixRgba.widthPx === 380 &&
+      matrixRgba.heightPx === 392 &&
+      matrixRgba.pixelFormat === "rgba8" &&
+      matrixRgba.alphaMode === "straight" &&
+      matrixRgba.colorSpace === "srgb",
+    "matrix-to-RGBA WASM operation returned invalid buffer metadata",
+  );
+  const matrixCenterOffset = (118 * matrixRgba.widthPx + 146) * 4;
+  const matrixCenter = matrixRgba.pixels.subarray(matrixCenterOffset, matrixCenterOffset + 4);
+  assert(
+    matrixCenter[3] === 255 &&
+      (matrixCenter[0] !== 255 || matrixCenter[1] !== 255 || matrixCenter[2] !== 255),
+    "matrix-to-RGBA WASM operation did not rasterize the first diagonal cell",
+  );
   const invalidMatrixResult = renderMatrixSvg(matrixSceneV1, "unknown");
   const invalidMethodDiagnostic = invalidMatrixResult.diagnostic;
   assert(
