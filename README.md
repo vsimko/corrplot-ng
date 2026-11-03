@@ -91,6 +91,9 @@ The script is a Bash entry point; native Windows PowerShell is not supported.
 Use WSL or Git Bash on Windows. Individual CI workflows still provide the
 authoritative multi-platform checks.
 
+Performance benchmarks are run manually through the dedicated workflow;
+they are not part of ordinary pull-request CI.
+
 See the [testing strategy](docs/testing-strategy.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
 
 ## Citation
