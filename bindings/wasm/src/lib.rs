@@ -1,6 +1,6 @@
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
 use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
-use js_sys::{Reflect, Uint8Array};
+use js_sys::{Array, Reflect, Uint8Array};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
 use corrplot_core::scene::{scene_v1_to_scene, CellMethod};
 use serde::{Deserialize, Serialize};
@@ -959,6 +959,45 @@ pub fn render_matrix_canvas_commands_wasm(scene_v1_json: String, method: String)
         scene: Some(scene_canvas_commands(&scene)),
         diagnostic: None,
     })
+}
+
+
+#[cfg(test)]
+mod canvas_commands_tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    fn exports_scene_v1_canvas_commands_without_raster_pixels() {
+        let fixture = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let output = render_matrix_canvas_commands_wasm(fixture.into(), "circle".into()).unwrap();
+        let scene = Reflect::get(&output, &JsValue::from_str("scene")).unwrap();
+        assert!(!scene.is_null());
+        assert_eq!(Reflect::get(&scene, &JsValue::from_str("width")).unwrap().as_f64(), Some(380.0));
+        let commands = Array::from(&Reflect::get(&scene, &JsValue::from_str("commands")).unwrap());
+        assert!(commands.length() > 0);
+        let operations: Vec<String> = commands.iter()
+            .filter_map(|command| Reflect::get(&command, &JsValue::from_str("op")).ok()?.as_string())
+            .collect();
+        assert!(operations.iter().any(|op| op == "fillRect"));
+        assert!(operations.iter().any(|op| op == "strokeRect"));
+        assert!(operations.iter().any(|op| op == "circle"));
+        assert!(operations.iter().any(|op| op == "text"));
+        let diagnostic = Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap();
+        assert!(diagnostic.is_undefined() || diagnostic.is_null());
+    }
+
+    #[wasm_bindgen_test]
+    fn maps_invalid_canvas_method_to_diagnostic_v1() {
+        let fixture = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let output = render_matrix_canvas_commands_wasm(fixture.into(), "unknown".into()).unwrap();
+        let diagnostic = Reflect::get(&output, &JsValue::from_str("diagnostic")).unwrap();
+        assert_eq!(
+            Reflect::get(&diagnostic, &JsValue::from_str("code")).unwrap().as_string().as_deref(),
+            Some("configuration.invalid_field"),
+        );
+        assert!(Reflect::get(&output, &JsValue::from_str("scene")).unwrap().is_null());
+    }
 }
 
 #[cfg(test)]
