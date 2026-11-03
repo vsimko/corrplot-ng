@@ -74,7 +74,7 @@ jobs:
       - name: Run quick foundation checks through the local entry point
         run: bash scripts/dev-check.sh quick
       - name: Test TypeScript facade core
-        run: node --test packages/typescript/test/*.test.js
+        run: node --test packages/typescript/test/*.test.*
       - name: Test benchmark run comparison
         run: python -m unittest discover -s benchmarks -p 'test_compare_runs.py' -v
 

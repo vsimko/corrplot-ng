@@ -3,12 +3,26 @@
   "version": "0.1.0",
   "description": "Backend-neutral TypeScript API for corrplot-ng",
   "type": "module",
+  "main": "./src/node.cjs",
+  "module": "./src/node.js",
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
+      "browser": {
+        "types": "./src/index.d.ts",
+        "default": "./src/browser.js"
+      },
+      "node": {
+        "import": {
+          "types": "./src/index.d.ts",
+          "default": "./src/node.js"
+        },
+        "require": {
+          "types": "./src/index.d.cts",
+          "default": "./src/node.cjs"
+        }
+      },
       "types": "./src/index.d.ts",
-      "browser": "./src/browser.js",
-      "node": "./src/node.js",
       "default": "./src/browser.js"
     }
   },
