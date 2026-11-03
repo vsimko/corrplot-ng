@@ -1,6 +1,6 @@
 # npm package distribution and release preparation
 
-**Status:** Workspace and non-publishing staging infrastructure are being implemented under #290.  
+**Status:** Workspace, versioning, CI validation, and non-publishing staging infrastructure are complete under #290.  
 **Publication status:** Explicitly deferred. No package in this plan is authorized for public npm publication yet.
 
 ## Goals
@@ -24,7 +24,17 @@ npm run pack:dry-run
 
 The workspace uses Changesets for independent package versions and coordinated changelogs. Add a changeset for consumer-visible package changes with `npm run changeset`; do not add changesets for repository-only maintenance that does not alter published package contents.
 
-The planned `@corrplot-ng/core`, React, and Vue packages are not yet present. They join through the workspace globs when their implementation issues (#145, #291, and #292) establish their manifests and public contracts. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
+The planned `@corrplot-ng/core`, React, and Vue packages are not yet present. Issue #145 remains active to complete the current `@corrplot-ng/typescript` facade and its public contract; #291 and #292 cover the React and Vue adapters. Add each package to the workspace only when its own implementation establishes a manifest and public contract. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
+
+## Current implementation status — 2026-11-04
+
+The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, and `@corrplot-ng/typescript`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
+
+The native Node and browser WASM packages expose matrix validation, typed-scene SVG/RGBA operations, matrix-bearing scene-v1 SVG/RGBA operations, renderer capabilities, and diagnostic-v1 errors. The TypeScript facade is an initial subset: it validates `MatrixInput`, renders a matrix-bearing scene-v1 JSON string to SVG or RGBA, returns renderer capabilities, supports adapter injection, and disposes the backend. It does not yet expose `createScene()` or a direct normalized-matrix-to-render operation; that remaining API work is tracked by #145.
+
+The scene-v1 parser used by the bindings currently supports the matrix-bearing subset, not every presentation field in the full scene-v1 contract. The browser smoke example draws returned RGBA bytes into a host-owned Canvas; it is not the direct scene-to-Canvas renderer tracked by #144. React and Vue adapters remain unimplemented under #291 and #292.
+
+Public npm publication remains explicitly disabled and requires separate maintainer approval under #293.
 
 ## Target package topology
 
@@ -43,7 +53,7 @@ The browser package must not depend on, optionally install, import, or bundle th
 
 ## API consistency versus runtime isolation
 
-The Node and browser packages should expose the same backend-neutral operations and public types where their renderer capabilities overlap. They may expose runtime-specific initialization and output capabilities where necessary.
+The Node and browser packages should expose the same backend-neutral operations and public types where their renderer capabilities overlap. They may expose runtime-specific initialization and output capabilities where necessary. The current TypeScript facade does not yet expose the full target surface: `validate()` accepts a `MatrixInput`, while `render()` accepts matrix-bearing scene-v1 JSON and returns SVG or RGBA. It does not expose `createScene()` or typed-scene rendering; those are tracked as remaining work in #145.
 
 - Browser users install the WASM package, not the Node package.
 - Node users install the native Node package, not the browser WASM package.
@@ -100,9 +110,9 @@ Both must be thin host adapters. They must not implement correlation or renderin
 ## Work breakdown
 
 - #145 — shared TypeScript API contract and runtime package isolation.
-- #290 — workspace, versioning, CI, and non-publishing tarball/release preparation.
+- #290 — workspace, versioning, CI, and non-publishing tarball/release preparation (**complete**).
 - #291 — React integration.
 - #292 — Vue integration.
 - #293 — later npm publication; explicitly deferred.
 
-Existing backend implementation work remains in #141 (Node) and #142 (WASM). Extend the existing prototypes rather than restarting them.
+The initial Node and WASM backend implementation slices in #141 and #142 are complete. Extend the existing packages rather than restarting them; #145 remains active for the broader public TypeScript API and package-isolation contract.
