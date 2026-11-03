@@ -29,7 +29,7 @@ try {
   await svg.waitFor({ state: "visible" });
   await svg.evaluate((image) => image.decode());
 
-  const canvas = page.locator("#figure canvas");
+  const canvas = page.locator("#figure canvas").first();
   await canvas.waitFor({ state: "visible" });
   const canvasInfo = await canvas.evaluate((element) => ({
     width: element.width,
