@@ -16,7 +16,7 @@ stress_sample_count <- 5L
 stress_warmups <- 1L
 
 measure_one <- function(fun, validate, workload, candidate, measurement,
-                        scene_cells, scene_json_bytes, stress = FALSE) {
+                        input_sha256, scene_cells, scene_json_bytes, stress = FALSE) {
   sample_count <- if (stress) stress_sample_count else regular_sample_count
   warmups <- if (stress) stress_warmups else regular_warmups
   first_started <- proc.time()[["elapsed"]]
@@ -48,7 +48,8 @@ measure_one <- function(fun, validate, workload, candidate, measurement,
   }
   list(
     workload = workload, candidate = candidate, status = "passed",
-    measurement = measurement, first_call_ms = first_time,
+    measurement = measurement, input_sha256 = input_sha256,
+    first_call_ms = first_time,
     median_ms = median(samples), iqr_ms = IQR(samples),
     min_ms = min(samples), max_ms = max(samples),
     samples_ms = as.list(samples), batch_size = batch,
@@ -90,17 +91,17 @@ for (case in fixture$workloads) {
     results[[length(results) + 1L]] <- measure_one(
       function() build_scene_v1_r(labels, matrix, annotation),
       function(value) same_scene(value, expected),
-      case$id, "R_pure", "scene_construction_only", cells, json_bytes
+      case$id, "R_pure", "scene_construction_only", case$input_sha256, cells, json_bytes
     )
     results[[length(results) + 1L]] <- measure_one(
       function() encode_scene_v1_r(r_scene),
       function(value) same_json_scene(value, expected),
-      case$id, "R_pure", "json_encoding_only", cells, json_bytes
+      case$id, "R_pure", "json_encoding_only", case$input_sha256, cells, json_bytes
     )
     results[[length(results) + 1L]] <- measure_one(
       function() build_scene_json_r(labels, matrix, annotation),
       function(value) same_json_scene(value, expected),
-      case$id, "R_pure", "scene_construction_plus_json_encoding", cells, json_bytes
+      case$id, "R_pure", "scene_construction_plus_json_encoding", case$input_sha256, cells, json_bytes
     )
   }
 
@@ -113,7 +114,7 @@ for (case in fixture$workloads) {
       candidates[[candidate_name]],
       function(value) same_json_scene(value, expected),
       case$id, candidate_name, "scene_construction_plus_json_encoding",
-      cells, json_bytes, stress = stress_mode
+      case$input_sha256, cells, json_bytes, stress = stress_mode
     )
   }
 }
@@ -122,6 +123,15 @@ payload <- list(
   schema_version = 2L,
   suite = "corrplot-ng-cross-language-scene-v1",
   candidates = if (stress_mode) c("Python", "Cpp_Rcpp", "Rust_rextendr") else c("Python", "R_pure", "Cpp_Rcpp", "Rust_rextendr"),
+  run_metadata = list(
+    commit_sha = Sys.getenv("GITHUB_SHA", unset = NA_character_),
+    run_id = Sys.getenv("GITHUB_RUN_ID", unset = NA_character_),
+    run_attempt = Sys.getenv("GITHUB_RUN_ATTEMPT", unset = NA_character_),
+    runner_os = Sys.getenv("RUNNER_OS", unset = Sys.info()[["sysname"]]),
+    runner_arch = Sys.getenv("RUNNER_ARCH", unset = Sys.info()[["machine"]]),
+    runner_image_os = Sys.getenv("ImageOS", unset = NA_character_),
+    runner_image_version = Sys.getenv("ImageVersion", unset = NA_character_)
+  ),
   timing_method = list(
     clock = "R proc.time elapsed with calibrated repeated batches",
     target_sample_ms = target_sample_ms,
