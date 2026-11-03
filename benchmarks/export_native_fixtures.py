@@ -2,6 +2,7 @@
 """Export deterministic inputs and Python scene-v1 oracle for native benchmarks."""
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -41,6 +42,11 @@ def project_scene_v1(scene: dict) -> dict:
     }
 
 
+def canonical_hash(value: dict) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
@@ -57,6 +63,11 @@ def main() -> None:
             "labels": config["labels"],
             "matrix": config["matrix"],
             "annotation": config.get("annotation", ""),
+            "input_sha256": canonical_hash({
+                "labels": config["labels"],
+                "matrix": config["matrix"],
+                "annotation": config.get("annotation", ""),
+            }),
             "expected_scene": project_scene_v1(scene),
         })
     payload = {
