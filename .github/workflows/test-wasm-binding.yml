@@ -59,7 +59,7 @@ jobs:
         run: node bindings/wasm/benchmarks/measure.mjs
       - name: Upload WASM baseline artifact
         if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wasm-baseline-node-${{ matrix.node }}-${{ github.run_id }}
           path: ${{ runner.temp }}/wasm-baseline.json

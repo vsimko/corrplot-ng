@@ -85,7 +85,7 @@ jobs:
             test -s rendered.svg
             grep -q "<svg" rendered.svg
           '
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-linux-x86_64-musl
           path: corrplot-ng-linux-x86_64-musl.tar.gz
@@ -157,7 +157,7 @@ jobs:
             test -s rendered.svg
             grep -q '<svg' rendered.svg
           )
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-macos-universal
           path: corrplot-ng-macos-universal.tar.gz
@@ -225,7 +225,7 @@ jobs:
           if (!(Test-Path rendered.svg)) { throw 'Installed CLI did not create the SVG output' }
           if (!(Select-String -Path rendered.svg -Pattern '<svg' -Quiet)) { throw 'Installed CLI output is not SVG' }
           Pop-Location
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-windows-x86_64
           path: corrplot-ng-windows-x86_64.zip

@@ -40,7 +40,7 @@ jobs:
           cd dist
           R CMD INSTALL --build ../prototypes/rust-rextendr/.ci-r-package
           test -n "$(find . -maxdepth 1 -type f -name '*.zip' -print -quit)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: rust-windows-binary
           path: dist/*.zip
