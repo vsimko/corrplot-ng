@@ -39,8 +39,11 @@ A source checkout can build the addon locally with Rust 1.78+, Node.js
 22/24/26, and npm using `npm run build`; consumers of a published binary
 package do not need Cargo or a Rust toolchain.
 
-The clean-install smoke test installs the base package and its matching
-platform package into a temporary project with lifecycle scripts disabled.
+The native binding CI builds the platform tarball on each matching runner,
+installs that tarball together with the base package into a clean temporary
+consumer project with lifecycle scripts disabled, and verifies validation,
+renderer capabilities, and SVG rendering. This checks the actual prebuilt
+package layout rather than only the source-built addon.
 
 ## Building release packages
 
