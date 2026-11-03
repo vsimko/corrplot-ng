@@ -1,5 +1,5 @@
 {
-  "name": "@corrplot-ng/browser-wasm",
+  "name": "@corrplot-ng/wasm",
   "version": "0.1.0",
   "description": "Browser WebAssembly binding for corrplot-ng",
   "type": "module",
