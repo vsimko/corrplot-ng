@@ -190,3 +190,27 @@ Deferred. They add cross-origin isolation, worker, browser-support, and deployme
 - The TypeScript facade and binding packages add build and release work. Keep them thin and test their outputs against the shared Rust fixtures.
 - The current core has grown beyond matrix validation to typed-scene SVG/RGBA rendering, but still needs a scene-v1 parser and matrix-to-scene builder before it can satisfy the complete plot-level API.
 - Production R adoption remains separately gated by the CRAN and maintainer-workflow conditions in ADR 0001.
+
+
+## Package distribution and publication boundary
+
+The public TypeScript API is consistent across runtimes, but the npm dependency graphs are intentionally separate. A browser consumer must not install or bundle Node native binaries merely because the same API is also available in Node.js.
+
+The intended package topology is:
+
+- `@corrplot-ng/core`: runtime-neutral public types, diagnostics, and API contracts only; no native or WASM backend dependency.
+- `@corrplot-ng/wasm`: browser/WASM backend; no Node native dependency or Node-only runtime imports.
+- `@corrplot-ng/native-node`: Node-API backend and its platform-specific implementation packages.
+- `@corrplot-ng/react` and `@corrplot-ng/vue`: optional framework adapters that depend only on the browser-facing API; React/Vue are peer dependencies.
+
+The existing Node package and platform package names under `bindings/node/` should be preserved unless a separately reviewed migration is justified. A universal package that installs both execution backends is rejected: conditional exports alone do not prevent npm from installing declared dependencies.
+
+The Node and browser packages should expose the same backend-neutral operations and types wherever capabilities overlap. Runtime-specific initialization and renderer capabilities remain explicit. This is API consistency, not a requirement for a single package or dependency graph.
+
+### Staged release policy
+
+The current implementation stage is **non-publishing**. Prepare package manifests, workspace tooling, independent versioning/changelogs, CI validation, clean-install tests, and reproducible tarball artifacts. The release workflow must not call `npm publish`, use npm credentials, request OIDC publication permissions, or publish automatically from tags.
+
+When publication is later prioritized, publish according to the actual dependency graph: runtime-neutral types/core first, then WASM and Node platform packages, then the main Node package, then React/Vue integrations. npm publication is not transactional; the future workflow must detect already-published versions and safely handle partial failures.
+
+Do not configure live npm Trusted Publishing or credentials until a separate maintainer-approved release issue is activated. The detailed plan and work breakdown are in [npm package distribution](../npm-package-distribution.md); implementation is tracked by #290, #291, and #292, while public publication is deferred in #293.
