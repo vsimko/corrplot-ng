@@ -13,6 +13,8 @@ on:
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
+  schedule:
+    - cron: '23 4 * * 1'
 
 permissions:
   contents: read
@@ -43,8 +45,18 @@ jobs:
         working-directory: bindings/wasm
         run: wasm-pack build --target web --release --out-dir pkg
       - name: Measure WASM size, initialization, and renderer baselines
-        if: github.event_name == 'workflow_dispatch'
+        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        env:
+          CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/wasm-baseline.json
         run: node bindings/wasm/benchmarks/measure.mjs
+      - name: Upload WASM baseline artifact
+        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-baseline-node-${{ matrix.node }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/wasm-baseline.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Install Playwright
         if: matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1
