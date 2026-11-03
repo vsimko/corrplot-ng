@@ -19,8 +19,8 @@ test("backend packages are optional peers, never installed as facade dependencie
 test("browser facade and WASM package use the same canonical package name", async () => {
   assert.equal(wasmManifest.name, "@corrplot-ng/wasm");
   const browser = await readFile(new URL("src/browser.js", packageRoot), "utf8");
-  assert.match(browser, /@corrplot-ng\\/wasm/);
-  assert.doesNotMatch(browser, /@corrplot-ng\\/native-node/);
+  assert.ok(browser.includes("@corrplot-ng/wasm"));
+  assert.ok(!browser.includes("@corrplot-ng/native-node"));
 });
 
 test("runtime entry points import only their matching backend", async () => {
@@ -29,8 +29,8 @@ test("runtime entry points import only their matching backend", async () => {
     readFile(new URL("src/node.cjs", packageRoot), "utf8"),
   ]);
 
-  assert.match(node, /@corrplot-ng\\/native-node/);
-  assert.doesNotMatch(node, /@corrplot-ng\\/wasm/);
-  assert.match(commonJs, /@corrplot-ng\\/native-node/);
-  assert.doesNotMatch(commonJs, /@corrplot-ng\\/wasm/);
+  assert.ok(node.includes("@corrplot-ng/native-node"));
+  assert.ok(!node.includes("@corrplot-ng/wasm"));
+  assert.ok(commonJs.includes("@corrplot-ng/native-node"));
+  assert.ok(!commonJs.includes("@corrplot-ng/wasm"));
 });
