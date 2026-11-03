@@ -119,7 +119,7 @@ static uint64_t monotonic_ns(void) {
   LARGE_INTEGER counter, frequency;
   QueryPerformanceCounter(&counter);
   QueryPerformanceFrequency(&frequency);
-  return (uint64_t)((counter.QuadPart * UINT64_C(1000000000)) / frequency.QuadPart);
+  return (uint64_t)((double)counter.QuadPart * 1000000000.0 / (double)frequency.QuadPart);
 #else
   struct timespec value;
   if (clock_gettime(CLOCK_MONOTONIC, &value) != 0) return 0;
