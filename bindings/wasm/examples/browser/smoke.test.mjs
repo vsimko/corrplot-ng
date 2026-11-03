@@ -74,7 +74,36 @@ try {
   });
   assert.deepEqual(pageErrors, [], "browser page raised an uncaught error");
 
-  console.log(`${browserName} WASM smoke passed: SVG decoded and Canvas pixels match.`);
+  const facadePage = await browser.newPage();
+  const facadeErrors = [];
+  facadePage.on("pageerror", (error) => facadeErrors.push(error.message));
+  await facadePage.goto(
+    "http://127.0.0.1:4173/packages/typescript/test/browser/index.html",
+    { waitUntil: "networkidle" },
+  );
+  await facadePage.waitForFunction(
+    () => {
+      const status = document.querySelector("#status")?.textContent ?? "";
+      return status.startsWith("TypeScript WASM facade ready") || status.startsWith("TypeScript WASM facade failed:");
+    },
+    null,
+    { timeout: 30_000 },
+  );
+  const facadeStatus = await facadePage.locator("#status").textContent();
+  assert(
+    facadeStatus?.startsWith("TypeScript WASM facade ready"),
+    `${browserName} TypeScript facade failed: ${facadeStatus}; page errors: ${facadeErrors.join(" | ") || "none"}`,
+  );
+  const facadeResult = await facadePage.evaluate(() => window.__corrplotTypeScriptFacade);
+  assert.equal(facadeResult.status, "ready");
+  assert.equal(facadeResult.backend, "wasm");
+  assert.ok(facadeResult.svgLength > 0);
+  assert.equal(facadeResult.widthPx, 64);
+  assert.equal(facadeResult.heightPx, 64);
+  assert.equal(facadeResult.pixelLength, 64 * 64 * 4);
+  assert.deepEqual(facadeErrors, [], "TypeScript facade page raised an uncaught error");
+
+  console.log(`${browserName} WASM and TypeScript facade smoke passed: SVG and Canvas outputs validated.`);
 } finally {
   await browser.close();
 }
