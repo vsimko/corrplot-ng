@@ -6,6 +6,9 @@ const pixels = new Uint8Array([1, 2, 3, 4]);
 function adapter(overrides = {}) {
   return {
     validateMatrix: () => true,
+    createScene: () => ({ scene: { width: 10, height: 10, description: "", cells: [], texts: [] }, diagnostic: null }),
+    renderSceneSvg: () => ({ svg: "<svg scene />", diagnostic: null }),
+    renderSceneRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels }),
     renderMatrixSvg: () => "<svg />",
     renderMatrixRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels }),
     getRendererCapabilities: () => ({ capability_schema_version: 1 }),
