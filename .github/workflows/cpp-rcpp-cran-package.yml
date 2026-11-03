@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: cpp-rcpp-cran-package-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   source-package-check:
     name: R CMD check --as-cran (${{ matrix.os }})
