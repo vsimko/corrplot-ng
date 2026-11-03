@@ -42,6 +42,13 @@ try {
   const fixtureResponse = await fetch("/prototypes/shared-svg/scene-v1.example.json");
   assert(fixtureResponse.ok, "could not load the canonical scene-v1 fixture");
   const matrixSceneV1 = await fixtureResponse.text();
+  const constructionFixtureResponse = await fetch("/prototypes/shared-svg/scene-v1-construction.example.json");
+  assert(constructionFixtureResponse.ok, "could not load the scene-v1 construction fixture");
+  const matrixSceneV1Construction = await constructionFixtureResponse.text();
+  const matrixFixtures = [
+    { id: "canonical-missing-values", json: matrixSceneV1 },
+    { id: "construction-overrides-and-figure-text", json: matrixSceneV1Construction },
+  ];
 
   const matrixResult = renderMatrixSvg(matrixSceneV1, "ellipse");
   assert(!matrixResult.diagnostic, matrixResult.diagnostic?.message ?? "matrix-to-scene WASM operation failed");
@@ -82,27 +89,29 @@ try {
   assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 314, 118, [178, 24, 43, 255], "negative cell");
   assertPixel(matrixRgba.pixels, matrixRgba.widthPx, 280, 180, [242, 242, 242, 255], "missing-cell fill");
 
-  // Exercise every advertised cell method in the actual browser runtime.
-  for (const method of cellMethods) {
-    const svgOutput = renderMatrixSvg(matrixSceneV1, method);
-    assert(
-      typeof svgOutput.svg === "string" && !svgOutput.diagnostic,
-      `${method} matrix SVG failed: ${svgOutput.diagnostic?.message ?? "missing SVG output"}`,
-    );
-    const rgbaOutput = renderMatrixRgba(matrixSceneV1, method, {
-      widthPx: 96,
-      heightPx: 96,
-      dpi: 96,
-      background: white,
-    });
-    assert(
-      rgbaOutput.pixels instanceof Uint8Array &&
-        rgbaOutput.pixels.byteLength === rgbaOutput.strideBytes * rgbaOutput.heightPx &&
-        rgbaOutput.widthPx === 96 &&
-        rgbaOutput.heightPx === 96 &&
-        !rgbaOutput.diagnostic,
-      `${method} matrix RGBA failed: ${rgbaOutput.diagnostic?.message ?? "invalid pixel buffer"}`,
-    );
+  // Exercise every advertised cell method against both shared scene-v1 fixtures.
+  for (const fixture of matrixFixtures) {
+    for (const method of cellMethods) {
+      const svgOutput = renderMatrixSvg(fixture.json, method);
+      assert(
+        typeof svgOutput.svg === "string" && !svgOutput.diagnostic,
+        `${fixture.id} / ${method} matrix SVG failed: ${svgOutput.diagnostic?.message ?? "missing SVG output"}`,
+      );
+      const rgbaOutput = renderMatrixRgba(fixture.json, method, {
+        widthPx: 96,
+        heightPx: 96,
+        dpi: 96,
+        background: white,
+      });
+      assert(
+        rgbaOutput.pixels instanceof Uint8Array &&
+          rgbaOutput.pixels.byteLength === rgbaOutput.strideBytes * rgbaOutput.heightPx &&
+          rgbaOutput.widthPx === 96 &&
+          rgbaOutput.heightPx === 96 &&
+          !rgbaOutput.diagnostic,
+        `${fixture.id} / ${method} matrix RGBA failed: ${rgbaOutput.diagnostic?.message ?? "invalid pixel buffer"}`,
+      );
+    }
   }
 
   const invalidJsonResult = renderMatrixSvg("{", "circle");
@@ -222,7 +231,7 @@ try {
   assertPixel(matrixContext.getImageData(314, 118, 1, 1).data, 1, 0, 0, [178, 24, 43, 255], "matrix Canvas negative cell");
 
   figure.replaceChildren(image, canvas, matrixCanvas);
-  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA semantics, all cell methods, diagnostics, and browser pixel checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
+  status.textContent = `WASM ready; renderer schema ${capabilities.capability_schema_version}; matrix SVG/RGBA semantics across two fixtures and all cell methods, diagnostics, and browser pixel checks passed (${matrixRgba.pixels.byteLength} matrix bytes)`;
 } catch (error) {
   status.textContent = `WASM smoke test failed: ${error.message}`;
   status.setAttribute("aria-live", "assertive");

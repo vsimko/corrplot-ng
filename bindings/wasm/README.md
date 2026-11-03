@@ -41,8 +41,9 @@ The npm package `@corrplot-ng/browser-wasm` exports the generated browser ESM en
 over HTTP (not `file://`) and open
 [`examples/browser/index.html`](examples/browser/index.html) to run the
 browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output,
-exercises all seven supported cell methods, verifies positive, negative, and
-missing-cell colors in both the returned pixel buffer and a real browser
+exercises all seven supported cell methods against the canonical missing-value
+fixture and a construction fixture with per-cell overrides and figure text,
+verifies positive, negative, and missing-cell colors in both the returned pixel buffer and a real browser
 Canvas, checks malformed scene-v1 diagnostics, and confirms that a later WASM
 call does not mutate the previously returned JavaScript-owned pixel buffer.
 
