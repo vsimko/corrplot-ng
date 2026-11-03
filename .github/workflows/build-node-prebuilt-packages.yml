@@ -1,11 +1,6 @@
 name: Build Node prebuilt packages
 
 on:
-  pull_request:
-    paths:
-      - "bindings/node/**"
-      - "crates/corrplot-core/**"
-      - ".github/workflows/build-node-prebuilt-packages.yml"
   workflow_dispatch:
 
 permissions:
