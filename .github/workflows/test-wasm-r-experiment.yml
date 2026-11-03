@@ -263,6 +263,7 @@ jobs:
             echo "Platform: $(uname -s)-$(uname -m)"
             echo "R: $(R --version | head -n 1)"
             echo "V8 package:"
+            # shellcheck disable=SC2016
             Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
             echo "WASM module bytes: $(wc -c < "$EMBEDDED_WASM_MODULE" | tr -d ' ')"
             echo "Native Rust library bytes: $NATIVE_LIBRARY_BYTES"
