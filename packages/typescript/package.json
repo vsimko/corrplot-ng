@@ -8,12 +8,21 @@
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "browser": "./src/browser.js",
-      "node": {
-        "import": "./src/node.js",
-        "require": "./src/node.cjs"
+      "browser": {
+        "types": "./src/index.d.ts",
+        "default": "./src/browser.js"
       },
+      "node": {
+        "import": {
+          "types": "./src/index.d.ts",
+          "default": "./src/node.js"
+        },
+        "require": {
+          "types": "./src/index.d.cts",
+          "default": "./src/node.cjs"
+        }
+      },
+      "types": "./src/index.d.ts",
       "default": "./src/browser.js"
     }
   },
