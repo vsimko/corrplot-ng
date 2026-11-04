@@ -307,7 +307,7 @@ function drawLegend(context, entries, sceneHeight, fontFamily) {
       x += 11;
       context.fillStyle = "rgba(0, 0, 0, 1)";
       context.fillText(entry.label, x, y);
-      x += 7 + [...entry.label].length * 8 * 6 / 7 + 10;
+      x += [...entry.label].length * 8 * 6 / 7 + 10;
     }
   } finally {
     context.restore();
