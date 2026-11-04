@@ -110,16 +110,16 @@ main <- function() {
   invoke <- function() .Call("corrplot_wasm_validate", wasm, request)
   rss_before_init <- process_rss_bytes()
   peak_rss_before_init <- .Call("corrplot_wasm_peak_rss_bytes")
-  init_started <- proc.time()[["elapsed"]]
+  init_started_ns <- .Call("corrplot_wasm_monotonic_ns")
   .Call("corrplot_wasm_initialize", wasm)
-  initialization_ms <- (proc.time()[["elapsed"]] - init_started) * 1000
+  initialization_ms <- (.Call("corrplot_wasm_monotonic_ns") - init_started_ns) / 1e6
   rss_after_init <- process_rss_bytes()
   peak_rss_after_init <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_init <- .Call("corrplot_wasm_memory_bytes")
 
-  first_started <- proc.time()[["elapsed"]]
+  first_started_ns <- .Call("corrplot_wasm_monotonic_ns")
   first_response_json <- invoke()
-  first_call_ms <- (proc.time()[["elapsed"]] - first_started) * 1000
+  first_call_ms <- (.Call("corrplot_wasm_monotonic_ns") - first_started_ns) / 1e6
   rss_after_first_call <- process_rss_bytes()
   peak_rss_after_first_call <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_first_call <- .Call("corrplot_wasm_memory_bytes")
@@ -159,9 +159,11 @@ main <- function() {
       processRssBytesAfterFirstCall = rss_after_first_call,
       processRssDeltaAfterInitializationBytes = rss_after_init - rss_before_init,
       processRssDeltaAfterFirstCallBytes = rss_after_first_call - rss_before_init,
-      processPeakRssBytesBeforeInitialization = peak_rss_before_init,
-      processPeakRssBytesAfterInitialization = peak_rss_after_init,
-      processPeakRssBytesAfterFirstCall = peak_rss_after_first_call,
+      # Normalize Darwin's unavailable ru_maxrss values to JSON null rather
+      # than allowing a platform-specific NaN representation to leak out.
+      processPeakRssBytesBeforeInitialization = if (is.na(peak_rss_before_init)) NULL else peak_rss_before_init,
+      processPeakRssBytesAfterInitialization = if (is.na(peak_rss_after_init)) NULL else peak_rss_after_init,
+      processPeakRssBytesAfterFirstCall = if (is.na(peak_rss_after_first_call)) NULL else peak_rss_after_first_call,
       peakRssNote = if (is.na(peak_rss_after_first_call)) {
         "Unavailable on macOS: Darwin does not expose process-lifetime ru_maxrss through getrusage."
       } else {
@@ -191,7 +193,7 @@ main <- function() {
   )
   output <- file(output_path, open = "wt")
   on.exit(close(output), add = TRUE)
-  writeLines(as.character(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null")), output)
+  writeLines(as.character(jsonlite::toJSON(result, auto_unbox = TRUE, null = "null", na = "null")), output)
   flush(output)
   invisible(result)
 }

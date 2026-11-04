@@ -247,10 +247,18 @@ jobs:
               assert result["transfer"]["phaseTimings"]["guestExecutionNs"]["medianNs"] >= 0
               peak_rss = result["memory"]["processPeakRssBytesAfterFirstCall"]
               if peak_rss is None:
-                  assert platform.system() == "Darwin", "peak RSS may be unavailable only on macOS"
-                  assert result["memory"]["peakRssNote"].startswith("Unavailable on macOS:")
+                  assert platform.system() == "Darwin", (
+                      f"peak RSS may be unavailable only on macOS; got {peak_rss!r} "
+                      f"on {platform.system()}"
+                  )
+                  note = result["memory"].get("peakRssNote")
+                  assert isinstance(note, str) and note.startswith("Unavailable on macOS:"), (
+                      f"macOS peak RSS must include an explicit unavailability note; got {note!r}"
+                  )
               else:
-                  assert isinstance(peak_rss, (int, float)) and peak_rss >= 0
+                  assert isinstance(peak_rss, (int, float)) and peak_rss >= 0, (
+                      f"peak RSS must be a non-negative number or JSON null on macOS; got {peak_rss!r}"
+                  )
           with (root / f"r-wasmtime-repeatability-{name}.json").open("w", encoding="utf-8") as stream:
               json.dump({
                   "fixture": name,
