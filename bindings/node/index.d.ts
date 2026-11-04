@@ -76,8 +76,8 @@ export interface SceneBuildOptionsInput {
 }
 
 export interface SceneResult {
-  scene?: SceneInput;
-  diagnostic?: DiagnosticV1;
+  scene?: SceneInput | null;
+  diagnostic?: DiagnosticV1 | null;
 }
 
 export interface SvgOptionsInput {
