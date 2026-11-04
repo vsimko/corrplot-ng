@@ -44,9 +44,9 @@ The component renders inline SVG. It accepts the same row-major matrix shape and
 Use useCorrplot when the application needs to place the SVG into its own layout or expose loading/error state:
 
 ~~~tsx
-import { useCorrplot } from "@corrplot-ng/react";
+import { useCorrplot, type MatrixInput } from "@corrplot-ng/react";
 
-function Figure({ matrix }) {
+function Figure({ matrix }: { matrix: MatrixInput }) {
   const { svg, loading, error } = useCorrplot(matrix, {
     title: "Correlation matrix",
     cellMethod: "ellipse",
@@ -54,6 +54,7 @@ function Figure({ matrix }) {
 
   if (loading) return <p>Rendering…</p>;
   if (error) return <p role="alert">{error.message}</p>;
+  if (!svg) return null;
   return <div role="img" aria-label="Correlation matrix" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 ~~~
