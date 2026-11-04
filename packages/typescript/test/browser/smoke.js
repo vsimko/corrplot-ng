@@ -83,6 +83,19 @@ try {
       !overlaySvg.includes('class="significance-annotation"')) {
     throw new Error("WASM typed-scene adapter dropped statistical overlays");
   }
+  for (const invalidScene of [
+    { ...statisticalScene, significance: { mode: "unsupported", thresholds: [0.05], symbol: "*" } },
+    { ...statisticalScene, cells: [{ ...statisticalScene.cells[0], pValue: 1.5 }] },
+  ]) {
+    let rejected = false;
+    try {
+      engine.render(invalidScene, { format: "svg" });
+    } catch (error) {
+      rejected = error instanceof CorrplotError &&
+        error.diagnostic.code === "renderer.output.invalid_options";
+    }
+    if (!rejected) throw new Error("WASM adapter dropped or failed to validate statistical metadata");
+  }
   const overlayRgba = engine.render(statisticalScene, {
     format: "rgba",
     widthPx: 100,
