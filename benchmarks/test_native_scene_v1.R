@@ -3,7 +3,6 @@ if (length(args) != 1L) stop("usage: test_native_scene_v1.R fixtures.json")
 fixtures_path <- args[[1]]
 
 suppressPackageStartupMessages(library(jsonlite))
-suppressPackageStartupMessages(library(corrplotngcppspike))
 suppressPackageStartupMessages(library(corrplotngrustspike))
 source("benchmarks/scene_v1_reference.R")
 
@@ -30,9 +29,6 @@ fixture <- fromJSON(fixtures_path, simplifyVector = FALSE)
 candidates <- list(
   R_pure = function(labels, matrix, annotation) {
     build_scene_json_r(labels, matrix, annotation)
-  },
-  Cpp_Rcpp = function(labels, matrix, annotation) {
-    build_scene_json_cpp(labels, matrix, annotation)
   },
   Rust_rextendr = function(labels, matrix, annotation) {
     build_scene_json_rust(labels, matrix, annotation)
