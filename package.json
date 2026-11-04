@@ -13,7 +13,7 @@
     "test:typescript": "npm run test --workspace=@corrplot-ng/typescript",
     "test": "npm run test:node && npm run test:typescript && npm run test:react",
     "pack:node": "npm pack --dry-run --workspace=@corrplot-ng/native-node",
-    "pack:wasm": "npm pack --dry-run --workspace=@corrplot-ng/wasm",
+    "pack:wasm": "npm run test:pack --workspace=@corrplot-ng/wasm && npm pack --dry-run --workspace=@corrplot-ng/wasm",
     "pack:typescript": "npm pack --dry-run --workspace=@corrplot-ng/typescript",
     "pack:dry-run": "npm run pack:node && npm run pack:wasm && npm run pack:typescript && npm run pack:react",
     "changeset": "changeset",
