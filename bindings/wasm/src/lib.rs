@@ -100,6 +100,7 @@ pub struct SceneSignificancePolicyInput {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SceneCellInput {
     pub x: f64,
     pub y: f64,
