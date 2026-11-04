@@ -26,7 +26,7 @@ The current path layout is retained to avoid breaking references, package manife
 
 - **Normative, versioned contracts:** `normalized-matrix-v1/`, `publication-config-v1/`, `publication-svg-v1/`, the scene-v1 schema and fixtures, and `renderer-capabilities-v1.schema.json`. Their schemas and compatibility rules are normative; their current location under `prototypes/` is historical, not a statement that the contracts are throwaway.
 - **Reference implementation:** `shared-svg/` is the Python scene/SVG reference implementation. It is useful for semantic examples and conformance work, but it is not the selected production shared core.
-- **Disposable integration experiments:** `rust-rextendr/` and `cpp-rcpp/` are evaluation spikes. The Rust spike demonstrates that an R binding and the CLI can call the same crate; it is not the production R package.
+- **Rust integration experiment:** `rust-rextendr/` is an isolated evaluation spike. It demonstrates that an R binding and the CLI can call the same crate; it is not the production R package. C++/Rcpp was rejected and its prototype has been removed.
 
 Future work may move these categories to clearer top-level locations such as `contracts/`, `references/`, and `experiments/`. Do not move them until a separate staged change inventories and updates every relative link, package path, CI path filter, fixture consumer, and developer command.
 

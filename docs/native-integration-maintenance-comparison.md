@@ -1,3 +1,5 @@
+> **Historical evaluation — superseded for project direction.** This report records the earlier workflow comparison. The project has since selected Rust exclusively and removed the C++/Rcpp prototype and workflow. The proposed human-effort comparison was not performed and is no longer a decision gate.
+
 # Maintainer workflow and CI cost: Rust/rextendr vs C++/Rcpp
 
 **Issue:** [#113](https://github.com/vsimko/corrplot-ng/issues/113)  

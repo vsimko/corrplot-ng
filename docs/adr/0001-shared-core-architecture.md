@@ -19,7 +19,7 @@ This is the project's target architecture, not a claim that the shared library i
 
 The Rust CLI and R/rextendr spike now call the same local `corrplot-core` library for matrix validation, as demonstrated by merged PR #180. Issue #173 continues to track the remaining source-package, toolchain, distribution, and maintenance evidence; this focused proof does not authorize migration of the production R package.
 
-C++/Rcpp remains useful as an R-only integration comparison and fallback only if Rust's R packaging constraints prove unacceptable. It is not the preferred repository-wide core because it would introduce a second native implementation/integration path for the Rust CLI and future consumers.
+C++/Rcpp was evaluated and explicitly rejected. The project will use Rust for the shared native implementation and will not maintain a parallel C++ implementation or an Rcpp fallback. R integration work must use the Rust/rextendr path or a clearly documented non-C++ alternative if a future constraint requires one.
 
 ## Shared-crate proof: Issue #173
 
@@ -88,7 +88,7 @@ The evaluation issues and merged implementation PRs provide the following eviden
 
 ### Interpretation
 
-The evidence supports Rust as the shared-core target. C++/Rcpp remains lower-risk only for an isolated R-only native extension; it is not a competing repository-wide architecture. The remaining question is whether the shared Rust crate can satisfy R packaging and toolchain requirements sustainably.
+The evidence supports Rust as the shared-core target. Rust is the sole selected native implementation. C++/Rcpp is not retained as an alternative. The remaining question is whether the shared Rust crate can satisfy R packaging and toolchain requirements sustainably.
 
 The measured performance difference does not override these operational considerations. The benchmark covers a small scene-v1 workload set on one Linux runner; it is not a full corrplot workload or a cross-platform performance comparison. The R-independence work proves that the *data contract* can cross language boundaries, not that a Rust or C++ library is already reused by Python or TypeScript.
 
@@ -112,17 +112,7 @@ The measured performance difference does not override these operational consider
 
 ### C++ + Rcpp
 
-**Strengths**
-- Mature R integration and the lower incremental CRAN/release risk.
-- Shorter local build, binding-generation, and release workflow for an R-only extension.
-- Three-platform source-tarball checks and Windows binary installation without Rtools on the end user's PATH have been demonstrated.
-
-**Conditions and risks**
-- C++ is not the implementation language of the standalone CLI. Selecting it for the shared core would either require a second native integration in the CLI or a separately designed cross-language ABI.
-- Generated Rcpp wrappers and compiler/R ABI compatibility still require maintenance.
-- The current evidence does not demonstrate a shared C++ core consumed by Python or TypeScript.
-
-**Assessment:** preferred fallback if a concrete requirement calls for an R-only native extension; not selected as the repository-wide shared core.
+**Assessment: rejected.** The project will not maintain the C++/Rcpp prototype, its CI workflow, or an Rcpp fallback. The Rust shared core is the only selected native implementation. This is an explicit project direction, not a claim that every Rust/R packaging gate is already resolved.
 
 ### Keep Python as the production core
 
@@ -136,7 +126,7 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 
 - Scene-v1 remains the stable experimental interchange boundary. It describes plot meaning and geometry, not a language-specific object graph or renderer API.
 - Keep the Python scene prototype as the reference producer and shared fixtures as the semantic compatibility gate.
-- Keep the Rust/rextendr and C++/Rcpp spikes isolated. Do not add either binding to the production R package yet.
+- Keep the Rust/rextendr integration isolated until its production R rollout gates are met. Retire the C++/Rcpp spike; do not introduce a parallel native implementation.
 - Preserve the legacy R API, defaults, return values, graphics-device behavior, and compatibility tests. No breaking migration is implied.
 - Keep the standalone CLI in Rust as already decided in #98. This decision does not require the CLI to depend on the rextendr package.
 - Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
@@ -166,21 +156,20 @@ guideline, while the installed package exceeds rextendr's 5 MB caution and
 needs explicit CRAN guidance before production R use. These are prototype
 measurements, not CRAN acceptance. The workflow verifies Rust/Cargo 1.78 and
 stable builds on Linux, macOS, and Windows. A controlled measurement of human
-maintainer time against C++/Rcpp has not been run; the existing 1–2 h versus
-2–4 h figures remain planning estimates, not observed effort.
+the C++/Rcpp comparison was discontinued by explicit project decision; historical 1–2 h versus 2–4 h figures remain planning estimates, not observed effort.
 
 ## Conditions for production rollout
 
-The strategic language decision and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern source-package policy, package footprint, and sustainable maintainer workflow.
+The strategic language decision (Rust only; C++/Rcpp rejected) and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern source-package policy, package footprint, and sustainable maintainer workflow.
 
 Before making the shared Rust crate a production R dependency:
 
 - Retain the single Cargo vendor metadata NOTE only with an explicit CRAN-comments explanation: `.cargo-checksum.json` is required for offline vendored-source integrity and `.cargo_vcs_info.json` preserves source provenance. Do not delete these files merely to silence `R CMD check`.
 - Keep Rust 1.78/Cargo 1.78 as the declared and CI-tested MSRV, and confirm the intended minimum against the actual CRAN build environment before submission.
 - Record the generated source-tarball and installed-package sizes and assess the installed size against rextendr's 5 MB caution.
-- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates. The controlled elapsed maintainer-time comparison against C++/Rcpp remains unmeasured; current effort ranges are planning estimates only.
+- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates. The C++/Rcpp comparison was discontinued by explicit project decision; no human-effort measurements were claimed.
 
-If Rust's R packaging or CRAN/toolchain burden cannot be brought within the maintainer budget, keep the Rust core authoritative for CLI and other consumers and evaluate a narrowly scoped R-only C++/Rcpp or pure-R adapter as an explicit exception. Such an exception must conform to the same versioned contracts and shared fixtures; it must not silently redefine common semantics.
+If Rust's R packaging or CRAN/toolchain burden cannot be brought within the maintainer budget, keep Rust authoritative for the CLI and other consumers and evaluate a narrowly scoped pure-R adapter as an explicit exception. C++/Rcpp is not an approved fallback. Any alternative adapter must conform to the same versioned contracts and shared fixtures; it must not silently redefine common semantics.
 
 ## Rollback and exit strategy
 
@@ -190,10 +179,10 @@ No production package depends on either spike yet, so the shared-library rollout
 2. Require semantic parity and legacy compatibility before switching the default path.
 3. Retain the previous implementation until the new path passes supported-platform package checks and binary/source installation tests.
 4. If Rust's CRAN/toolchain conditions cannot be met within the maintainer budget, do not force an unsafe or unmaintainable Rust dependency into the R package. Keep Rust as the authoritative core for consumers it can serve, and document any R-only adapter exception against the same conformance fixtures. The scene-v1 schema and fixtures remain unchanged.
-5. If C++ cannot serve the required non-R consumers without a second implementation, do not force it into the shared-core role; retain the language-neutral interchange boundary and revisit the architecture.
+5. C++/Rcpp is not an option under the current project decision. Retain the language-neutral interchange boundary if a future adapter constraint arises.
 
 ## Revisit the rollout plan when
 
 - The shared-crate proof identifies a better crate boundary or binding strategy.
-- CRAN toolchain policy, Rcpp/rextendr maintenance costs, or binary distribution constraints change.
+- CRAN toolchain policy, rextendr maintenance costs, or binary distribution constraints change.
 - A full compatibility and performance comparison exists for representative corrplot workloads rather than only the current scene-v1 prototype.
