@@ -63,4 +63,5 @@ This is the native Node backend. The runtime-isolated TypeScript facade
 in `packages/typescript/` selects this package for Node.js and the browser
 WASM package for browser builds. The initial shared normalized-matrix scene
 workflow and cross-runtime facade in #145 are implemented. Direct browser
-Canvas rendering remains separate work in #144.
+Canvas rendering is implemented by the TypeScript browser facade in #144;
+it is not part of this native Node package.
