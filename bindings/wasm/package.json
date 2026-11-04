@@ -3,8 +3,15 @@
   "version": "0.1.0",
   "description": "Browser WebAssembly binding for corrplot-ng",
   "type": "module",
-  "files": ["pkg"],
-  "exports": { ".": "./pkg/corrplot_ng_wasm.js" },
-  "scripts": { "build": "wasm-pack build --target web --release --out-dir pkg" },
+  "files": [
+    "pkg"
+  ],
+  "exports": {
+    ".": "./pkg/corrplot_ng_wasm.js"
+  },
+  "scripts": {
+    "build": "wasm-pack build --target web --release --out-dir pkg && node scripts/prepare-package.mjs",
+    "test:pack": "node scripts/test-pack.mjs"
+  },
   "license": "MIT"
 }
