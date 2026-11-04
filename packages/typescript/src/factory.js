@@ -73,7 +73,7 @@ function normalizeMatrixInput(input) {
 }
 
 export function createEngine(adapter, backend) {
-  for (const method of ["validateMatrix", "createScene", "renderSceneSvg", "renderSceneRgba", "renderMatrixSvg", "renderMatrixRgba", "getRendererCapabilities"]) {
+  for (const method of ["validateMatrix", "renderMatrixSvg", "renderMatrixRgba", "getRendererCapabilities"]) {
     if (typeof adapter?.[method] !== "function") {
       fail("configuration.invalid_field", "configuration", `backend adapter is missing '${method}'`, `adapter.${method}`);
     }
@@ -109,6 +109,9 @@ export function createEngine(adapter, backend) {
         displayType: options.displayType ?? "full",
         showDiagonal: options.showDiagonal ?? true,
       };
+      if (typeof adapter.createScene !== "function") {
+        fail("renderer.unsupported_feature", "renderer", "backend adapter does not support normalized-matrix scene creation", "adapter.createScene");
+      }
       const scene = unwrap(invoke(() => adapter.createScene(normalizeMatrixInput(input), normalizedOptions)), "scene");
       if (!scene || typeof scene !== "object" || !Number.isFinite(scene.width) || !Number.isFinite(scene.height) || !Array.isArray(scene.cells) || !Array.isArray(scene.texts)) {
         fail("renderer.output.invalid_scene", "export", "scene builder returned an invalid renderer-neutral scene", "output.scene");
@@ -123,6 +126,9 @@ export function createEngine(adapter, backend) {
         fail("configuration.invalid_field", "configuration", "render input must be a renderer-neutral scene or a scene-v1 JSON string", "scene");
       }
       if (options?.format === "svg") {
+        if (!isSceneV1Json && typeof adapter.renderSceneSvg !== "function") {
+          fail("renderer.unsupported_feature", "renderer", "backend adapter does not support typed-scene SVG rendering", "adapter.renderSceneSvg");
+        }
         const result = invoke(() => isSceneV1Json
           ? adapter.renderMatrixSvg(sceneOrSceneV1Json, method)
           : adapter.renderSceneSvg(sceneOrSceneV1Json, {
@@ -141,6 +147,9 @@ export function createEngine(adapter, backend) {
         const { widthPx, heightPx, dpi, background } = options;
         if (!Number.isInteger(widthPx) || widthPx <= 0 || !Number.isInteger(heightPx) || heightPx <= 0 || !background) {
           fail("configuration.invalid_field", "configuration", "RGBA output requires positive integer widthPx/heightPx and a background color", "output");
+        }
+        if (!isSceneV1Json && typeof adapter.renderSceneRgba !== "function") {
+          fail("renderer.unsupported_feature", "renderer", "backend adapter does not support typed-scene RGBA rendering", "adapter.renderSceneRgba");
         }
         const output = unwrap(invoke(() => isSceneV1Json
           ? adapter.renderMatrixRgba(sceneOrSceneV1Json, method, { widthPx, heightPx, dpi, background })
