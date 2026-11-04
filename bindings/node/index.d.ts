@@ -38,6 +38,24 @@ export interface CellGlyphInput {
   color?: RgbaColorInput;
 }
 
+export interface SceneCellSignificanceInput {
+  pValue?: number;
+  status: "unknown" | "significant" | "not_significant";
+  annotation?: string;
+  blank: boolean;
+}
+
+export interface SceneConfidenceIntervalInput {
+  lower: number;
+  upper: number;
+  x1: number;
+  x2: number;
+  y: number;
+  capHeight: number;
+  strokeWidth: number;
+  color: RgbaColorInput;
+}
+
 export interface SceneCellInput {
   x: number;
   y: number;
@@ -46,16 +64,52 @@ export interface SceneCellInput {
   fill: RgbaColorInput;
   stroke: RgbaColorInput;
   glyph?: CellGlyphInput;
+  pValue?: number;
+  normalizedValue?: number;
+  significance?: SceneCellSignificanceInput;
+  confidenceInterval?: SceneConfidenceIntervalInput;
 }
 
 export interface SceneTextInput {
   text: string;
+  semanticRole?: string;
   x: number;
   y: number;
+  fontFamily?: string;
   fontSize: number;
+  fontWeight?: string;
+  fontStyle?: string;
   color: RgbaColorInput;
   anchor: "start" | "middle" | "end";
   rotationDegrees?: number;
+}
+
+export interface SceneSignificancePolicyInput {
+  mode: "pch" | "p-value" | "blank" | "stars";
+  thresholds: number[];
+  symbol: string;
+}
+
+export interface SceneLegendEntryInput {
+  kind: "stop" | "interval" | "missing";
+  label: string;
+  color: RgbaColorInput;
+}
+
+export interface SceneClusterRegionInput {
+  id: string;
+  variables: string[];
+  sourceIndices: number[];
+  rowStart: number;
+  rowEnd: number;
+  columnStart: number;
+  columnEnd: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: RgbaColorInput;
+  lineWidth: number;
 }
 
 export interface SceneInput {
@@ -64,6 +118,9 @@ export interface SceneInput {
   description?: string;
   cells: SceneCellInput[];
   texts: SceneTextInput[];
+  significance?: SceneSignificancePolicyInput;
+  legend?: SceneLegendEntryInput[];
+  clusterRegions?: SceneClusterRegionInput[];
 }
 
 export interface SceneBuildOptionsInput {
