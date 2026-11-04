@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const { CorrplotError, createCorrplotEngine } = require("../src/node.cjs");
 
 const pixels = new Uint8Array([1, 2, 3, 4]);
+const validMatrix = { labels: ["alpha"], rows: 1, columns: 1, values: [1], kind: "correlation" };
 function adapter(overrides = {}) {
   return {
     validateMatrix: () => true,
@@ -19,7 +20,7 @@ function adapter(overrides = {}) {
 test("CommonJS entry creates an engine using an injected backend", async () => {
   const engine = await createCorrplotEngine({ adapter: adapter() });
   assert.equal(engine.backend, "injected");
-  assert.equal(engine.validate({}), true);
+  assert.equal(engine.validate(validMatrix), true);
   assert.equal(engine.render("{}", { format: "svg" }), "<svg />");
 });
 
@@ -35,7 +36,7 @@ test("CommonJS entry shares the facade CorrplotError class", async () => {
   const engine = await createCorrplotEngine({
     adapter: adapter({ validateMatrix: () => { throw nativeError; } }),
   });
-  assert.throws(() => engine.validate({}), error =>
+  assert.throws(() => engine.validate(validMatrix), error =>
     error instanceof CorrplotError &&
     error.diagnostic.code === "input.matrix.not_symmetric");
 });
