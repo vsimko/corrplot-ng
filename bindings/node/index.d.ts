@@ -55,6 +55,7 @@ export interface SceneTextInput {
   fontSize: number;
   color: RgbaColorInput;
   anchor: "start" | "middle" | "end";
+  rotationDegrees?: number;
 }
 
 export interface SceneInput {
