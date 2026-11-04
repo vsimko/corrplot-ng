@@ -76,9 +76,9 @@ input and publication-config workflow. Its declaration is intentionally
 narrow. Do not infer feature parity between the Rust CLI and either the shared
 Rust core or Python SVG prototype from their shared use of the word SVG. The
 browser TypeScript Canvas renderer draws the seven cell glyph methods, labels,
-figure text, missing cells, supplied significance annotations, and confidence
-intervals directly from the typed scene. Legends, cluster regions, plotmath
-labels, and complete accessible title/description metadata remain unsupported
+figure text, missing cells, supplied significance annotations, confidence
+intervals, legends, and cluster-region overlays directly from the typed scene.
+Plotmath labels and complete accessible title/description metadata remain unsupported
 and produce diagnostics rather than being silently omitted. The browser smoke
 runs checked-in fixtures against both Canvas and the shared Rust RGBA renderer,
 checking stable interior pixels and overlay ink at 1x and 2x device-pixel
