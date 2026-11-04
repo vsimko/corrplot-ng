@@ -653,6 +653,8 @@ mod tests {
             }],
             texts: vec![],
             significance: None,
+            legend: None,
+            cluster_regions: None,
         };
         let options = RgbaOptionsInput {
             width_px: 16,
