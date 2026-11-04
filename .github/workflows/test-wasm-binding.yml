@@ -64,7 +64,7 @@ jobs:
         run: wasm-pack test --node
       - name: Build browser ESM package
         working-directory: bindings/wasm
-        run: wasm-pack build --target web --release --out-dir pkg
+        run: npm run build
       - name: Measure WASM size, initialization, and renderer baselines
         if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         env:
@@ -80,7 +80,7 @@ jobs:
           retention-days: 90
       - name: Verify browser WASM npm package contents
         working-directory: bindings/wasm
-        run: npm pack --dry-run
+        run: npm run test:pack
       - name: Install npm workspace dependencies for the TypeScript facade smoke
         run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
       - name: Install Linux esbuild and Rollup binaries omitted with optional dependencies
