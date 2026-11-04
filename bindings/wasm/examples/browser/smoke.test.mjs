@@ -103,7 +103,60 @@ try {
   assert.equal(facadeResult.pixelLength, 64 * 64 * 4);
   assert.deepEqual(facadeErrors, [], "TypeScript facade page raised an uncaught error");
 
-  console.log(`${browserName} WASM and TypeScript facade smoke passed: SVG and Canvas outputs validated.`);
+  const reactPage = await browser.newPage();
+  const reactErrors = [];
+  reactPage.on("pageerror", error => reactErrors.push(error.message));
+  await reactPage.goto(
+    "http://127.0.0.1:4173/packages/react/test/browser/vite-dist/index.html",
+    { waitUntil: "networkidle" },
+  );
+  const reactPlot = reactPage.locator('[data-testid="corrplot"]');
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  let reactSvg = await reactPlot.locator("svg").evaluate(element => element.outerHTML);
+  assert.ok(reactSvg.includes("React smoke revision 0"), "React Strict Mode did not render the initial figure");
+
+  await reactPage.locator("#update").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"] svg')?.outerHTML.includes("React smoke revision 1"),
+    null,
+    { timeout: 15_000 },
+  );
+  reactSvg = await reactPlot.locator("svg").evaluate(element => element.outerHTML);
+  assert.ok(reactSvg.includes("gamma"), "React matrix update did not reach the rendered SVG");
+
+  await reactPage.locator("#toggle").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]') === null,
+    null,
+    { timeout: 10_000 },
+  );
+  await reactPage.locator("#toggle").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+
+  await reactPage.locator("#invalid").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "error",
+    null,
+    { timeout: 15_000 },
+  );
+  assert.ok(await reactPage.locator('[data-testid="corrplot"][role="alert"]').count());
+  await reactPage.locator("#recover").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  assert.deepEqual(reactErrors, [], "React integration page raised an uncaught error");
+
+  console.log(`${browserName} WASM, TypeScript facade, and React integration smoke passed.`);
 } finally {
   await browser.close();
 }

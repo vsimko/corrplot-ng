@@ -85,6 +85,8 @@ jobs:
         run: npm install --no-save --no-package-lock --ignore-scripts --omit=optional @esbuild/linux-x64@0.25.0
       - name: Bundle the browser TypeScript facade against the built WASM package
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
+      - name: Build React Vite and esbuild browser bundles
+        run: npm run build:browser-smoke --workspace=@corrplot-ng/react
       - name: Install Playwright
         if: matrix.node == 24
         run: npm install --no-save --no-package-lock playwright@1.56.1

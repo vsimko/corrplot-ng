@@ -77,6 +77,9 @@ jobs:
       - name: Stage Node package after platform binaries
         working-directory: bindings/node
         run: npm pack --pack-destination ${{ runner.temp }}
+      - name: Stage React browser adapter
+        working-directory: packages/react
+        run: npm pack --pack-destination ${{ runner.temp }}
       - name: Stage TypeScript facade
         working-directory: packages/typescript
         run: npm pack --pack-destination ${{ runner.temp }}
@@ -101,15 +104,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find dist -maxdepth 1 -name '*.tgz' | wc -l)" -eq 7
+          test "$(find dist -maxdepth 1 -name '*.tgz' | wc -l)" -eq 8
           cd dist
           sha256sum -- ./*.tgz | sort -k2 > SHA256SUMS
           cat > RELEASE-ORDER.txt <<'EOF'
           Non-publishing staging order:
           1. @corrplot-ng/native-node platform packages (four platform tarballs)
           2. @corrplot-ng/wasm
-          3. @corrplot-ng/native-node
-          4. @corrplot-ng/typescript
+          3. @corrplot-ng/react
+          4. @corrplot-ng/native-node
+          5. @corrplot-ng/typescript
 
           This bundle is a CI artifact only. It is not published to npm.
           EOF
