@@ -41,6 +41,62 @@ try {
   if (!(rgba.pixels instanceof Uint8Array) || rgba.pixels.byteLength !== rgba.strideBytes * rgba.heightPx) {
     throw new Error("browser facade returned invalid RGBA pixels");
   }
+  const statisticalScene = {
+    width: 100,
+    height: 50,
+    cells: [
+      {
+        x: 0, y: 0, size: 10, visible: true,
+        fill: { red: 255, green: 255, blue: 255, alpha: 255 },
+        stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
+        confidenceInterval: {
+          lower: 0.2, upper: 0.8, x1: 2, x2: 8, y: 5,
+          capHeight: 4, strokeWidth: 2,
+          color: { red: 220, green: 20, blue: 60, alpha: 255 },
+        },
+        significance: { pValue: 0.01, status: "significant", annotation: "**", blank: false },
+      },
+      {
+        x: 10, y: 0, size: 10, visible: true,
+        fill: { red: 255, green: 255, blue: 255, alpha: 255 },
+        stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
+        glyph: { kind: "circle", radius: 4, color: { red: 0, green: 0, blue: 0, alpha: 255 } },
+        significance: { pValue: null, status: "unknown", annotation: "?", blank: true },
+        confidenceInterval: {
+          lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5,
+          capHeight: 4, strokeWidth: 2,
+          color: { red: 220, green: 20, blue: 60, alpha: 255 },
+        },
+      },
+      {
+        x: 20, y: 0, size: 10, visible: false,
+        fill: { red: 255, green: 255, blue: 255, alpha: 255 },
+        stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
+        significance: { pValue: 0.5, status: "not_significant", annotation: "ns", blank: false },
+      },
+    ],
+    texts: [],
+    significance: { mode: "stars", thresholds: [0.05, 0.01], symbol: "*" },
+  };
+  const overlaySvg = engine.render(statisticalScene, { format: "svg" });
+  if (!overlaySvg.includes('class="confidence-interval"') ||
+      !overlaySvg.includes('class="significance-annotation"')) {
+    throw new Error("WASM typed-scene adapter dropped statistical overlays");
+  }
+  const overlayCanvas = document.createElement("canvas");
+  engine.renderToCanvas(statisticalScene, overlayCanvas, {
+    width: 100, height: 50, devicePixelRatio: 1,
+  });
+  const overlayPixels = overlayCanvas.getContext("2d").getImageData(0, 0, 100, 50).data;
+  const intervalPixelOffset = (5 * 100 + 5) * 4;
+  if (overlayPixels[intervalPixelOffset] !== 220 ||
+      overlayPixels[intervalPixelOffset + 1] !== 20 ||
+      overlayPixels[intervalPixelOffset + 2] !== 60) {
+    throw new Error("Canvas did not render the supplied confidence interval");
+  }
+  if (overlayPixels[(5 * 100 + 15) * 4] === 220) {
+    throw new Error("blank cell unexpectedly rendered its confidence interval");
+  }
 
   const canvas = document.createElement("canvas");
   const canvasResult = engine.renderToCanvas(scene, canvas, {
