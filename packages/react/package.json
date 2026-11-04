@@ -20,7 +20,8 @@
     "test": "node --test test/renderer.test.js test/package-isolation.test.js && npm run test:types",
     "test:types": "tsc --noEmit --strict --module ESNext --moduleResolution Bundler --jsx react-jsx --target ES2022 --lib ES2022,DOM test/types/usage.tsx",
     "build:browser-smoke": "esbuild src/index.js --bundle --format=esm --platform=browser --external:react --outfile=test/browser/esbuild/react.js --loader:.wasm=file --asset-names=[name] && vite build --config examples/vite/vite.config.js && node test/browser/assert-bundles.mjs",
-    "pack:dry-run": "npm pack --dry-run"
+    "pack:dry-run": "npm pack --dry-run",
+    "dev:browser-smoke": "vite --config examples/vite/vite.config.js"
   },
   "dependencies": {
     "@corrplot-ng/wasm": "0.1.0"
