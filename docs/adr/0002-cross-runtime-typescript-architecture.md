@@ -228,10 +228,9 @@ The current workspace contains these installable packages:
 - `@corrplot-ng/typescript`: the initial runtime-selecting facade with optional peer dependencies for the Node and WASM backends.
 - `@corrplot-ng/react`: browser-only React component and hook; it depends directly on `@corrplot-ng/wasm` and declares React as a peer dependency.
 
-The following packages remain planned, not current workspace packages:
+The following package remains planned, not a current workspace package:
 
 - `@corrplot-ng/core`: runtime-neutral public types, diagnostics, and API contracts only; no native or WASM backend dependency.
-- `@corrplot-ng/vue`: optional browser-only Vue component and composable. It depends on `@corrplot-ng/wasm` and declares Vue as a peer dependency; implemented under #292.
 
 The existing Node package and platform package names under `bindings/node/` should be preserved unless a separately reviewed migration is justified. A universal package that installs both execution backends is rejected: conditional exports alone do not prevent npm from installing declared dependencies.
 
