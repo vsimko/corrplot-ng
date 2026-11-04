@@ -12,7 +12,10 @@
       "import": "./src/index.js"
     }
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "test": "node --test test/renderer.test.js test/package-isolation.test.js && npm run test:types",
     "test:types": "tsc --noEmit --strict --module ESNext --moduleResolution Bundler --jsx react-jsx --target ES2022 --lib ES2022,DOM test/types/usage.tsx",
@@ -31,7 +34,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typescript": "^5.9.3",
-    "vite": "^7.0.0"
+    "vite": "7.0.0"
   },
   "engines": {
     "node": "^22 || ^24 || ^26"
