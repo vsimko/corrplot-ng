@@ -148,6 +148,33 @@ try {
     { timeout: 15_000 },
   );
   assert.ok(await reactPage.locator('[data-testid="corrplot"][role="alert"]').count());
+  await reactPage.waitForFunction(
+    () => document.querySelector("#error-count")?.textContent === "1",
+    null,
+    { timeout: 10_000 },
+  );
+  await reactPage.waitForTimeout(100);
+  assert.equal(await reactPage.locator("#error-count").textContent(), "1", "onError must not repeat when its callback rerenders the parent");
+
+  await reactPage.locator("#recover").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  await reactPage.locator("#invalid").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "error",
+    null,
+    { timeout: 15_000 },
+  );
+  await reactPage.waitForFunction(
+    () => document.querySelector("#error-count")?.textContent === "2",
+    null,
+    { timeout: 10_000 },
+  );
+  await reactPage.waitForTimeout(100);
+  assert.equal(await reactPage.locator("#error-count").textContent(), "2", "a later error should notify once again");
   await reactPage.locator("#recover").click();
   await reactPage.waitForFunction(
     () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
