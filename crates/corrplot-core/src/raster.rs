@@ -212,7 +212,10 @@ impl Scene {
         }
         for (index, region) in self.cluster_regions.iter().enumerate() {
             if region.id.is_empty() || region.variables.is_empty()
+                || region.variables.iter().any(|variable| variable.is_empty())
                 || region.variables.len() != region.source_indices.len()
+                || region.variables.iter().enumerate().any(|(index, variable)| region.variables[..index].contains(variable))
+                || region.source_indices.iter().enumerate().any(|(index, source)| region.source_indices[..index].contains(source))
                 || region.row_start > region.row_end
                 || region.column_start > region.column_end
                 || !region.x.is_finite() || !region.y.is_finite()
@@ -953,6 +956,26 @@ mod tests {
             kind: "custom".into(), label: "Custom".into(), color: RgbaColor::WHITE,
         });
         assert!(scene.validate().unwrap_err().message.contains("unsupported kind"));
+    }
+
+    #[test]
+    fn rejects_duplicate_or_empty_cluster_region_members() {
+        let mut scene = sample_scene();
+        scene.cluster_regions.push(SceneClusterRegion {
+            id: "group-a".into(), variables: vec!["alpha".into(), "alpha".into()],
+            source_indices: vec![0, 1], row_start: 0, row_end: 0,
+            column_start: 0, column_end: 1, x: 10.0, y: 10.0,
+            width: 40.0, height: 20.0, color: RgbaColor::WHITE, line_width: 1.0,
+        });
+        assert!(scene.validate().unwrap_err().message.contains("invalid metadata or geometry"));
+
+        scene.cluster_regions[0].variables = vec!["alpha".into(), "beta".into()];
+        scene.cluster_regions[0].source_indices = vec![0, 0];
+        assert!(scene.validate().unwrap_err().message.contains("invalid metadata or geometry"));
+
+        scene.cluster_regions[0].variables = vec!["alpha".into(), "".into()];
+        scene.cluster_regions[0].source_indices = vec![0, 1];
+        assert!(scene.validate().unwrap_err().message.contains("invalid metadata or geometry"));
     }
 
     #[test]
