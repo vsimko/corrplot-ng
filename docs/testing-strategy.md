@@ -30,8 +30,8 @@ The current implementation includes:
   scene-v1 parser/builder, and typed-scene SVG/RGBA rendering. The CLI,
   Node-API, browser-WASM, and disposable R/rextendr consumers use this core
   for their implemented operations.
-- An experimental Node-API binding and browser-WASM binding, plus an initial
-  TypeScript facade with runtime-specific backend selection.
+- Node-API and browser-WASM bindings, a runtime-specific TypeScript facade,
+  direct browser Canvas 2D rendering, and browser-only React/Vue adapters.
 - Experimental C++/Rcpp and Rust/rextendr R-integration candidates; the
   rextendr adapter is disposable evaluation infrastructure, not the
   production R package.
@@ -187,7 +187,7 @@ cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo
 The standalone CLI remains a thin application adapter. Production R rollout
 is separately gated by the CRAN and maintainer-workflow evidence in ADR 0001.
 
-### 6. Node, browser-WASM, and TypeScript integrations
+### 6. Node, browser-WASM, TypeScript, Canvas, and framework integrations
 
 The native Node-API binding tests matrix validation, typed-scene SVG/RGBA,
 and matrix-bearing scene-v1 to SVG/RGBA operations against the shared Rust
@@ -207,10 +207,22 @@ workflows. It selects the runtime-specific Node or WASM backend and exposes
 matrix validation, normalized-matrix scene construction, typed-scene
 SVG/RGBA rendering, matrix-bearing scene-v1 compatibility rendering,
 typed-array normalization, capability lookup, diagnostics, and disposal.
-The initial API slice in #145 is implemented; full scene-v1 presentation
-semantics and broader cross-backend conformance remain separate work in #146.
-Direct Canvas (#144) remains unfinished; the React and Vue adapters (#291/#292) are implemented as browser-only packages and have framework-specific lifecycle and browser-bundle checks.
-The binding READMEs document their operation and runtime boundaries.
+The direct browser Canvas 2D adapter adds `renderToCanvas()` for HTMLCanvasElement,
+OffscreenCanvas, and caller-provided 2D contexts; its browser smoke uses a
+checked-in visual fixture compared with the shared Rust RGBA renderer. The
+React and Vue adapters (#291/#292) are browser-only packages with framework
+lifecycle and browser-bundle checks.
+
+The Node/WASM parity workflow consumes the common correlation and general
+numeric matrix fixture corpora. It compares validation, normalized-matrix
+scene construction, SVG, and RGBA for all seven cell methods, and includes a
+deterministic 64×64 correlation matrix. Exact SVG/RGBA equality is used only
+between Node and WASM adapters that call the same Rust core. Canvas uses
+sample-based visual conformance rather than byte equality. The unified
+TypeScript API (#145), direct Canvas (#144), and framework adapters are
+implemented; broader scene-v1 semantics, CLI/R adapter fixture parity, and
+performance evidence remain in #146 and related measurement issues.
+The binding READMEs document runtime boundaries.
 
 ### Local command entry point
 
@@ -272,12 +284,13 @@ pull requests.
 
 ### 8. Future test extensions
 
-The initial normalized-matrix TypeScript scene workflow in #145, Node native
-binding, and browser-WASM operations have dedicated test coverage. Full
-scene-v1 presentation semantics and broader semantic/visual parity remain
-incomplete (#146); direct Canvas (#144), worker orchestration, and public npm
-publication (#293) remain separate work. The React/Vue adapters (#291/#292)
-are implemented and have dedicated browser integration checks.
+The normalized-matrix TypeScript API (#145), direct Canvas (#144), Node and
+browser-WASM bindings, and React/Vue adapters (#291/#292) are implemented and
+have dedicated correctness or browser integration checks. Issue #146 remains
+partially open for broader scene-v1 semantics, CLI/R adapter fixture parity,
+additional reviewed visual comparisons, and performance baselines. R-host
+measurement evidence is tracked separately in #267/#238; worker orchestration
+and public npm publication (#293) remain separate or deferred work.
 
 When one of these interfaces is implemented:
 
@@ -337,8 +350,8 @@ version. Test coverage percentage alone is not proof of compatibility.
 
 - Each current test layer is described as implemented, with its evidence and
   limitations.
-- Implemented Node/WASM/TypeScript slices are distinguished from incomplete
-  APIs, Canvas/framework work, and production support.
+- Implemented Node/WASM/TypeScript/Canvas/React/Vue slices are distinguished
+  from incomplete scene-v1 semantics and production support.
 - Contract conformance, adapter parity, semantic compatibility, structural
   SVG conformance, pixel regression, and shared implementation parity are
   distinct claims.

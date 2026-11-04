@@ -5,17 +5,22 @@ on:
     paths:
       - "bindings/node/**"
       - "bindings/cross-backend/**"
+      - "tests/fixtures/**"
       - "bindings/wasm/**"
       - "crates/corrplot-core/**"
       - "prototypes/shared-svg/scene-v1.example.json"
+      - "prototypes/shared-svg/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
   push:
     branches: [main]
     paths:
       - "bindings/node/**"
+      - "bindings/cross-backend/**"
+      - "tests/fixtures/**"
       - "bindings/wasm/**"
       - "crates/corrplot-core/**"
       - "prototypes/shared-svg/scene-v1.example.json"
+      - "prototypes/shared-svg/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
   workflow_dispatch:
 
