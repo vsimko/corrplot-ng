@@ -286,3 +286,27 @@ test("preserves typed-scene statistical metadata through the Node adapter", () =
   });
   assert.ok(rgba.pixels.some((channel, index) => index % 4 === 0 && channel === 220));
 });
+
+
+test("validates plot-wide significance policy and cell p-values through the Node adapter", () => {
+  const options = {
+    width: 20, height: 10, unit: "px", fontFamily: "sans-serif",
+    fontSizePt: 10, background: white,
+  };
+  const invalidPolicy = {
+    ...scene,
+    significance: { mode: "unsupported", thresholds: [0.05], symbol: "*" },
+  };
+  assert.throws(
+    () => renderSceneSvg(invalidPolicy, options),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.output.invalid_options",
+  );
+  const invalidPValue = {
+    ...scene,
+    cells: [{ ...scene.cells[0], pValue: 1.5 }],
+  };
+  assert.throws(
+    () => renderSceneSvg(invalidPValue, options),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.output.invalid_options",
+  );
+});
