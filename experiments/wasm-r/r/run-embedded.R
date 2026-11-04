@@ -110,16 +110,16 @@ main <- function() {
   invoke <- function() .Call("corrplot_wasm_validate", wasm, request)
   rss_before_init <- process_rss_bytes()
   peak_rss_before_init <- .Call("corrplot_wasm_peak_rss_bytes")
-  init_started <- proc.time()[["elapsed"]]
+  init_started_ns <- .Call("corrplot_wasm_monotonic_ns")
   .Call("corrplot_wasm_initialize", wasm)
-  initialization_ms <- (proc.time()[["elapsed"]] - init_started) * 1000
+  initialization_ms <- (.Call("corrplot_wasm_monotonic_ns") - init_started_ns) / 1e6
   rss_after_init <- process_rss_bytes()
   peak_rss_after_init <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_init <- .Call("corrplot_wasm_memory_bytes")
 
-  first_started <- proc.time()[["elapsed"]]
+  first_started_ns <- .Call("corrplot_wasm_monotonic_ns")
   first_response_json <- invoke()
-  first_call_ms <- (proc.time()[["elapsed"]] - first_started) * 1000
+  first_call_ms <- (.Call("corrplot_wasm_monotonic_ns") - first_started_ns) / 1e6
   rss_after_first_call <- process_rss_bytes()
   peak_rss_after_first_call <- .Call("corrplot_wasm_peak_rss_bytes")
   wasm_memory_after_first_call <- .Call("corrplot_wasm_memory_bytes")
