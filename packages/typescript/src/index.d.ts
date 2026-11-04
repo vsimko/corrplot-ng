@@ -90,15 +90,18 @@ export interface SceneCellInput {
   glyph?: CellGlyphInput | null;
   pValue?: number | null;
   normalizedValue?: number | null;
-  significance?: SceneCellSignificance;
-  confidenceInterval?: SceneConfidenceInterval;
+  significance?: SceneCellSignificance | null;
+  confidenceInterval?: SceneConfidenceInterval | null;
 }
 export interface SceneTextInput {
   text: string;
-  semanticRole?: string;
+  semanticRole?: string | null;
   x: number;
   y: number;
+  fontFamily?: string | null;
   fontSize: number;
+  fontWeight?: string | null;
+  fontStyle?: string | null;
   color: RgbaColor;
   anchor: "start" | "middle" | "end";
   rotationDegrees?: number;
@@ -106,12 +109,12 @@ export interface SceneTextInput {
 export interface SceneInput {
   width: number;
   height: number;
-  description?: string;
+  description?: string | null;
   cells: SceneCellInput[];
   texts: SceneTextInput[];
-  significance?: SceneSignificancePolicy;
-  legend?: SceneLegendEntryInput[];
-  clusterRegions?: SceneClusterRegionInput[];
+  significance?: SceneSignificancePolicy | null;
+  legend?: SceneLegendEntryInput[] | null;
+  clusterRegions?: SceneClusterRegionInput[] | null;
 }
 export interface SceneResult {
   scene?: SceneInput | null;
