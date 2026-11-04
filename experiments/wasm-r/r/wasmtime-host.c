@@ -132,6 +132,11 @@ static uint64_t monotonic_ns(void) {
 #endif
 }
 
+/* Expose the same high-resolution monotonic clock to the R harness. */
+SEXP corrplot_wasm_monotonic_ns(void) {
+  return Rf_ScalarReal((double)monotonic_ns());
+}
+
 static char *validate_json(const char *module_path, const char *json,
                            phase_timings_t *timings, size_t *output_len) {
   size_t json_len = strlen(json);
