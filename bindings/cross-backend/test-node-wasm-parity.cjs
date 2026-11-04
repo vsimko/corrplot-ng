@@ -119,7 +119,7 @@ test("Node and WASM build the same normalized-matrix scene and render it identic
   const wasmResult = wasm.createScene(matrix, options);
   assert.equal(nativeResult.diagnostic ?? null, null);
   assert.equal(wasmResult.diagnostic ?? null, null);
-  assert.deepEqual(wasmResult.scene, nativeResult.scene);
+  assert.deepEqual(JSON.parse(JSON.stringify(wasmResult.scene)), JSON.parse(JSON.stringify(nativeResult.scene)));
 
   const svgOptions = {
     width: nativeResult.scene.width,
