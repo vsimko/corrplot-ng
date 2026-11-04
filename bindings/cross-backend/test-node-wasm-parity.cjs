@@ -11,7 +11,10 @@ const white = { red: 255, green: 255, blue: 255, alpha: 255 };
 const scene = {
   width: 80,
   height: 30,
-  legend: [{ kind: "missing", label: "Not observed", color: { red: 242, green: 242, blue: 242, alpha: 255 } }],
+  legend: [
+    { kind: "missing", label: "NA", color: { red: 242, green: 242, blue: 242, alpha: 255 } },
+    { kind: "stop", label: "Sig", color: { red: 33, green: 102, blue: 172, alpha: 255 } },
+  ],
   clusterRegions: [{
     id: "group-a",
     variables: ["alpha"],
