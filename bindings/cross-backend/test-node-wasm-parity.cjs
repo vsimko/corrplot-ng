@@ -107,6 +107,48 @@ test("Node and WASM render identical RGBA bytes for typed scenes", () => {
   assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels);
 });
 
+test("Node and WASM build the same normalized-matrix scene and render it identically", () => {
+  const options = {
+    cellMethod: "ellipse",
+    title: "Cross-runtime scene",
+    description: "Built from the same normalized matrix.",
+    displayType: "upper",
+    showDiagonal: true,
+  };
+  const nativeResult = native.createScene(matrix, options);
+  const wasmResult = wasm.createScene(matrix, options);
+  assert.equal(nativeResult.diagnostic ?? null, null);
+  assert.equal(wasmResult.diagnostic ?? null, null);
+  assert.deepEqual(wasmResult.scene, nativeResult.scene);
+
+  const svgOptions = {
+    width: nativeResult.scene.width,
+    height: nativeResult.scene.height,
+    unit: "px",
+    fontFamily: "sans-serif",
+    fontSizePt: 10,
+    background: white,
+  };
+  const nativeSvg = native.renderSceneSvg(nativeResult.scene, svgOptions);
+  const wasmSvg = unwrapSvg(wasm.renderSceneSvg(wasmResult.scene, svgOptions));
+  assert.equal(wasmSvg, nativeSvg);
+
+  const rasterOptions = { widthPx: 128, heightPx: 128, dpi: 96, background: white };
+  const nativeRgba = native.renderSceneRgba(nativeResult.scene, rasterOptions);
+  const wasmRgba = wasm.renderSceneRgba(wasmResult.scene, rasterOptions);
+  assert.equal(wasmRgba.diagnostic ?? null, null);
+  assert.deepEqual(Buffer.from(wasmRgba.pixels), nativeRgba.pixels);
+});
+
+test("Node and WASM return the same diagnostic for invalid scene construction", () => {
+  const invalid = { ...matrix, columns: 1, values: [1, 0.5] };
+  const nativeResult = native.createScene(invalid);
+  const wasmResult = wasm.createScene(invalid, {});
+  assert.equal(nativeResult.scene ?? null, null);
+  assert.deepEqual(wasmResult.diagnostic, nativeResult.diagnostic);
+  assert.equal(nativeResult.diagnostic.code, "input.matrix.invalid_shape");
+});
+
 test("Node and WASM construct identical matrix SVG across fixtures and cell methods", () => {
   for (const fixture of matrixFixtures) {
     for (const method of cellMethods) {
