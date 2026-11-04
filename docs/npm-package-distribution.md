@@ -11,7 +11,7 @@ The shared API contract and semantics should be consistent across runtimes. That
 
 ## Workspace
 
-The repository root is a private npm workspace, not a publishable package. Its workspace globs include the Node binding, browser WASM binding, TypeScript facade, and optional React adapter. The four platform-specific native packages remain optional dependencies of the Node package but are deliberately not npm workspaces: their `os`/`cpu` constraints must not make a cross-platform workspace install fail. Their tarballs are built separately on matching runners. Working bindings remain in their current directories; no package relocation is required.
+The repository root is a private npm workspace, not a publishable package. Its workspace globs include the Node binding, browser WASM binding, TypeScript facade, and optional React and Vue adapters. The four platform-specific native packages remain optional dependencies of the Node package but are deliberately not npm workspaces: their `os`/`cpu` constraints must not make a cross-platform workspace install fail. Their tarballs are built separately on matching runners. Working bindings remain in their current directories; no package relocation is required.
 
 Install and validate locally with:
 
@@ -24,15 +24,15 @@ npm run pack:dry-run
 
 The workspace uses Changesets for independent package versions and coordinated changelogs. Add a changeset for consumer-visible package changes with `npm run changeset`; do not add changesets for repository-only maintenance that does not alter published package contents.
 
-The planned `@corrplot-ng/core` and Vue packages are not yet present. The initial `@corrplot-ng/typescript` facade and its public normalized-matrix scene workflow are implemented under #145. The React adapter is implemented under #291 as a separate browser-only workspace package. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
+The planned `@corrplot-ng/core` package is not yet present. The initial `@corrplot-ng/typescript` facade and its public normalized-matrix scene workflow are implemented under #145. The React and Vue adapters are implemented under #291 and #292 as separate browser-only workspace packages. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
 
 ## Current implementation status — 2026-11-04
 
-The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and `@corrplot-ng/react`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
+The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, `@corrplot-ng/react`, and `@corrplot-ng/vue`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
 
 The native Node and browser WASM packages expose matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA operations, matrix-bearing scene-v1 SVG/RGBA operations, renderer capabilities, and diagnostic-v1 errors. The TypeScript facade validates array or typed-array `MatrixInput`, creates a renderer-neutral scene through the shared Rust builder, renders that scene to SVG/RGBA, retains matrix-bearing scene-v1 JSON rendering for compatibility, verifies an optional renderer ID, supports adapter injection, and disposes the backend. Node ESM/CommonJS and browser conditional-export usage are type-checked; runtime smoke tests exercise the native backend and a bundled browser/WASM facade.
 
-The scene-v1 parser used by the bindings currently supports the matrix-bearing subset, not every presentation field in the full scene-v1 contract. The browser smoke example draws returned RGBA bytes into a host-owned Canvas; it is not the direct scene-to-Canvas renderer tracked by #144. The React adapter under #291 is implemented as a browser-only package. The Vue adapter remains unimplemented under #292.
+The scene-v1 parser used by the bindings currently supports the matrix-bearing subset, not every presentation field in the full scene-v1 contract. The browser smoke example draws returned RGBA bytes into a host-owned Canvas; it is not the direct scene-to-Canvas renderer tracked by #144. The React adapter under #291 and Vue adapter under #292 are implemented as browser-only packages.
 
 Public npm publication remains explicitly disabled and requires separate maintainer approval under #293.
 
@@ -44,7 +44,7 @@ Public npm publication remains explicitly disabled and requires separate maintai
 | `@corrplot-ng/wasm` | Browser execution backend and WASM assets | WASM/browser only |
 | `@corrplot-ng/native-node` | Node.js execution backend | Node-API addon and matching platform package |
 | `@corrplot-ng/react` | Optional React component and hook | `@corrplot-ng/wasm`; React peer dependency; implemented |
-| `@corrplot-ng/vue` | Optional Vue components/composables | Vue peer dependency and browser API; planned |
+| `@corrplot-ng/vue` | Optional Vue component and composable | `@corrplot-ng/wasm`; Vue peer dependency; implemented |
 | `@corrplot-ng/typescript` | Initial runtime-selecting facade | Optional peer dependencies for the Node and WASM backends |
 
 The Node package already has an implementation under `bindings/node/` and platform-specific package names. Preserve these names unless a separate migration is reviewed. Do not rename or recreate working native package artifacts as part of package-workspace preparation.
@@ -73,11 +73,11 @@ The pull-request workspace workflow validates manifests, workspace links, Node b
 1. Builds each native platform package on its matching GitHub-hosted runner.
 2. Builds the browser WASM package.
 3. Stages the WASM and Node base package tarballs after the platform binaries.
-4. Stages the React adapter after the browser WASM package.
+4. Stages the React and Vue adapters after the browser WASM package.
 5. Stages the TypeScript facade after its runtime backends.
-6. Assembles all eight tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
+6. Assembles all nine tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
 
-The staging workflow now includes the React adapter tarball after WASM and before the TypeScript facade. The current bundle contains eight tarballs: four native platform packages, WASM, the main Node package, React, and the TypeScript facade.
+The staging workflow includes the React and Vue adapter tarballs after WASM and before the TypeScript facade. The current bundle contains nine tarballs: four native platform packages, WASM, the main Node package, React, Vue, and the TypeScript facade.
 
 The staging workflow must remain non-publishing: it must not run `npm publish`, use npm credentials, request OIDC publication permissions, or publish automatically from tags. The current stage is build/test/package only.
 
@@ -106,7 +106,7 @@ The future publication issue is #293. It remains deferred until maintainers expl
 The framework packages are part of the intended ecosystem, but they are not prerequisites for completing the core/browser API:
 
 - React integration: #291 — implemented in `packages/react/`. It exports `Corrplot` and `useCorrplot`, initializes the WASM backend after mount, ignores results from cleaned-up effects, and renders inline SVG. React is a peer dependency; the only runtime package dependency is `@corrplot-ng/wasm`. Vite and esbuild production bundles are checked for Node-only dependencies, and browser smoke tests cover Strict Mode, updates, unmount/remount, initialization failures, and rendering errors.
-- Vue integration: #292 — planned. It must remain a thin browser host adapter and must not implement correlation or rendering semantics.
+- Vue integration: #292 — implemented in `packages/vue/` as a browser-only component and composable over `@corrplot-ng/wasm`; Vue is a peer dependency. It remains a thin browser host adapter and does not implement correlation or rendering semantics.
 
 Framework packages must not pull native Node artifacts into browser dependency graphs.
 
@@ -115,7 +115,7 @@ Framework packages must not pull native Node artifacts into browser dependency g
 - #145 — shared TypeScript API contract and runtime package isolation (**normalized-matrix scene workflow, typed-scene SVG/RGBA, typed-array normalization, runtime isolation, Node ESM/CommonJS and browser type checks, and native/browser runtime smoke coverage implemented**).
 - #290 — workspace, versioning, CI, and non-publishing tarball/release preparation (**complete**).
 - #291 — React integration (**component, hook, browser-only WASM dependency, Vite/esbuild bundling, and browser lifecycle/error coverage implemented**).
-- #292 — Vue integration.
+- #292 — Vue integration (**component, composable, reactive updates, lifecycle/error handling, browser-only bundling, and non-publishing package staging implemented**).
 - #293 — later npm publication; explicitly deferred.
 
 The initial Node and WASM backend implementation slices in #141 and #142 are complete. The runtime-isolated TypeScript facade and normalized-matrix scene workflow in #145 are implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain tracked separately by #146; direct Canvas remains #144. Extend the existing packages rather than restarting them.

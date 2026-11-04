@@ -11,15 +11,17 @@
   "scripts": {
     "test:node": "npm run test --workspace=@corrplot-ng/native-node",
     "test:typescript": "npm run test --workspace=@corrplot-ng/typescript",
-    "test": "npm run test:node && npm run test:typescript && npm run test:react",
+    "test": "npm run test:node && npm run test:typescript && npm run test:react && npm run test:vue",
     "pack:node": "npm pack --dry-run --workspace=@corrplot-ng/native-node",
     "pack:wasm": "npm run test:pack --workspace=@corrplot-ng/wasm && npm pack --dry-run --workspace=@corrplot-ng/wasm",
     "pack:typescript": "npm pack --dry-run --workspace=@corrplot-ng/typescript",
-    "pack:dry-run": "npm run pack:node && npm run pack:wasm && npm run pack:typescript && npm run pack:react",
+    "pack:dry-run": "npm run pack:node && npm run pack:wasm && npm run pack:typescript && npm run pack:react && npm run pack:vue",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "test:react": "npm run test --workspace=@corrplot-ng/react",
-    "pack:react": "npm pack --dry-run --workspace=@corrplot-ng/react"
+    "pack:react": "npm pack --dry-run --workspace=@corrplot-ng/react",
+    "test:vue": "npm run test --workspace=@corrplot-ng/vue",
+    "pack:vue": "npm pack --dry-run --workspace=@corrplot-ng/vue"
   },
   "devDependencies": {
     "@changesets/cli": "2.29.7"

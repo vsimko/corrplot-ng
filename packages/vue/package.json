@@ -1,0 +1,40 @@
+{
+  "name": "@corrplot-ng/vue",
+  "version": "0.1.0",
+  "description": "Vue 3 components and composables for browser-based corrplot-ng rendering",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "test": "node --test test/renderer.test.js test/package-isolation.test.js && npm run test:types",
+    "test:types": "tsc --noEmit --strict --module ESNext --moduleResolution Bundler --target ES2022 --lib ES2022,DOM test/types/usage.ts",
+    "build:browser-smoke": "esbuild src/index.js --bundle --format=esm --platform=browser --external:vue --outfile=test/browser/esbuild/vue.js --loader:.wasm=file --asset-names=[name] && vite build --config examples/vite/vite.config.js && node test/browser/assert-bundles.mjs",
+    "pack:dry-run": "npm pack --dry-run",
+    "dev:browser-smoke": "vite --config examples/vite/vite.config.js"
+  },
+  "dependencies": {
+    "@corrplot-ng/wasm": "0.1.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.1",
+    "esbuild": "0.25.0",
+    "typescript": "^5.9.3",
+    "vite": "7.0.0",
+    "vue": "^3.5.13"
+  },
+  "engines": {
+    "node": "^22 || ^24 || ^26"
+  },
+  "license": "MIT"
+}

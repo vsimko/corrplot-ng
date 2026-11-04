@@ -68,10 +68,10 @@ flowchart TB
     RPKG --> NM
     RPKG --> SC
     WASM -. RGBA output consumed by host .-> CANVAS
-    TS -. future framework integration .-> FRAME
+    WASM -. browser-only framework adapters .-> FRAME
 ```
 
-Solid edges represent implemented integration paths or contract use. Dashed edges represent host-side usage or unfinished integrations; they must not be read as a complete renderer or framework API. The browser binding returns SVG or owned RGBA data; it does not implement direct Canvas rendering. The R/rextendr adapter is a disposable evaluation integration, not the production R package.
+Solid edges represent implemented integration paths or contract use. Dashed edges represent host-owned boundaries. React and Vue are thin browser adapters over WASM; they do not implement correlation semantics. The browser binding returns SVG or owned RGBA data; it does not implement direct Canvas rendering. The R/rextendr adapter is a disposable evaluation integration, not the production R package.
 
 ## Contracts: stable boundaries, not a shared runtime
 
@@ -118,7 +118,7 @@ Node-based WASM tests and package checks run on Node 24 and 26. The browser smok
 
 The facade in `packages/typescript/` provides runtime-specific exports and backend selection: Node.js loads the native Node-API backend, while browser builds load the WASM backend. It exposes matrix validation, Rust-backed normalized-matrix scene construction, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 JSON compatibility rendering, renderer capabilities with optional renderer-ID verification, diagnostic errors, adapter injection, and idempotent disposal. Matrix input accepts JavaScript arrays with explicit `null` values or numeric typed arrays with an explicit boolean missing-cell mask.
 
-The initial API slice tracked by #145 is implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain separate work in #146; direct Canvas integration (#144) and the Vue adapter (#292) remain unfinished. The React adapter (#291) is implemented in `packages/react/` as a browser-only component and hook over the WASM backend. See the [TypeScript package README](../packages/typescript/README.md) and [React package README](../packages/react/README.md).
+The initial API slice tracked by #145 is implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain separate work in #146; direct Canvas integration (#144) remains unfinished. The React adapter (#291) is implemented in `packages/react/`, and the Vue adapter (#292) is implemented in `packages/vue/`; both are browser-only components over the WASM backend. See the [TypeScript package README](../packages/typescript/README.md), [React package README](../packages/react/README.md), and [Vue package README](../packages/vue/README.md).
 
 ### R package
 
@@ -143,7 +143,7 @@ The following capabilities remain incomplete or separately gated:
 - **Full scene-v1 semantics and cross-backend conformance:** broader semantic and visual parity remain unfinished (#146). The initial normalized-matrix TypeScript scene workflow in #145 is implemented; direct Canvas remains separate (#144).
 - **Direct browser Canvas:** the current WASM binding returns SVG or RGBA; Canvas drawing is host-owned. Direct Canvas/OffscreenCanvas integration remains #144.
 - **React adapter:** implemented in `packages/react/` as a browser-only component and hook over the WASM package; React is a peer dependency.
-- **Vue adapter:** not implemented.
+- **Vue adapter:** implemented in `packages/vue/` as a browser-only component and composable over the WASM package; Vue is a peer dependency.
 - **Threaded WASM and worker orchestration:** the baseline is single-threaded; shared memory, worker lifecycle, and worker protocols are not provided by the package.
 - **npm publication:** package build and tarball staging are non-publishing preparation. Public publication remains deferred under #293.
 - **Cross-runtime semantic and visual parity:** current tests cover specific operations and fixtures; they do not prove complete API or presentation parity.
@@ -164,7 +164,7 @@ The Rust/rextendr integration remains a disposable evaluation adapter that prove
 | R compatibility | Legacy path plus normalized-input and experimental scene paths; production Rust integration not approved |
 | Rust/rextendr and C++/Rcpp | Evaluation spikes; rextendr consumes the shared Rust core for implemented operations |
 | Python shared-scene/SVG | Reference/prototype implementation |
-| Direct Canvas, workers, Vue | Not implemented; React browser adapter implemented separately |
+| Direct Canvas, workers | Not implemented; React and Vue browser adapters implemented separately |
 | npm publication | Explicitly deferred |
 
 The accepted Rust shared-core direction now has working CLI, Node, and browser-WASM consumers for the implemented operation slice. That does not imply complete semantic parity, full scene-v1 presentation support, or production status for the bindings. Keep language-specific adapters thin, preserve scene-v1 as the versioned interchange/conformance contract, and keep production R rollout and npm publication behind their separate gates.
