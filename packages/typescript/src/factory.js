@@ -60,7 +60,7 @@ function normalizeMatrixInput(input) {
   }
   for (let index = 0; index < values.length; index += 1) {
     if (values[index] !== null && typeof values[index] !== "number") {
-      fail("input.matrix.non_numeric", "input", "matrix values must be numbers or null", `values[${index}]`);
+      fail("configuration.invalid_field", "configuration", "matrix values must be numbers or null", `values[${index}]`);
     }
   }
   return {
