@@ -107,7 +107,7 @@ try {
   const reactErrors = [];
   reactPage.on("pageerror", error => reactErrors.push(error.message));
   await reactPage.goto(
-    "http://127.0.0.1:4174/",
+    "http://127.0.0.1:4173/packages/react/test/browser/vite-dist/index.html",
     { waitUntil: "networkidle" },
   );
   const reactPlot = reactPage.locator('[data-testid="corrplot"]');
@@ -154,9 +154,34 @@ try {
     null,
     { timeout: 30_000 },
   );
-  assert.deepEqual(reactErrors, [], "React integration page raised an uncaught error");
+  assert.deepEqual(reactErrors, [], "React production integration page raised an uncaught error");
 
-  console.log(`${browserName} WASM, TypeScript facade, and React integration smoke passed.`);
+  const strictModePage = await browser.newPage();
+  const strictModeErrors = [];
+  strictModePage.on("pageerror", error => strictModeErrors.push(error.message));
+  await strictModePage.goto("http://127.0.0.1:4174/", { waitUntil: "domcontentloaded" });
+  await strictModePage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  assert.ok(await strictModePage.locator('[data-testid="corrplot"] svg').count());
+
+  await strictModePage.locator("#toggle").click();
+  await strictModePage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]') === null,
+    null,
+    { timeout: 10_000 },
+  );
+  await strictModePage.locator("#toggle").click();
+  await strictModePage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  assert.deepEqual(strictModeErrors, [], "React Strict Mode development page raised an uncaught error");
+
+  console.log(`${browserName} WASM, TypeScript facade, and React production/Strict Mode smoke passed.`);
 } finally {
   await browser.close();
 }
