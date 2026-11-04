@@ -59,7 +59,7 @@ function validateScene(scene) {
   for (const [index, region] of (scene.clusterRegions ?? []).entries()) {
     const path = `scene.clusterRegions[${index}]`;
     const validIndices = values => Array.isArray(values) && values.length > 0 &&
-      values.every(value => Number.isSafeInteger(value) && value >= 0) &&
+      values.every(value => Number.isSafeInteger(value) && value >= 0 && value <= 0xffff_ffff) &&
       new Set(values).size === values.length;
     const validNames = values => Array.isArray(values) && values.length > 0 &&
       values.every(value => typeof value === "string" && value.length > 0) &&
@@ -67,10 +67,10 @@ function validateScene(scene) {
     if (!region || typeof region.id !== "string" || !region.id.length ||
         !validNames(region.variables) || !validIndices(region.sourceIndices) ||
         region.variables.length !== region.sourceIndices.length ||
-        !Number.isSafeInteger(region.rowStart) || region.rowStart < 0 ||
-        !Number.isSafeInteger(region.rowEnd) || region.rowEnd < region.rowStart ||
-        !Number.isSafeInteger(region.columnStart) || region.columnStart < 0 ||
-        !Number.isSafeInteger(region.columnEnd) || region.columnEnd < region.columnStart ||
+        !Number.isSafeInteger(region.rowStart) || region.rowStart < 0 || region.rowStart > 0xffff_ffff ||
+        !Number.isSafeInteger(region.rowEnd) || region.rowEnd < region.rowStart || region.rowEnd > 0xffff_ffff ||
+        !Number.isSafeInteger(region.columnStart) || region.columnStart < 0 || region.columnStart > 0xffff_ffff ||
+        !Number.isSafeInteger(region.columnEnd) || region.columnEnd < region.columnStart || region.columnEnd > 0xffff_ffff ||
         !finite(region.x) || !finite(region.y) || !positive(region.width) ||
         !positive(region.height) || !positive(region.lineWidth)) {
       fail("renderer.output.invalid_scene", "cluster region has invalid identity, indices, or geometry", path);
