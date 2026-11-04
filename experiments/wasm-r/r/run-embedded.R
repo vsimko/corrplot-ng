@@ -162,7 +162,11 @@ main <- function() {
       processPeakRssBytesBeforeInitialization = peak_rss_before_init,
       processPeakRssBytesAfterInitialization = peak_rss_after_init,
       processPeakRssBytesAfterFirstCall = peak_rss_after_first_call,
-      peakRssNote = "Process-lifetime high-water mark; includes R and Wasmtime allocations and is not a WASM-only memory measure.",
+      peakRssNote = if (is.na(peak_rss_after_first_call)) {
+        "Unavailable on macOS: Darwin does not expose process-lifetime ru_maxrss through getrusage."
+      } else {
+        "Process-lifetime high-water mark; includes R and Wasmtime allocations and is not a WASM-only memory measure."
+      },
       wasmLinearMemoryBytesAfterInitialization = wasm_memory_after_init,
       wasmLinearMemoryBytesAfterFirstCall = wasm_memory_after_first_call
     ),

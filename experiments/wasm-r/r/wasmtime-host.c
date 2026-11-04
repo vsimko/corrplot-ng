@@ -228,7 +228,9 @@ static double peak_rss_bytes(void) {
   struct rusage usage;
   if (getrusage(RUSAGE_SELF, &usage) != 0) return NA_REAL;
 #if defined(__APPLE__)
-  return (double)usage.ru_maxrss;
+  /* Darwin's struct rusage does not expose ru_maxrss. Do not substitute a
+   * current-RSS snapshot while labeling it a process-lifetime high-water mark. */
+  return NA_REAL;
 #else
   return (double)usage.ru_maxrss * 1024.0;
 #endif
