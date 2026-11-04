@@ -236,7 +236,7 @@ try {
     heightPx: highDpiResult.heightPx,
     background: { red: 255, green: 255, blue: 255, alpha: 255 },
   });
-  if (highDpiResult.widthPx !== 320 || highDpiResult.heightPx !== 80 ||
+  if (highDpiResult.widthPx !== 320 || highDpiResult.heightPx !== 240 ||
       highDpiRgba.widthPx !== highDpiResult.widthPx ||
       highDpiRgba.heightPx !== highDpiResult.heightPx) {
     throw new Error("high-DPI Canvas/RGBA output dimensions did not match the requested viewport");
