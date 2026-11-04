@@ -614,8 +614,8 @@ fn build_matrix_scene(input: MatrixInput, options: SceneBuildOptionsInput) -> Re
         "lower" => DisplayType::Lower,
         "diagonal" => DisplayType::Diagonal,
         other => return Err(diagnostic(
-            "input.scene.invalid_value",
-            "input",
+            "configuration.invalid_field",
+            "configuration",
             format!("unsupported display type '{other}'"),
             Some("displayType"),
         )),
