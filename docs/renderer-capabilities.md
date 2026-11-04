@@ -23,6 +23,7 @@ An optional host_targets array identifies host-owned targets that are not serial
 Current declarations:
 
 - [Python SVG prototype](../prototypes/shared-svg/renderer-capabilities.json)
+- [Rust shared-core SVG/RGBA renderer](../crates/corrplot-core/renderer-capabilities.json)
 - [Rust standalone CLI SVG output](../tools/corrplot-ng/renderer-capabilities.json)
 - Browser TypeScript Canvas 2D adapter (runtime declaration returned by `engine.getCanvasRendererCapabilities()`)
 
@@ -63,18 +64,26 @@ and accessible title and description metadata. It does not interpret R
 plotmath labels or draw a legend. Those features fail in strict mode; permissive mode can omit them
 only when the caller explicitly marks them optional.
 
+The shared Rust core SVG/RGBA renderer supports all seven cell methods,
+missing cells, cell text annotations, supplied significance annotations,
+confidence intervals, legends, cluster-region overlays, and figure-level
+text. It does not interpret plotmath labels. SVG output includes accessible
+title and description metadata; the combined SVG/RGBA capability declaration
+keeps `accessible_metadata` false because raw RGBA cannot carry that metadata.
+
 The native Rust CLI supports circle and number cell methods for its matrix
 input and publication-config workflow. Its declaration is intentionally
-narrow. Do not infer feature parity between the Rust CLI and Python SVG
-prototype from their shared use of the word SVG. The browser TypeScript Canvas
-renderer draws the seven cell glyph methods, labels, figure text, and missing
-cells directly from the typed scene. Significance, confidence intervals,
-legends, cluster regions, and plotmath labels are declared unsupported and
-produce diagnostics rather than being silently omitted. The TypeScript browser
-smoke runs a checked-in glyph fixture against both Canvas and the shared Rust
-RGBA renderer, checking stable interior pixels and text/shade ink. Because
-Canvas is a host-owned target, its `output_formats` array is empty; it does not
-pretend that a Canvas context is a PNG or raw RGBA file.
+narrow. Do not infer feature parity between the Rust CLI and either the shared
+Rust core or Python SVG prototype from their shared use of the word SVG. The
+browser TypeScript Canvas renderer draws the seven cell glyph methods, labels,
+figure text, missing cells, supplied significance annotations, and confidence
+intervals directly from the typed scene. Legends, cluster regions, plotmath
+labels, and complete accessible title/description metadata remain unsupported
+and produce diagnostics rather than being silently omitted. The browser smoke
+runs checked-in fixtures against both Canvas and the shared Rust RGBA renderer,
+checking stable interior pixels and overlay ink at 1x and 2x device-pixel
+ratios. Because Canvas is a host-owned target, its `output_formats` array is
+empty; it does not pretend that a Canvas context is a PNG or raw RGBA file.
 
 ## Adding a renderer
 
