@@ -151,6 +151,10 @@ test("reports browser host targets and supported statistical overlay capabilitie
   assert.equal(capabilities.host_targets.includes("browser-offscreen-canvas-2d"), offscreenSupported);
   assert.equal(capabilities.output_formats.length, 0);
   assert.equal(capabilities.features.legend, false);
+  assert.equal(capabilities.features.cluster_regions, false);
+  assert.equal(capabilities.features.plotmath_labels, false);
+  assert.equal(capabilities.features.accessible_metadata, false);
+  assert.equal(capabilities.features.figure_text, true);
   assert.equal(capabilities.features.confidence_intervals, true);
   assert.equal(capabilities.features.significance, true);
   assert.equal(capabilities.features.missing_cells, true);

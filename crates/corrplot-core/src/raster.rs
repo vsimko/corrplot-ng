@@ -1106,6 +1106,11 @@ mod tests {
         assert!(capabilities.contains("\"id\": \"rust-core-scene\""));
         assert!(capabilities.contains("\"output_formats\": [\"svg\", \"rgba\"]"));
         assert!(capabilities.contains("\"plotmath_labels\": false"));
+        assert!(capabilities.contains("\"significance\": true"));
+        assert!(capabilities.contains("\"confidence_intervals\": true"));
+        assert!(capabilities.contains("\"legend\": true"));
+        assert!(capabilities.contains("\"figure_text\": true"));
+        assert!(capabilities.contains("\"cluster_regions\": true"));
     }
 
     #[test]

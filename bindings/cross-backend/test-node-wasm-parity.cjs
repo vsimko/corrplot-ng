@@ -359,8 +359,20 @@ test("Node and WASM preserve scene and renderer parity for a deterministic 64x64
   );
 });
 
-test("Node and WASM expose the same renderer capabilities", () => {
-  assert.deepEqual(JSON.parse(wasm.getRendererCapabilities()), native.getRendererCapabilities());
+test("Node and WASM expose the same implemented renderer capabilities", () => {
+  const capabilities = JSON.parse(wasm.getRendererCapabilities());
+  assert.deepEqual(capabilities, native.getRendererCapabilities());
+  for (const feature of [
+    "significance",
+    "confidence_intervals",
+    "legend",
+    "figure_text",
+    "cluster_regions",
+  ]) {
+    assert.equal(capabilities.features[feature], true, `${feature} must be declared supported`);
+  }
+  assert.equal(capabilities.features.plotmath_labels, false);
+  assert.equal(capabilities.features.accessible_metadata, false);
 });
 
 test("Node and WASM return the same diagnostic for unsupported matrix methods", () => {

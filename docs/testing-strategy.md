@@ -228,16 +228,21 @@ checked-in visual fixture compared with the shared Rust RGBA renderer. The
 React and Vue adapters (#291/#292) are browser-only packages with framework
 lifecycle and browser-bundle checks.
 
-The Node/WASM parity workflow consumes the common correlation and general
-numeric matrix fixture corpora. It compares validation, normalized-matrix
-scene construction, SVG, and RGBA for all seven cell methods, and includes a
+The native CLI and R scene adapter consume the shared correlation and
+general-numeric fixture corpora where their input contracts support them.
+The Node/WASM parity workflow compares validation, normalized-matrix scene
+construction, SVG, and RGBA for all seven cell methods, and includes a
 deterministic 64×64 correlation matrix. Exact SVG/RGBA equality is used only
 between Node and WASM adapters that call the same Rust core. Canvas uses
 sample-based visual conformance at 1x and 2x backing-store resolutions,
-including a letterboxed viewport, rather than byte equality. The unified
-TypeScript API (#145), direct Canvas (#144), and framework adapters are
-implemented; broader scene-v1 semantics, CLI/R adapter fixture parity, and
-performance evidence remain in #146 and related measurement issues.
+including a letterboxed viewport and supplied statistical overlays, rather
+than byte equality. Renderer capability tests distinguish shared-core support
+for significance, confidence intervals, legends, and cluster regions from
+the narrower Canvas feature set; unsupported features must produce
+structured diagnostics rather than being silently omitted. Full scene-v1
+presentation fidelity and repeatable cross-runtime performance evidence remain
+tracked in #146 and related measurement issues, including the R-host work in
+#267.
 The binding READMEs document runtime boundaries.
 
 ### Local command entry point

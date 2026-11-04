@@ -15,12 +15,12 @@
     "plotmath_labels": false,
     "missing_cells": true,
     "cell_text_annotations": true,
-    "significance": false,
-    "confidence_intervals": false,
-    "legend": false,
-    "figure_text": false,
+    "significance": true,
+    "confidence_intervals": true,
+    "legend": true,
+    "figure_text": true,
     "accessible_metadata": false,
-    "cluster_regions": false
+    "cluster_regions": true
   },
   "negotiation_modes": ["strict"]
 }
