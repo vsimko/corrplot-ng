@@ -130,7 +130,7 @@ Use the existing diagnostic-v1 schema from #72 as the cross-runtime error contra
 
 - The Node and WASM bindings map Rust failures to diagnostic-v1 records. The TypeScript facade wraps backend diagnostics in `CorrplotError`, whose `diagnostic` property contains the record.
 - The current facade treats a returned `diagnostic` as an error. It does not yet expose a success-result envelope for structured warnings.
-- The current facade's own unavailable-backend, initialization-failure, and post-disposal errors use `configuration.invalid_field` at the `configuration` stage. Initialization context is included in the message and `backend` path; a dedicated backend-initialization diagnostic with structured runtime/backend details remains part of the #145 contract work.
+- The current facade's own unavailable-backend, initialization-failure, and post-disposal errors use `configuration.invalid_field` at the `configuration` stage. Initialization context is included in the message and `backend` path. A dedicated diagnostic code with structured runtime/backend fields is not currently exposed; the generic diagnostic remains deterministic and actionable for the implemented API slice.
 - The intended cross-runtime contract remains stable codes and structured diagnostics; do not make callers parse backend-specific message text.
 - Unexpected internal failures must not expose Rust panic payloads as a public API.
 
@@ -212,7 +212,7 @@ Deferred. They add cross-origin isolation, worker, browser-support, and deployme
 - Node.js and browser users receive one documented TypeScript API and the same semantic behavior.
 - Native and browser deployments require separate binding artifacts but do not maintain separate algorithms.
 - The TypeScript facade and binding packages add build and release work. Keep them thin and test their outputs against the shared Rust fixtures.
-- The core now parses the matrix-bearing scene-v1 subset and constructs normalized-matrix scenes for the initial Node/WASM SVG and RGBA operations. The full presentation-scene contract and broader semantic parity remain incomplete; the TypeScript facade is also still a partial implementation of the target API.
+- The core parses the matrix-bearing scene-v1 subset and constructs normalized-matrix scenes for Node/WASM SVG and RGBA operations. The TypeScript facade now exposes the initial normalized-matrix scene workflow and typed-scene rendering through runtime-isolated Node/browser entry points. Full scene-v1 presentation semantics and broader semantic/visual parity remain incomplete.
 - Production R adoption remains separately gated by the CRAN and maintainer-workflow conditions in ADR 0001.
 
 
@@ -241,4 +241,4 @@ The workspace, Changesets versioning, pull-request validation, and manual non-pu
 
 When publication is later prioritized, publish according to the actual dependency graph: runtime-neutral types/core first if that package is implemented, then WASM and Node platform packages, then the main Node package, then React/Vue integrations. npm publication is not transactional; the future workflow must detect already-published versions and safely handle partial failures.
 
-Do not configure live npm Trusted Publishing or credentials until a separate maintainer-approved release issue is activated. The detailed plan is in [npm package distribution](../npm-package-distribution.md). #145 tracks the remaining facade/API contract, #291 and #292 track framework adapters, #290 is complete, and public publication remains deferred in #293.
+Do not configure live npm Trusted Publishing or credentials until a separate maintainer-approved release issue is activated. The detailed plan is in [npm package distribution](../npm-package-distribution.md). The initial facade/API contract in #145 is implemented; #291 and #292 track framework adapters, #290 is complete, and public publication remains deferred in #293.
