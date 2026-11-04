@@ -46,30 +46,30 @@ try {
     height: 50,
     cells: [
       {
-        x: 0, y: 0, size: 10, visible: true,
+        x: 0, y: 0, size: 20, visible: true,
         fill: { red: 255, green: 255, blue: 255, alpha: 255 },
         stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
         confidenceInterval: {
-          lower: 0.2, upper: 0.8, x1: 2, x2: 8, y: 5,
+          lower: 0.2, upper: 0.8, x1: 4, x2: 16, y: 10,
           capHeight: 4, strokeWidth: 2,
           color: { red: 220, green: 20, blue: 60, alpha: 255 },
         },
         significance: { pValue: 0.01, status: "significant", annotation: "**", blank: false },
       },
       {
-        x: 10, y: 0, size: 10, visible: true,
+        x: 20, y: 0, size: 20, visible: true,
         fill: { red: 255, green: 255, blue: 255, alpha: 255 },
         stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
         glyph: { kind: "circle", radius: 4, color: { red: 0, green: 0, blue: 0, alpha: 255 } },
         significance: { status: "unknown", annotation: "?", blank: true },
         confidenceInterval: {
-          lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5,
+          lower: -0.5, upper: 0.5, x1: 24, x2: 36, y: 10,
           capHeight: 4, strokeWidth: 2,
           color: { red: 220, green: 20, blue: 60, alpha: 255 },
         },
       },
       {
-        x: 20, y: 0, size: 10, visible: false,
+        x: 40, y: 0, size: 20, visible: false,
         fill: { red: 255, green: 255, blue: 255, alpha: 255 },
         stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
         significance: { pValue: 0.5, status: "not_significant", annotation: "ns", blank: false },
@@ -89,7 +89,7 @@ try {
     heightPx: 50,
     background: { red: 255, green: 255, blue: 255, alpha: 255 },
   });
-  const overlayIntervalOffset = (5 * overlayRgba.widthPx + 5) * 4;
+  const overlayIntervalOffset = (10 * overlayRgba.widthPx + 10) * 4;
   if (overlayRgba.pixels[overlayIntervalOffset] !== 220 ||
       overlayRgba.pixels[overlayIntervalOffset + 1] !== 20 ||
       overlayRgba.pixels[overlayIntervalOffset + 2] !== 60 ||
@@ -101,13 +101,13 @@ try {
     width: 100, height: 50, devicePixelRatio: 1,
   });
   const overlayPixels = overlayCanvas.getContext("2d").getImageData(0, 0, 100, 50).data;
-  const intervalPixelOffset = (5 * 100 + 5) * 4;
+  const intervalPixelOffset = (10 * 100 + 10) * 4;
   if (overlayPixels[intervalPixelOffset] !== 220 ||
       overlayPixels[intervalPixelOffset + 1] !== 20 ||
       overlayPixels[intervalPixelOffset + 2] !== 60) {
     throw new Error("Canvas did not render the supplied confidence interval");
   }
-  if (overlayPixels[(5 * 100 + 15) * 4] === 220) {
+  if (overlayPixels[(10 * 100 + 30) * 4] === 220) {
     throw new Error("blank cell unexpectedly rendered its confidence interval");
   }
   const countDarkInk = (pixels, width, region) => {
@@ -120,7 +120,7 @@ try {
     }
     return count;
   };
-  if (countDarkInk(overlayPixels, 100, { x: 4, y: 1, width: 8, height: 6 }) === 0) {
+  if (countDarkInk(overlayPixels, 100, { x: 11, y: 1, width: 8, height: 8 }) === 0) {
     throw new Error("Canvas did not render the supplied significance annotation");
   }
   const highDpiOverlayCanvas = document.createElement("canvas");
@@ -130,12 +130,12 @@ try {
   const highDpiOverlayPixels = highDpiOverlayCanvas.getContext("2d").getImageData(
     0, 0, highDpiOverlayCanvas.width, highDpiOverlayCanvas.height,
   ).data;
-  const highDpiIntervalOffset = (10 * highDpiOverlayCanvas.width + 10) * 4;
+  const highDpiIntervalOffset = (20 * highDpiOverlayCanvas.width + 20) * 4;
   if (highDpiOverlayPixels[highDpiIntervalOffset] !== 220 ||
       highDpiOverlayPixels[highDpiIntervalOffset + 1] !== 20 ||
       highDpiOverlayPixels[highDpiIntervalOffset + 2] !== 60 ||
       countDarkInk(highDpiOverlayPixels, highDpiOverlayCanvas.width, {
-        x: 8, y: 2, width: 18, height: 12,
+        x: 22, y: 2, width: 16, height: 14,
       }) === 0) {
     throw new Error("2x Canvas did not preserve confidence interval and annotation ink");
   }
