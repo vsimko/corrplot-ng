@@ -121,23 +121,23 @@ test("rejects invalid scenes, dimensions, colors, and unsupported scene features
   expectCode(() => renderSceneToCanvas(scene, canvas, { width: 0 }), "renderer.output.invalid_options");
   expectCode(() => renderSceneToCanvas({ ...scene, legend: [{ label: "x" }] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({ ...scene, clusterRegions: [{}] }, canvas), "renderer.unsupported_feature");
-  expectCode(() => renderSceneToCanvas({ ...scene, significance: {} }, canvas), "renderer.unsupported_feature");
+  expectCode(() => renderSceneToCanvas({ ...scene, significance: {} }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({ ...scene, texts: [{ ...scene.texts[0], semanticRole: "plotmath" }] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({
     ...scene,
     cells: [{ ...scene.cells[0], confidenceInterval: {} }],
-  }, canvas), "renderer.unsupported_feature");
+  }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({
     ...scene,
     cells: [{ ...scene.cells[0], significance: {} }],
-  }, canvas), "renderer.unsupported_feature");
+  }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({
     ...scene,
     cells: [{ ...scene.cells[0], fill: { red: 256, green: 0, blue: 0, alpha: 255 } }],
   }, canvas), "renderer.output.invalid_scene");
 });
 
-test("reports browser host targets and conservative unsupported-feature capabilities", () => {
+test("reports browser host targets and supported statistical overlay capabilities", () => {
   const capabilities = getCanvasRendererCapabilities();
   assert.equal(capabilities.renderer.id, "typescript-canvas-2d");
   assert.ok(capabilities.host_targets.includes("browser-canvas-2d"));
@@ -151,7 +151,8 @@ test("reports browser host targets and conservative unsupported-feature capabili
   assert.equal(capabilities.host_targets.includes("browser-offscreen-canvas-2d"), offscreenSupported);
   assert.equal(capabilities.output_formats.length, 0);
   assert.equal(capabilities.features.legend, false);
-  assert.equal(capabilities.features.confidence_intervals, false);
+  assert.equal(capabilities.features.confidence_intervals, true);
+  assert.equal(capabilities.features.significance, true);
   assert.equal(capabilities.features.missing_cells, true);
 });
 
@@ -186,5 +187,39 @@ test("Engine exposes Canvas only when a browser renderer is supplied", () => {
   assert.throws(
     () => browserEngine.renderToCanvas({ width: 10, height: 10, cells: [], texts: [] }, canvas),
     error => error instanceof CorrplotError && error.diagnostic.code === "configuration.invalid_field",
+  );
+});
+
+
+test("renders supplied confidence intervals and significance annotations with blank and hidden-cell semantics", () => {
+  const { canvas, calls } = mockCanvas();
+  const statisticalScene = {
+    width: 100, height: 50, texts: [],
+    significance: { mode: "stars", thresholds: [0.05, 0.01], symbol: "*" },
+    cells: [
+      { ...scene.cells[0], confidenceInterval: { lower: 0.2, upper: 0.8, x1: 2, x2: 8, y: 5, capHeight: 4, strokeWidth: 2, color: red },
+        significance: { pValue: 0.01, status: "significant", annotation: "**", blank: false } },
+      { ...scene.cells[1], significance: { status: "unknown", annotation: "?", blank: true },
+        confidenceInterval: { lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5, capHeight: 4, strokeWidth: 2, color: red } },
+      { ...scene.cells[2], visible: false, significance: { pValue: 0.5, status: "not_significant", annotation: "ns", blank: false } },
+    ],
+  };
+  renderSceneToCanvas(statisticalScene, canvas, { devicePixelRatio: 1 });
+  assert.ok(calls.filter(call => call[0] === "lineTo").length >= 3);
+  assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "**"));
+  // Blank cells suppress glyphs and intervals, but explicit annotations remain visible.
+  assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "?"));
+  assert.ok(!calls.some(call => call[0] === "fillText" && call[1] === "ns"));
+});
+
+test("rejects malformed statistical metadata with actionable scene paths", () => {
+  const { canvas } = mockCanvas();
+  assert.throws(
+    () => renderSceneToCanvas({ ...scene, cells: [{ ...scene.cells[0], significance: { status: "bad", blank: false } }] }, canvas),
+    error => error instanceof CorrplotError && error.diagnostic.path === "scene.cells[0].significance",
+  );
+  assert.throws(
+    () => renderSceneToCanvas({ ...scene, cells: [{ ...scene.cells[0], confidenceInterval: { lower: 2, upper: 3 } }] }, canvas),
+    error => error instanceof CorrplotError && error.diagnostic.path === "scene.cells[0].confidenceInterval",
   );
 });

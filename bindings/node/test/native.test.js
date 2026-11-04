@@ -241,3 +241,72 @@ test("maps invalid matrix construction options to diagnostic-v1", () => {
     },
   );
 });
+
+
+test("preserves typed-scene statistical metadata through the Node adapter", () => {
+  const red = { red: 220, green: 20, blue: 60, alpha: 255 };
+  const statisticalScene = {
+    width: 20,
+    height: 10,
+    cells: [
+      {
+        ...scene.cells[0],
+        confidenceInterval: {
+          lower: 0.2, upper: 0.8, x1: 2, x2: 8, y: 5,
+          capHeight: 4, strokeWidth: 2, color: red,
+        },
+        significance: {
+          pValue: 0.01, status: "significant", annotation: "**", blank: false,
+        },
+      },
+      {
+        ...scene.cells[0],
+        x: 10,
+        significance: {
+          status: "unknown", blank: true,
+        },
+        confidenceInterval: {
+          lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5,
+          capHeight: 4, strokeWidth: 2, color: red,
+        },
+      },
+    ],
+    texts: [],
+    significance: { mode: "stars", thresholds: [0.05, 0.01], symbol: "*" },
+  };
+  const svg = renderSceneSvg(statisticalScene, {
+    width: 20, height: 10, unit: "px", fontFamily: "sans-serif",
+    fontSizePt: 10, background: white,
+  });
+  assert.equal((svg.match(/class="confidence-interval"/g) ?? []).length, 1);
+  assert.equal((svg.match(/class="significance-annotation"/g) ?? []).length, 1);
+  assert.match(svg, />\*\*<\/text>/);
+  const rgba = renderSceneRgba(statisticalScene, {
+    widthPx: 20, heightPx: 10, background: white,
+  });
+  assert.ok(rgba.pixels.some((channel, index) => index % 4 === 0 && channel === 220));
+});
+
+
+test("validates plot-wide significance policy and cell p-values through the Node adapter", () => {
+  const options = {
+    width: 20, height: 10, unit: "px", fontFamily: "sans-serif",
+    fontSizePt: 10, background: white,
+  };
+  const invalidPolicy = {
+    ...scene,
+    significance: { mode: "unsupported", thresholds: [0.05], symbol: "*" },
+  };
+  assert.throws(
+    () => renderSceneSvg(invalidPolicy, options),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.output.invalid_options",
+  );
+  const invalidPValue = {
+    ...scene,
+    cells: [{ ...scene.cells[0], pValue: 1.5 }],
+  };
+  assert.throws(
+    () => renderSceneSvg(invalidPValue, options),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.output.invalid_options",
+  );
+});

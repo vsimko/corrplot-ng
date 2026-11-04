@@ -1,5 +1,5 @@
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
-use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
+use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneCellSignificance, SceneConfidenceInterval, SceneSignificancePolicy, SceneSvgRenderer, SceneText, TextAnchor};
 use js_sys::{Reflect, Uint8Array};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
 use corrplot_core::scene::{matrix_to_scene_v1, scene_v1_to_scene, CellMethod, DisplayType, MatrixSemantics, NormalizedMatrixV1, SceneBuildOptions};
@@ -70,6 +70,37 @@ pub struct CellGlyphInput {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneCellSignificanceInput {
+    pub p_value: Option<f64>,
+    pub status: String,
+    pub annotation: Option<String>,
+    pub blank: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneConfidenceIntervalInput {
+    pub lower: f64,
+    pub upper: f64,
+    pub x1: f64,
+    pub x2: f64,
+    pub y: f64,
+    pub cap_height: f64,
+    pub stroke_width: f64,
+    pub color: RgbaColorInput,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneSignificancePolicyInput {
+    pub mode: String,
+    pub thresholds: Vec<f64>,
+    pub symbol: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SceneCellInput {
     pub x: f64,
     pub y: f64,
@@ -78,6 +109,10 @@ pub struct SceneCellInput {
     pub fill: RgbaColorInput,
     pub stroke: RgbaColorInput,
     pub glyph: Option<CellGlyphInput>,
+    pub p_value: Option<f64>,
+    pub normalized_value: Option<f64>,
+    pub significance: Option<SceneCellSignificanceInput>,
+    pub confidence_interval: Option<SceneConfidenceIntervalInput>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -100,6 +135,7 @@ pub struct SceneInput {
     pub description: Option<String>,
     pub cells: Vec<SceneCellInput>,
     pub texts: Vec<SceneTextInput>,
+    pub significance: Option<SceneSignificancePolicyInput>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -281,7 +317,26 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             fill,
             stroke,
             glyph: cell.glyph.map(glyph).transpose()?,
-            p_value: None, normalized_value: None, significance: None, confidence_interval: None,
+            p_value: cell.p_value,
+            normalized_value: cell.normalized_value,
+            significance: cell.significance.map(|value| SceneCellSignificance {
+                p_value: value.p_value,
+                status: value.status,
+                annotation: value.annotation,
+                blank: value.blank,
+            }),
+            confidence_interval: cell.confidence_interval.map(|value| {
+                Ok::<_, DiagnosticV1>(SceneConfidenceInterval {
+                    lower: value.lower,
+                    upper: value.upper,
+                    x1: value.x1,
+                    x2: value.x2,
+                    y: value.y,
+                    cap_height: value.cap_height,
+                    stroke_width: value.stroke_width,
+                    color: rgba(value.color, &format!("cells[{index}].confidenceInterval.color"))?,
+                })
+            }).transpose()?,
         });
     }
 
@@ -313,7 +368,12 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
+    let significance = input.significance.map(|value| SceneSignificancePolicy {
+        mode: value.mode,
+        thresholds: value.thresholds,
+        symbol: value.symbol,
+    });
+    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[wasm_bindgen(js_name = "renderSceneSvg")]
@@ -477,8 +537,13 @@ mod tests {
                     font_size: None,
                     color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
                 }),
+                p_value: None,
+                normalized_value: None,
+                significance: None,
+                confidence_interval: None,
             }],
             texts: vec![],
+            significance: None,
         };
         let options = SvgOptionsInput {
             width: 100.0,
@@ -524,8 +589,13 @@ mod tests {
                     font_size: None,
                     color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
                 }),
+                p_value: None,
+                normalized_value: None,
+                significance: None,
+                confidence_interval: None,
             }],
             texts: vec![],
+            significance: None,
         };
         let options = RgbaOptionsInput {
             width_px: 16,
@@ -550,7 +620,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn maps_invalid_rgba_options_to_diagnostic_v1() {
-        let scene = SceneInput { width: 1.0, height: 1.0, description: None, cells: vec![], texts: vec![] };
+        let scene = SceneInput { width: 1.0, height: 1.0, description: None, cells: vec![], texts: vec![], significance: None };
         let options = RgbaOptionsInput {
             width_px: 0,
             height_px: 12,
@@ -779,6 +849,24 @@ fn scene_input(scene: Scene) -> SceneInput {
         fill: rgba_input(&cell.fill),
         stroke: rgba_input(&cell.stroke),
         glyph: cell.glyph.map(glyph_input),
+        p_value: cell.p_value,
+        normalized_value: cell.normalized_value,
+        significance: cell.significance.map(|value| SceneCellSignificanceInput {
+            p_value: value.p_value,
+            status: value.status,
+            annotation: value.annotation,
+            blank: value.blank,
+        }),
+        confidence_interval: cell.confidence_interval.map(|value| SceneConfidenceIntervalInput {
+            lower: value.lower,
+            upper: value.upper,
+            x1: value.x1,
+            x2: value.x2,
+            y: value.y,
+            cap_height: value.cap_height,
+            stroke_width: value.stroke_width,
+            color: rgba_input(&value.color),
+        }),
     }).collect();
     let texts = scene.texts.into_iter().map(|text| SceneTextInput {
         text: text.text,
@@ -800,6 +888,11 @@ fn scene_input(scene: Scene) -> SceneInput {
         description: Some(scene.description),
         cells,
         texts,
+        significance: scene.significance.map(|value| SceneSignificancePolicyInput {
+            mode: value.mode,
+            thresholds: value.thresholds,
+            symbol: value.symbol,
+        }),
     }
 }
 

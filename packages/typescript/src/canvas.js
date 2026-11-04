@@ -54,8 +54,15 @@ function validateScene(scene) {
       fail("renderer.unsupported_feature", `Canvas 2D does not yet support ${label}`, `scene.${field}`);
     }
   }
-  if (scene.significance !== undefined && scene.significance !== null) {
-    fail("renderer.unsupported_feature", "Canvas 2D does not yet support plot-wide significance policies", "scene.significance");
+  if (scene.significance != null) {
+    const policy = scene.significance;
+    if (!policy || !["pch", "p-value", "blank", "stars"].includes(policy.mode) ||
+        !Array.isArray(policy.thresholds) || policy.thresholds.length === 0 ||
+        policy.thresholds.some(value => !finite(value) || value < 0 || value > 1) ||
+        typeof policy.symbol !== "string" || !policy.symbol.length ||
+        [...policy.symbol].length > 8) {
+      fail("renderer.output.invalid_scene", "scene has invalid plot-wide significance policy", "scene.significance");
+    }
   }
 
   for (const [index, cell] of scene.cells.entries()) {
@@ -65,11 +72,31 @@ function validateScene(scene) {
     }
     colorCss(cell.fill, `${path}.fill`);
     colorCss(cell.stroke, `${path}.stroke`);
-    if (cell.significance !== undefined && cell.significance !== null) {
-      fail("renderer.unsupported_feature", "Canvas 2D does not yet support cell significance annotations", `${path}.significance`);
+    if (cell.pValue != null && (!finite(cell.pValue) || cell.pValue < 0 || cell.pValue > 1)) {
+      fail("renderer.output.invalid_scene", "cell pValue must be between 0 and 1", `${path}.pValue`);
     }
-    if (cell.confidenceInterval !== undefined && cell.confidenceInterval !== null) {
-      fail("renderer.unsupported_feature", "Canvas 2D does not yet support confidence intervals", `${path}.confidenceInterval`);
+    if (cell.normalizedValue != null && !finite(cell.normalizedValue)) {
+      fail("renderer.output.invalid_scene", "cell normalizedValue must be finite", `${path}.normalizedValue`);
+    }
+    if (cell.significance != null) {
+      const value = cell.significance;
+      if (!value || (value.pValue != null && (!finite(value.pValue) || value.pValue < 0 || value.pValue > 1)) ||
+          !["unknown", "significant", "not_significant"].includes(value.status) ||
+          (value.annotation != null && typeof value.annotation !== "string") ||
+          typeof value.blank !== "boolean") {
+        fail("renderer.output.invalid_scene", "cell has invalid significance metadata", `${path}.significance`);
+      }
+    }
+    if (cell.confidenceInterval != null) {
+      const value = cell.confidenceInterval;
+      if (!value || !finite(value.lower) || !finite(value.upper) ||
+          value.lower < -1 || value.upper > 1 || value.lower > value.upper ||
+          !finite(value.x1) || !finite(value.x2) || !finite(value.y) ||
+          !finite(value.capHeight) || value.capHeight < 0 ||
+          !finite(value.strokeWidth) || value.strokeWidth < 0) {
+        fail("renderer.output.invalid_scene", "cell has invalid confidence interval metadata", `${path}.confidenceInterval`);
+      }
+      colorCss(value.color, `${path}.confidenceInterval.color`);
     }
     const glyph = cell.glyph;
     if (glyph === undefined || glyph === null) continue;
@@ -343,7 +370,44 @@ export function renderSceneToCanvas(scene, target, options = {}) {
       context.strokeStyle = colorCss(cell.stroke, `${path}.stroke`);
       context.lineWidth = 1;
       context.strokeRect(cell.x, cell.y, cell.size, cell.size);
-      if (cell.glyph) drawGlyph(context, cell, cell.glyph, fontFamily, `${path}.glyph`);
+      const blank = cell.significance?.blank === true;
+      if (!blank && cell.glyph) drawGlyph(context, cell, cell.glyph, fontFamily, `${path}.glyph`);
+      if (!blank && cell.confidenceInterval) {
+        const interval = cell.confidenceInterval;
+        context.save();
+        try {
+          context.strokeStyle = colorCss(interval.color, `${path}.confidenceInterval.color`);
+          context.lineWidth = interval.strokeWidth;
+          context.beginPath();
+          context.moveTo(interval.x1, interval.y);
+          context.lineTo(interval.x2, interval.y);
+          context.stroke();
+          for (const endpoint of [interval.x1, interval.x2]) {
+            context.beginPath();
+            context.moveTo(endpoint, interval.y - interval.capHeight / 2);
+            context.lineTo(endpoint, interval.y + interval.capHeight / 2);
+            context.stroke();
+          }
+        } finally {
+          context.restore();
+        }
+      }
+    }
+
+    for (const [index, cell] of scene.cells.entries()) {
+      if (!cell.visible) continue;
+      const annotation = cell.significance?.annotation;
+      if (typeof annotation !== "string" || annotation.length === 0) continue;
+      context.save();
+      try {
+        context.font = `normal bold 10px ${fontFamily}`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillStyle = "rgba(34, 34, 34, 1)";
+        context.fillText(annotation, cell.x + cell.size * 0.8, cell.y + cell.size * 0.2);
+      } finally {
+        context.restore();
+      }
     }
 
     for (const [index, text] of scene.texts.entries()) {
@@ -389,8 +453,8 @@ export function getCanvasRendererCapabilities() {
       plotmath_labels: false,
       missing_cells: true,
       cell_text_annotations: true,
-      significance: false,
-      confidence_intervals: false,
+      significance: true,
+      confidence_intervals: true,
       legend: false,
       figure_text: true,
       accessible_metadata: false,
