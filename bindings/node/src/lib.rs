@@ -391,9 +391,9 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             color: rgba(text.color, &format!("texts[{index}].color"))?,
             anchor,
             rotation_degrees: text.rotation_degrees.unwrap_or(0.0),
-            font_family: String::new(),
-            font_weight: "normal".into(),
-            font_style: "normal".into(),
+            font_family: text.font_family.unwrap_or_default(),
+            font_weight: text.font_weight.unwrap_or_else(|| "normal".into()),
+            font_style: text.font_style.unwrap_or_else(|| "normal".into()),
         });
     }
 
@@ -681,6 +681,9 @@ fn scene_input(scene: Scene) -> SceneInput {
         x: text.x,
         y: text.y,
         font_size: text.font_size,
+        font_family: Some(text.font_family),
+        font_weight: Some(text.font_weight),
+        font_style: Some(text.font_style),
         color: rgba_input(&text.color),
         anchor: match text.anchor {
             TextAnchor::Start => "start",
