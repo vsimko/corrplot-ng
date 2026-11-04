@@ -1,5 +1,5 @@
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
-use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneSvgRenderer, SceneText, TextAnchor};
+use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneCellSignificance, SceneConfidenceInterval, SceneSignificancePolicy, SceneSvgRenderer, SceneText, TextAnchor};
 use js_sys::{Reflect, Uint8Array};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
 use corrplot_core::scene::{matrix_to_scene_v1, scene_v1_to_scene, CellMethod, DisplayType, MatrixSemantics, NormalizedMatrixV1, SceneBuildOptions};
@@ -78,6 +78,10 @@ pub struct SceneCellInput {
     pub fill: RgbaColorInput,
     pub stroke: RgbaColorInput,
     pub glyph: Option<CellGlyphInput>,
+    pub p_value: Option<f64>,
+    pub normalized_value: Option<f64>,
+    pub significance: Option<SceneCellSignificanceInput>,
+    pub confidence_interval: Option<SceneConfidenceIntervalInput>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -100,6 +104,7 @@ pub struct SceneInput {
     pub description: Option<String>,
     pub cells: Vec<SceneCellInput>,
     pub texts: Vec<SceneTextInput>,
+    pub significance: Option<SceneSignificancePolicyInput>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -281,7 +286,26 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
             fill,
             stroke,
             glyph: cell.glyph.map(glyph).transpose()?,
-            p_value: None, normalized_value: None, significance: None, confidence_interval: None,
+            p_value: cell.p_value,
+            normalized_value: cell.normalized_value,
+            significance: cell.significance.map(|value| SceneCellSignificance {
+                p_value: value.p_value,
+                status: value.status,
+                annotation: value.annotation,
+                blank: value.blank,
+            }),
+            confidence_interval: cell.confidence_interval.map(|value| {
+                Ok::<_, DiagnosticV1>(SceneConfidenceInterval {
+                    lower: value.lower,
+                    upper: value.upper,
+                    x1: value.x1,
+                    x2: value.x2,
+                    y: value.y,
+                    cap_height: value.cap_height,
+                    stroke_width: value.stroke_width,
+                    color: rgba(value.color, &format!("cells[{index}].confidenceInterval.color"))?,
+                })
+            }).transpose()?,
         });
     }
 
@@ -313,7 +337,12 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         });
     }
 
-    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance: None, legend: Vec::new(), cluster_regions: Vec::new() })
+    let significance = input.significance.map(|value| SceneSignificancePolicy {
+        mode: value.mode,
+        thresholds: value.thresholds,
+        symbol: value.symbol,
+    });
+    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance, legend: Vec::new(), cluster_regions: Vec::new() })
 }
 
 #[wasm_bindgen(js_name = "renderSceneSvg")]
