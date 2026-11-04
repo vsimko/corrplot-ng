@@ -207,7 +207,8 @@ test("renders supplied confidence intervals and significance annotations with bl
   renderSceneToCanvas(statisticalScene, canvas, { devicePixelRatio: 1 });
   assert.ok(calls.filter(call => call[0] === "lineTo").length >= 3);
   assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "**"));
-  assert.ok(!calls.some(call => call[0] === "fillText" && call[1] === "?"));
+  // Blank cells suppress glyphs and intervals, but explicit annotations remain visible.
+  assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "?"));
   assert.ok(!calls.some(call => call[0] === "fillText" && call[1] === "ns"));
 });
 
