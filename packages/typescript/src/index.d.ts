@@ -39,22 +39,6 @@ export interface CellGlyphInput {
   fontSize?: number;
   color?: RgbaColor;
 }
-export interface SceneCellSignificance {
-  pValue?: number | null;
-  status: string;
-  annotation?: string | null;
-  blank: boolean;
-}
-export interface SceneConfidenceInterval {
-  lower: number;
-  upper: number;
-  x1: number;
-  x2: number;
-  y: number;
-  capHeight: number;
-  strokeWidth: number;
-  color: RgbaColor;
-}
 export interface SceneCellInput {
   x: number;
   y: number;
@@ -63,8 +47,6 @@ export interface SceneCellInput {
   fill: RgbaColor;
   stroke: RgbaColor;
   glyph?: CellGlyphInput | null;
-  significance?: SceneCellSignificance | null;
-  confidenceInterval?: SceneConfidenceInterval | null;
 }
 export interface SceneTextInput {
   text: string;
@@ -74,35 +56,6 @@ export interface SceneTextInput {
   color: RgbaColor;
   anchor: "start" | "middle" | "end";
   rotationDegrees?: number;
-  semanticRole?: string | null;
-  fontFamily?: string;
-  fontWeight?: string;
-  fontStyle?: string;
-}
-export interface SceneLegendEntry {
-  kind: string;
-  label: string;
-  color: RgbaColor;
-}
-export interface SceneClusterRegion {
-  id: string;
-  variables: string[];
-  sourceIndices: number[];
-  rowStart: number;
-  rowEnd: number;
-  columnStart: number;
-  columnEnd: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: RgbaColor;
-  lineWidth: number;
-}
-export interface SceneSignificancePolicy {
-  mode: string;
-  thresholds: number[];
-  symbol: string;
 }
 export interface SceneInput {
   width: number;
@@ -110,9 +63,6 @@ export interface SceneInput {
   description?: string;
   cells: SceneCellInput[];
   texts: SceneTextInput[];
-  significance?: SceneSignificancePolicy | null;
-  legend?: SceneLegendEntry[];
-  clusterRegions?: SceneClusterRegion[];
 }
 export interface SceneResult {
   scene?: SceneInput | null;

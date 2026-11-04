@@ -66,9 +66,15 @@ only when the caller explicitly marks them optional.
 The native Rust CLI supports circle and number cell methods for its matrix
 input and publication-config workflow. Its declaration is intentionally
 narrow. Do not infer feature parity between the Rust CLI and Python SVG
-prototype from their shared use of the word SVG. A future browser Canvas
-renderer declares its host target in host_targets; it does not pretend
-that a Canvas context is a PNG or raw RGBA file.
+prototype from their shared use of the word SVG. The browser TypeScript Canvas
+renderer draws the seven cell glyph methods, labels, figure text, and missing
+cells directly from the typed scene. Significance, confidence intervals,
+legends, cluster regions, and plotmath labels are declared unsupported and
+produce diagnostics rather than being silently omitted. The TypeScript browser
+smoke runs a checked-in glyph fixture against both Canvas and the shared Rust
+RGBA renderer, checking stable interior pixels and text/shade ink. Because
+Canvas is a host-owned target, its `output_formats` array is empty; it does not
+pretend that a Canvas context is a PNG or raw RGBA file.
 
 ## Adding a renderer
 
