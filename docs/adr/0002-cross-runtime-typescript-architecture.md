@@ -164,8 +164,8 @@ The following evidence is already present:
 - TypeScript declaration fixtures compile Node ESM, Node CommonJS, and browser conditional-export usage examples. A bundled browser-facade smoke test runs the actual WASM backend in Chromium, Firefox, and WebKit; the Node facade integration test runs against the actual native addon.
 
 Remaining release/conformance gates include:
-- Implement direct scene-to-Canvas rendering in #144.
-- Expand full-scene semantic and visual regression coverage across the backends in #146. The existing Node/WASM parity tests do not establish complete legacy corrplot or full presentation-scene parity.
+- Direct scene-to-Canvas rendering is implemented in #144. The Canvas renderer supports the documented common feature subset and reports unsupported legends, cluster regions, and plotmath through its capability declaration and diagnostics.
+- Continue expanding full-scene semantic and visual regression coverage across the backends in #146. The existing Node/WASM parity tests do not establish complete legacy corrplot or full presentation-scene parity.
 - Keep performance thresholds and noisy measurements informational until the broader evidence and repeatability work in #146 supports stable budgets.
 - Preserve scene-v1 and diagnostic-v1 compatibility. A runtime binding must not silently change either contract.
 
@@ -178,7 +178,7 @@ Remaining release/conformance gates include:
 - **#141 and #142 — Node/WASM bindings:** the initial binding slices are complete. This does not mean a production release or full API parity.
 - **#143/#153 and #154 — renderer contract and RGBA raster:** complete. SVG and RGBA are available in the current binding APIs.
 - **#236 — scene-v1 parsing and matrix-to-scene construction:** complete for the matrix-bearing subset used by the current bindings; full presentation-scene semantics remain outside that initial slice.
-- **#144 — direct Canvas:** not implemented; remains a separate browser adapter.
+- **#144 — direct Canvas:** implemented as a browser TypeScript adapter. It renders the shared typed scene directly and supports the declared Canvas feature subset, including supplied significance annotations and confidence intervals.
 - **#145 — unified TypeScript API:** the initial shared facade, normalized-matrix scene builder, typed-scene rendering, typed-array normalization, renderer-ID checking, package isolation, and Node/browser runtime tests are implemented. Full scene-v1 presentation parity remains outside this issue's initial API slice.
 - **#146 — broad parity and visual regression:** active; it remains the broader conformance/performance gate.
 - **#290 — npm workspace and non-publishing staging:** complete. Public publication remains separately deferred under #293.
