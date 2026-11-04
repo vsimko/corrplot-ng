@@ -53,10 +53,18 @@ foundations are implemented:
   does not require Python or R at runtime and has native build/test coverage
   on Linux, macOS, and Windows.
 - **Native Node.js binding:** an experimental N-API addon in `bindings/node/`
-  exposes shared matrix validation and typed-scene SVG/RGBA rendering. Its
-  clean npm tarball install is tested without Cargo at runtime on Node.js 22,
-  24, and 26 across Linux, macOS, and Windows. Prebuilt package publishing,
-  scene construction, and the unified TypeScript facade remain open.
+  exposes shared matrix validation, normalized-matrix scene construction,
+  typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 compatibility
+  rendering. Its clean npm tarball install is tested without Cargo at runtime
+  on Node.js 22, 24, and 26 across Linux, macOS, and Windows.
+- **Browser WebAssembly binding:** `bindings/wasm/` exposes the same initial
+  Rust-backed validation, normalized-matrix scene construction, and typed-scene
+  plus matrix-bearing scene-v1 SVG/RGBA operations. Node and browser smoke tests
+  cover Node 24/26 and Chromium, Firefox, and WebKit.
+- **TypeScript facade:** `packages/typescript/` provides runtime-specific Node
+  ESM/CommonJS and browser exports, typed-array matrix input, normalized-matrix
+  scene construction, typed-scene SVG/RGBA rendering, scene-v1 compatibility
+  rendering, capabilities, diagnostics, adapter injection, and disposal.
 - **Correctness and compatibility checks:** shared fixture validation,
   normalized-input contract tests, R compatibility tests against a pinned
   upstream reference, scene/SVG tests, native CLI tests, and SVG
@@ -151,7 +159,7 @@ the issue is deliberately reactivated.
 
 ### Phase 3 — Establish the shared Rust core
 
-**Status:** Strategic architecture selected; CLI/R crate-reuse proof and native Node binding slices complete; browser WASM and complete scene construction remain.
+**Status:** Strategic architecture selected; CLI/R crate-reuse proof, native Node and browser-WASM binding slices, normalized-matrix scene construction, and the initial runtime-isolated TypeScript facade are implemented. Full scene-v1 presentation semantics, direct Canvas, and production R rollout remain separate work.
 
 The target is one authoritative Rust implementation of shared correlation,
 validation, scene construction, layout, and other common visualization
@@ -167,13 +175,15 @@ and disposable R/rextendr adapter call its matrix-validation operation.
 This is a real but deliberately small compiled-library reuse proof; the core
 does not yet implement the complete visualization pipeline.
 
-The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The remaining implementation track is:
+The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The initial integration issues have implementation evidence:
 
 - [#139 — Cross-runtime Rust and TypeScript architecture](https://github.com/vsimko/corrplot-ng/issues/139) — architecture decision recorded in ADR 0002.
-- [#140 — Portable Rust core for native and WebAssembly](https://github.com/vsimko/corrplot-ng/issues/140).
-- [#141 — Node.js native binding](https://github.com/vsimko/corrplot-ng/issues/141) — initial N-API validation, typed-scene SVG/RGBA rendering, and clean package-install smoke test are implemented; scene construction and prebuilt distribution remain.
-- [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142).
-- [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145).
+- [#140 — Portable Rust core for native and WebAssembly](https://github.com/vsimko/corrplot-ng/issues/140) — shared Rust core used by the CLI and runtime bindings for the implemented operations.
+- [#141 — Node.js native binding](https://github.com/vsimko/corrplot-ng/issues/141) — initial N-API validation, normalized-matrix scene construction, typed-scene SVG/RGBA rendering, and clean package-install smoke tests implemented.
+- [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142) — initial browser-WASM binding and cross-browser smoke coverage implemented.
+- [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145) — runtime-isolated Node/browser facade, normalized-matrix scene workflow, typed-array input, typed-scene SVG/RGBA, and compatibility rendering implemented.
+
+The remaining integration and conformance work includes [#144 — Direct browser Canvas rendering](https://github.com/vsimko/corrplot-ng/issues/144) and [#146 — Cross-backend parity, visual regression, and performance tests](https://github.com/vsimko/corrplot-ng/issues/146).
 
 **Completed integration gate:** the CLI and disposable R/rextendr adapter
 depend on the exact same reusable crate and call its matrix-validation API.
