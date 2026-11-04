@@ -60,6 +60,26 @@ export interface SceneSignificancePolicy {
   thresholds: number[];
   symbol: string;
 }
+export interface SceneLegendEntryInput {
+  kind: "stop" | "interval" | "missing";
+  label: string;
+  color: RgbaColor;
+}
+export interface SceneClusterRegionInput {
+  id: string;
+  variables: string[];
+  sourceIndices: number[];
+  rowStart: number;
+  rowEnd: number;
+  columnStart: number;
+  columnEnd: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: RgbaColor;
+  lineWidth: number;
+}
 export interface SceneCellInput {
   x: number;
   y: number;
@@ -75,6 +95,7 @@ export interface SceneCellInput {
 }
 export interface SceneTextInput {
   text: string;
+  semanticRole?: string;
   x: number;
   y: number;
   fontSize: number;
@@ -89,6 +110,8 @@ export interface SceneInput {
   cells: SceneCellInput[];
   texts: SceneTextInput[];
   significance?: SceneSignificancePolicy;
+  legend?: SceneLegendEntryInput[];
+  clusterRegions?: SceneClusterRegionInput[];
 }
 export interface SceneResult {
   scene?: SceneInput | null;
