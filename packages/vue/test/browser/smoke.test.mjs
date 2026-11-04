@@ -5,7 +5,9 @@ const browserName = process.env.CORRPLOT_BROWSER ?? "chromium";
 const browserType = { chromium, firefox, webkit }[browserName];
 assert.ok(browserType, "Unsupported CORRPLOT_BROWSER: " + browserName);
 
-const browser = await browserType.launch({ headless: true });
+const launchOptions = { headless: true };
+if (browserName === "chromium") launchOptions.channel = "chrome";
+const browser = await browserType.launch(launchOptions);
 try {
   const page = await browser.newPage();
   const errors = [];
