@@ -78,8 +78,10 @@ Rust core or Python SVG prototype from their shared use of the word SVG. The
 browser TypeScript Canvas renderer draws the seven cell glyph methods, labels,
 figure text, missing cells, supplied significance annotations, confidence
 intervals, legends, and cluster-region overlays directly from the typed scene.
-Plotmath labels and complete accessible title/description metadata remain unsupported
-and produce diagnostics rather than being silently omitted. The browser smoke
+Plotmath labels remain unsupported and produce diagnostics rather than being
+silently omitted. Canvas exposes the scene description as an `aria-label`, but
+does not preserve the complete accessible title/description metadata contract;
+that limitation is declared in its capability record. The browser smoke
 runs checked-in fixtures against both Canvas and the shared Rust RGBA renderer,
 checking stable interior pixels and overlay ink at 1x and 2x device-pixel
 ratios. Because Canvas is a host-owned target, its `output_formats` array is
