@@ -967,7 +967,10 @@ mod tests {
             color: region_color, line_width: 2.0,
         });
         scene.legend.push(SceneLegendEntry {
-            kind: "missing".into(), label: "Not observed".into(), color: legend_color,
+            kind: "missing".into(), label: "NA".into(), color: legend_color,
+        });
+        scene.legend.push(SceneLegendEntry {
+            kind: "stop".into(), label: "Sig".into(), color: region_color,
         });
 
         let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(100.0, 100.0, crate::output::SvgUnit::Pixels));
@@ -977,7 +980,10 @@ mod tests {
         assert!(svg.contains("data-region-id=\"group-a\""));
         assert!(svg.contains("stroke-width=\"2\""));
         assert!(svg.contains("class=\"legend-entry\""));
-        assert!(svg.contains("Not observed"));
+        assert!(svg.contains("NA"));
+        assert!(svg.contains("data-kind=\\\"stop\\\""));
+        let second_legend_x = 8.0 + 11.0 + 2.0 * 8.0 * 6.0 / 7.0 + 10.0;
+        assert!(svg.contains(&format!("x=\\\"{second_legend_x}\\\"")));
 
         let rgba = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
         let pixel = |x: usize, y: usize| {
@@ -986,6 +992,7 @@ mod tests {
         };
         assert_eq!(pixel(10, 30), &[33, 102, 172, 255]);
         assert_eq!(pixel(8, 88), &[242, 242, 242, 255]);
+        assert_eq!(pixel(45, 88), &[33, 102, 172, 255]);
     }
 
     #[test]
