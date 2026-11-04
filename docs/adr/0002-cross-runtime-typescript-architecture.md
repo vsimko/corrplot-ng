@@ -34,7 +34,7 @@ The current implementation consists of four layers:
 3. **Browser WASM binding — `bindings/wasm/`:** a `wasm32-unknown-unknown` adapter exposing the same validation, typed-scene and matrix-bearing SVG/RGBA operations, capability data, and structured diagnostics. RGBA bytes are copied into JavaScript-owned `Uint8Array` memory. Browser smoke coverage runs on Chromium, Firefox, and WebKit; the WASM Node tests run on Node.js 24 and 26.
 4. **TypeScript facade — `packages/typescript/`:** a shared facade with separate Node and browser entry points. It asynchronously loads only the matching native or WASM backend; validates row-major matrix input (arrays or numeric typed arrays with an explicit missing mask); constructs a renderer-neutral scene in Rust; renders that scene to SVG/RGBA; exposes renderer capabilities and diagnostic errors; and supports adapter injection and disposal. It retains a compatibility path for matrix-bearing scene-v1 JSON. The scene builder currently covers the normalized-matrix subset described below, not the full scene-v1 presentation contract.
 
-The npm workspace currently contains `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and the browser-only `@corrplot-ng/react` adapter. The runtime-neutral `@corrplot-ng/core` and Vue adapter remain planned. These implementation notes do not imply a production npm release, full scene-v1 presentation support, or direct Canvas rendering.
+The npm workspace currently contains `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and the browser-only `@corrplot-ng/react` and `@corrplot-ng/vue` adapters. The runtime-neutral `@corrplot-ng/core` remains planned. These implementation notes do not imply a production npm release, full scene-v1 presentation support, or direct Canvas rendering.
 
 ## Runtime and backend selection
 
@@ -183,7 +183,7 @@ Remaining release/conformance gates include:
 - **#146 — broad parity and visual regression:** active; it remains the broader conformance/performance gate.
 - **#290 — npm workspace and non-publishing staging:** complete. Public publication remains separately deferred under #293.
 - **#291 — React:** implemented in `packages/react/` as a browser-only component and hook over `@corrplot-ng/wasm`; React is a peer dependency. Vite/esbuild bundles and browser lifecycle/error behavior are tested.
-- **#292 — Vue:** remains planned and depends on the browser-facing API contract in #145.
+- **#292 — Vue:** implemented in `packages/vue/` as a browser-only component and composable over `@corrplot-ng/wasm`; Vue is a peer dependency.
 - **#173 — CRAN and human-maintainer evidence:** remains a separate R release-readiness gate and does not block Node/WASM/TypeScript engineering.
 
 ## Rejected alternatives
@@ -231,7 +231,7 @@ The current workspace contains these installable packages:
 The following packages remain planned, not current workspace packages:
 
 - `@corrplot-ng/core`: runtime-neutral public types, diagnostics, and API contracts only; no native or WASM backend dependency.
-- `@corrplot-ng/vue`: optional framework adapter. It must depend only on the browser-facing API and declare Vue as a peer dependency.
+- `@corrplot-ng/vue`: optional browser-only Vue component and composable. It depends on `@corrplot-ng/wasm` and declares Vue as a peer dependency; implemented under #292.
 
 The existing Node package and platform package names under `bindings/node/` should be preserved unless a separately reviewed migration is justified. A universal package that installs both execution backends is rejected: conditional exports alone do not prevent npm from installing declared dependencies.
 
@@ -243,4 +243,4 @@ The workspace, Changesets versioning, pull-request validation, and manual non-pu
 
 When publication is later prioritized, publish according to the actual dependency graph: runtime-neutral types/core first if that package is implemented, then WASM and Node platform packages, then the main Node package, then React/Vue integrations. npm publication is not transactional; the future workflow must detect already-published versions and safely handle partial failures.
 
-Do not configure live npm Trusted Publishing or credentials until a separate maintainer-approved release issue is activated. The detailed plan is in [npm package distribution](../npm-package-distribution.md). The initial facade/API contract in #145 is implemented; #291 and #292 track framework adapters, #290 is complete, and public publication remains deferred in #293.
+Do not configure live npm Trusted Publishing or credentials until a separate maintainer-approved release issue is activated. The detailed plan is in [npm package distribution](../npm-package-distribution.md). The initial facade/API contract in #145 and browser-only React/Vue adapters #291/#292 are implemented; #290 is complete, and public publication remains deferred in #293.
