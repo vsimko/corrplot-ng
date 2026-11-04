@@ -31,6 +31,8 @@ NORMALIZED_FIXTURE_PAIRS = (
         ROOT / "implementations" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "invalid-cases.json",
     ),
 )
+CORRELATION_FIXTURE_PATH = ROOT / "tests" / "fixtures" / "correlation-cases.json"
+R_CORRELATION_FIXTURE_PATH = ROOT / "implementations" / "r" / "inst" / "extdata" / "correlation-cases.json"
 GENERAL_MATRIX_PATH = ROOT / "tests" / "fixtures" / "general-matrix-cases.json"
 R_GENERAL_MATRIX_PATH = ROOT / "implementations" / "r" / "inst" / "extdata" / "general-matrix-cases.json"
 EXPECTED_METHODS = {
@@ -59,6 +61,9 @@ class FixtureIntegrityTests(unittest.TestCase):
         for canonical, packaged in NORMALIZED_FIXTURE_PAIRS:
             with self.subTest(fixture=canonical.name):
                 self.assertEqual(packaged.read_bytes(), canonical.read_bytes())
+
+    def test_correlation_r_fixture_is_an_exact_copy(self):
+        self.assertEqual(R_CORRELATION_FIXTURE_PATH.read_bytes(), CORRELATION_FIXTURE_PATH.read_bytes())
 
     def test_general_matrix_r_fixture_is_an_explicit_projection(self):
         """The R package copy intentionally omits the all-missing render case."""
