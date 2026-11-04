@@ -225,7 +225,10 @@ test("Node and WASM render scene-v1 statistical overlays identically", () => {
   assert.ok(nativeSvg.includes('class="confidence-interval-cap"'));
   assert.ok(nativeSvg.includes('class="significance-annotation"'));
   assert.ok(nativeSvg.includes(">**</text>"));
+  assert.equal((nativeSvg.match(/class="significance-annotation"/g) ?? []).length, 1);
+  assert.ok(!nativeSvg.includes("HIDDEN"));
   assert.ok(!nativeSvg.includes('x1="112.00" y1="280.00" x2="180.00" y2="280.00"'));
+  assert.ok(!nativeSvg.includes('x1="280.00" y1="280.00" x2="348.00" y2="280.00"'));
 
   const nativeOutput = native.renderMatrixRgba(sceneV1Statistical, "circle", rgbaOptions);
   const wasmOutput = wasm.renderMatrixRgba(sceneV1Statistical, "circle", rgbaOptions);
@@ -236,6 +239,7 @@ test("Node and WASM render scene-v1 statistical overlays identically", () => {
   };
   assert.deepEqual(pixelAt(nativeOutput, 146, 112), [34, 34, 34, 255]);
   assert.deepEqual(pixelAt(nativeOutput, 146, 280), [255, 255, 255, 255]);
+  assert.deepEqual(pixelAt(nativeOutput, 320, 280), [255, 255, 255, 255]);
   const annotationInk = [];
   for (let y = 86; y < 102; y++) {
     for (let x = 166; x < 178; x++) {
