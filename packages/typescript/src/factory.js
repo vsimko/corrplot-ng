@@ -29,6 +29,44 @@ function unwrap(result, field) {
   return typeof result === "string" ? result : result?.[field];
 }
 
+function isNumericTypedArray(value) {
+  if (!ArrayBuffer.isView(value) || value instanceof DataView) return false;
+  if (typeof BigInt64Array !== "undefined" && value instanceof BigInt64Array) return false;
+  if (typeof BigUint64Array !== "undefined" && value instanceof BigUint64Array) return false;
+  return true;
+}
+
+function normalizeMatrixInput(input) {
+  if (!input || typeof input !== "object") {
+    fail("configuration.invalid_field", "configuration", "matrix input must be an object", "matrix");
+  }
+  const source = input.values;
+  let values;
+  if (Array.isArray(source)) values = source;
+  else if (isNumericTypedArray(source)) values = Array.from(source);
+  else fail("configuration.invalid_field", "configuration", "matrix values must be a number/null array or a numeric typed array", "values");
+
+  if (input.missingMask !== undefined) {
+    const mask = input.missingMask;
+    if (!mask || typeof mask.length !== "number" || mask.length !== values.length) {
+      fail("configuration.invalid_field", "configuration", "missingMask length must match matrix values", "missingMask");
+    }
+    values = values.map((value, index) => {
+      if (typeof mask[index] !== "boolean") {
+        fail("configuration.invalid_field", "configuration", "missingMask entries must be booleans", `missingMask[${index}]`);
+      }
+      return mask[index] ? null : value;
+    });
+  }
+  return {
+    labels: input.labels,
+    rows: input.rows,
+    columns: input.columns,
+    values,
+    kind: input.kind,
+  };
+}
+
 export function createEngine(adapter, backend) {
   for (const method of ["validateMatrix", "createScene", "renderSceneSvg", "renderSceneRgba", "renderMatrixSvg", "renderMatrixRgba", "getRendererCapabilities"]) {
     if (typeof adapter?.[method] !== "function") {
@@ -45,7 +83,7 @@ export function createEngine(adapter, backend) {
     backend,
     validate(input) {
       ensureActive();
-      const result = invoke(() => adapter.validateMatrix(input));
+      const result = invoke(() => adapter.validateMatrix(normalizeMatrixInput(input)));
       if (result && typeof result === "object" && "valid" in result) {
         if (!result.valid) {
           if (result.diagnostic) unwrap(result);
@@ -66,7 +104,7 @@ export function createEngine(adapter, backend) {
         displayType: options.displayType ?? "full",
         showDiagonal: options.showDiagonal ?? true,
       };
-      const scene = unwrap(invoke(() => adapter.createScene(input, normalizedOptions)), "scene");
+      const scene = unwrap(invoke(() => adapter.createScene(normalizeMatrixInput(input), normalizedOptions)), "scene");
       if (!scene || typeof scene !== "object" || !Number.isFinite(scene.width) || !Number.isFinite(scene.height) || !Array.isArray(scene.cells) || !Array.isArray(scene.texts)) {
         fail("renderer.output.invalid_scene", "export", "scene builder returned an invalid renderer-neutral scene", "output.scene");
       }
@@ -109,10 +147,14 @@ export function createEngine(adapter, backend) {
       }
       fail("renderer.unsupported_feature", "renderer", `unsupported output format '${options?.format}'`, "output.format");
     },
-    getRendererCapabilities() {
+    getRendererCapabilities(rendererId) {
       ensureActive();
       const value = invoke(() => adapter.getRendererCapabilities());
-      return typeof value === "string" ? JSON.parse(value) : value;
+      const capabilities = typeof value === "string" ? JSON.parse(value) : value;
+      if (rendererId !== undefined && capabilities?.renderer?.id !== rendererId) {
+        fail("renderer.unsupported_feature", "renderer", `renderer '${rendererId}' is not available in the selected backend`, "rendererId");
+      }
+      return capabilities;
     },
     dispose() {
       if (disposed) return;
