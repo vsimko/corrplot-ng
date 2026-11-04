@@ -169,8 +169,8 @@ test("renders legend entries and cluster-region overlays from typed scenes", () 
   assert.ok(calls.some(call => call[0] === "strokeRect" && call[1] === 1 && call[2] === 1 && call[3] === 8 && call[4] === 8));
   assert.ok(calls.some(call => call[0] === "fillRect" && call[1] === 8 && call[2] === 38 && call[3] === 7 && call[4] === 7));
   assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "NA" && call[2] === 19 && call[3] === 37));
-  assert.ok(calls.some(call => call[0] === "fillRect" && Math.abs(call[1] - 49.714285714285715) < 1e-9 && call[2] === 38 && call[3] === 7 && call[4] === 7));
-  assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "Sig" && Math.abs(call[2] - 60.714285714285715) < 1e-9 && call[3] === 37));
+  assert.ok(calls.some(call => call[0] === "fillRect" && Math.abs(call[1] - 42.714285714285715) < 1e-9 && call[2] === 38 && call[3] === 7 && call[4] === 7));
+  assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "Sig" && Math.abs(call[2] - 53.714285714285715) < 1e-9 && call[3] === 37));
 });
 
 test("reports browser host targets and supported scene feature capabilities", () => {
