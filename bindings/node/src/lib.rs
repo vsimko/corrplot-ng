@@ -1,6 +1,6 @@
 use napi::bindgen_prelude::Buffer;
 use corrplot_core::output::{OutputOptions, RasterOptions, RenderOutput, Renderer, RgbaColor, SvgOptions, SvgUnit};
-use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneCellSignificance, SceneConfidenceInterval, SceneSignificancePolicy, SceneSvgRenderer, SceneText, TextAnchor};
+use corrplot_core::raster::{CellGlyph, RgbaRenderer, Scene, SceneCell, SceneCellSignificance, SceneClusterRegion, SceneConfidenceInterval, SceneLegendEntry, SceneSignificancePolicy, SceneSvgRenderer, SceneText, TextAnchor};
 use corrplot_core::{validate_matrix, MatrixKind, RENDERER_CAPABILITIES_V1};
 use corrplot_core::scene::{matrix_to_scene_v1, scene_v1_to_scene, CellMethod, DisplayType, MatrixSemantics, NormalizedMatrixV1, SceneBuildOptions};
 use napi_derive::napi;
@@ -137,6 +137,30 @@ pub struct SceneTextInput {
 }
 
 #[napi(object)]
+pub struct SceneLegendEntryInput {
+    pub kind: String,
+    pub label: String,
+    pub color: RgbaColorInput,
+}
+
+#[napi(object)]
+pub struct SceneClusterRegionInput {
+    pub id: String,
+    pub variables: Vec<String>,
+    pub source_indices: Vec<u32>,
+    pub row_start: u32,
+    pub row_end: u32,
+    pub column_start: u32,
+    pub column_end: u32,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub color: RgbaColorInput,
+    pub line_width: f64,
+}
+
+#[napi(object)]
 pub struct SceneInput {
     pub width: f64,
     pub height: f64,
@@ -144,6 +168,8 @@ pub struct SceneInput {
     pub cells: Vec<SceneCellInput>,
     pub texts: Vec<SceneTextInput>,
     pub significance: Option<SceneSignificancePolicyInput>,
+    pub legend: Option<Vec<SceneLegendEntryInput>>,
+    pub cluster_regions: Option<Vec<SceneClusterRegionInput>>,
 }
 
 #[napi(object)]
@@ -376,7 +402,31 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         thresholds: value.thresholds,
         symbol: value.symbol,
     });
-    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance, legend: Vec::new(), cluster_regions: Vec::new() })
+    let legend = input.legend.unwrap_or_default().into_iter().enumerate().map(|(index, entry)| {
+        Ok::<_, DiagnosticV1>(SceneLegendEntry {
+            kind: entry.kind,
+            label: entry.label,
+            color: rgba(entry.color, &format!("legend[{index}].color"))?,
+        })
+    }).collect::<Result<Vec<_>, DiagnosticV1>>()?;
+    let cluster_regions = input.cluster_regions.unwrap_or_default().into_iter().enumerate().map(|(index, region)| {
+        Ok::<_, DiagnosticV1>(SceneClusterRegion {
+            id: region.id,
+            variables: region.variables,
+            source_indices: region.source_indices.into_iter().map(|value| value as usize).collect(),
+            row_start: region.row_start as usize,
+            row_end: region.row_end as usize,
+            column_start: region.column_start as usize,
+            column_end: region.column_end as usize,
+            x: region.x,
+            y: region.y,
+            width: region.width,
+            height: region.height,
+            color: rgba(region.color, &format!("clusterRegions[{index}].color"))?,
+            line_width: region.line_width,
+        })
+    }).collect::<Result<Vec<_>, DiagnosticV1>>()?;
+    Ok(Scene { width: input.width, height: input.height, description: input.description.unwrap_or_default(), cells, texts, significance, legend, cluster_regions })
 }
 
 #[napi(js_name = "renderSceneSvg")]
@@ -639,6 +689,26 @@ fn scene_input(scene: Scene) -> SceneInput {
         }.into(),
         rotation_degrees: Some(text.rotation_degrees),
     }).collect();
+    let legend = (!scene.legend.is_empty()).then(|| scene.legend.into_iter().map(|entry| SceneLegendEntryInput {
+        kind: entry.kind,
+        label: entry.label,
+        color: rgba_input(&entry.color),
+    }).collect());
+    let cluster_regions = (!scene.cluster_regions.is_empty()).then(|| scene.cluster_regions.into_iter().map(|region| SceneClusterRegionInput {
+        id: region.id,
+        variables: region.variables,
+        source_indices: region.source_indices.into_iter().map(|value| value as u32).collect(),
+        row_start: region.row_start as u32,
+        row_end: region.row_end as u32,
+        column_start: region.column_start as u32,
+        column_end: region.column_end as u32,
+        x: region.x,
+        y: region.y,
+        width: region.width,
+        height: region.height,
+        color: rgba_input(&region.color),
+        line_width: region.line_width,
+    }).collect());
     SceneInput {
         width: scene.width,
         height: scene.height,
@@ -650,6 +720,8 @@ fn scene_input(scene: Scene) -> SceneInput {
             thresholds: value.thresholds,
             symbol: value.symbol,
         }),
+        legend,
+        cluster_regions,
     }
 }
 
