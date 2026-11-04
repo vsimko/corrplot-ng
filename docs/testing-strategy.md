@@ -238,8 +238,8 @@ sample-based visual conformance at 1x and 2x backing-store resolutions,
 including a letterboxed viewport and supplied statistical overlays, rather
 than byte equality. Renderer capability tests distinguish shared-core support
 for significance, confidence intervals, legends, and cluster regions from
-the narrower Canvas feature set; unsupported features must produce
-structured diagnostics rather than being silently omitted. Full scene-v1
+the expanded Canvas feature set; unsupported plotmath and accessibility
+metadata remain explicit capability limits or structured diagnostics. Full scene-v1
 presentation fidelity and repeatable cross-runtime performance evidence remain
 tracked in #146 and related measurement issues, including the R-host work in
 #267.
