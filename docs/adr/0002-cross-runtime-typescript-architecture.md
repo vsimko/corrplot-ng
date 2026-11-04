@@ -84,7 +84,7 @@ The Node and WASM bindings expose the same typed-scene and matrix-bearing scene-
 
 ### Remaining API work
 
-The initial cross-runtime facade, package isolation, typed-array normalization, renderer-ID checking, and runtime-specific initialization are implemented under #145. The full scene-v1 presentation contract is not implied by this initial normalized-matrix builder; broader semantics and visual conformance remain tracked by #146 and the direct Canvas adapter by #144.
+The initial cross-runtime facade, package isolation, typed-array normalization, renderer-ID checking, and runtime-specific initialization are implemented under #145. The full scene-v1 presentation contract is not implied by this initial normalized-matrix builder; broader scene-v1 semantics and cross-renderer visual conformance remain tracked by #146; the direct Canvas implementation is in #144.
 
 The public TypeScript types must not expose internal Rust structs, pointers, N-API handles, or WebAssembly memory offsets. The shared Rust core remains the only source of correlation, normalization, ordering, and scene-construction semantics.
 
@@ -177,7 +177,7 @@ Remaining release/conformance gates include:
 - **#141 and #142 — Node/WASM bindings:** the initial binding slices are complete. This does not mean a production release or full API parity.
 - **#143/#153 and #154 — renderer contract and RGBA raster:** complete. SVG and RGBA are available in the current binding APIs.
 - **#236 — scene-v1 parsing and matrix-to-scene construction:** complete for the matrix-bearing subset used by the current bindings; full presentation-scene semantics remain outside that initial slice.
-- **#144 — direct Canvas:** implemented as a browser TypeScript adapter. It renders the shared typed scene directly and supports the declared Canvas feature subset, including supplied significance annotations and confidence intervals.
+- **#144 — direct Canvas:** implemented as a browser TypeScript adapter. It renders the shared typed scene directly and supports the declared Canvas feature subset, including supplied significance annotations, confidence intervals, legends, and cluster regions.
 - **#145 — unified TypeScript API:** the initial shared facade, normalized-matrix scene builder, typed-scene rendering, typed-array normalization, renderer-ID checking, package isolation, and Node/browser runtime tests are implemented. Full scene-v1 presentation parity remains outside this issue's initial API slice.
 - **#146 — broad parity and visual regression:** active; it remains the broader conformance/performance gate.
 - **#290 — npm workspace and non-publishing staging:** complete. Public publication remains separately deferred under #293.
@@ -233,7 +233,7 @@ The following package remains planned, not a current workspace package:
 
 The existing Node package and platform package names under `bindings/node/` should be preserved unless a separately reviewed migration is justified. A universal package that installs both execution backends is rejected: conditional exports alone do not prevent npm from installing declared dependencies.
 
-The current `@corrplot-ng/typescript` facade selects the runtime-specific backend through separate Node and browser entry points. It validates array or typed-array `MatrixInput`, builds a renderer-neutral scene through the shared Rust core, renders that scene to SVG/RGBA, retains matrix-bearing scene-v1 JSON rendering for compatibility, returns renderer capabilities, wraps diagnostics, supports adapter injection, and disposes the adapter. Full scene-v1 presentation semantics and direct Canvas remain separate conformance/rendering work.
+The current `@corrplot-ng/typescript` facade selects the runtime-specific backend through separate Node and browser entry points. It validates array or typed-array `MatrixInput`, builds a renderer-neutral scene through the shared Rust core, renders that scene to SVG/RGBA, retains matrix-bearing scene-v1 JSON rendering for compatibility, returns renderer capabilities, wraps diagnostics, supports adapter injection, and disposes the adapter. Full scene-v1 presentation semantics remain separate conformance work; the direct Canvas implementation is present and its supported feature set is tested under #146.
 
 ### Staged release policy
 
