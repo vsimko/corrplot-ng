@@ -119,8 +119,8 @@ test("rejects invalid scenes, dimensions, colors, and unsupported scene features
 
   expectCode(() => renderSceneToCanvas(null, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas(scene, canvas, { width: 0 }), "renderer.output.invalid_options");
-  expectCode(() => renderSceneToCanvas({ ...scene, legend: [{ label: "x" }] }, canvas), "renderer.unsupported_feature");
-  expectCode(() => renderSceneToCanvas({ ...scene, clusterRegions: [{}] }, canvas), "renderer.unsupported_feature");
+  expectCode(() => renderSceneToCanvas({ ...scene, legend: [{ kind: "unknown", label: "x", color: red }] }, canvas), "renderer.output.invalid_scene");
+  expectCode(() => renderSceneToCanvas({ ...scene, clusterRegions: [{ id: "group-a", variables: ["alpha"], sourceIndices: [], rowStart: 0, rowEnd: 0, columnStart: 0, columnEnd: 0, x: 0, y: 0, width: 10, height: 10, color: red, lineWidth: 1 }] }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({ ...scene, significance: {} }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({ ...scene, texts: [{ ...scene.texts[0], semanticRole: "plotmath" }] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({
@@ -137,7 +137,38 @@ test("rejects invalid scenes, dimensions, colors, and unsupported scene features
   }, canvas), "renderer.output.invalid_scene");
 });
 
-test("reports browser host targets and supported statistical overlay capabilities", () => {
+
+test("renders legend entries and cluster-region overlays from typed scenes", () => {
+  const { canvas, calls } = mockCanvas();
+  const regionColor = { red: 33, green: 102, blue: 172, alpha: 255 };
+  const legendColor = { red: 242, green: 242, blue: 242, alpha: 255 };
+  const annotatedScene = {
+    ...scene,
+    legend: [{ kind: "missing", label: "Not observed", color: legendColor }],
+    clusterRegions: [{
+      id: "group-a",
+      variables: ["alpha"],
+      sourceIndices: [0],
+      rowStart: 0,
+      rowEnd: 0,
+      columnStart: 0,
+      columnEnd: 0,
+      x: 1,
+      y: 1,
+      width: 8,
+      height: 8,
+      color: regionColor,
+      lineWidth: 2,
+    }],
+  };
+
+  renderSceneToCanvas(annotatedScene, canvas, { devicePixelRatio: 1 });
+  assert.ok(calls.some(call => call[0] === "strokeRect" && call[1] === 1 && call[2] === 1 && call[3] === 8 && call[4] === 8));
+  assert.ok(calls.some(call => call[0] === "fillRect" && call[1] === 8 && call[2] === 38 && call[3] === 7 && call[4] === 7));
+  assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "Not observed" && call[2] === 19 && call[3] === 37));
+});
+
+test("reports browser host targets and supported scene feature capabilities", () => {
   const capabilities = getCanvasRendererCapabilities();
   assert.equal(capabilities.renderer.id, "typescript-canvas-2d");
   assert.ok(capabilities.host_targets.includes("browser-canvas-2d"));
@@ -150,8 +181,8 @@ test("reports browser host targets and supported statistical overlay capabilitie
   }
   assert.equal(capabilities.host_targets.includes("browser-offscreen-canvas-2d"), offscreenSupported);
   assert.equal(capabilities.output_formats.length, 0);
-  assert.equal(capabilities.features.legend, false);
-  assert.equal(capabilities.features.cluster_regions, false);
+  assert.equal(capabilities.features.legend, true);
+  assert.equal(capabilities.features.cluster_regions, true);
   assert.equal(capabilities.features.plotmath_labels, false);
   assert.equal(capabilities.features.accessible_metadata, false);
   assert.equal(capabilities.features.figure_text, true);
