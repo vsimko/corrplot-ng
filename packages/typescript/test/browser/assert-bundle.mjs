@@ -7,6 +7,6 @@ assert.ok(!bundle.includes("@corrplot-ng/native-node"), "browser bundle must not
 assert.ok(!bundle.includes("bindings/node"), "browser bundle must not contain Node binding sources");
 assert.doesNotMatch(
   bundle,
-  /(?:from\s*|import\s*\()\s*["']node:/,
+  /["']node:[^"']+["']/,
   "browser bundle must not contain Node built-in imports",
 );
