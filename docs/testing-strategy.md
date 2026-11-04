@@ -198,16 +198,19 @@ runs cover Linux x64 GNU, macOS x64, macOS arm64, and Windows x64 on Node
 The browser-WASM binding compiles the same core for `wasm32-unknown-unknown`.
 Its Node-based binding tests and browser ESM build run on Node 24 for PRs;
 comprehensive runs use Node 24 and 26. Browser smoke coverage runs on Node
-26 against Chromium, Firefox, and WebKit. Weekly and manual runs also collect
+24 against Chromium, Firefox, and WebKit. Weekly and manual runs also collect
 informational WASM size/initialization/rendering baselines; these are not
 per-PR performance gates.
 
-The initial TypeScript facade has tests in the foundation workflow. It
-selects the runtime-specific Node or WASM backend and currently exposes
-validation, matrix-to-SVG/RGBA rendering, capabilities, diagnostics, and
-disposal. Broader API completeness, direct Canvas, and React/Vue adapters
-remain unfinished. The binding READMEs document their operation and runtime
-boundaries.
+The TypeScript facade has tests in the foundation and npm-workspace
+workflows. It selects the runtime-specific Node or WASM backend and exposes
+matrix validation, normalized-matrix scene construction, typed-scene
+SVG/RGBA rendering, matrix-bearing scene-v1 compatibility rendering,
+typed-array normalization, capability lookup, diagnostics, and disposal.
+The initial API slice in #145 is implemented; full scene-v1 presentation
+semantics and broader cross-backend conformance remain separate work in #146.
+Direct Canvas (#144) and React/Vue adapters (#291/#292) remain unfinished.
+The binding READMEs document their operation and runtime boundaries.
 
 ### Local command entry point
 
@@ -248,10 +251,10 @@ appropriate. Workflow concurrency cancels superseded runs for the same PR.
 | [Shared Rust core](../.github/workflows/test-shared-rust-core.yml) | PRs and pushes to `main` for core, CLI, rextendr, or workflow paths; manual dispatch | Repository-local rextendr consumer, native core tests, WASM target compile, and Rust 1.78 MSRV checks |
 | [Native Rust CLI](../.github/workflows/test-rust-cli.yml) | PRs and pushes to `main` for CLI/core/publication-config/validator paths; manual dispatch | Core and CLI offline tests, Ubuntu PR build, comprehensive Ubuntu/macOS/Windows build, SVG validation, installed-outside-checkout smoke |
 | [Native Node binding](../.github/workflows/test-node-native.yml) | PRs and pushes to `main` for Node binding/core/workflow paths; manual dispatch | Linux x64 GNU + Node 24 on PRs; comprehensive Linux/macOS/Windows architecture matrix on Node 22/24/26; native tests and package assembly |
-| [Browser WASM binding](../.github/workflows/test-wasm-binding.yml) | PRs and pushes to `main` for WASM binding/core/workflow paths; manual dispatch and weekly schedule | Node 24 PR tests/build; Node 24/26 comprehensive tests, browser ESM package checks, Chromium/Firefox/WebKit smoke on Node 26; scheduled/manual informational baseline artifact |
+| [Browser WASM binding](../.github/workflows/test-wasm-binding.yml) | PRs and pushes to `main` for WASM binding/core/workflow paths; manual dispatch and weekly schedule | Node 24 PR tests/build; Node 24/26 comprehensive tests, browser ESM package checks, Chromium/Firefox/WebKit smoke on Node 24; scheduled/manual informational baseline artifact |
 
 The foundation workflow's component jobs run only when their detected paths
-change (or on manual dispatch); its path filter also includes the initial
+change (or on manual dispatch); its path filter also includes the
 TypeScript facade tests. The R workflow similarly filters package-related
 paths. Shared-core, CLI, Node, and WASM workflows have explicit path filters.
 The PR tier uses representative fast checks; comprehensive matrices and
@@ -269,11 +272,11 @@ pull requests.
 
 ### 8. Future test extensions
 
-The initial TypeScript, Node native, and browser-WASM slices now have test
-coverage, but their broader APIs and production support are not complete.
-Direct Canvas, worker orchestration, React/Vue adapters, full scene-v1
-presentation coverage, and wider cross-backend conformance remain future
-work tracked under issues #139–#146.
+The initial normalized-matrix TypeScript scene workflow in #145, Node native
+binding, and browser-WASM operations have dedicated test coverage. Full
+scene-v1 presentation semantics and broader semantic/visual parity remain
+incomplete (#146); direct Canvas (#144), worker orchestration, React/Vue
+adapters (#291/#292), and public npm publication (#293) remain separate work.
 
 When one of these interfaces is implemented:
 
