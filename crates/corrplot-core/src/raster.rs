@@ -871,7 +871,7 @@ fn append_scene_legend_svg(out: &mut String, scene: &Scene, font_family: &str) {
             escape_xml(&entry.kind), x, y + 1.0, color_hex(entry.color), alpha(entry.color),
             x + 11.0, y, escape_xml(font_family), escape_xml(&entry.label)
         ));
-        x += 18.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
+        x += 11.0 + entry.label.chars().count() as f64 * 8.0 * 6.0 / 7.0 + 10.0;
     }
 }
 
