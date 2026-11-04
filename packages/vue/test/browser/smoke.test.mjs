@@ -10,7 +10,7 @@ try {
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto("http://127.0.0.1:4175/", { waitUntil: "networkidle" });
+  await page.goto("http://127.0.0.1:4175/", { waitUntil: "domcontentloaded" });
 
   const plot = page.locator('[data-testid="corrplot"]');
   const waitForStatus = status => page.waitForFunction(
