@@ -107,7 +107,7 @@ try {
   const reactErrors = [];
   reactPage.on("pageerror", error => reactErrors.push(error.message));
   await reactPage.goto(
-    "http://127.0.0.1:4173/packages/react/test/browser/vite-dist/index.html",
+    "http://127.0.0.1:4174/",
     { waitUntil: "networkidle" },
   );
   const reactPlot = reactPage.locator('[data-testid="corrplot"]');
