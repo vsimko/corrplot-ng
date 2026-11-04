@@ -70,6 +70,36 @@ pub struct CellGlyphInput {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneCellSignificanceInput {
+    pub p_value: Option<f64>,
+    pub status: String,
+    pub annotation: Option<String>,
+    pub blank: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneConfidenceIntervalInput {
+    pub lower: f64,
+    pub upper: f64,
+    pub x1: f64,
+    pub x2: f64,
+    pub y: f64,
+    pub cap_height: f64,
+    pub stroke_width: f64,
+    pub color: RgbaColorInput,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneSignificancePolicyInput {
+    pub mode: String,
+    pub thresholds: Vec<f64>,
+    pub symbol: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct SceneCellInput {
     pub x: f64,
     pub y: f64,
