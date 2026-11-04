@@ -1,0 +1,40 @@
+{
+  "name": "@corrplot-ng/react",
+  "version": "0.1.0",
+  "description": "React components and hooks for browser-based corrplot-ng rendering",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "test": "node --test test/renderer.test.js test/package-isolation.test.js && npm run test:types",
+    "test:types": "tsc --noEmit --strict --module ESNext --moduleResolution Bundler --jsx react-jsx --target ES2022 --lib ES2022,DOM test/types/usage.tsx",
+    "build:browser-smoke": "esbuild src/index.js --bundle --format=esm --platform=browser --external:react --outfile=test/browser/esbuild/react.js --loader:.wasm=file --asset-names=[name] && vite build --config examples/vite/vite.config.js && node test/browser/assert-bundles.mjs",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "dependencies": {
+    "@corrplot-ng/wasm": "0.1.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "esbuild": "0.25.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.0"
+  },
+  "engines": {
+    "node": "^22 || ^24 || ^26"
+  },
+  "license": "MIT"
+}
