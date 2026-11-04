@@ -34,7 +34,7 @@ The current implementation consists of four layers:
 3. **Browser WASM binding — `bindings/wasm/`:** a `wasm32-unknown-unknown` adapter exposing the same validation, typed-scene and matrix-bearing SVG/RGBA operations, capability data, and structured diagnostics. RGBA bytes are copied into JavaScript-owned `Uint8Array` memory. Browser smoke coverage runs on Chromium, Firefox, and WebKit; the WASM Node tests run on Node.js 24 and 26.
 4. **TypeScript facade — `packages/typescript/`:** a shared facade with separate Node and browser entry points. It asynchronously loads only the matching native or WASM backend; validates row-major matrix input (arrays or numeric typed arrays with an explicit missing mask); constructs a renderer-neutral scene in Rust; renders that scene to SVG/RGBA; exposes renderer capabilities and diagnostic errors; and supports adapter injection and disposal. It retains a compatibility path for matrix-bearing scene-v1 JSON. The scene builder currently covers the normalized-matrix subset described below, not the full scene-v1 presentation contract.
 
-The npm workspace currently contains `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, and `@corrplot-ng/typescript`. The runtime-neutral `@corrplot-ng/core` package and the React/Vue adapters remain planned. These implementation notes do not imply a production npm release, full scene-v1 presentation support, or direct Canvas rendering.
+The npm workspace currently contains `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and the browser-only `@corrplot-ng/react` adapter. The runtime-neutral `@corrplot-ng/core` and Vue adapter remain planned. These implementation notes do not imply a production npm release, full scene-v1 presentation support, or direct Canvas rendering.
 
 ## Runtime and backend selection
 
@@ -226,12 +226,12 @@ The current workspace contains these installable packages:
 - `@corrplot-ng/native-node`: Node-API backend and its platform-specific implementation packages.
 - `@corrplot-ng/wasm`: browser/WASM backend; no Node native dependency or Node-only runtime imports.
 - `@corrplot-ng/typescript`: the initial runtime-selecting facade with optional peer dependencies for the Node and WASM backends.
+- `@corrplot-ng/react`: browser-only React component and hook; it depends directly on `@corrplot-ng/wasm` and declares React as a peer dependency.
 
 The following packages remain planned, not current workspace packages:
 
 - `@corrplot-ng/core`: runtime-neutral public types, diagnostics, and API contracts only; no native or WASM backend dependency.
-- `@corrplot-ng/react`: implemented optional framework adapter. It depends directly on `@corrplot-ng/wasm` and declares React as a peer dependency.
-- `@corrplot-ng/vue`: planned optional framework adapter. It must depend only on the browser-facing API and declare Vue as a peer dependency.
+- `@corrplot-ng/vue`: optional framework adapter. It must depend only on the browser-facing API and declare Vue as a peer dependency.
 
 The existing Node package and platform package names under `bindings/node/` should be preserved unless a separately reviewed migration is justified. A universal package that installs both execution backends is rejected: conditional exports alone do not prevent npm from installing declared dependencies.
 
