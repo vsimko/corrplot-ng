@@ -51,7 +51,7 @@ flowchart TB
     TS[TypeScript facade]
     PY[Python scene/SVG reference]
     RPKG[Provisional R package]
-    CANVAS[Host-owned Canvas adapter]
+    CANVAS[TypeScript/browser Canvas 2D adapter]
     FRAME[React / Vue adapters]
 
     NM --> CORE
@@ -67,11 +67,11 @@ flowchart TB
     PY --> SC
     RPKG --> NM
     RPKG --> SC
-    WASM -. RGBA output consumed by host .-> CANVAS
+    TS -->|direct scene drawing| CANVAS
     WASM -. browser-only framework adapters .-> FRAME
 ```
 
-Solid edges represent implemented integration paths or contract use. Dashed edges represent host-owned boundaries. React and Vue are thin browser adapters over WASM; they do not implement correlation semantics. The browser binding returns SVG or owned RGBA data; it does not implement direct Canvas rendering. The R/rextendr adapter is a disposable evaluation integration, not the production R package.
+Solid edges represent implemented integration paths or contract use. Dashed edges represent host-owned boundaries. React and Vue are thin browser adapters over WASM; they do not implement correlation semantics. The browser binding provides shared SVG/RGBA operations; direct Canvas drawing is implemented separately by the TypeScript/browser adapter. The R/rextendr adapter is a disposable evaluation integration, not the production R package.
 
 ## Contracts: stable boundaries, not a shared runtime
 
@@ -112,13 +112,13 @@ The binding's focused PR CI runs on Linux x64 with Node 24. Comprehensive CI cov
 
 The binding in `bindings/wasm/` compiles the same Rust core for `wasm32-unknown-unknown`. It exposes matrix validation, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 to SVG/RGBA, and renderer capability reporting. RGBA pixels are copied into JavaScript-owned `Uint8Array` memory so they remain valid independently of later WASM calls.
 
-Node-based WASM tests and package checks run on Node 24 and 26. The browser smoke suite exercises Chromium, Firefox, and WebKit on Ubuntu. The current build is single-threaded. This does not establish support for every browser version, mobile webview, threaded WASM, workers, or OffscreenCanvas.
+Node-based WASM tests and package checks run on Node 24 and 26. The browser smoke suite exercises Chromium, Firefox, and WebKit on Ubuntu. The current WASM build is single-threaded. This does not establish support for every browser version or mobile webview. OffscreenCanvas is a separate TypeScript/browser host target and is used only when the runtime exposes a working 2D context. The package does not provide threaded WASM, worker transport, worker lifecycle, or worker protocols.
 
 ### TypeScript facade
 
 The facade in `packages/typescript/` provides runtime-specific exports and backend selection: Node.js loads the native Node-API backend, while browser builds load the WASM backend. It exposes matrix validation, Rust-backed normalized-matrix scene construction, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 JSON compatibility rendering, renderer capabilities with optional renderer-ID verification, diagnostic errors, adapter injection, and idempotent disposal. Matrix input accepts JavaScript arrays with explicit `null` values or numeric typed arrays with an explicit boolean missing-cell mask.
 
-The initial API slice tracked by #145 is implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain separate work in #146; direct Canvas integration (#144) remains unfinished. The React adapter (#291) is implemented in `packages/react/`, and the Vue adapter (#292) is implemented in `packages/vue/`; both are browser-only components over the WASM backend. See the [TypeScript package README](../packages/typescript/README.md), [React package README](../packages/react/README.md), and [Vue package README](../packages/vue/README.md).
+The initial API slice tracked by #145 is implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain separate work in #146. Direct Canvas 2D rendering (#144) is implemented by the browser-only TypeScript adapter; it is not a Rust/WASM output operation. The React adapter (#291) is implemented in `packages/react/`, and the Vue adapter (#292) is implemented in `packages/vue/`; both are browser-only components over the WASM backend. See the [TypeScript package README](../packages/typescript/README.md), [React package README](../packages/react/README.md), and [Vue package README](../packages/vue/README.md).
 
 ### R package
 
@@ -140,8 +140,8 @@ The following capabilities remain incomplete or separately gated:
 
 - **Production R integration:** gated by CRAN guidance on the vendor-metadata NOTE and installed package size, plus measured maintainer workflow effort (#173).
 - **Full scene-v1 semantics and presentation fidelity:** the current parser and builder cover the matrix-bearing slice, not all scene-v1 fields and presentation behavior.
-- **Full scene-v1 semantics and cross-backend conformance:** broader semantic and visual parity remain unfinished (#146). The initial normalized-matrix TypeScript scene workflow in #145 is implemented; direct Canvas remains separate (#144).
-- **Direct browser Canvas:** the current WASM binding returns SVG or RGBA; Canvas drawing is host-owned. Direct Canvas/OffscreenCanvas integration remains #144.
+- **Full scene-v1 semantics and cross-backend conformance:** broader semantic and visual parity remain unfinished (#146). The initial normalized-matrix TypeScript scene workflow in #145 is implemented; direct Canvas is implemented separately by the TypeScript/browser adapter (#144).
+- **Direct browser Canvas:** implemented by the TypeScript/browser adapter (#144), which draws the shared scene directly with Canvas 2D. The WASM binding still exposes SVG/RGBA operations and does not implement Canvas drawing. OffscreenCanvas is feature-detected and available only when the runtime supplies a working 2D context.
 - **React adapter:** implemented in `packages/react/` as a browser-only component and hook over the WASM package; React is a peer dependency.
 - **Vue adapter:** implemented in `packages/vue/` as a browser-only component and composable over the WASM package; Vue is a peer dependency.
 - **Threaded WASM and worker orchestration:** the baseline is single-threaded; shared memory, worker lifecycle, and worker protocols are not provided by the package.
@@ -162,9 +162,9 @@ The Rust/rextendr integration remains an evaluation adapter that proves shared-c
 | Browser WASM | Experimental binding over the same Rust core; matrix-to-scene SVG/RGBA and typed-scene SVG/RGBA implemented |
 | TypeScript facade | Runtime-isolated Node/browser API, normalized-matrix scene construction, typed-scene SVG/RGBA, typed-array input, scene-v1 compatibility rendering, capabilities and diagnostics implemented; full scene-v1 parity remains incomplete |
 | R compatibility | Legacy path plus normalized-input and experimental scene paths; production Rust integration not approved |
-| Rust/rextendr and C++/Rcpp | Evaluation spikes; rextendr consumes the shared Rust core for implemented operations |
+| Rust/rextendr | Disposable evaluation adapter; consumes the shared Rust core for implemented operations |\n| C++/Rcpp | Rejected; prototype and CI retired; not an approved fallback |
 | Python shared-scene/SVG | Reference/prototype implementation |
-| Direct Canvas, workers | Not implemented; React and Vue browser adapters implemented separately |
+| Direct Canvas 2D | Implemented by the TypeScript/browser adapter; OffscreenCanvas is conditional on runtime support |\n| Workers and threaded WASM | Worker transport, lifecycle/protocols, shared-memory threading are not provided |
 | npm publication | Explicitly deferred |
 
 The accepted Rust shared-core direction now has working CLI, Node, and browser-WASM consumers for the implemented operation slice. That does not imply complete semantic parity, full scene-v1 presentation support, or production status for the bindings. Keep language-specific adapters thin, preserve scene-v1 as the versioned interchange/conformance contract, and keep production R rollout and npm publication behind their separate gates.
