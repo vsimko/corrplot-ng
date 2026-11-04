@@ -225,7 +225,7 @@ jobs:
             Rscript experiments/wasm-r/r/run-native-rust.R "$NATIVE_LIBRARY" "$FIXTURE" "$RESULTS_DIR/r-native-rust-$NAME.json"
             Rscript experiments/wasm-r/r/benchmark-native.R "$FIXTURE" "$RESULTS_DIR/r-native-reference-$NAME.json"
             python3 - "$NAME" "$RESULTS_DIR" "$NATIVE_LIBRARY_BYTES" "$EMBEDDED_WASM_MODULE" <<'PY'
-          import csv, json, os, pathlib, sys
+          import csv, json, os, pathlib, platform, sys
           name, directory, native_bytes, wasm_path = sys.argv[1:]
           root = pathlib.Path(directory)
           def read(prefix):
@@ -245,7 +245,12 @@ jobs:
               assert result["fixtureSha256"] == node_embedded["fixtureSha256"]
               assert result["response"] == node_embedded["response"]
               assert result["transfer"]["phaseTimings"]["guestExecutionNs"]["medianNs"] >= 0
-              assert result["memory"]["processPeakRssBytesAfterFirstCall"] >= 0
+              peak_rss = result["memory"]["processPeakRssBytesAfterFirstCall"]
+              if peak_rss is None:
+                  assert platform.system() == "Darwin", "peak RSS may be unavailable only on macOS"
+                  assert result["memory"]["peakRssNote"].startswith("Unavailable on macOS:")
+              else:
+                  assert isinstance(peak_rss, (int, float)) and peak_rss >= 0
           with (root / f"r-wasmtime-repeatability-{name}.json").open("w", encoding="utf-8") as stream:
               json.dump({
                   "fixture": name,
