@@ -98,9 +98,9 @@ export interface DiagnosticV1 {
 export class CorrplotError extends Error { readonly diagnostic: DiagnosticV1; }
 export interface BackendAdapter {
   validateMatrix(input: Omit<MatrixInput, "missingMask"> & { values: Array<number | null> }): true | { valid: boolean; diagnostic?: DiagnosticV1 | null };
-  createScene(input: Omit<MatrixInput, "missingMask"> & { values: Array<number | null> }, options: SceneBuildOptions): SceneResult;
-  renderSceneSvg(scene: SceneInput, options: Omit<SvgRenderOptions, "format" | "method"> & { width: number; height: number; unit: "px" | "mm" | "in"; fontFamily: string; fontSizePt: number; background: RgbaColor }): string | { svg?: string | null; diagnostic?: DiagnosticV1 | null };
-  renderSceneRgba(scene: SceneInput, options: Omit<RgbaRenderOptions, "format" | "method">): RgbaOutput | (Partial<RgbaOutput> & { diagnostic?: DiagnosticV1 | null });
+  createScene?(input: Omit<MatrixInput, "missingMask"> & { values: Array<number | null> }, options: SceneBuildOptions): SceneResult;
+  renderSceneSvg?(scene: SceneInput, options: Omit<SvgRenderOptions, "format" | "method"> & { width: number; height: number; unit: "px" | "mm" | "in"; fontFamily: string; fontSizePt: number; background: RgbaColor }): string | { svg?: string | null; diagnostic?: DiagnosticV1 | null };
+  renderSceneRgba?(scene: SceneInput, options: Omit<RgbaRenderOptions, "format" | "method">): RgbaOutput | (Partial<RgbaOutput> & { diagnostic?: DiagnosticV1 | null });
   renderMatrixSvg(sceneV1Json: string, method: string): string | { svg?: string | null; diagnostic?: DiagnosticV1 | null };
   renderMatrixRgba(sceneV1Json: string, method: string, options: Omit<RgbaRenderOptions, "format" | "method">): RgbaOutput | (Partial<RgbaOutput> & { diagnostic?: DiagnosticV1 | null });
   getRendererCapabilities(): unknown | string;
