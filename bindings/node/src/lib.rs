@@ -606,6 +606,24 @@ fn scene_input(scene: Scene) -> SceneInput {
         fill: rgba_input(&cell.fill),
         stroke: rgba_input(&cell.stroke),
         glyph: cell.glyph.map(glyph_input),
+        p_value: cell.p_value,
+        normalized_value: cell.normalized_value,
+        significance: cell.significance.map(|value| SceneCellSignificanceInput {
+            p_value: value.p_value,
+            status: value.status,
+            annotation: value.annotation,
+            blank: value.blank,
+        }),
+        confidence_interval: cell.confidence_interval.map(|value| SceneConfidenceIntervalInput {
+            lower: value.lower,
+            upper: value.upper,
+            x1: value.x1,
+            x2: value.x2,
+            y: value.y,
+            cap_height: value.cap_height,
+            stroke_width: value.stroke_width,
+            color: rgba_input(&value.color),
+        }),
     }).collect();
     let texts = scene.texts.into_iter().map(|text| SceneTextInput {
         text: text.text,
@@ -627,6 +645,11 @@ fn scene_input(scene: Scene) -> SceneInput {
         description: Some(scene.description),
         cells,
         texts,
+        significance: scene.significance.map(|value| SceneSignificancePolicyInput {
+            mode: value.mode,
+            thresholds: value.thresholds,
+            symbol: value.symbol,
+        }),
     }
 }
 
