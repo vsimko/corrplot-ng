@@ -137,7 +137,7 @@ test("rejects invalid scenes, dimensions, colors, and unsupported scene features
   }, canvas), "renderer.output.invalid_scene");
 });
 
-test("reports browser host targets and conservative unsupported-feature capabilities", () => {
+test("reports browser host targets and supported statistical overlay capabilities", () => {
   const capabilities = getCanvasRendererCapabilities();
   assert.equal(capabilities.renderer.id, "typescript-canvas-2d");
   assert.ok(capabilities.host_targets.includes("browser-canvas-2d"));
