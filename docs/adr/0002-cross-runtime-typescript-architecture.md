@@ -34,7 +34,7 @@ The current implementation consists of four layers:
 3. **Browser WASM binding — `bindings/wasm/`:** a `wasm32-unknown-unknown` adapter exposing the same validation, typed-scene and matrix-bearing SVG/RGBA operations, capability data, and structured diagnostics. RGBA bytes are copied into JavaScript-owned `Uint8Array` memory. Browser smoke coverage runs on Chromium, Firefox, and WebKit; the WASM Node tests run on Node.js 24 and 26.
 4. **TypeScript facade — `packages/typescript/`:** a shared facade with separate Node and browser entry points. It asynchronously loads only the matching native or WASM backend; validates row-major matrix input (arrays or numeric typed arrays with an explicit missing mask); constructs a renderer-neutral scene in Rust; renders that scene to SVG/RGBA; exposes renderer capabilities and diagnostic errors; and supports adapter injection and disposal. It retains a compatibility path for matrix-bearing scene-v1 JSON. The scene builder currently covers the normalized-matrix subset described below, not the full scene-v1 presentation contract.
 
-The npm workspace currently contains `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and the browser-only `@corrplot-ng/react` and `@corrplot-ng/vue` adapters. The runtime-neutral `@corrplot-ng/core` remains planned. These implementation notes do not imply a production npm release, full scene-v1 presentation support, or direct Canvas rendering.
+The npm workspace currently contains `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and the browser-only `@corrplot-ng/react` and `@corrplot-ng/vue` adapters. The runtime-neutral `@corrplot-ng/core` remains planned. These implementation notes do not imply a production npm release or full scene-v1 presentation support. Direct Canvas rendering is a separate browser TypeScript adapter with its own declared feature subset.
 
 ## Runtime and backend selection
 
@@ -164,7 +164,6 @@ The following evidence is already present:
 - TypeScript declaration fixtures compile Node ESM, Node CommonJS, and browser conditional-export usage examples. A bundled browser-facade smoke test runs the actual WASM backend in Chromium, Firefox, and WebKit; the Node facade integration test runs against the actual native addon.
 
 Remaining release/conformance gates include:
-- Direct scene-to-Canvas rendering is implemented in #144. The Canvas renderer supports the documented common feature subset and reports unsupported legends, cluster regions, and plotmath through its capability declaration and diagnostics.
 - Continue expanding full-scene semantic and visual regression coverage across the backends in #146. The existing Node/WASM parity tests do not establish complete legacy corrplot or full presentation-scene parity.
 - Keep performance thresholds and noisy measurements informational until the broader evidence and repeatability work in #146 supports stable budgets.
 - Preserve scene-v1 and diagnostic-v1 compatibility. A runtime binding must not silently change either contract.
