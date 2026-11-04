@@ -1,4 +1,4 @@
-> **Historical evaluation — superseded for project direction.** This document records the CRAN policy comparison that informed the explicit decision to use Rust only. C++/Rcpp is not an approved implementation or fallback. Do not use this report to reopen the language choice; Rust/rextendr CRAN readiness remains an operational gate.
+> **Archive — historical CRAN policy comparison, not current language-selection guidance.** Rust is now the sole selected native implementation; C++/Rcpp was rejected and retired by PR #332. The proposed maintainer-effort comparison was discontinued by issue #269 on 2026-11-04 and no comparative timings were collected. This report preserves the policy evidence gathered for the disposable prototypes. Current R-adoption gates are the retained Cargo vendor-metadata NOTE disposition, intended CRAN toolchain compatibility, and validation of the actual production package artifact. Do not recreate or re-evaluate the retired C++ candidate.
 
 # CRAN policy and release implications: Rust/rextendr vs C++/Rcpp
 
@@ -11,7 +11,7 @@ Both approaches are viable in principle for a CRAN package. Neither is a zero-to
 
 The material difference is the additional Rust toolchain and Cargo supply-chain/build process. C++ through Rcpp follows R's established compiled-package path and has the lower CRAN operational risk. Rust through rextendr is feasible, but the package maintainer must deliberately satisfy the Rust-specific policy: vendor all crate sources, compile offline, declare Cargo/rustc, detect and report toolchain versions, constrain Cargo parallelism, and keep the minimum Rust/Cargo versions compatible with older CRAN build environments.
 
-**Preliminary assessment:** C++/Rcpp — PASS, lower release risk. Rust/rextendr — PASS WITH CONDITIONS, higher release and maintenance risk. These are assessments of policy fit, not a recommendation of the project's production core language.
+**Historical preliminary assessment (2026-10-31):** C++/Rcpp — PASS, lower release risk; Rust/rextendr — PASS WITH CONDITIONS, higher release and maintenance risk. These were assessments of the two disposable prototypes' CRAN policy fit at that date, not the project's final architecture decision. The current decision is Rust only.
 
 ## 1. CRAN rules that apply to both options
 
@@ -122,36 +122,33 @@ CRAN does not accept package-maintainer uploads of Windows/macOS binaries. CRAN'
 | Maintainer workload | Higher: vendor refresh, Cargo compatibility, Rust logs, offline checks | Lower incremental burden for a conventional Rcpp package |
 | Prebuilt binary user experience | No Rust installation needed for CRAN binary | No C++ installation needed for CRAN binary |
 
-## 6. Project-specific implications and open questions
+## 6. Current production-R implications
 
-The current R package at `implementations/r` is still a provisional compatibility harness. Its `DESCRIPTION` currently has no `Rcpp` or `rextendr` dependency and no `SystemRequirements` declaration. The repository's Rust CLI decision in issue #98 is explicitly separate from the R integration decision; it must not be treated as evidence that the R package has selected Rust.
+The R package at `implementations/r` remains a provisional compatibility harness and has not migrated to the Rust binding. ADR 0001 selects Rust as the sole shared native implementation; C++/Rcpp is rejected and its prototype was removed by PR #332. The old questions about which language to choose are closed.
 
-Before the parent issue #12 makes a production decision, the maintainers should confirm:
+The remaining operational questions before any production R adoption are:
 
-- Whether the intended shared core is compiled into the R package at all, or whether the R package will call a separately installed CLI/process. The latter has different CRAN and portability implications and is not evaluated as an equivalent in-process Rcpp/rextendr binding here.
-- The exact rextendr version/template and generated file layout to pin if Rust remains under consideration.
-- The minimum supported R, Cargo, and rustc versions and how those intersect with CRAN's Linux check machines and Windows/macOS toolchains.
-- The measured source-tarball size and built-package size for the actual vendored Rust prototype; explain the vendor archive in `cran-comments.md` and request CRAN guidance if the relevant size guidance is exceeded.
-- Whether all Rust crates and C++ dependencies have licenses compatible with CRAN distribution and the project's MIT licensing.
-- Whether any native dependencies can be built from bundled source and meet the Windows/macOS static-library requirement.
-- Whether the project can maintain the Rust toolchain and vendoring process over the package's long support lifetime.
+- Obtain an authoritative CRAN/maintainer disposition for the retained Cargo `.cargo-checksum.json` and `.cargo_vcs_info.json` NOTE, tracked in #268. Do not delete integrity/provenance metadata to suppress the NOTE.
+- Validate the intended Rust/Cargo minimum against the actual CRAN build environment and supported Windows/macOS/Linux toolchains; Rust/Cargo 1.78 is the current declared and CI-tested minimum.
+- Build and inspect the actual production R package source tarball and installed artifacts; the disposable prototype's sizes are not a substitute for production-package measurements.
+- Re-run offline source installation, license/dependency audit, `R CMD check --as-cran`, and supported-platform binary-install checks for that production candidate.
+- Record the CRAN/toolchain and package-footprint disposition before making a production migration or release decision.
 
-## 7. Recommended validation before a final language decision
+The proposed human maintainer-time comparison against C++/Rcpp was discontinued by #269. Historical estimates remain estimates, not measurements or a production gate.
 
-For each prototype, build a real source tarball and test the same minimal R-facing function through the actual CRAN installation path.
+## 7. Historical prototype-validation record
 
-1. Run `R CMD build` and `R CMD check --as-cran` on the resulting tarball.
-2. Install from source in clean Linux, Windows, and macOS environments, recording every compiler/toolchain version.
-3. For Rust, test with vendored dependencies and network disabled; verify Cargo uses at most two jobs and does not silently update dependencies.
-4. For C++, test the declared C++ standard against the oldest supported compiler on the CRAN platform matrix.
-5. Install CRAN-like prebuilt binaries in clean user environments without the native toolchain to confirm the expected end-user experience.
-6. Record source tarball size, build time, failure modes, and maintenance steps. Keep this comparison separate from runtime performance and scene-builder parity, which are covered by the other child issues.
+The 2026-10-31 prototype work used the standard CRAN source-package path: build an actual source tarball, install from source on Linux/Windows/macOS, run `R CMD check --as-cran`, test offline Cargo vendoring for the Rust candidate, and verify binary installation without requiring the native toolchain. The Rust results and their remaining NOTE are recorded in section 9. The C++/Rcpp checks are historical evidence only; the prototype was retired by PR #332 and no further C++ work is planned.
 
-## 8. Conclusion for issue #111
+These prototype checks do not establish CRAN acceptance and do not replace validation of a future production R package. Do not repeat the retired C++ experiment or treat this archived protocol as a request to reopen the language decision.
 
-Both options can satisfy CRAN requirements. Rcpp is the simpler and lower-risk CRAN route for an in-process R native extension. Rust/rextendr remains a viable option, but only with a consciously maintained Rust/Cargo compatibility range, fully vendored and offline builds, explicit toolchain diagnostics, platform validation, and a source-tarball-size plan.
+## 8. Historical conclusion and current decision
 
-This issue does not select the production implementation language. The comparison should be combined with the maintainer/CI evidence, scene-builder parity/performance, and R-independence evidence from the sibling issues before ADR 0001 is finalized.
+The 2026-10-31 policy review found that both disposable prototypes could satisfy the basic CRAN source-package mechanics, with different toolchain and vendoring burdens. At that time, Rcpp appeared operationally simpler for an R-only native extension, while Rust/rextendr required a deliberate Cargo/Rust compatibility, vendoring, offline-build, and package-footprint strategy. Those are historical observations, not the current architecture choice.
+
+The project subsequently selected Rust as its sole native implementation and rejected C++/Rcpp, including as an R-only fallback. The C++ prototype and workflow were retired by PR #332. Issue #269 was closed as not planned on 2026-11-04; no human maintainer-effort comparison was performed, and the historical effort estimates must not be represented as measured results.
+
+The remaining question is operational: whether the selected Rust/rextendr path can satisfy CRAN guidance, toolchain compatibility, and actual production-package footprint requirements. This report does not claim CRAN acceptance or authorize production R migration.
 
 ---
 
@@ -186,8 +183,8 @@ The dedicated source-package workflow added in this PR, [run #2](https://github.
 ### Updated interpretation
 
 - Rust/rextendr: source-tarball build, offline install, R integration, and `R CMD check --as-cran` have run on all three platforms. Status is **PASS WITH NOTES / CONDITIONS**, not a clean pass. Resolve or justify both notes and confirm the installed-size policy interpretation.
-- C++/Rcpp: source installation, semantic parity, source-tarball build, and `R CMD check --as-cran` passed on all three hosted platforms. This closes the prototype's basic CRAN source-package validation gap, but does not establish CRAN acceptance or oldest-toolchain compatibility.
-- Neither prototype is the production R package. These results do not establish CRAN acceptance, binary publication, oldest-toolchain compatibility, or final language choice.
+- C++/Rcpp: source installation, semantic parity, source-tarball build, and `R CMD check --as-cran` passed on all three hosted platforms in the historical prototype workflow. This does not establish CRAN acceptance or oldest-toolchain compatibility; the prototype was subsequently retired by PR #332.
+- Neither prototype was the production R package. These results do not establish CRAN acceptance, binary publication, oldest-toolchain compatibility, or production-R readiness.
 
 
 ### Latest confirmation on PR #124 (2026-10-31)
@@ -210,8 +207,18 @@ These deterministic CI checks disable CRAN incoming and remote incoming checks. 
 
 The current generated package pins `extendr-api = "=0.9.0"` and declares Rust/Cargo 1.78. The dedicated CI workflow verifies offline installation and `R CMD check --as-cran` on Ubuntu, macOS, and Windows, as well as Windows binary installation without Rust on the user's PATH.
 
-The Ubuntu 24.04 / R 4.6.2 / GCC 13.3.0 job measured a compressed source tarball of **1,314,220 bytes** and an installed package size of **6.0 MB** (5.9 MB in `libs`). The source archive is below CRAN's general 10 MB guideline; the installed size exceeds rextendr's 5 MB caution and needs explicit CRAN guidance before any production R migration.
+The initial Ubuntu 24.04 / R 4.6.2 / GCC 13.3.0 extendr 0.9.0 run measured a compressed source tarball of **1,314,220 bytes** and an unstripped installed package size of **6.0 MB** (5.9 MB in `libs`). This was the pre-stripping baseline, not the latest prototype result. PR #215 later added build-time linker stripping; the latest three-platform measurements are summarized below.
 
-The latest Ubuntu `R CMD check --as-cran` result is **1 NOTE**. Extendr 0.9.0 removed the `R_NamespaceRegistry` non-API NOTE, and pruning unused vendored tests/examples/benchmarks removed the non-portable-path NOTE. The remaining NOTE lists Cargo's hidden `.cargo-checksum.json` and `.cargo_vcs_info.json` files. They are retained because the checksum manifest is required for offline Cargo integrity and the VCS metadata preserves source provenance; explain them in any CRAN submission comments. This is not evidence of CRAN acceptance.
+The initial extendr 0.9.0 run's **1 NOTE** listed Cargo's hidden `.cargo-checksum.json` and `.cargo_vcs_info.json` files. Extendr 0.9.0 had already removed the `R_NamespaceRegistry` non-API NOTE, and pruning unused vendored tests/examples/benchmarks removed the non-portable-path NOTE. The metadata remains required for offline Cargo integrity and source provenance; explain it in any CRAN submission comments. This is not evidence of CRAN acceptance.
 
-Rust/Cargo 1.78 is tested for the core, CLI, and rextendr consumer. Controlled human maintainer time remains unmeasured; existing effort estimates are planning estimates only.
+After PR #215 added build-time linker stripping, the three-platform workflow measured:
+
+| Platform | Installed package | Native library | Source tarball | R CMD check |
+| --- | ---: | ---: | ---: | --- |
+| Linux | 2,112,721 bytes | 2,100,280 bytes | 1,049,181 bytes | 1 NOTE |
+| macOS | 1,805,047 bytes | 1,792,600 bytes | 1,048,308 bytes | 1 NOTE |
+| Windows | 1,176,796 bytes | 1,164,288 bytes | 1,041,008 bytes | 1 NOTE |
+
+Linux uses the GNU linker `--strip-debug` option, macOS uses Apple's `-S` option, and Windows remains unstripped pending a validated PE/COFF approach. The remaining NOTE is for retained Cargo vendor checksum/provenance metadata. These are disposable-prototype measurements, not production-package measurements or CRAN acceptance. Obtain the CRAN disposition tracked in #268 before production R adoption.
+
+Rust/Cargo 1.78 is tested for the core, CLI, and rextendr consumer. The proposed human maintainer-time comparison was discontinued by #269; no comparative timings were collected, and historical effort estimates remain unmeasured planning estimates only.
