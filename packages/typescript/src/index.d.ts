@@ -39,6 +39,27 @@ export interface CellGlyphInput {
   fontSize?: number;
   color?: RgbaColor;
 }
+export interface SceneCellSignificance {
+  pValue?: number | null;
+  status: "unknown" | "significant" | "not_significant";
+  annotation?: string | null;
+  blank: boolean;
+}
+export interface SceneConfidenceInterval {
+  lower: number;
+  upper: number;
+  x1: number;
+  x2: number;
+  y: number;
+  capHeight: number;
+  strokeWidth: number;
+  color: RgbaColor;
+}
+export interface SceneSignificancePolicy {
+  mode: "pch" | "p-value" | "blank" | "stars";
+  thresholds: number[];
+  symbol: string;
+}
 export interface SceneCellInput {
   x: number;
   y: number;
@@ -47,6 +68,10 @@ export interface SceneCellInput {
   fill: RgbaColor;
   stroke: RgbaColor;
   glyph?: CellGlyphInput | null;
+  pValue?: number | null;
+  normalizedValue?: number | null;
+  significance?: SceneCellSignificance | null;
+  confidenceInterval?: SceneConfidenceInterval | null;
 }
 export interface SceneTextInput {
   text: string;
@@ -63,6 +88,7 @@ export interface SceneInput {
   description?: string;
   cells: SceneCellInput[];
   texts: SceneTextInput[];
+  significance?: SceneSignificancePolicy | null;
 }
 export interface SceneResult {
   scene?: SceneInput | null;
