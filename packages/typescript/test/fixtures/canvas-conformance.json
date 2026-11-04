@@ -220,11 +220,21 @@
     "legend": [
       {
         "kind": "missing",
-        "label": "Missing",
+        "label": "NA",
         "color": {
           "red": 242,
           "green": 242,
           "blue": 242,
+          "alpha": 255
+        }
+      },
+      {
+        "kind": "stop",
+        "label": "Sig",
+        "color": {
+          "red": 33,
+          "green": 102,
+          "blue": 172,
           "alpha": 255
         }
       }
@@ -256,17 +266,17 @@
         "rowEnd": 0,
         "columnStart": 0,
         "columnEnd": 7,
-        "x": 1,
-        "y": 1,
-        "width": 78,
-        "height": 8,
+        "x": 2,
+        "y": 2,
+        "width": 76,
+        "height": 6,
         "color": {
           "red": 33,
           "green": 102,
           "blue": 172,
           "alpha": 255
         },
-        "lineWidth": 2
+        "lineWidth": 4
       }
     ]
   },
@@ -350,7 +360,7 @@
     },
     {
       "label": "cluster-region border",
-      "x": 1,
+      "x": 3,
       "y": 5,
       "color": [
         33,
@@ -367,6 +377,17 @@
         242,
         242,
         242,
+        255
+      ]
+    },
+    {
+      "label": "second legend swatch",
+      "x": 53,
+      "y": 21,
+      "color": [
+        33,
+        102,
+        172,
         255
       ]
     }
