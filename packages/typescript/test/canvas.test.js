@@ -121,6 +121,7 @@ test("rejects invalid scenes, dimensions, colors, and unsupported scene features
   expectCode(() => renderSceneToCanvas(scene, canvas, { width: 0 }), "renderer.output.invalid_options");
   expectCode(() => renderSceneToCanvas({ ...scene, legend: [{ kind: "unknown", label: "x", color: red }] }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({ ...scene, clusterRegions: [{ id: "group-a", variables: ["alpha"], sourceIndices: [], rowStart: 0, rowEnd: 0, columnStart: 0, columnEnd: 0, x: 0, y: 0, width: 10, height: 10, color: red, lineWidth: 1 }] }, canvas), "renderer.output.invalid_scene");
+  expectCode(() => renderSceneToCanvas({ ...scene, clusterRegions: [{ id: "group-a", variables: ["alpha", "alpha"], sourceIndices: [0, 1], rowStart: 0, rowEnd: 0, columnStart: 0, columnEnd: 1, x: 0, y: 0, width: 10, height: 10, color: red, lineWidth: 1 }] }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({ ...scene, significance: {} }, canvas), "renderer.output.invalid_scene");
   expectCode(() => renderSceneToCanvas({ ...scene, texts: [{ ...scene.texts[0], semanticRole: "plotmath" }] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({
