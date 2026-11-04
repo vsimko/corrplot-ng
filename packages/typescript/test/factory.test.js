@@ -89,3 +89,34 @@ test("converts scene-construction diagnostics to CorrplotError", () => {
     error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.invalid_shape",
   );
 });
+
+test("normalizes typed-array matrix values with an explicit missing mask", () => {
+  let received;
+  const engine = createEngine(adapter({
+    createScene: input => {
+      received = input;
+      return { scene: { width: 1, height: 1, cells: [], texts: [] }, diagnostic: null };
+    },
+  }), "injected");
+  engine.createScene({
+    labels: ["alpha", "beta"],
+    rows: 2,
+    columns: 2,
+    values: new Float64Array([1, 0, 0, 1]),
+    missingMask: [false, true, true, false],
+    kind: "correlation",
+  });
+  assert.deepEqual(received.values, [1, null, null, 1]);
+  assert.equal("missingMask" in received, false);
+});
+
+test("validates an optional renderer id against the backend capability declaration", () => {
+  const engine = createEngine(adapter({
+    getRendererCapabilities: () => ({ renderer: { id: "rust-core-scene" }, capability_schema_version: 1 }),
+  }), "injected");
+  assert.equal(engine.getRendererCapabilities("rust-core-scene").renderer.id, "rust-core-scene");
+  assert.throws(
+    () => engine.getRendererCapabilities("unknown"),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.unsupported_feature",
+  );
+});
