@@ -49,6 +49,41 @@ const matrix = {
 };
 const cellMethods = ["circle", "square", "ellipse", "number", "shade", "color", "pie"];
 
+const correlationCorpus = JSON.parse(fs.readFileSync(
+  path.join(__dirname, "../../tests/fixtures/correlation-cases.json"),
+  "utf8",
+));
+const generalMatrixCorpus = JSON.parse(fs.readFileSync(
+  path.join(__dirname, "../../tests/fixtures/general-matrix-cases.json"),
+  "utf8",
+));
+const sharedMatrixFixtures = [
+  ...correlationCorpus.cases.map(fixture => ({ ...fixture, kind: "correlation" })),
+  ...generalMatrixCorpus.cases.map(fixture => ({ ...fixture, kind: "general_numeric" })),
+];
+
+function matrixInputFromFixture(fixture) {
+  const rows = fixture.matrix.length;
+  const columns = fixture.matrix[0]?.length ?? 0;
+  assert.ok(rows > 0 && columns > 0, `${fixture.id}: fixture matrix must not be empty`);
+  assert.ok(fixture.matrix.every(row => row.length === columns), `${fixture.id}: fixture matrix must be rectangular`);
+  return {
+    labels: fixture.labels ?? Array.from({ length: rows }, (_, index) => `v${index + 1}`),
+    rows,
+    columns,
+    values: fixture.matrix.flat(),
+    kind: fixture.kind,
+  };
+}
+
+function assertRgbaParity(nativeOutput, wasmOutput, context) {
+  assert.equal(wasmOutput.diagnostic ?? null, null, `${context}: WASM RGBA diagnostic`);
+  for (const key of ["widthPx", "heightPx", "strideBytes", "pixelFormat", "alphaMode", "colorSpace", "dpi"]) {
+    assert.equal(wasmOutput[key], nativeOutput[key], `${context}: ${key}`);
+  }
+  assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels, `${context}: RGBA bytes differ`);
+}
+
 function unwrapSvg(result) {
   assert.equal(result.diagnostic ?? null, null);
   assert.equal(typeof result.svg, "string");
@@ -171,6 +206,114 @@ test("Node and WASM construct identical matrix RGBA across fixtures and cell met
       assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels, `${fixture.id} / ${method}: RGBA bytes differ`);
     }
   }
+});
+
+
+test("Node and WASM build and render the shared matrix fixture corpus across every cell method", () => {
+  for (const fixture of sharedMatrixFixtures) {
+    const input = matrixInputFromFixture(fixture);
+    assert.equal(native.validateMatrix(input), true, `${fixture.id}: native validation`);
+    const wasmValidation = wasm.validateMatrix(input);
+    assert.equal(wasmValidation.valid, true, `${fixture.id}: WASM validation`);
+    assert.equal(wasmValidation.diagnostic ?? null, null, `${fixture.id}: WASM validation diagnostic`);
+
+    for (const method of cellMethods) {
+      const options = {
+        cellMethod: method,
+        title: fixture.id,
+        description: fixture.description ?? `Shared fixture ${fixture.id}`,
+        annotation: fixture.id,
+        displayType: fixture.id === "three-variable-reordered"
+          ? "lower"
+          : fixture.id === "missing-value-pattern"
+            ? "upper"
+            : "full",
+        showDiagonal: fixture.diag ?? true,
+      };
+      const nativeResult = native.createScene(input, options);
+      const wasmResult = wasm.createScene(input, options);
+      const context = `${fixture.id} / ${method}`;
+      assert.equal(nativeResult.diagnostic ?? null, null, `${context}: native scene diagnostic`);
+      assert.equal(wasmResult.diagnostic ?? null, null, `${context}: WASM scene diagnostic`);
+      assert.deepEqual(
+        JSON.parse(JSON.stringify(wasmResult.scene)),
+        JSON.parse(JSON.stringify(nativeResult.scene)),
+        `${context}: normalized scene differs`,
+      );
+
+      const svgOptions = {
+        width: nativeResult.scene.width,
+        height: nativeResult.scene.height,
+        unit: "px",
+        fontFamily: "sans-serif",
+        fontSizePt: 10,
+        background: white,
+      };
+      const nativeSvg = native.renderSceneSvg(nativeResult.scene, svgOptions);
+      const wasmSvg = unwrapSvg(wasm.renderSceneSvg(wasmResult.scene, svgOptions));
+      assert.equal(wasmSvg, nativeSvg, `${context}: SVG output differs`);
+
+      const rasterOptions = { widthPx: 96, heightPx: 96, dpi: 96, background: white };
+      const nativeRgba = native.renderSceneRgba(nativeResult.scene, rasterOptions);
+      const wasmRgba = wasm.renderSceneRgba(wasmResult.scene, rasterOptions);
+      assertRgbaParity(nativeRgba, wasmRgba, context);
+    }
+  }
+});
+
+test("Node and WASM preserve scene and renderer parity for a deterministic 64x64 correlation matrix", () => {
+  const size = 64;
+  const labels = Array.from({ length: size }, (_, index) => `variable-${String(index + 1).padStart(2, "0")}`);
+  const values = Array.from({ length: size * size }, (_, index) => {
+    const row = Math.floor(index / size);
+    const column = index % size;
+    if (row === column) return 1;
+    const first = Math.min(row, column);
+    const second = Math.max(row, column);
+    return ((first * 31 + second * 17) % 201 - 100) / 200;
+  });
+  const input = { labels, rows: size, columns: size, values, kind: "correlation" };
+
+  assert.equal(native.validateMatrix(input), true);
+  const wasmValidation = wasm.validateMatrix(input);
+  assert.equal(wasmValidation.valid, true);
+  assert.equal(wasmValidation.diagnostic ?? null, null);
+
+  const options = {
+    cellMethod: "ellipse",
+    title: "64-variable parity fixture",
+    description: "Deterministic large correlation matrix for cross-backend regression coverage.",
+    displayType: "upper",
+    showDiagonal: false,
+  };
+  const nativeResult = native.createScene(input, options);
+  const wasmResult = wasm.createScene(input, options);
+  assert.equal(nativeResult.diagnostic ?? null, null);
+  assert.equal(wasmResult.diagnostic ?? null, null);
+  assert.equal(nativeResult.scene.cells.length, size * size);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(wasmResult.scene)),
+    JSON.parse(JSON.stringify(nativeResult.scene)),
+  );
+
+  const svgOptions = {
+    width: nativeResult.scene.width,
+    height: nativeResult.scene.height,
+    unit: "px",
+    fontFamily: "sans-serif",
+    fontSizePt: 10,
+    background: white,
+  };
+  assert.equal(
+    unwrapSvg(wasm.renderSceneSvg(wasmResult.scene, svgOptions)),
+    native.renderSceneSvg(nativeResult.scene, svgOptions),
+  );
+  const rasterOptions = { widthPx: 128, heightPx: 128, dpi: 96, background: white };
+  assertRgbaParity(
+    native.renderSceneRgba(nativeResult.scene, rasterOptions),
+    wasm.renderSceneRgba(wasmResult.scene, rasterOptions),
+    "64x64 correlation matrix",
+  );
 });
 
 test("Node and WASM expose the same renderer capabilities", () => {

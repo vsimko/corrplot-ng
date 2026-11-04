@@ -8,7 +8,9 @@ The compatibility suite separates three kinds of evidence. A passing layer is no
 | --- | --- | --- |
 | **Semantic** | The pinned legacy `corrplot` oracle preserves matrix ordering, labels, coordinates, values, and missingness; the same oracle output is passed through the renderer-neutral scene model. | `.github/workflows/test-foundation.yml`, job `legacy-r-oracle`; run `Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R` followed by `python prototypes/shared-svg/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json`. |
 | **Structural SVG** | Each legacy-derived matrix is rendered with all seven implemented methods. Tests parse the SVG XML and verify dimensions, cell count, labels, annotation placement, missing-cell labels, glyph-specific elements, and deterministic serialization. | The same `legacy-r-oracle` job runs the bridge test. The broader scene/SVG tests run with `python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v`. |
-| **Pixel baseline** | Fifteen selected 900×900 PNGs are compared to saved renders from `corrplot` 0.95. This currently validates the R compatibility adapter, not the independent Python SVG renderer or a future production engine. | `R CMD check implementations/r`, test `test-visual-regression.R`. Pixel mismatches include the fixture ID in the failure. |
+| **Pixel baseline** | Fifteen selected 900×900 PNGs are compared to saved renders from `corrplot` 0.95. This validates the R compatibility adapter in the pinned graphics environment. | `R CMD check implementations/r`, test `test-visual-regression.R`. Pixel mismatches include the fixture ID in the failure. |
+| **Cross-runtime parity** | Native Node and Node-hosted WASM consume the common correlation and general-numeric matrix fixtures. The test compares validation, normalized-matrix scene construction, SVG, and RGBA for all seven cell methods, plus a deterministic 64×64 correlation matrix. | `.github/workflows/test-node-wasm-parity.yml`; run `node --test bindings/cross-backend/test-node-wasm-parity.cjs` after building the native and Node-WASM bindings. |
+| **Browser Canvas conformance** | A checked-in scene fixture compares stable interior pixels from direct Canvas 2D output with the shared Rust RGBA renderer and checks number/shade glyph ink. It deliberately avoids byte-for-byte comparison across different text rasterizers. | Browser smoke in `.github/workflows/test-npm-workspace.yml` on Chromium, Firefox, and WebKit. |
 
 Semantic bridge failures are prefixed `SEMANTIC`; SVG/XML/layout failures are prefixed `STRUCTURAL SVG`; saved-raster mismatches are reported as `Rendered pixels differ from saved legacy baseline`. This keeps the source of a regression visible instead of conflating data semantics with renderer markup or rasterization.
 
@@ -26,13 +28,15 @@ Review all generated PNGs and commit the complete set together. Ordinary tests n
 
 ## Platform and font limitations
 
-The semantic and structural tests are the cross-platform contract; they do not require pixel-identical output across operating systems. PNG equality depends on the same R graphics device, Cairo build, fonts, and graphics environment. The current saved-raster test is intentionally run only in the pinned R CI environment. Do not loosen semantic or SVG structural assertions to accommodate font differences.
+The semantic and structural tests are the cross-platform contract; they do not require pixel-identical output across operating systems. PNG equality depends on the same R graphics device, Cairo build, fonts, and graphics environment. The saved-raster test is intentionally run only in the pinned R CI environment. Node and WASM exact SVG/RGBA equality is appropriate because both adapters execute the same Rust core. Browser Canvas is compared to Rust RGBA through stable interior samples and glyph-presence checks, not byte equality, because browser text rasterization differs.
 
 ## Current scope
 
 - The R package remains a provisional scaffold. Its default exported `corrplot_ng()` delegates to `corrplot::corrplot()`; the PNG baseline therefore verifies that adapter path.
 - The Python scene/SVG prototype is independent and experimental. The bridge runs actual matrices exported by the pinned legacy oracle through all seven prototype glyph methods, but this is not proof that the R scene engine or every legacy option is compatible.
-- The shared JSON fixture tests validate schema and matrix properties; they do not replace the pinned legacy oracle.
+- The shared JSON fixture tests validate schema and matrix properties and are now consumed by the Node/WASM parity workflow for matrix validation, scene construction, SVG, and RGBA across all seven cell methods. They do not replace the pinned legacy oracle or exercise R-specific `col_limits`, mapping, and palette normalization options.
+- The Node/WASM parity workflow also generates a deterministic 64×64 correlation matrix to cover a larger input without introducing a timing threshold.
+- Browser Canvas has a separate checked-in visual fixture. Stable cell-interior samples are compared with the shared Rust RGBA output; number and shade glyphs are checked for visible ink. This is not a cross-platform pixel-baseline claim.
 
 Run the general fixture checks with Python 3.10 or later:
 
