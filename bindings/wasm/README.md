@@ -69,13 +69,18 @@ package and have not been validated here. Shared-memory threading is therefore
 intentionally deferred; it would require an explicit browser compatibility
 policy (including cross-origin isolation) and dedicated CI coverage.
 
-The browser smoke page copies the returned RGBA pixels into a regular Canvas
-2D context. This is not a direct Canvas renderer: drawing remains host-owned,
-and the Rust backend currently returns SVG or RGBA data. OffscreenCanvas and
-worker-owned Canvas rendering are not implemented or claimed as supported.
-Applications can transfer the owned RGBA result to their own Canvas adapter,
-but device-pixel-ratio policy, resizing, and OffscreenCanvas lifecycle remain
-the responsibility of that adapter.
+The low-level browser example in `bindings/wasm/examples/browser` copies
+returned RGBA pixels into a regular Canvas 2D context. That example demonstrates
+host-owned presentation of the WASM output; it is not the direct Canvas API.
+The browser TypeScript facade in `packages/typescript/` adds a separate direct
+Canvas 2D adapter that draws the same renderer-neutral scene without an SVG or
+RGBA intermediate. It supports caller-owned HTMLCanvasElement, OffscreenCanvas,
+and Canvas 2D contexts, including device-pixel-ratio scaling and letterboxing;
+see the [TypeScript facade README](../../packages/typescript/README.md).
+OffscreenCanvas rendering is implemented by that facade where the runtime
+provides a 2D context. Worker startup, message protocols, transferable matrix
+buffers, cancellation, and worker-pool policy remain host responsibilities
+and are not implemented or validated by this low-level WASM package.
 
 The browser smoke suite runs against Chromium, Firefox, and WebKit on
 Ubuntu 24.04 using Playwright. Node 24 and 26 both run the WASM tests and
@@ -91,7 +96,9 @@ matrix scene construction and typed-scene SVG/RGBA operations, alongside the
 matrix-bearing scene-v1 compatibility renderers. The runtime-isolated TypeScript
 facade in `packages/typescript/` exposes this workflow through separate Node and
 browser entry points, including typed-array normalization and explicit missing-
-cell masks. The parser and builder intentionally cover only the matrix-bearing
-subset; full scene-v1 presentation semantics and broader cross-backend/browser
-conformance remain separate work in #146. Direct Canvas remains #144, while
-package publication is explicitly deferred under #293.
+cell masks. Its browser entry point also provides the direct Canvas 2D adapter
+implemented under #144; that adapter is a separate TypeScript layer rather than
+part of the low-level WASM package API. The parser and builder intentionally
+cover only the matrix-bearing subset; full scene-v1 presentation semantics and
+broader cross-backend/browser conformance remain separate work in #146.
+Package publication is explicitly deferred under #293.
