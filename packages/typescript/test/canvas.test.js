@@ -199,7 +199,7 @@ test("renders supplied confidence intervals and significance annotations with bl
     cells: [
       { ...scene.cells[0], confidenceInterval: { lower: 0.2, upper: 0.8, x1: 2, x2: 8, y: 5, capHeight: 4, strokeWidth: 2, color: red },
         significance: { pValue: 0.01, status: "significant", annotation: "**", blank: false } },
-      { ...scene.cells[1], significance: { pValue: null, status: "unknown", annotation: "?", blank: true },
+      { ...scene.cells[1], significance: { status: "unknown", annotation: "?", blank: true },
         confidenceInterval: { lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5, capHeight: 4, strokeWidth: 2, color: red } },
       { ...scene.cells[2], visible: false, significance: { pValue: 0.5, status: "not_significant", annotation: "ns", blank: false } },
     ],
