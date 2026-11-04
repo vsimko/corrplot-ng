@@ -1,123 +1,50 @@
-> **Historical evaluation — superseded for project direction.** This report records the earlier workflow comparison. The project has since selected Rust exclusively and removed the C++/Rcpp prototype and workflow. The proposed human-effort comparison was not performed and is no longer a decision gate.
+> **Archive — historical workflow comparison, not current instructions.** This report describes the disposable R-binding candidates as they existed at the snapshot below. Rust is now the sole selected native implementation. The C++/Rcpp prototype and its CI were retired by PR #332. The proposed human-effort comparison was not performed and was discontinued by issue #269 on 2026-11-04; the estimates below are unmeasured historical planning estimates, not current rollout gates. Do not recreate the retired candidate or use this report as a current build recipe.
 
 # Maintainer workflow and CI cost: Rust/rextendr vs C++/Rcpp
 
 **Issue:** [#113](https://github.com/vsimko/corrplot-ng/issues/113)  
 **Snapshot reviewed:** `main` at `91981304c6f5509e919f2d086cb8d74e33bbe255`  
-**Scope:** the isolated scene-v1 spikes in `prototypes/rust-rextendr/` and `prototypes/cpp-rcpp/`. This is a workflow comparison, not a language or production-architecture decision. The companion CRAN policy assessment is handled separately by [issue #111](https://github.com/vsimko/corrplot-ng/issues/111); this report focuses on the actual repository workflows and their maintainer burden.
+**Scope:** historical comparison of the disposable scene-v1 R-binding spikes at the reviewed snapshot. This is an archived workflow assessment, not a current language or production-architecture decision. The companion CRAN policy assessment is handled separately by [issue #111](https://github.com/vsimko/corrplot-ng/issues/111).
 
 ## Executive summary
 
-Both candidates implement the same narrow R-callable scene-v1 JSON builder. Both can be generated, compiled, installed, and exercised by the existing cross-language workflow on Ubuntu, macOS, and Windows. That establishes basic integration feasibility, not equal release readiness.
+At the reviewed snapshot, both candidates implemented the same narrow R-callable scene-v1 JSON builder and could be generated, compiled, installed, and exercised by the then-current cross-language workflow on Ubuntu, macOS, and Windows. That historical evidence established basic integration feasibility, not equal release readiness. The C++/Rcpp candidate has since been removed; only the Rust/rextendr adapter remains as disposable evaluation infrastructure.
 
 - **C++/Rcpp has the shorter routine package workflow.** Rcpp attributes generate the R/C++ registration wrappers, then ordinary R package installation compiles the C++ source. Its main maintenance cost is keeping generated wrappers in sync and diagnosing the platform's C++ compiler/R toolchain.
 - **Rust/rextendr has more build and distribution machinery.** The current package-generation script creates a temporary R package, pins the generated package to extendr 0.9.0, adapts the lockfile and generated Makevars, and adds R wrappers, help, namespace, and tests. Its dedicated CI also checks offline vendoring, source-tarball contents, dependency licenses, and a Windows binary install without Rust on PATH.
 - **Current CI investment is asymmetric.** The shared manual cross-language workflow covers both candidates on all three operating systems, but the extra offline-package, dependency-audit, and Windows binary workflows currently cover Rust only. This is evidence of more Rust validation work, not proof that C++ has no corresponding release risks.
-- **Neither spike is production-ready.** Keep both isolated until the same distribution and maintenance acceptance is applied to each.
+- **Current project direction:** Rust is the sole selected native implementation. The C++/Rcpp prototype and workflow were retired by PR #332. The Rust/rextendr adapter remains disposable evaluation infrastructure; it is not the production R package and does not authorize migration.
 
 ## What is being compared
 
 | Property | C++ / Rcpp | Rust / rextendr |
 |---|---|---|
 | Prototype entry point | `build_scene_json_cpp(labels, matrix, annotation)` | `build_scene_json_rust(labels, matrix, annotation)` |
-| Native implementation | `prototypes/cpp-rcpp/src/scene_v1.cpp` | `prototypes/rust-rextendr/src/{lib.rs,scene_v1.rs}` |
-| R package metadata | `prototypes/cpp-rcpp/DESCRIPTION`, Imports/LinkingTo Rcpp | `prototypes/rust-rextendr/DESCRIPTION`, generated package metadata |
+| Native implementation | Retired C++/Rcpp spike (removed by PR #332) | Disposable Rust/rextendr spike (historical snapshot) |
+| R package metadata | Retired C++/Rcpp package metadata (historical) | Disposable Rust/rextendr package metadata |
 | Binding generator | `Rcpp::compileAttributes()` | `rextendr::use_extendr()` via `prepare-r-package.R` |
 | Native build system | R package build + platform C++ compiler | Cargo build invoked through generated rextendr package |
 | Dependency pinning in spike | R package dependency declaration; R package resolution | Committed `Cargo.lock`; extendr API pinned to `=0.9.0` |
 | Package output | Install the spike package directly | Generate disposable `.ci-r-package`, then install it |
 | Scope boundary | Experiment only; no production R package edits | Experiment only; no production R package edits |
 
-Both implementations produce the same scene-v1 shape, preserve missing matrix values as JSON `null`, emit row-major cells, and use the same geometry/style constants. The C++ spike additionally validates dimensions and coefficient bounds in its implementation. The Rust spike is an equivalent candidate behind the R binding. The shared parity harness is the appropriate place to judge semantic equivalence rather than comparing source-code size.
+At the reviewed snapshot, both implementations produced the same scene-v1 shape, preserved missing matrix values as JSON `null`, emitted row-major cells, and used the same geometry/style constants. The C++ spike additionally validated dimensions and coefficient bounds. These statements describe historical prototype behavior only; the C++ implementation is retired and no longer part of the supported benchmark or test matrix.
 
-## Reproducible local workflow
+## Historical local workflow (not current build instructions)
 
-Run these commands from the repository root. They describe the current repository scripts and package metadata; they are not a claim that every maintainer machine has already run them.
+At the reviewed snapshot, the C++/Rcpp candidate was generated with `Rcpp::compileAttributes()` and installed as an ordinary R package; the Rust/rextendr candidate was generated into a disposable package and installed from that generated tree. The C++ source tree and its dedicated workflow were removed by PR #332, so the former C++ commands are intentionally not reproduced here and cannot be run on current `main`.
 
-### C++ / Rcpp
-
-**Prerequisites**
-
-- Git and R 4.x.
-- A working C++ compiler compatible with the local R installation: Rtools on Windows, Xcode Command Line Tools/Clang on macOS, or the distribution compiler toolchain on Linux.
-- R package `Rcpp`.
-
-**One-time setup**
-
-```sh
-R -q -e 'install.packages("Rcpp", repos = "https://cloud.r-project.org")'
-```
-
-**Generate wrappers, build, and install**
-
-```sh
-Rscript -e 'Rcpp::compileAttributes("prototypes/cpp-rcpp")'
-R CMD INSTALL prototypes/cpp-rcpp
-```
-
-The attribute generator scans the C++ source annotations and creates the R wrapper and native registration source. In this checkout those generated `RcppExports` files are not present in the tracked prototype directories, so regeneration is part of the reproducible build workflow rather than a manual source edit.
-
-**Exercise it**
-
-After installation, call `corrplotngcppspike::build_scene_json_cpp()` with a small square numeric matrix and labels. For a fair comparison, use the shared fixtures and harness in `benchmarks/run_native_scene_v1.R` and `benchmarks/test_native_scene_v1.R`, not a hand-picked input alone.
-
-### Rust / rextendr
-
-**Prerequisites**
-
-- Git and R 4.x.
-- Rust/Cargo 1.78 or later (`rustc` and `cargo`); the manifests declare 1.78 as the MSRV.
-- R packages `rextendr`, `usethis`, `devtools`, and `testthat`; the shared benchmark workflow also installs `jsonlite`.
-- A supported native linker/build toolchain for the host platform.
-
-Install Rust using the official rustup installer for the operating system, then install the R dependencies:
-
-```sh
-R -q -e 'install.packages(c("rextendr", "usethis", "devtools", "testthat"), repos = "https://cloud.r-project.org")'
-```
-
-**Generate, build, and install**
-
-```sh
-Rscript prototypes/rust-rextendr/prepare-r-package.R
-R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
-```
-
-**Exercise it**
-
-```sh
-Rscript -e 'library(corrplotngrustspike); source("prototypes/rust-rextendr/test-r-integration.R")'
-```
-
-The generator deletes and recreates `.ci-r-package`. It calls `rextendr::use_extendr()`, pins the generated `extendr-api` dependency to 0.9.0, adapts the committed lockfile to the generated package identity, copies the Rust implementation, adjusts generated Makevars/target handling, and creates the R wrapper, namespace export, help page, and testthat smoke test. Do not hand-edit generated files as the source of truth; change the prototype or generator and regenerate.
-
-**Additional release-oriented/offline path**
-
-The dedicated workflow shows the extra steps currently needed to validate a self-contained source package:
-
-1. Generate the temporary package.
-2. Check the extendr license notice is included.
-3. Resolve dependencies, enforce the license policy with `cargo-deny`, and vendor locked crates.
-4. Configure Cargo offline mode and build with the lockfile.
-5. Install the generated package without network access.
-6. Build the actual R source tarball, restore the vendored source tree after the generated clean target, and inspect required archive entries.
-7. Run `R CMD check --as-cran` on that tarball.
-
-The exact workflow is `.github/workflows/rust-rextendr-offline-package.yml`. Its complexity is real and should be counted as maintainer work if Rust becomes the production route.
+The disposable Rust/rextendr adapter remains available for evaluation. Its current setup and package-generation instructions are maintained in the [Rust/rextendr spike README](../prototypes/rust-rextendr/README.md). Do not treat this historical report as a production R-package installation guide.
 
 ## CI and platform comparison
 
-### Existing shared CI
+### Historical shared CI at the reviewed snapshot
 
-`.github/workflows/cross-language-benchmarks.yml` is manually dispatched (`workflow_dispatch`), not an ordinary pull-request gate.
-
-- The `cross-language` job runs on `ubuntu-latest`, installs Python 3.12, R, stable Rust, and the R packages Rcpp/jsonlite/rextendr/usethis. It exports shared fixtures, regenerates Rcpp wrappers, installs the C++ candidate, generates and installs the Rust candidate, and benchmarks both alongside Python/Pure R.
-- The optional `package-smoke` job runs the same package build and semantic parity test on `ubuntu-latest`, `macos-latest`, and `windows-latest`. It is enabled only when the workflow input `package_smoke` is selected.
-- The optional stress workloads are separate and do not change the routine package build path.
+The cross-language workflow was manually dispatched (`workflow_dispatch`), not an ordinary pull-request gate. At the snapshot reviewed, its `cross-language` and optional `package-smoke` jobs installed and compared the C++/Rcpp and Rust/rextendr candidates alongside Python and pure R. That description is historical: PR #332 subsequently removed the C++ implementation and its dedicated workflow. The active benchmark harness is being reconciled separately; do not infer current support for the retired candidate from this archived comparison.
 
 This is the current symmetric cross-platform evidence for both spikes. Because the workflow is manual and the package matrix is opt-in, it should not be described as continuous PR protection.
 
-### Additional CI currently specific to Rust
+### Historical additional CI specific to Rust
 
 | Workflow | Trigger | Platforms | Additional maintenance it exercises |
 |---|---|---|---|
@@ -125,7 +52,7 @@ This is the current symmetric cross-platform evidence for both spikes. Because t
 | `rust-cran-dependency-audit.yml` | PR on Rust dependency inputs; weekly schedule; manual dispatch | Ubuntu | `cargo metadata --locked`, `cargo-deny`, dependency inventory, vendoring, offline build |
 | `test-rust-windows-binary.yml` | PR paths for Rust spike/workflow and audit report; manual dispatch | Windows | Build binary ZIP, then install with a restricted PATH containing R/Windows system paths but no Rust toolchain; run R smoke test |
 
-There is no dedicated C++-only workflow in the current workflow directory. C++ is exercised by the shared manual benchmark/package-smoke workflow. A production C++ package would still need explicit source-tarball checks, CRAN checks, and a clean Windows binary-install test; the absence of those jobs is a coverage gap, not a free pass.
+At the reviewed snapshot there was no dedicated C++-only workflow; the C++ spike was exercised by the shared manual benchmark/package-smoke workflow. PR #332 later retired the C++ spike and its dedicated CRAN workflow. The historical absence of C++ release checks is not a current coverage gap because C++/Rcpp is no longer a project candidate.
 
 ### Platform-specific concerns
 
@@ -138,7 +65,7 @@ There is no dedicated C++-only workflow in the current workflow directory. C++ i
 
 The workflows use hosted runner labels rather than pinning exact compiler/Xcode/Rtools versions in this comparison. Runner images evolve; record tool versions in any production decision experiment before treating a passing run as a reproducible toolchain specification.
 
-## Generated files and manual maintenance
+## Historical generated files and manual maintenance
 
 | Concern | C++ / Rcpp | Rust / rextendr |
 |---|---|---|
@@ -151,7 +78,7 @@ The workflows use hosted runner labels rather than pinning exact compiler/Xcode/
 
 The current Rust generator contains explicit compatibility adjustments around rextendr-generated Makevars and lockfile identity. That is a maintenance burden today, but it is also documented and automated rather than left as an undocumented manual recipe.
 
-## Debugging and upgrade risks
+## Historical debugging and upgrade risks
 
 ### C++ / Rcpp
 
@@ -170,9 +97,9 @@ The current Rust generator contains explicit compatibility adjustments around re
 - **License obligations:** transitive crate notices need an auditable inventory and inclusion in the generated R package. The generator copies the pinned extendr MIT notice explicitly.
 - **Windows install boundary:** source builds require Rust, while the Windows binary test is specifically designed to prove that installation of the built binary does not require Rust on the user's PATH.
 
-## Estimated maintainer effort
+## Historical maintainer-effort estimates (not measured)
 
-These are planning estimates for one maintainer familiar with R packaging, inferred from the steps and scripts in this repository. They are not measured timings or CI wall-clock measurements. They exclude feature implementation and the shared scene-contract work.
+These are planning estimates for one maintainer familiar with R packaging, inferred from the steps and scripts in the historical repository snapshot. They are not measured timings or CI wall-clock measurements. They exclude feature implementation and the shared scene-contract work. Issue #269 closed as not planned on 2026-11-04; the proposed human-effort comparison was discontinued and these ranges are not current decision evidence.
 
 | Activity | C++ / Rcpp | Rust / rextendr | Basis |
 |---|---:|---:|---|
@@ -184,7 +111,7 @@ These are planning estimates for one maintainer familiar with R packaging, infer
 
 **Interpretation:** C++/Rcpp currently has lower expected maintenance cost for an R-only native extension. Rust/rextendr has a larger initial and release-validation surface, particularly because CRAN-style source distribution needs a self-contained Cargo dependency strategy. Rust may still be justified if the same core is genuinely reused by non-R consumers; that benefit is not measured by this issue and should not be assumed.
 
-## Observed measurements from the shared-core proof
+## Historical CI measurements from the shared-core proof
 
 The PR #180 offline source-package workflow ran on all three operating systems.
 From the completed GitHub Actions job logs, end-to-end job wall times were:
@@ -196,56 +123,31 @@ From the completed GitHub Actions job logs, end-to-end job wall times were:
 | Windows | 3 min 10 sec |
 
 The Linux source tarball measured 1,270,634 bytes and the installed package
-reported 6.0 MB. The Windows source tarball measured 1,260,465 bytes. These
-measurements are for the extendr 0.8.2 baseline before the 0.9.0 upgrade;
-the follow-up 0.9.0 CI run must refresh them before treating them as current.
-CI wall time is not human maintainer effort and does not replace the controlled
-change/upgrade timing experiment below.
+reported 6.0 MB; the Windows source tarball measured 1,260,465 bytes. These
+are historical extendr 0.8.2 baseline measurements, superseded by the later
+extendr 0.9.0 and build-time stripping evidence below. CI wall time is not
+human maintainer effort and cannot be used as a substitute for it.
 ## Updated Rust/rextendr package measurements (2026-10-31)
 
-The extendr 0.9.0 / Rust 1.78 offline workflow measured the generated package on Ubuntu 24.04 with R 4.6.2 and GCC 13.3.0:
+PR #215 added opt-in build-time linker stripping to the disposable package generator. The three-platform offline workflow measured the following results on 2026-10-31:
 
-- Compressed source tarball: **1,314,220 bytes** (about 1.25 MiB).
-- Installed package: **6.0 MB**, including **5.9 MB** in `libs`.
-- `R CMD check --as-cran`: **1 NOTE**, for Cargo checksum/provenance metadata intentionally retained for offline integrity and source provenance.
+| Platform | Installed package | Native library | Source tarball | R CMD check |
+| --- | ---: | ---: | ---: | --- |
+| Linux | 2,112,721 bytes | 2,100,280 bytes | 1,049,181 bytes | 1 NOTE |
+| macOS | 1,805,047 bytes | 1,792,600 bytes | 1,048,308 bytes | 1 NOTE |
+| Windows | 1,176,796 bytes | 1,164,288 bytes | 1,041,008 bytes | 1 NOTE |
 
-The 6.0 MB installed size exceeds rextendr's 5 MB caution, so obtain CRAN guidance before production use. The source archive remains below the general 10 MB guideline. Rust/Cargo 1.78 is declared and CI-tested; stable CI exercises Linux, macOS, and Windows. Human maintainer effort has not been measured; the estimates above remain planning estimates, not observations. CI wall-clock duration is not a substitute for maintainer time.
+Linux uses the GNU linker `--strip-debug` option, macOS uses Apple's `-S` option, and Windows remains unstripped because a PE/COFF approach has not been validated. The full offline install, R smoke test, source-tarball build, and `R CMD check --as-cran` passed on all three platforms.
 
-## Fair comparison gaps and recommended follow-up
+The remaining NOTE reports Cargo's hidden `.cargo-checksum.json` and `.cargo_vcs_info.json` vendor metadata. These files are retained for offline dependency integrity and source provenance; they must not be deleted merely to silence the NOTE. The source archives are about 1.0 MiB on all three platforms. These are prototype measurements, not CRAN acceptance or production-package measurements. Obtain CRAN/maintainer guidance before any production R adoption.
 
-The current CI is not fully symmetric. Before using this report to select a production language:
+## Discontinued maintainer-time comparison
 
-1. Add equivalent C++ evidence for building the source tarball and running `R CMD check --as-cran` on supported platforms.
-2. Add a C++ Windows binary install/smoke test under a restricted PATH, analogous to the Rust workflow.
-3. Run both package-smoke paths from clean checkouts and retain exact-head logs; the existing cross-language workflow is manually dispatched and its platform matrix is optional.
-4. Record actual `R --version`, compiler, Rust/Cargo, Rcpp and rextendr versions in the evidence.
-5. Measure wall-clock maintainer time for one controlled change (one exported argument or validation rule) and one dependency upgrade on each spike.
-6. Compare compressed source package size and installation behavior on a clean user machine, not only on CI runners.
-
-Until these are complete, the evidence supports a limited conclusion: **Rcpp is operationally simpler in the current prototype; Rust has a more thoroughly exercised source/offline and Windows-binary distribution path.** It does not establish the overall production winner.
-
-## Controlled maintainer-time comparison (requires maintainer participation)
-
-The effort ranges above are planning estimates, not measured observations. A controlled comparison is still outstanding and must not be inferred from CI wall-clock times.
-
-Use the same maintainer and the same clean checkout conditions for both prototypes. Run the two candidates in alternating order to reduce order effects, and record active human time separately from unattended CI time.
-
-1. **Small implementation change:** make the same narrowly scoped change in each spike (for example, add one optional argument to the shared scene-v1 builder with matching validation and one test). Start timing when the maintainer begins inspecting the task; stop when the change is committed and the relevant local checks pass.
-2. **Dependency upgrade:** perform one comparable, preselected dependency upgrade in each spike. Record time spent reviewing release notes, changing manifests/lockfiles, regenerating bindings, resolving build failures, updating notices, running checks, and preparing the package evidence.
-3. **Record environment:** capture date, operator, exact commit, R/Rcpp/rextendr versions, compiler, rustc/Cargo versions, operating system, commands, failed attempts, manual steps, and the final CI runs.
-4. **Separate measures:** report active maintainer minutes, unattended CI wall time, number of manual interventions, and number of failed/retried steps. Do not combine these into one elapsed-time figure.
-5. **Repeat or qualify:** repeat each task if practical; otherwise label the result as a single-observation case study and do not generalize it to all future maintenance.
-
-| Task | C++/Rcpp active minutes | Rust/rextendr active minutes | Operator/date | Evidence |
-| --- | ---: | ---: | --- | --- |
-| Same small implementation change | Not measured | Not measured | Requires maintainer | Pending |
-| Comparable dependency upgrade | Not measured | Not measured | Requires maintainer | Pending |
-
-No values should be filled in by an agent without a maintainer actually performing and timing the work. The estimates earlier in this document remain estimates until this experiment is completed.
+The estimates above were not measured. No controlled human-effort comparison was performed. Issue #269 closed as not planned on 2026-11-04 after the project selected Rust as the sole native implementation and retired C++/Rcpp. Do not perform or report a C++/Rcpp maintainer-time comparison; do not infer human effort from CI wall-clock measurements.
 
 ## Evidence index
 
-- [C++ spike README](../prototypes/cpp-rcpp/README.md), [DESCRIPTION](../prototypes/cpp-rcpp/DESCRIPTION), [implementation](../prototypes/cpp-rcpp/src/scene_v1.cpp).
+- [C++/Rcpp retirement PR #332](https://github.com/vsimko/corrplot-ng/pull/332) and the historical assessment preserved in this report. The retired source tree is not linked as a current repository path.
 - [Rust spike README](../prototypes/rust-rextendr/README.md), [Cargo manifest](../prototypes/rust-rextendr/Cargo.toml), [R package generator](../prototypes/rust-rextendr/prepare-r-package.R), [integration smoke test](../prototypes/rust-rextendr/test-r-integration.R).
 - [Shared cross-language workflow](../.github/workflows/cross-language-benchmarks.yml).
 - [Rust offline package workflow](../.github/workflows/rust-rextendr-offline-package.yml), [dependency audit workflow](../.github/workflows/rust-cran-dependency-audit.yml), [Windows binary workflow](../.github/workflows/test-rust-windows-binary.yml).
