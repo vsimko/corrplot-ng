@@ -281,7 +281,7 @@ The PR tier uses representative fast checks; comprehensive matrices and
 scheduled WASM baseline collection are intentionally broader. The detailed
 path-to-check mapping is maintained in [CI validation tiers](ci-validation-tiers.md).
 
-Performance measurements are not part of routine pull-request CI.
+Full performance baselines are not part of routine pull-request CI; PRs only smoke-test the Node/WASM benchmark harness without timing assertions.
 The cross-language **Performance benchmarks** workflow is started manually
 using `workflow_dispatch` and has no scheduled trigger; the separate WASM
 and Node/WASM runtime baselines have weekly/manual triggers as described above.
@@ -365,5 +365,5 @@ version. Test coverage percentage alone is not proof of compatibility.
   SVG conformance, pixel regression, and shared implementation parity are
   distinct claims.
 - CI triggers and checks agree with the workflow files.
-- Performance benchmarks remain manual and outside ordinary PR checks.
+- Full performance baselines remain scheduled/manual and outside ordinary PR gates; PRs may smoke-test the harness without timing assertions.
 - The documented commands and links point to existing files and workflows.
