@@ -648,23 +648,35 @@ impl Renderer<Scene> for SceneSvgRenderer {
             ));
         };
         let unit = svg.unit.as_str();
+        let document_title = scene.texts.iter()
+            .find(|text| text.semantic_role.as_deref() == Some("document-title"))
+            .map(|text| text.text.as_str())
+            .filter(|title| !title.is_empty());
         let accessibility_label = if scene.description.is_empty() {
             String::new()
         } else {
             format!(" aria-label=\"{}\"", escape_xml(&scene.description))
         };
+        let accessibility_title = if document_title.is_some() {
+            " aria-labelledby=\"scene-title\""
+        } else {
+            ""
+        };
         let mut out = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\"{}>",
-            svg.width, unit, svg.height, unit, scene.width, scene.height, accessibility_label
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}{}\" height=\"{}{}\" viewBox=\"0 0 {} {}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\"{}{}>",
+            svg.width, unit, svg.height, unit, scene.width, scene.height, accessibility_label, accessibility_title
         );
+        if let Some(title) = document_title {
+            out.push_str(&format!("<title id=\"scene-title\">{}</title>", escape_xml(title)));
+        }
+        if !scene.description.is_empty() {
+            out.push_str(&format!("<desc>{}</desc>", escape_xml(&scene.description)));
+        }
         out.push_str(&format!(
             "<rect width=\"100%\" height=\"100%\" fill=\"{}\" fill-opacity=\"{}\"/>",
             color_hex(svg.background),
             alpha(svg.background),
         ));
-        if !scene.description.is_empty() {
-            out.push_str(&format!("<desc>{}</desc>", escape_xml(&scene.description)));
-        }
         for cell in &scene.cells {
             if !cell.visible { continue; }
             out.push_str(&format!(

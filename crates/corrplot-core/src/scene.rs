@@ -1410,7 +1410,7 @@ pub fn matrix_to_scene_v1(input: &NormalizedMatrixV1, options: &SceneBuildOption
     }
     if !options.title.is_empty() {
         texts.push(SceneText {
-                semantic_role: None, text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
+                semantic_role: Some("document-title".into()), text: options.title.clone(), x: width / 2.0, y: 12.0, rotation_degrees: 0.0, font_size: 18.0, color: black, anchor: TextAnchor::Middle, font_family: String::new(), font_weight: "normal".into(), font_style: "normal".into() });
     }
     if let Some(annotation) = &options.annotation {
         if !annotation.is_empty() {
@@ -1516,7 +1516,7 @@ mod tests {
         let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert_eq!((scene.width, scene.height), (380.0, 392.0));
-        assert!(scene.texts.iter().any(|text| text.text == "Example correlation matrix"));
+        assert!(scene.texts.iter().any(|text| text.semantic_role.as_deref() == Some("document-title") && text.text == "Example correlation matrix"));
         assert_eq!(scene.description, "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.");
         use crate::output::{OutputOptions, RenderOutput, Renderer, SvgOptions, SvgUnit};
         let svg = crate::raster::SceneSvgRenderer.render(
@@ -1525,6 +1525,8 @@ mod tests {
         ).unwrap();
         let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
         assert!(svg.contains("<desc>Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.</desc>"));
+        assert!(svg.contains("<title id=\"scene-title\">Example correlation matrix</title>"));
+        assert!(svg.contains("aria-labelledby=\"scene-title\""));
         assert!(svg.contains("role=\"img\""));
         assert!(svg.contains("aria-label=\"Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.\""));
         assert!(scene.texts.iter().any(|text| text.text == "Prototype annotation: synthetic example only"));
