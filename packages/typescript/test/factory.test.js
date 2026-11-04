@@ -134,7 +134,7 @@ test("rejects nonnumeric and sparse array values before crossing the backend bou
       values: [undefined],
       kind: "correlation",
     }),
-    error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.non_numeric",
+    error => error instanceof CorrplotError && error.diagnostic.code === "configuration.invalid_field",
   );
   assert.equal(called, false);
 });
