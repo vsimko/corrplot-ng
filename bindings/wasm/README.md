@@ -78,7 +78,7 @@ the responsibility of that adapter.
 
 The browser smoke suite runs against Chromium, Firefox, and WebKit on
 Ubuntu 24.04 using Playwright. Node 24 and 26 both run the WASM tests and
-package checks; the browser matrix runs on Node 26. This is a focused engine
+package checks; the browser matrix runs on Node 24. This is a focused engine
 compatibility check, not a claim of coverage across every browser version,
 operating system, or mobile device.
 
