@@ -3,7 +3,7 @@
 The repository has two benchmark suites:
 
 - **Shared-core benchmark:** measures the Python scene prototype on B01, B02, B05, B07 and B08.
-- **Cross-language benchmark:** compares Python, Pure R, C++/Rcpp and Rust/rextendr on the common scene-v1 workloads. The regular suite covers B01, B02, B05, B06 and B07. The optional stress suite covers B03 (500x500) and B04 (1000x1000); Pure R is excluded from these two large workloads.
+- **Cross-language benchmark:** compares the Python reference, pure R and the disposable Rust/rextendr adapter on the common scene-v1 workloads. The regular suite covers B01, B02, B05, B06 and B07. The optional stress suite covers B03 (500x500) and B04 (1000x1000); pure R is excluded from these two large workloads.
 
 Performance benchmarks are deliberately excluded from pull-request workflows. The regular shared-core and cross-language suites are started manually from the GitHub Actions tab. Stress workloads and the three-platform package-smoke matrix are opt-in inputs available only to manual runs.
 
@@ -54,7 +54,7 @@ The workflow uploads machine-readable JSON fixtures and timing results as artifa
 
 ## Cross-language methodology
 
-The cross-language workflow exports shared fixtures before timing. Python, Pure R, C++/Rcpp and Rust/rextendr are compared on equivalent inputs. Each implementation must pass semantic comparison against the expected scene before its timing is considered. Pure R remains in the regular comparison but is intentionally omitted from B03/B04 stress measurements because its JSON serialization path is not practical at those sizes.
+The cross-language workflow exports shared fixtures before timing. The Python reference, pure-R builder and Rust/rextendr adapter are compared on equivalent inputs. Each measured implementation must pass semantic comparison against the expected scene before its timing is considered. Pure R remains in the regular comparison but is intentionally omitted from B03/B04 stress measurements because its JSON serialization path is not practical at those sizes. The retired C++/Rcpp candidate is not part of the current workflow; its earlier measurements remain in the historical report below.
 
 Regular measurements use warmups and repeated samples with calibrated batches for short workloads. Stress measurements use one warmup, five measured samples and batch size one. Results are specific to the CI runner and are not, by themselves, a production-language decision.
 
