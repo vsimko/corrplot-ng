@@ -58,6 +58,11 @@ function normalizeMatrixInput(input) {
       return mask[index] ? null : value;
     });
   }
+  for (let index = 0; index < values.length; index += 1) {
+    if (values[index] !== null && typeof values[index] !== "number") {
+      fail("input.matrix.invalid_cell_value", "input", "matrix values must be numbers or null", `values[${index}]`);
+    }
+  }
   return {
     labels: input.labels,
     rows: input.rows,
