@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { CorrplotError, createEngine, backendInitializationFailed } from "../src/factory.js";
 
 const pixels = new Uint8Array([1, 2, 3, 4]);
+const validMatrix = { labels: ["alpha"], rows: 1, columns: 1, values: [1], kind: "correlation" };
 function adapter(overrides = {}) {
   return {
     validateMatrix: () => true,
@@ -18,7 +19,7 @@ function adapter(overrides = {}) {
 
 test("validates and renders through the injected backend", () => {
   const engine = createEngine(adapter(), "injected");
-  assert.equal(engine.validate({}), true);
+  assert.equal(engine.validate(validMatrix), true);
   assert.equal(engine.render("{}", { format: "svg" }), "<svg />");
   assert.equal(engine.render("{}", { format: "rgba", widthPx: 1, heightPx: 1, background: { red: 0, green: 0, blue: 0, alpha: 255 } }).pixels, pixels);
   assert.deepEqual(engine.getRendererCapabilities(), { capability_schema_version: 1 });
@@ -26,7 +27,7 @@ test("validates and renders through the injected backend", () => {
 
 test("converts backend validation diagnostics to CorrplotError", () => {
   const engine = createEngine(adapter({ validateMatrix: () => ({ valid: false, diagnostic: { schema_version: 1, code: "input.matrix.invalid_shape", severity: "error", stage: "input", message: "bad matrix" } }) }), "injected");
-  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.invalid_shape");
+  assert.throws(() => engine.validate(validMatrix), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.invalid_shape");
 });
 
 test("converts renderer diagnostics to CorrplotError", () => {
@@ -47,14 +48,14 @@ test("dispose is idempotent and prevents later operations", () => {
   engine.dispose();
   engine.dispose();
   assert.equal(calls, 1);
-  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "configuration.invalid_field");
+  assert.throws(() => engine.validate(validMatrix), error => error instanceof CorrplotError && error.diagnostic.code === "configuration.invalid_field");
 });
 
 test("normalizes diagnostics thrown by a native-style adapter", () => {
   const nativeError = new Error("bad input");
   nativeError.diagnostic = { schema_version: 1, code: "input.matrix.not_symmetric", severity: "error", stage: "input", message: "bad input" };
   const engine = createEngine(adapter({ validateMatrix: () => { throw nativeError; } }), "injected");
-  assert.throws(() => engine.validate({}), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.not_symmetric");
+  assert.throws(() => engine.validate(validMatrix), error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.not_symmetric");
 });
 
 test("creates and renders a renderer-neutral scene through the injected backend", () => {
