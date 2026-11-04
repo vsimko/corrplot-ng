@@ -105,8 +105,11 @@ The Python scene/SVG prototype has its own tests under
 layout, labels, annotations, missing values, deterministic SVG output, and
 the seven prototype glyph methods. The R scene consumer checks that the R
 adapter can consume and produce the documented scene-v1 representation.
-The legacy-to-scene bridge uses actual matrix output from the pinned legacy
-oracle to check selected semantic edge cases.
+The R package tests also run the shared correlation corpus through the scene
+adapter; packaged general-matrix and normalized-matrix fixtures cover the
+corresponding scene and input-normalization paths. The legacy-to-scene bridge
+uses actual matrix output from the pinned legacy oracle to check selected
+semantic edge cases.
 
 Run the Python prototype tests with:
 
