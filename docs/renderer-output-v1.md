@@ -1,6 +1,6 @@
 # Renderer output contract, version 1
 
-**Status:** Current contract; raster and browser Canvas implementations are tracked separately.
+**Status:** Current contract; raw RGBA and direct browser Canvas 2D rendering are implemented. PNG encoding remains planned.
 
 This document defines output selection independently of figure semantics, the Rust API types in crates/corrplot-core/src/output.rs, and the host boundary required by the Node and WebAssembly adapters.
 
@@ -75,18 +75,18 @@ The PNG renderer must preserve the same pixel meaning and straight-alpha interpr
 
 Canvas 2D is a browser host target, not a serialized OutputFormat. The TypeScript/browser adapter owns the caller-provided HTMLCanvasElement, CanvasRenderingContext2D, or OffscreenCanvas. Rust must not receive or retain DOM objects.
 
-The browser API is expected to expose a method equivalent to:
+The TypeScript API exposes a synchronous `renderToCanvas()` method that returns `CanvasRenderResult`:
 
-    await engine.renderToCanvas(scene, canvasOrContext, {
+    const canvasResult = engine.renderToCanvas(scene, canvasOrContext, {
       width: 1200,
       height: 900,
       devicePixelRatio: window.devicePixelRatio,
-      background: "#ffffff"
+      background: { red: 255, green: 255, blue: 255, alpha: 255 }
     });
 
-The adapter sets the canvas backing-store dimensions, applies device-pixel-ratio scaling, clears/fills the background, and draws the shared scene or a documented renderer command representation. It must not serialize SVG and parse it to draw. The canvas context remains owned by the caller.
+The adapter sets the canvas backing-store dimensions, applies device-pixel-ratio scaling, clears or fills the background, and draws the shared scene directly with Canvas 2D primitives. It does not serialize SVG or route drawing through an intermediate RGBA buffer. The canvas and context remain owned by the caller.
 
-OffscreenCanvas is optional and feature-detected. The baseline Canvas path must work on the main thread without cross-origin isolation headers, SharedArrayBuffer, WebAssembly threads, WebGPU, or WebGL. Worker transport and OffscreenCanvas behavior are implemented in #144.
+OffscreenCanvas is optional and feature-detected. The adapter reports this target only when the runtime exposes `OffscreenCanvas` and can create a working 2D context. The main-thread HTMLCanvasElement path does not require cross-origin isolation headers, SharedArrayBuffer, WebAssembly threads, WebGPU, or WebGL. The package does not provide worker transport, worker lifecycle management, or a worker protocol; applications manage any worker orchestration themselves.
 
 Renderer capability declarations use the existing capability-v1 schema. The optional host_targets property distinguishes browser-canvas-2d and browser-offscreen-canvas-2d from serialized output_formats. Canvas renderers still declare the same scene versions and feature flags and use the same strict/permissive negotiation and diagnostic rules. No second capability model is introduced.
 
@@ -106,7 +106,7 @@ Runtime adapters map OutputValidationError to diagnostic-v1 records. Callers bra
 
 - #153 defines this output contract and the Rust output types/trait.
 - #154 implements direct raw RGBA rendering from the typed shared scene; PNG encoding remains future work.
-- #144 implements direct browser Canvas rendering and the TypeScript host adapter.
+- #144 implements direct browser Canvas 2D rendering in the TypeScript host adapter, including feature-detected OffscreenCanvas targets where supported; it does not add worker orchestration.
 - #140 ensures the shared core and output types compile for native and WASM targets.
 - #141/#142 expose the same core through Node-API and WebAssembly.
 - #145 publishes the unified TypeScript API.
