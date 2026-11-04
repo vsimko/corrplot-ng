@@ -143,6 +143,7 @@ jobs:
             echo "Running browser smoke test: $browser"
             CORRPLOT_BROWSER="$browser" node bindings/wasm/examples/browser/smoke.test.mjs
             CORRPLOT_BROWSER="$browser" node packages/vue/test/browser/smoke.test.mjs
+          done
       - name: Upload browser Canvas performance artifact
         if: matrix.node == 24 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         uses: actions/upload-artifact@v7
@@ -151,4 +152,3 @@ jobs:
           path: ${{ runner.temp }}/browser-canvas-benchmark.jsonl
           if-no-files-found: error
           retention-days: 90
-          done
