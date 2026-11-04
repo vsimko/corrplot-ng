@@ -537,8 +537,13 @@ mod tests {
                     font_size: None,
                     color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
                 }),
+                p_value: None,
+                normalized_value: None,
+                significance: None,
+                confidence_interval: None,
             }],
             texts: vec![],
+            significance: None,
         };
         let options = SvgOptionsInput {
             width: 100.0,
@@ -610,7 +615,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn maps_invalid_rgba_options_to_diagnostic_v1() {
-        let scene = SceneInput { width: 1.0, height: 1.0, description: None, cells: vec![], texts: vec![] };
+        let scene = SceneInput { width: 1.0, height: 1.0, description: None, cells: vec![], texts: vec![], significance: None };
         let options = RgbaOptionsInput {
             width_px: 0,
             height_px: 12,
@@ -839,6 +844,24 @@ fn scene_input(scene: Scene) -> SceneInput {
         fill: rgba_input(&cell.fill),
         stroke: rgba_input(&cell.stroke),
         glyph: cell.glyph.map(glyph_input),
+        p_value: cell.p_value,
+        normalized_value: cell.normalized_value,
+        significance: cell.significance.map(|value| SceneCellSignificanceInput {
+            p_value: value.p_value,
+            status: value.status,
+            annotation: value.annotation,
+            blank: value.blank,
+        }),
+        confidence_interval: cell.confidence_interval.map(|value| SceneConfidenceIntervalInput {
+            lower: value.lower,
+            upper: value.upper,
+            x1: value.x1,
+            x2: value.x2,
+            y: value.y,
+            cap_height: value.cap_height,
+            stroke_width: value.stroke_width,
+            color: rgba_input(&value.color),
+        }),
     }).collect();
     let texts = scene.texts.into_iter().map(|text| SceneTextInput {
         text: text.text,
@@ -860,6 +883,11 @@ fn scene_input(scene: Scene) -> SceneInput {
         description: Some(scene.description),
         cells,
         texts,
+        significance: scene.significance.map(|value| SceneSignificancePolicyInput {
+            mode: value.mode,
+            thresholds: value.thresholds,
+            symbol: value.symbol,
+        }),
     }
 }
 
