@@ -53,10 +53,15 @@ const sceneV1Statistical = fs.readFileSync(
   path.join(__dirname, "../../prototypes/shared-svg/scene-v1-statistical-overlays.example.json"),
   "utf8",
 );
+const sceneV1LegendCluster = fs.readFileSync(
+  path.join(__dirname, "../../prototypes/shared-svg/scene-v1-legend-cluster.example.json"),
+  "utf8",
+);
 const matrixFixtures = [
   { id: "canonical-missing-values", json: sceneV1 },
   { id: "construction-overrides-and-figure-text", json: sceneV1Construction },
   { id: "statistical-overlays", json: sceneV1Statistical },
+  { id: "legend-and-cluster-regions", json: sceneV1LegendCluster },
 ];
 const rgbaOptions = {
   widthPx: 380,
