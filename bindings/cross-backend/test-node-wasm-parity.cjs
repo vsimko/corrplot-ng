@@ -9,8 +9,24 @@ const wasm = require("../../bindings/wasm/pkg-node/corrplot_ng_wasm.js");
 const black = { red: 0, green: 0, blue: 0, alpha: 255 };
 const white = { red: 255, green: 255, blue: 255, alpha: 255 };
 const scene = {
-  width: 10,
-  height: 10,
+  width: 80,
+  height: 30,
+  legend: [{ kind: "missing", label: "Not observed", color: { red: 242, green: 242, blue: 242, alpha: 255 } }],
+  clusterRegions: [{
+    id: "group-a",
+    variables: ["alpha"],
+    sourceIndices: [0],
+    rowStart: 0,
+    rowEnd: 0,
+    columnStart: 0,
+    columnEnd: 0,
+    x: 1,
+    y: 1,
+    width: 10,
+    height: 10,
+    color: { red: 33, green: 102, blue: 172, alpha: 255 },
+    lineWidth: 2,
+  }],
   cells: [{
     x: 0,
     y: 0,
@@ -131,6 +147,8 @@ test("Node and WASM render identical SVG for typed scenes", () => {
   const nativeSvg = native.renderSceneSvg(scene, options);
   const wasmSvg = unwrapSvg(wasm.renderSceneSvg(scene, options));
   assert.equal(wasmSvg, nativeSvg);
+  assert.ok(nativeSvg.includes('class="cluster-region"'));
+  assert.ok(nativeSvg.includes('class="legend-entry"'));
 });
 
 test("Node and WASM render identical RGBA bytes for typed scenes", () => {
