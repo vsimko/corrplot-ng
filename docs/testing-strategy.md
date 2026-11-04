@@ -34,9 +34,10 @@ The current implementation includes:
   for their implemented operations.
 - Node-API and browser-WASM bindings, a runtime-specific TypeScript facade,
   direct browser Canvas 2D rendering, and browser-only React/Vue adapters.
-- Experimental C++/Rcpp and Rust/rextendr R-integration candidates; the
-  rextendr adapter is disposable evaluation infrastructure, not the
-  production R package.
+- A disposable Rust/rextendr R-integration adapter that proves shared-crate
+  use for selected operations; it is evaluation infrastructure, not the
+  production R package. The C++/Rcpp spike was retired by PR #332 and is not
+  part of the current test matrix.
 
 ## Test layers
 
@@ -194,8 +195,11 @@ cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
 cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
 ```
 
-The standalone CLI remains a thin application adapter. Production R rollout
-is separately gated by the CRAN and maintainer-workflow evidence in ADR 0001.
+The standalone CLI remains a thin application adapter. Production R adoption
+is separately gated by CRAN disposition for the retained Cargo vendor-metadata
+NOTE, compatibility with the intended CRAN toolchain, and validation of the
+actual production package artifact, as described in ADR 0001. The proposed
+C++/Rcpp maintainer-time comparison was discontinued by #269.
 
 ### 6. Node, browser-WASM, TypeScript, Canvas, and framework integrations
 
