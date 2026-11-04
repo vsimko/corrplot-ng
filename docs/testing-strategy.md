@@ -170,8 +170,10 @@ The dependency-free `crates/corrplot-core` library is the accepted strategic
 shared implementation under ADR 0001. It currently tests matrix validation,
 the matrix-bearing scene-v1 parser and normalized-matrix-to-scene builder,
 and typed-scene SVG/RGBA rendering, including supplied scene-v1 confidence
-intervals and per-cell significance annotations. The renderer consumes
-prepared statistical metadata and does not calculate p-values or intervals.
+intervals and per-cell significance annotations. Blank cells suppress glyphs
+and intervals, hidden cells are omitted, and missing p-values do not generate
+annotations. The renderer consumes prepared statistical metadata and does not
+calculate p-values or intervals.
 The CLI, Node, browser-WASM, and
 experimental R/rextendr integrations call this crate for their implemented
 operations. This is real shared compiled implementation, but not full
