@@ -106,6 +106,62 @@ try {
     throw new Error("Canvas visual fixture did not render its number and shade glyphs");
   }
 
+  // Exercise the same visual contract at a larger logical viewport and 2x
+  // backing-store resolution. The narrower viewport also verifies centered
+  // letterboxing rather than cropping.
+  const highDpiCanvas = document.createElement("canvas");
+  const highDpiResult = engine.renderToCanvas(visualFixture.scene, highDpiCanvas, {
+    width: visualFixture.scene.width * 2,
+    height: visualFixture.scene.height * 4,
+    devicePixelRatio: 2,
+  });
+  const highDpiContext = highDpiCanvas.getContext("2d");
+  if (!highDpiContext) throw new Error("high-DPI conformance Canvas has no 2D context");
+  const highDpiCanvasPixels = highDpiContext.getImageData(0, 0, highDpiCanvas.width, highDpiCanvas.height).data;
+  const highDpiRgba = engine.render(visualFixture.scene, {
+    format: "rgba",
+    widthPx: highDpiResult.widthPx,
+    heightPx: highDpiResult.heightPx,
+    background: { red: 255, green: 255, blue: 255, alpha: 255 },
+  });
+  if (highDpiResult.widthPx !== 320 || highDpiResult.heightPx !== 80 ||
+      highDpiRgba.widthPx !== highDpiResult.widthPx ||
+      highDpiRgba.heightPx !== highDpiResult.heightPx) {
+    throw new Error("high-DPI Canvas/RGBA output dimensions did not match the requested viewport");
+  }
+  const highDpiScale = Math.min(
+    highDpiResult.widthPx / visualFixture.scene.width,
+    highDpiResult.heightPx / visualFixture.scene.height,
+  );
+  const highDpiOffsetX = (highDpiResult.widthPx - visualFixture.scene.width * highDpiScale) / 2;
+  const highDpiOffsetY = (highDpiResult.heightPx - visualFixture.scene.height * highDpiScale) / 2;
+  for (const sample of visualFixture.expectedSamples) {
+    const x = Math.floor(highDpiOffsetX + sample.x * highDpiScale);
+    const y = Math.floor(highDpiOffsetY + sample.y * highDpiScale);
+    const canvasPixel = readPixel(highDpiCanvasPixels, highDpiCanvas.width * 4, x, y);
+    const rgbaPixel = readPixel(highDpiRgba.pixels, highDpiRgba.strideBytes, x, y);
+    if (canvasPixel.some((channel, index) => channel !== sample.color[index]) ||
+        rgbaPixel.some((channel, index) => channel !== sample.color[index])) {
+      throw new Error("high-DPI Canvas/RGBA visual fixture mismatch at " + sample.label +
+        ": Canvas=" + canvasPixel.join(",") + " RGBA=" + rgbaPixel.join(","));
+    }
+  }
+  const scaleRegion = region => ({
+    x: Math.floor(highDpiOffsetX + region.x * highDpiScale),
+    y: Math.floor(highDpiOffsetY + region.y * highDpiScale),
+    width: Math.ceil(region.width * highDpiScale),
+    height: Math.ceil(region.height * highDpiScale),
+  });
+  const highDpiNumberInkPixels = countInk(
+    highDpiCanvasPixels, highDpiCanvas.width * 4, scaleRegion(visualFixture.inkRegions.number),
+  );
+  const highDpiShadeInkPixels = countInk(
+    highDpiCanvasPixels, highDpiCanvas.width * 4, scaleRegion(visualFixture.inkRegions.shade),
+  );
+  if (highDpiNumberInkPixels === 0 || highDpiShadeInkPixels === 0) {
+    throw new Error("high-DPI Canvas fixture did not render its number and shade glyphs");
+  }
+
   const canvasCapabilities = engine.getCanvasRendererCapabilities();
   if (!canvasCapabilities.host_targets.includes("browser-canvas-2d")) {
     throw new Error("Canvas capability declaration omitted browser-canvas-2d");
