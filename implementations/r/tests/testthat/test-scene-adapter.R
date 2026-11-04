@@ -398,3 +398,41 @@ test_that("missing label options reject invalid values", {
   expect_error(corrplot_ng(diag(2), engine = "scene", na.label.col = "not-a-color"),
     "valid R color")
 })
+
+
+test_that("correlation scene adapter matches the shared correlation fixtures", {
+  skip_if_not_installed("jsonlite")
+  fixture_path <- system.file("extdata", "correlation-cases.json",
+    package = "corrplotng")
+  expect_true(nzchar(fixture_path), info = "shared correlation fixtures must be installed")
+  fixtures <- jsonlite::fromJSON(fixture_path, simplifyVector = FALSE)
+
+  for (case in fixtures$cases) {
+    labels <- unlist(case$labels, use.names = FALSE)
+    values <- do.call(rbind, lapply(case$matrix, function(row) {
+      vapply(row, function(value) {
+        if (is.null(value)) NA_real_ else as.numeric(value)
+      }, numeric(1))
+    }))
+    dimnames(values) <- list(labels, labels)
+
+    scene <- corrplot_ng(values, engine = "scene")
+    expect_identical(scene$schema_version, 1L, info = case$id)
+    expect_identical(scene$kind, "correlation_plot", info = case$id)
+    expect_identical(
+      vapply(scene$labels, function(label) label$text, character(1)),
+      labels,
+      info = case$id
+    )
+    expect_length(scene$cells, length(labels)^2)
+
+    scene_values <- matrix(
+      vapply(scene$cells, function(cell) {
+        if (is.null(cell$value)) NA_real_ else as.numeric(cell$value)
+      }, numeric(1)),
+      nrow = length(labels),
+      byrow = TRUE
+    )
+    expect_equal(unname(scene_values), unname(values), info = case$id)
+  }
+})
