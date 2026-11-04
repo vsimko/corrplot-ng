@@ -110,6 +110,35 @@ try {
   if (overlayPixels[(5 * 100 + 15) * 4] === 220) {
     throw new Error("blank cell unexpectedly rendered its confidence interval");
   }
+  const countDarkInk = (pixels, width, region) => {
+    let count = 0;
+    for (let y = region.y; y < region.y + region.height; y += 1) {
+      for (let x = region.x; x < region.x + region.width; x += 1) {
+        const offset = (y * width + x) * 4;
+        if (pixels[offset] < 60 && pixels[offset + 1] < 60 && pixels[offset + 2] < 60) count += 1;
+      }
+    }
+    return count;
+  };
+  if (countDarkInk(overlayPixels, 100, { x: 4, y: 1, width: 8, height: 6 }) === 0) {
+    throw new Error("Canvas did not render the supplied significance annotation");
+  }
+  const highDpiOverlayCanvas = document.createElement("canvas");
+  engine.renderToCanvas(statisticalScene, highDpiOverlayCanvas, {
+    width: 100, height: 50, devicePixelRatio: 2,
+  });
+  const highDpiOverlayPixels = highDpiOverlayCanvas.getContext("2d").getImageData(
+    0, 0, highDpiOverlayCanvas.width, highDpiOverlayCanvas.height,
+  ).data;
+  const highDpiIntervalOffset = (10 * highDpiOverlayCanvas.width + 10) * 4;
+  if (highDpiOverlayPixels[highDpiIntervalOffset] !== 220 ||
+      highDpiOverlayPixels[highDpiIntervalOffset + 1] !== 20 ||
+      highDpiOverlayPixels[highDpiIntervalOffset + 2] !== 60 ||
+      countDarkInk(highDpiOverlayPixels, highDpiOverlayCanvas.width, {
+        x: 8, y: 2, width: 18, height: 12,
+      }) === 0) {
+    throw new Error("2x Canvas did not preserve confidence interval and annotation ink");
+  }
 
   const canvas = document.createElement("canvas");
   const canvasResult = engine.renderToCanvas(scene, canvas, {
