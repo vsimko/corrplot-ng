@@ -59,6 +59,8 @@ preparation is tracked by #290 and documented in
 
 ## Scope boundary
 
-This is the native Node backend, not the unified cross-runtime TypeScript
-facade. Backend selection and shared browser/native API design remain in
-issue #145. The WASM and direct Canvas work remain in issues #142 and #144.
+This is the native Node backend. The runtime-isolated TypeScript facade
+in `packages/typescript/` selects this package for Node.js and the browser
+WASM package for browser builds. The initial shared normalized-matrix scene
+workflow and cross-runtime facade in #145 are implemented. Direct browser
+Canvas rendering remains separate work in #144.
