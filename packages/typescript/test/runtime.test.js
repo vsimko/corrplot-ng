@@ -8,7 +8,8 @@ const matrix = {
   labels: ["alpha", "beta"],
   rows: 2,
   columns: 2,
-  values: [1, -0.5, -0.5, 1],
+  values: new Float64Array([1, 0, 0, 1]),
+  missingMask: [false, true, true, false],
   kind: "correlation",
 };
 
