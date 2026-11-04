@@ -18,14 +18,33 @@ The backend packages are optional peer dependencies, not ordinary dependencies. 
 import { createCorrplotEngine } from "@corrplot-ng/typescript";
 
 const engine = await createCorrplotEngine({ backend: "auto" });
-engine.validate({ labels: ["a"], rows: 1, columns: 1, values: [1], kind: "correlation" });
-const svg = engine.render(sceneV1Json, { format: "svg", method: "circle" });
+const matrix = {
+  labels: ["alpha", "beta"],
+  rows: 2,
+  columns: 2,
+  values: [1, 0.65, 0.65, 1],
+  kind: "correlation",
+};
+
+engine.validate(matrix);
+const scene = engine.createScene(matrix, {
+  cellMethod: "circle",
+  title: "Example correlation matrix",
+  description: "A two-variable correlation matrix.",
+});
+const svg = engine.render(scene, { format: "svg" });
+const rgba = engine.render(scene, {
+  format: "rgba",
+  widthPx: 640,
+  heightPx: 640,
+  background: { red: 255, green: 255, blue: 255, alpha: 255 },
+});
 engine.dispose();
 ```
 
-The initial facade exposes matrix validation, scene-v1 matrix-to-SVG, scene-v1 matrix-to-RGBA, renderer capabilities, and idempotent disposal. The current `render` input is the matrix-bearing scene-v1 JSON string accepted by the existing Rust adapters; it is not yet a general normalized-matrix plotting API. RGBA results contain JavaScript-owned `Uint8Array` pixels. Direct Canvas is not advertised until the browser adapter in #144 is implemented.
+The facade exposes matrix validation, Rust-backed normalized-matrix-to-scene construction through `createScene()`, rendering of renderer-neutral scenes to SVG or RGBA, renderer capabilities, and idempotent disposal. `MatrixInput` uses row-major numeric values; ordinary arrays may contain explicit `null` cells, while numeric typed arrays use an optional boolean `missingMask` (`true` means missing). Scene construction currently requires a non-empty square matrix. The older `render(sceneV1Json, options)` path remains available for callers with a matrix-bearing scene-v1 JSON document. RGBA results contain JavaScript-owned `Uint8Array` pixels. Direct Canvas is not advertised until the browser adapter in #144 is implemented.
 
-`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. Tests and advanced integrations may inject an adapter through `adapter`.
+`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. `getRendererCapabilities("rust-core-scene")` optionally verifies the selected renderer ID. Tests and advanced integrations may inject an adapter through `adapter`.
 
 ## CommonJS on Node.js
 

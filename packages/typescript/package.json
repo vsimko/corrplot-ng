@@ -8,25 +8,51 @@
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "browser": {"types": "./src/index.d.ts", "default": "./src/browser.js"},
+      "browser": {
+        "types": "./src/index.d.ts",
+        "default": "./src/browser.js"
+      },
       "node": {
-        "import": {"types": "./src/index.d.ts", "default": "./src/node.js"},
-        "require": {"types": "./src/index.d.cts", "default": "./src/node.cjs"}
+        "import": {
+          "types": "./src/index.d.ts",
+          "default": "./src/node.js"
+        },
+        "require": {
+          "types": "./src/index.d.cts",
+          "default": "./src/node.cjs"
+        }
       },
       "types": "./src/index.d.ts",
       "default": "./src/browser.js"
     }
   },
-  "files": ["src", "README.md"],
-  "scripts": {"test": "node --test"},
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/factory.test.js test/package-isolation.test.js test/runtime.test.js test/node-cjs.test.cjs && npm run test:types",
+    "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM test/types/node-usage.ts test/types/commonjs-usage.cts && tsc --noEmit --strict --module ESNext --moduleResolution Bundler --customConditions browser --target ES2022 --lib ES2022,DOM test/types/browser-usage.ts",
+    "build:browser-smoke": "esbuild test/browser/smoke.js --bundle --format=esm --platform=browser --outfile=test/browser/dist/smoke.js --loader:.wasm=file --asset-names=[name] && node -e \"require('node:fs').copyFileSync('../../bindings/wasm/pkg/corrplot_ng_wasm_bg.wasm', 'test/browser/dist/corrplot_ng_wasm_bg.wasm')\" && node test/browser/assert-bundle.mjs"
+  },
   "peerDependencies": {
     "@corrplot-ng/native-node": "0.1.0",
     "@corrplot-ng/wasm": "0.1.0"
   },
   "peerDependenciesMeta": {
-    "@corrplot-ng/native-node": {"optional": true},
-    "@corrplot-ng/wasm": {"optional": true}
+    "@corrplot-ng/native-node": {
+      "optional": true
+    },
+    "@corrplot-ng/wasm": {
+      "optional": true
+    }
   },
-  "engines": {"node": "^22 || ^24 || ^26"},
-  "license": "MIT"
+  "engines": {
+    "node": "^22 || ^24 || ^26"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "esbuild": "0.25.0"
+  }
 }

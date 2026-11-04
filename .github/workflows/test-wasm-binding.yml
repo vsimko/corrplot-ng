@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "bindings/wasm/**"
+      - "packages/typescript/**"
+      - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
   push:
     branches: [main]
     paths:
       - "bindings/wasm/**"
+      - "packages/typescript/**"
+      - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
@@ -75,17 +79,23 @@ jobs:
       - name: Verify browser WASM npm package contents
         working-directory: bindings/wasm
         run: npm pack --dry-run
+      - name: Install npm workspace dependencies for the TypeScript facade smoke
+        run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
+      - name: Install the Linux esbuild executable omitted with optional dependencies
+        run: npm install --no-save --no-package-lock --ignore-scripts --omit=optional @esbuild/linux-x64@0.25.0
+      - name: Bundle the browser TypeScript facade against the built WASM package
+        run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Install Playwright
-        if: matrix.node == 26
+        if: matrix.node == 24
         run: npm install --no-save --no-package-lock playwright@1.56.1
       - name: Install Firefox and WebKit
-        if: matrix.node == 26
+        if: matrix.node == 24
         run: npx playwright install --with-deps firefox webkit
       - name: Verify preinstalled Chrome
-        if: matrix.node == 26
+        if: matrix.node == 24
         run: google-chrome --version
       - name: Run browser WebAssembly smoke tests in Chromium, Firefox, and WebKit
-        if: matrix.node == 26
+        if: matrix.node == 24
         env:
           DEBUG: pw:api
         run: |

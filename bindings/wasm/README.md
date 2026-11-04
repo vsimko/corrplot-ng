@@ -78,16 +78,19 @@ the responsibility of that adapter.
 
 The browser smoke suite runs against Chromium, Firefox, and WebKit on
 Ubuntu 24.04 using Playwright. Node 24 and 26 both run the WASM tests and
-package checks; the browser matrix runs on Node 26. This is a focused engine
+package checks; the browser matrix runs on Node 24. This is a focused engine
 compatibility check, not a claim of coverage across every browser version,
 operating system, or mobile device.
 
 ## Scope boundary
 
 The Rust core provides an initial scene-v1 matrix parser and deterministic
-matrix-to-scene builder. The Node and WASM bindings expose the same end-to-end
-matrix-to-SVG and matrix-to-RGBA operations. The parser intentionally validates
-only the matrix-bearing subset; full scene-v1 presentation semantics are not
-yet implemented. Broader cross-backend and browser conformance, performance
-budgets, package publishing, and the unified TypeScript facade remain follow-up
-work in #142 and #145.
+matrix-to-scene builder. The Node and WASM bindings expose the same normalized-
+matrix scene construction and typed-scene SVG/RGBA operations, alongside the
+matrix-bearing scene-v1 compatibility renderers. The runtime-isolated TypeScript
+facade in `packages/typescript/` exposes this workflow through separate Node and
+browser entry points, including typed-array normalization and explicit missing-
+cell masks. The parser and builder intentionally cover only the matrix-bearing
+subset; full scene-v1 presentation semantics and broader cross-backend/browser
+conformance remain separate work in #146. Direct Canvas remains #144, while
+package publication is explicitly deferred under #293.
