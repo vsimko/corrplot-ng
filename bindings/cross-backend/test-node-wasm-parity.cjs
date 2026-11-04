@@ -39,7 +39,19 @@ const scene = {
     stroke: black,
     glyph: { kind: "circle", radius: 3, color: black },
   }],
-  texts: [],
+  texts: [{
+    text: "Typed title",
+    semanticRole: "document-title",
+    x: 40,
+    y: 1,
+    fontFamily: "Arial",
+    fontSize: 8,
+    fontWeight: "bold",
+    fontStyle: "normal",
+    color: black,
+    anchor: "middle",
+    rotationDegrees: 0,
+  }],
 };
 const sceneV1 = fs.readFileSync(
   path.join(__dirname, "../../prototypes/shared-svg/scene-v1.example.json"),
@@ -157,6 +169,9 @@ test("Node and WASM render identical SVG for typed scenes", () => {
   assert.equal(wasmSvg, nativeSvg);
   assert.ok(nativeSvg.includes('class="cluster-region"'));
   assert.ok(nativeSvg.includes('class="legend-entry"'));
+  assert.ok(nativeSvg.includes('data-semantic-role="document-title"'));
+  assert.ok(nativeSvg.includes('font-family="Arial"'));
+  assert.ok(nativeSvg.includes('font-weight="bold"'));
 });
 
 test("Node and WASM render identical RGBA bytes for typed scenes", () => {
