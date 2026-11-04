@@ -589,8 +589,13 @@ mod tests {
                     font_size: None,
                     color: Some(RgbaColorInput { red: 0, green: 0, blue: 0, alpha: 255 }),
                 }),
+                p_value: None,
+                normalized_value: None,
+                significance: None,
+                confidence_interval: None,
             }],
             texts: vec![],
+            significance: None,
         };
         let options = RgbaOptionsInput {
             width_px: 16,
