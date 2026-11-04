@@ -11,7 +11,7 @@ const matrix: MatrixInput = {
   rows: 2,
   columns: 2,
   values: new Float64Array([1, 0, 0, 1]),
-  missingMask: new Uint8Array([0, 1, 1, 0]).map(Boolean),
+  missingMask: [false, true, true, false],
   kind: "correlation",
 };
 const sceneOptions: SceneBuildOptions = {
