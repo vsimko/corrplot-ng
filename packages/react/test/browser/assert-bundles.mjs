@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const esbuildRoot = new URL("./esbuild/", import.meta.url);
-const viteRoot = new URL("./vite-dist/", import.meta.url);
+const esbuildRoot = fileURLToPath(new URL("./esbuild/", import.meta.url));
+const viteRoot = fileURLToPath(new URL("./vite-dist/", import.meta.url));
 
 async function javascriptFiles(directory) {
   const files = [];
