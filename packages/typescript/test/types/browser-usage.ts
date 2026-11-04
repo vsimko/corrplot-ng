@@ -10,7 +10,8 @@ const matrix: MatrixInput = {
   labels: ["alpha", "beta"],
   rows: 2,
   columns: 2,
-  values: [1, null, null, 1],
+  values: new Float64Array([1, 0, 0, 1]),
+  missingMask: new Uint8Array([0, 1, 1, 0]).map(Boolean),
   kind: "correlation",
 };
 const sceneOptions: SceneBuildOptions = {
@@ -30,6 +31,7 @@ export async function browserUsageExample() {
   const scene = engine.createScene(matrix, sceneOptions);
   const svg: string = engine.render(scene, svgOptions);
   const rgba = engine.render(scene, rgbaOptions);
+  const capabilities = engine.getRendererCapabilities("rust-core-scene");
   engine.dispose();
-  return { svg, rgba };
+  return { svg, rgba, capabilities };
 }
