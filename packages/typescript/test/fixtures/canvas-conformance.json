@@ -1,7 +1,7 @@
 {
   "scene": {
     "width": 80,
-    "height": 10,
+    "height": 30,
     "description": "Direct Canvas glyph visual conformance fixture",
     "cells": [
       {
@@ -216,7 +216,59 @@
         }
       }
     ],
-    "texts": []
+    "texts": [],
+    "legend": [
+      {
+        "kind": "missing",
+        "label": "Missing",
+        "color": {
+          "red": 242,
+          "green": 242,
+          "blue": 242,
+          "alpha": 255
+        }
+      }
+    ],
+    "clusterRegions": [
+      {
+        "id": "all-cells",
+        "variables": [
+          "v1",
+          "v2",
+          "v3",
+          "v4",
+          "v5",
+          "v6",
+          "v7",
+          "v8"
+        ],
+        "sourceIndices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "rowStart": 0,
+        "rowEnd": 0,
+        "columnStart": 0,
+        "columnEnd": 7,
+        "x": 1,
+        "y": 1,
+        "width": 78,
+        "height": 8,
+        "color": {
+          "red": 33,
+          "green": 102,
+          "blue": 172,
+          "alpha": 255
+        },
+        "lineWidth": 2
+      }
+    ]
   },
   "expectedSamples": [
     {
@@ -288,11 +340,33 @@
     {
       "label": "uncovered cell background",
       "x": 1,
-      "y": 1,
+      "y": 15,
       "color": [
         255,
         255,
         255,
+        255
+      ]
+    },
+    {
+      "label": "cluster-region border",
+      "x": 1,
+      "y": 5,
+      "color": [
+        33,
+        102,
+        172,
+        255
+      ]
+    },
+    {
+      "label": "legend swatch",
+      "x": 11,
+      "y": 21,
+      "color": [
+        242,
+        242,
+        242,
         255
       ]
     }
