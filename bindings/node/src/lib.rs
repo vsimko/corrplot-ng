@@ -96,6 +96,7 @@ pub struct SceneCellInput {
 #[napi(object)]
 pub struct SceneTextInput {
     pub text: String,
+    pub semantic_role: Option<String>,
     pub x: f64,
     pub y: f64,
     pub font_size: f64,
@@ -306,7 +307,7 @@ fn scene(input: SceneInput) -> Result<Scene, DiagnosticV1> {
         };
         texts.push(SceneText {
             text: text.text,
-            semantic_role: None,
+            semantic_role: text.semantic_role,
             x: text.x,
             y: text.y,
             font_size: text.font_size,
@@ -552,6 +553,7 @@ fn scene_input(scene: Scene) -> SceneInput {
     }).collect();
     let texts = scene.texts.into_iter().map(|text| SceneTextInput {
         text: text.text,
+        semantic_role: text.semantic_role,
         x: text.x,
         y: text.y,
         font_size: text.font_size,
