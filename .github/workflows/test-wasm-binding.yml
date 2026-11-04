@@ -84,16 +84,16 @@ jobs:
       - name: Bundle the browser TypeScript facade against the built WASM package
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Install Playwright
-        if: matrix.node == 26
+        if: matrix.node == 24
         run: npm install --no-save --no-package-lock playwright@1.56.1
       - name: Install Firefox and WebKit
-        if: matrix.node == 26
+        if: matrix.node == 24
         run: npx playwright install --with-deps firefox webkit
       - name: Verify preinstalled Chrome
-        if: matrix.node == 26
+        if: matrix.node == 24
         run: google-chrome --version
       - name: Run browser WebAssembly smoke tests in Chromium, Firefox, and WebKit
-        if: matrix.node == 26
+        if: matrix.node == 24
         env:
           DEBUG: pw:api
         run: |
