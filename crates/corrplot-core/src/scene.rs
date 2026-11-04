@@ -2069,6 +2069,8 @@ mod tests {
         assert_eq!(scene.cells[5].significance.as_ref().unwrap().status, "unknown");
         assert_eq!(scene.cells[6].significance.as_ref().unwrap().blank, true);
         assert!(scene.cells[6].confidence_interval.is_some());
+        assert!(!scene.cells[8].visible);
+        assert_eq!(scene.cells[8].significance.as_ref().unwrap().annotation.as_deref(), Some("HIDDEN"));
     }
 
 }
