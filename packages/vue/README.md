@@ -85,6 +85,10 @@ const { svg, loading, error } = useCorrplot(matrix, () => ({
 
 Each argument may be a plain value, a ref/computed ref, or a getter. Reactive object and array changes are observed. Replace typed-array values rather than mutating their indexed elements in place, because JavaScript typed-array index writes are not a reliable Vue reactivity signal.
 
+## Compatibility
+
+The package requires Vue 3.3 or later and an evergreen browser with WebAssembly MVP, ES modules, typed arrays, and Promises. The package does not require SharedArrayBuffer, browser threads, Web Workers, or OffscreenCanvas.
+
 ## Errors and lifecycle
 
 - WASM initialization and rendering are asynchronous.
