@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "bindings/wasm/**"
+      - "packages/typescript/**"
+      - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
   push:
     branches: [main]
     paths:
       - "bindings/wasm/**"
+      - "packages/typescript/**"
+      - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
@@ -75,6 +79,10 @@ jobs:
       - name: Verify browser WASM npm package contents
         working-directory: bindings/wasm
         run: npm pack --dry-run
+      - name: Install npm workspace dependencies for the TypeScript facade smoke
+        run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
+      - name: Bundle the browser TypeScript facade against the built WASM package
+        run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Install Playwright
         if: matrix.node == 26
         run: npm install --no-save --no-package-lock playwright@1.56.1
