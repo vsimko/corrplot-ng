@@ -33,7 +33,7 @@
   "scripts": {
     "test": "node --test test/factory.test.js test/package-isolation.test.js test/runtime.test.js test/node-cjs.test.cjs && npm run test:types",
     "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM test/types/node-usage.ts test/types/commonjs-usage.cts && tsc --noEmit --strict --module ESNext --moduleResolution Bundler --customConditions browser --target ES2022 --lib ES2022,DOM test/types/browser-usage.ts",
-    "build:browser-smoke": "esbuild test/browser/smoke.js --bundle --format=esm --platform=browser --outfile=test/browser/dist/smoke.js --loader:.wasm=file --asset-names=[name] && node test/browser/assert-bundle.mjs"
+    "build:browser-smoke": "esbuild test/browser/smoke.js --bundle --format=esm --platform=browser --outfile=test/browser/dist/smoke.js --loader:.wasm=file --asset-names=[name] && node -e \"require('node:fs').copyFileSync('../../bindings/wasm/pkg/corrplot_ng_wasm_bg.wasm', 'test/browser/dist/corrplot_ng_wasm_bg.wasm')\" && node test/browser/assert-bundle.mjs"
   },
   "peerDependencies": {
     "@corrplot-ng/native-node": "0.1.0",
