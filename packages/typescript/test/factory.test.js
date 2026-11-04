@@ -148,3 +148,17 @@ test("wraps backend initialization failures in an actionable diagnostic", () => 
       error.message.includes("missing WASM asset"),
   );
 });
+
+test("keeps legacy injected adapters usable for the scene-v1 compatibility path", () => {
+  const engine = createEngine({
+    validateMatrix: () => true,
+    renderMatrixSvg: () => "<svg legacy />",
+    renderMatrixRgba: () => ({ widthPx: 1, heightPx: 1, strideBytes: 4, pixelFormat: "rgba8", alphaMode: "straight", colorSpace: "srgb", pixels }),
+    getRendererCapabilities: () => ({ capability_schema_version: 1 }),
+  }, "injected");
+  assert.equal(engine.render("{}", { format: "svg" }), "<svg legacy />");
+  assert.throws(
+    () => engine.createScene({ labels: ["a"], rows: 1, columns: 1, values: [1], kind: "correlation" }),
+    error => error instanceof CorrplotError && error.diagnostic.code === "renderer.unsupported_feature",
+  );
+});
