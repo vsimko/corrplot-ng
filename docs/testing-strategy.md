@@ -27,7 +27,9 @@ The current implementation includes:
   adapters.
 - A Python scene/SVG reference prototype and an R scene-v1 consumer.
 - A Rust shared core with matrix validation, an initial matrix-bearing
-  scene-v1 parser/builder, and typed-scene SVG/RGBA rendering. The CLI,
+  scene-v1 parser/builder, and typed-scene SVG/RGBA rendering, including
+  supplied confidence-interval and significance overlays. Renderers consume
+  prepared statistical metadata; they do not calculate statistics. The CLI,
   Node-API, browser-WASM, and disposable R/rextendr consumers use this core
   for their implemented operations.
 - Node-API and browser-WASM bindings, a runtime-specific TypeScript facade,
@@ -167,7 +169,10 @@ R, Python, renderer, and CLI failures. See the
 The dependency-free `crates/corrplot-core` library is the accepted strategic
 shared implementation under ADR 0001. It currently tests matrix validation,
 the matrix-bearing scene-v1 parser and normalized-matrix-to-scene builder,
-and typed-scene SVG/RGBA rendering. The CLI, Node, browser-WASM, and
+and typed-scene SVG/RGBA rendering, including supplied scene-v1 confidence
+intervals and per-cell significance annotations. The renderer consumes
+prepared statistical metadata and does not calculate p-values or intervals.
+The CLI, Node, browser-WASM, and
 experimental R/rextendr integrations call this crate for their implemented
 operations. This is real shared compiled implementation, but not full
 scene-v1 semantic or presentation parity.
