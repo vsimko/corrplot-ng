@@ -208,7 +208,7 @@ try {
       const second = Math.max(row, column);
       return ((first * 31 + second * 17) % 201 - 100) / 200;
     });
-    const benchmarkSceneResult = engine.createScene({
+    const benchmarkScene = engine.createScene({
       labels: benchmarkLabels,
       rows: benchmarkSize,
       columns: benchmarkSize,
@@ -221,10 +221,9 @@ try {
       displayType: "upper",
       showDiagonal: false,
     });
-    if (benchmarkSceneResult.diagnostic) {
+    if (!benchmarkScene || !Array.isArray(benchmarkScene.cells)) {
       throw new Error("could not construct browser Canvas performance fixture");
     }
-    const benchmarkScene = benchmarkSceneResult.scene;
     const benchmarkWidthPx = 512;
     const benchmarkHeightPx = 512;
     const benchmarkCanvas = document.createElement("canvas");
