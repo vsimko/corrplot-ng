@@ -201,9 +201,12 @@ runs cover Linux x64 GNU, macOS x64, macOS arm64, and Windows x64 on Node
 The browser-WASM binding compiles the same core for `wasm32-unknown-unknown`.
 Its Node-based binding tests and browser ESM build run on Node 24 for PRs;
 comprehensive runs use Node 24 and 26. Browser smoke coverage runs on Node
-24 against Chromium, Firefox, and WebKit. Weekly and manual runs also collect
-informational WASM size/initialization/rendering baselines; these are not
-per-PR performance gates.
+24 against Chromium, Firefox, and WebKit. Weekly/manual runs collect
+informational WASM size/initialization/rendering baselines and a separate
+native Node versus Node-hosted WASM comparison. The latter records cold module
+loads, point-in-time memory snapshots, validation, scene construction, SVG,
+RGBA, and binary sizes for 2×2 and 64×64 workloads. These are informational
+artifacts, not per-PR performance gates.
 
 The TypeScript facade has tests in the foundation and npm-workspace
 workflows. It selects the runtime-specific Node or WASM backend and exposes
