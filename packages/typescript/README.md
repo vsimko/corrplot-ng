@@ -42,9 +42,9 @@ const rgba = engine.render(scene, {
 engine.dispose();
 ```
 
-The facade exposes matrix validation, Rust-backed normalized-matrix-to-scene construction through `createScene()`, rendering of renderer-neutral scenes to SVG or RGBA, renderer capabilities, and idempotent disposal. `MatrixInput` uses row-major `number | null` values and currently requires a non-empty square matrix for scene construction. The older `render(sceneV1Json, options)` path remains available for callers with a matrix-bearing scene-v1 JSON document. RGBA results contain JavaScript-owned `Uint8Array` pixels. Direct Canvas is not advertised until the browser adapter in #144 is implemented.
+The facade exposes matrix validation, Rust-backed normalized-matrix-to-scene construction through `createScene()`, rendering of renderer-neutral scenes to SVG or RGBA, renderer capabilities, and idempotent disposal. `MatrixInput` uses row-major numeric values; ordinary arrays may contain explicit `null` cells, while numeric typed arrays use an optional boolean `missingMask` (`true` means missing). Scene construction currently requires a non-empty square matrix. The older `render(sceneV1Json, options)` path remains available for callers with a matrix-bearing scene-v1 JSON document. RGBA results contain JavaScript-owned `Uint8Array` pixels. Direct Canvas is not advertised until the browser adapter in #144 is implemented.
 
-`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. Tests and advanced integrations may inject an adapter through `adapter`.
+`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. `getRendererCapabilities("rust-core-scene")` optionally verifies the selected renderer ID. Tests and advanced integrations may inject an adapter through `adapter`.
 
 ## CommonJS on Node.js
 
