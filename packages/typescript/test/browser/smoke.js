@@ -106,7 +106,7 @@ try {
   if (overlayRgba.pixels[overlayIntervalOffset] !== 220 ||
       overlayRgba.pixels[overlayIntervalOffset + 1] !== 20 ||
       overlayRgba.pixels[overlayIntervalOffset + 2] !== 60 ||
-      overlayRgba.pixels[(5 * overlayRgba.widthPx + 15) * 4] === 220) {
+      overlayRgba.pixels[(10 * overlayRgba.widthPx + 30) * 4] === 220) {
     throw new Error("WASM RGBA renderer did not preserve statistical overlay and blank-cell semantics");
   }
   const overlayCanvas = document.createElement("canvas");
