@@ -212,6 +212,24 @@
         "sign": 1,
         "color": "#2166ac",
         "radius": 36.12
+      },
+      "visible": false,
+      "p_value": 0.001,
+      "significance": {
+        "p_value": 0.001,
+        "status": "significant",
+        "annotation": "HIDDEN",
+        "blank": false
+      },
+      "confidence_interval": {
+        "lower": 0.4,
+        "upper": 0.8,
+        "x1": 280,
+        "x2": 348,
+        "y": 280,
+        "cap_height": 8,
+        "stroke_width": 2,
+        "color": "#ff00ff"
       }
     }
   ],
