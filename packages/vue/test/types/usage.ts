@@ -43,7 +43,7 @@ const props: CorrplotProps = {
 h(Corrplot, props);
 h(Corrplot, {
   matrix: matrixRef.value,
-  onError: error => console.error(error.diagnostic?.code ?? error.message),
+  onError: error => console.error(error.message),
 });
 
 if (state.error.value) console.error(state.error.value.message);
