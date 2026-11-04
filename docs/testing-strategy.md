@@ -270,6 +270,7 @@ appropriate. Workflow concurrency cancels superseded runs for the same PR.
 | [Shared Rust core](../.github/workflows/test-shared-rust-core.yml) | PRs and pushes to `main` for core, CLI, rextendr, or workflow paths; manual dispatch | Repository-local rextendr consumer, native core tests, WASM target compile, and Rust 1.78 MSRV checks |
 | [Native Rust CLI](../.github/workflows/test-rust-cli.yml) | PRs and pushes to `main` for CLI/core/publication-config/validator paths; manual dispatch | Core and CLI offline tests, Ubuntu PR build, comprehensive Ubuntu/macOS/Windows build, SVG validation, installed-outside-checkout smoke |
 | [Native Node binding](../.github/workflows/test-node-native.yml) | PRs and pushes to `main` for Node binding/core/workflow paths; manual dispatch | Linux x64 GNU + Node 24 on PRs; comprehensive Linux/macOS/Windows architecture matrix on Node 22/24/26; native tests and package assembly |
+| [Node/WASM parity](../.github/workflows/test-node-wasm-parity.yml) | PRs, pushes to `main`, manual dispatch, and weekly schedule for Node/WASM bindings, cross-backend tests, fixtures, or workflow changes | Native Node and Node-hosted WASM parity; PR benchmark-harness smoke without timing thresholds; scheduled/manual comparative performance artifact |
 | [Browser WASM binding](../.github/workflows/test-wasm-binding.yml) | PRs and pushes to `main` for WASM binding, TypeScript facade, root package manifest, core, or workflow paths; manual dispatch and weekly schedule | Node 24 PR tests/build; Node 24/26 comprehensive tests, browser ESM package checks, Chromium/Firefox/WebKit smoke on Node 24; scheduled/manual informational baseline artifact |
 
 The foundation workflow's component jobs run only when their detected paths
@@ -280,9 +281,10 @@ The PR tier uses representative fast checks; comprehensive matrices and
 scheduled WASM baseline collection are intentionally broader. The detailed
 path-to-check mapping is maintained in [CI validation tiers](ci-validation-tiers.md).
 
-Performance measurements are not part of routine pull-request CI. The
-dedicated **Performance benchmarks** workflow is started manually using
-`workflow_dispatch`; it has no scheduled trigger.
+Performance measurements are not part of routine pull-request CI.
+The cross-language **Performance benchmarks** workflow is started manually
+using `workflow_dispatch` and has no scheduled trigger; the separate WASM
+and Node/WASM runtime baselines have weekly/manual triggers as described above.
 Large B03/B04 stress workloads and the three-platform native package smoke
 matrix are separate opt-in inputs for manual runs. See
 [benchmark operations](../benchmarks/README.md). The native CLI correctness
