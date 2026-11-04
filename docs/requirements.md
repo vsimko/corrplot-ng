@@ -99,8 +99,8 @@ a complete language package or proof of shared compiled implementation.
 | Python | Reference/prototype | The shared scene/SVG prototype exercises scene construction and deterministic SVG output. It is not a production package or selected shared core. |
 | Rust shared core and CLI | Partial shared implementation | `crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
 | Rust/rextendr and C++/Rcpp | Evaluation spikes | These experiments inform architecture and packaging decisions. They are not production R backends. |
-| TypeScript / Node.js | Planned | No supported public TypeScript API or Node native binding is currently delivered. |
-| Browser WebAssembly / Canvas | Planned | No production browser WASM or direct Canvas renderer is currently delivered. |
+| TypeScript / Node.js | Experimental implementation | The Node native binding and runtime-isolated TypeScript facade implement matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA, matrix-bearing scene-v1 compatibility rendering, capabilities, and diagnostics. The packages are not publicly released. |
+| Browser WebAssembly / Canvas | Experimental WASM implementation; direct Canvas planned | The browser-WASM binding implements the shared-core validation, normalized-matrix scene construction, and SVG/RGBA operations. Direct scene-to-Canvas/OffscreenCanvas rendering is not implemented, and the package is not publicly released. |
 
 The current support and test details are maintained in
 [the architecture document](architecture.md),
