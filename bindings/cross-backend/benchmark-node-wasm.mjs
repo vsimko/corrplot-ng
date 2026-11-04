@@ -16,10 +16,8 @@ const smoke = process.argv.includes("--smoke");
 
 const nativeAddonPath = resolve(repoRoot, "bindings/node/index.node");
 const wasmModulePath = resolve(repoRoot, "bindings/wasm/pkg-node/corrplot_ng_wasm_bg.wasm");
-const wasmBytes = readFileSync(wasmModulePath);
 const nativeAddonBytes = statSync(nativeAddonPath).size;
 
-const black = { red: 0, green: 0, blue: 0, alpha: 255 };
 const white = { red: 255, green: 255, blue: 255, alpha: 255 };
 const smallMatrix = {
   labels: ["alpha", "beta"],
@@ -202,7 +200,7 @@ const operations = {
   },
   validateMatrix64x64: {
     native: measure(() => native.validateMatrix(largeMatrix), iterations.largeValidation, iterations.warmup),
-    wasm: measure(() => validateWasm(largeMatrix), iterations.largeValidation, iterations.warmup),
+    wasm: measure(() => wasm.validateMatrix(largeMatrix), iterations.largeValidation, iterations.warmup),
   },
   createScene64x64: {
     native: measure(() => native.createScene(largeMatrix, sceneOptions), iterations.sceneBuild, iterations.warmup),
@@ -240,7 +238,7 @@ const results = {
     wasmBrotliBytes: brotliCompressSync(wasmModule).byteLength,
   },
   initialization: {
-    nativeNodeApi: measureColdLoads(nativeAddonPath, iterations.coldLoads),
+    nativeNodeApi: measureColdLoads(resolve(repoRoot, "bindings/node"), iterations.coldLoads),
     nodeHostedWasm: measureColdLoads(resolve(repoRoot, "bindings/wasm/pkg-node/corrplot_ng_wasm.js"), iterations.coldLoads),
   },
   workloads: {
