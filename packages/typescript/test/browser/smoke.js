@@ -1,9 +1,20 @@
-import { createCorrplotEngine } from "../../src/browser.js";
+import { createCorrplotEngine, CorrplotError } from "../../src/browser.js";
 
 const status = document.querySelector("#status");
 
 try {
-  const engine = await createCorrplotEngine({ backend: "wasm" });
+  let unavailableBackendError;
+  try {
+    await createCorrplotEngine({ backend: "native" });
+  } catch (error) {
+    unavailableBackendError = error;
+  }
+  if (!(unavailableBackendError instanceof CorrplotError) ||
+      unavailableBackendError.diagnostic.path !== "backend") {
+    throw new Error("browser facade did not report an explicit native-backend request as unavailable");
+  }
+
+  const engine = await createCorrplotEngine({ backend: "auto" });
   const matrix = {
     labels: ["alpha", "beta"],
     rows: 2,
