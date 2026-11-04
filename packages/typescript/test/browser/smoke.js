@@ -61,7 +61,7 @@ try {
         fill: { red: 255, green: 255, blue: 255, alpha: 255 },
         stroke: { red: 0, green: 0, blue: 0, alpha: 255 },
         glyph: { kind: "circle", radius: 4, color: { red: 0, green: 0, blue: 0, alpha: 255 } },
-        significance: { pValue: null, status: "unknown", annotation: "?", blank: true },
+        significance: { status: "unknown", annotation: "?", blank: true },
         confidenceInterval: {
           lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5,
           capHeight: 4, strokeWidth: 2,
