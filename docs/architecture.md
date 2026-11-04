@@ -19,7 +19,7 @@ The normalized-matrix v1 and **scene-v1** contracts are language-neutral input a
 
 The Rust shared core lives in `crates/corrplot-core`. It currently provides matrix validation, an initial parser for the matrix-bearing subset of scene-v1, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. The standalone CLI, Node-API binding, browser-WASM binding, and disposable R/rextendr adapter consume this crate for the operations implemented by each integration. These are shared implementation paths, not proof of complete semantic parity or a finished visualization engine.
 
-The initial TypeScript facade in `packages/typescript/` selects the native Node or browser-WASM backend through runtime-specific exports. It exposes the current validation, matrix-to-SVG/RGBA, capabilities, diagnostics, and disposal slice. The broader public API and framework adapters remain incomplete.
+The TypeScript facade in `packages/typescript/` selects the native Node or browser-WASM backend through runtime-specific exports. It exposes matrix validation, Rust-backed normalized-matrix scene construction, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 JSON compatibility rendering, renderer capabilities with optional renderer-ID verification, diagnostic errors, adapter injection, and disposal. It accepts JavaScript arrays with explicit `null` values or numeric typed arrays with an explicit boolean missing-cell mask. The initial API slice tracked by #145 is implemented.
 
 Rust is the accepted strategic shared-core implementation. The remaining #173 production-R rollout gates are the controlled human maintainer-time comparison and CRAN guidance on the vendor-metadata NOTE and installed package size. No production R migration is authorized by the existing shared-operation proof. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md) and [ADR 0002: Cross-runtime TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md).
 
@@ -116,9 +116,9 @@ Node-based WASM tests and package checks run on Node 24 and 26. The browser smok
 
 ### TypeScript facade
 
-The initial facade in `packages/typescript/` provides runtime-specific exports and backend selection: Node.js loads the native Node-API backend, while browser builds load the WASM backend. It exposes matrix validation, matrix-bearing scene-v1 to SVG/RGBA rendering, renderer capabilities, diagnostic errors, and idempotent disposal.
+The facade in `packages/typescript/` provides runtime-specific exports and backend selection: Node.js loads the native Node-API backend, while browser builds load the WASM backend. It exposes matrix validation, Rust-backed normalized-matrix scene construction, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 JSON compatibility rendering, renderer capabilities with optional renderer-ID verification, diagnostic errors, adapter injection, and idempotent disposal. Matrix input accepts JavaScript arrays with explicit `null` values or numeric typed arrays with an explicit boolean missing-cell mask.
 
-This is an initial facade, not the complete API described by ADR 0002. General normalized-matrix plotting APIs, complete scene-v1 presentation semantics, direct Canvas integration, and React/Vue adapters remain unfinished. See [the TypeScript package README](../packages/typescript/README.md).
+The initial API slice tracked by #145 is implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain separate work in #146; direct Canvas integration (#144) and React/Vue adapters (#291/#292) remain unfinished. See [the TypeScript package README](../packages/typescript/README.md).
 
 ### R package
 
@@ -140,7 +140,7 @@ The following capabilities remain incomplete or separately gated:
 
 - **Production R integration:** gated by CRAN guidance on the vendor-metadata NOTE and installed package size, plus measured maintainer workflow effort (#173).
 - **Full scene-v1 semantics and presentation fidelity:** the current parser and builder cover the matrix-bearing slice, not all scene-v1 fields and presentation behavior.
-- **Complete public TypeScript API:** broader plotting API and stable cross-backend conformance remain unfinished (#145–#146).
+- **Full scene-v1 semantics and cross-backend conformance:** broader semantic and visual parity remain unfinished (#146). The initial normalized-matrix TypeScript scene workflow in #145 is implemented; direct Canvas remains separate (#144).
 - **Direct browser Canvas:** the current WASM binding returns SVG or RGBA; Canvas drawing is host-owned. Direct Canvas/OffscreenCanvas integration remains #144.
 - **React and Vue adapters:** not implemented.
 - **Threaded WASM and worker orchestration:** the baseline is single-threaded; shared memory, worker lifecycle, and worker protocols are not provided by the package.
@@ -159,7 +159,7 @@ The Rust/rextendr integration remains a disposable evaluation adapter that prove
 | Standalone CLI | Implemented Rust consumer of the shared core |
 | Native Node binding | Experimental Node-API integration; matrix validation, matrix-to-scene SVG/RGBA, typed-scene SVG/RGBA implemented |
 | Browser WASM | Experimental binding over the same Rust core; matrix-to-scene SVG/RGBA and typed-scene SVG/RGBA implemented |
-| TypeScript facade | Initial runtime-specific facade and backend selection implemented; broader API incomplete |
+| TypeScript facade | Runtime-isolated Node/browser API, normalized-matrix scene construction, typed-scene SVG/RGBA, typed-array input, scene-v1 compatibility rendering, capabilities and diagnostics implemented; full scene-v1 parity remains incomplete |
 | R compatibility | Legacy path plus normalized-input and experimental scene paths; production Rust integration not approved |
 | Rust/rextendr and C++/Rcpp | Evaluation spikes; rextendr consumes the shared Rust core for implemented operations |
 | Python shared-scene/SVG | Reference/prototype implementation |
