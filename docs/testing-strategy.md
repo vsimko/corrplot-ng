@@ -221,7 +221,8 @@ numeric matrix fixture corpora. It compares validation, normalized-matrix
 scene construction, SVG, and RGBA for all seven cell methods, and includes a
 deterministic 64×64 correlation matrix. Exact SVG/RGBA equality is used only
 between Node and WASM adapters that call the same Rust core. Canvas uses
-sample-based visual conformance rather than byte equality. The unified
+sample-based visual conformance at 1x and 2x backing-store resolutions,
+including a letterboxed viewport, rather than byte equality. The unified
 TypeScript API (#145), direct Canvas (#144), and framework adapters are
 implemented; broader scene-v1 semantics, CLI/R adapter fixture parity, and
 performance evidence remain in #146 and related measurement issues.
