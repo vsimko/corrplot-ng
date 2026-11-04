@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CorrplotError, createEngine } from "../src/factory.js";
+import { CorrplotError, createEngine, backendInitializationFailed } from "../src/factory.js";
 
 const pixels = new Uint8Array([1, 2, 3, 4]);
 function adapter(overrides = {}) {
@@ -137,4 +137,14 @@ test("rejects nonnumeric and sparse array values before crossing the backend bou
     error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.non_numeric",
   );
   assert.equal(called, false);
+});
+
+test("wraps backend initialization failures in an actionable diagnostic", () => {
+  assert.throws(
+    () => backendInitializationFailed("wasm", new Error("missing WASM asset")),
+    error => error instanceof CorrplotError &&
+      error.diagnostic.code === "configuration.invalid_field" &&
+      error.diagnostic.path === "backend" &&
+      error.message.includes("missing WASM asset"),
+  );
 });
