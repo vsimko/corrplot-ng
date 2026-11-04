@@ -71,6 +71,9 @@ jobs:
       - name: Build browser WASM package
         working-directory: bindings/wasm
         run: npm run build
+      - name: Verify browser WASM package contents
+        working-directory: bindings/wasm
+        run: npm run test:pack
       - name: Stage WASM tarball
         working-directory: bindings/wasm
         run: npm pack --pack-destination ${{ runner.temp }}
