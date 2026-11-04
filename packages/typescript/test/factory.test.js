@@ -120,3 +120,21 @@ test("validates an optional renderer id against the backend capability declarati
     error => error instanceof CorrplotError && error.diagnostic.code === "renderer.unsupported_feature",
   );
 });
+
+test("rejects nonnumeric and sparse array values before crossing the backend boundary", () => {
+  let called = false;
+  const engine = createEngine(adapter({
+    validateMatrix: () => { called = true; return true; },
+  }), "injected");
+  assert.throws(
+    () => engine.validate({
+      labels: ["alpha"],
+      rows: 1,
+      columns: 1,
+      values: [undefined],
+      kind: "correlation",
+    }),
+    error => error instanceof CorrplotError && error.diagnostic.code === "input.matrix.non_numeric",
+  );
+  assert.equal(called, false);
+});
