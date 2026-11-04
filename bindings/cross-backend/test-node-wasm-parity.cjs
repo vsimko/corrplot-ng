@@ -164,9 +164,11 @@ test("Node and WASM build the same normalized-matrix scene and render it identic
     fontSizePt: 10,
     background: white,
   };
+  assert.ok(nativeResult.scene.texts.some(text => text.semanticRole === "document-title"));
   const nativeSvg = native.renderSceneSvg(nativeResult.scene, svgOptions);
   const wasmSvg = unwrapSvg(wasm.renderSceneSvg(wasmResult.scene, svgOptions));
   assert.equal(wasmSvg, nativeSvg);
+  assert.ok(nativeSvg.includes("<title id=\"scene-title\">Cross-runtime scene</title>"));
 
   const rasterOptions = { widthPx: 128, heightPx: 128, dpi: 96, background: white };
   const nativeRgba = native.renderSceneRgba(nativeResult.scene, rasterOptions);
