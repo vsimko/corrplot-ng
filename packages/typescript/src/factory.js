@@ -129,7 +129,7 @@ export function createEngine(adapter, backend) {
               width: options.width ?? sceneOrSceneV1Json.width,
               height: options.height ?? sceneOrSceneV1Json.height,
               unit: options.unit ?? "px",
-              fontFamily: options.fontFamily ?? "",
+              fontFamily: options.fontFamily ?? "sans-serif",
               fontSizePt: options.fontSizePt ?? 10,
               background: options.background ?? { red: 255, green: 255, blue: 255, alpha: 255 },
             }));
