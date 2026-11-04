@@ -122,6 +122,7 @@ test("rejects invalid scenes, dimensions, colors, and unsupported scene features
   expectCode(() => renderSceneToCanvas({ ...scene, legend: [{ label: "x" }] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({ ...scene, clusterRegions: [{}] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({ ...scene, significance: {} }, canvas), "renderer.unsupported_feature");
+  expectCode(() => renderSceneToCanvas({ ...scene, texts: [{ ...scene.texts[0], semanticRole: "plotmath" }] }, canvas), "renderer.unsupported_feature");
   expectCode(() => renderSceneToCanvas({
     ...scene,
     cells: [{ ...scene.cells[0], confidenceInterval: {} }],

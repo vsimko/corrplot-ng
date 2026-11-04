@@ -66,9 +66,21 @@ console.log(canvasCapabilities.host_targets);
 
 Width and height are logical CSS pixels and default to the scene dimensions. The backing store is scaled by `devicePixelRatio`, which defaults to the current environment's value or `1`. For an HTML canvas, CSS width and height are set to the logical dimensions by default; pass `setCssSize: false` to leave CSS layout to the caller. The renderer preserves the context's previous state, letterboxes rather than crops, clips drawing to the viewport, and sets the canvas role and accessible label from the scene description when available.
 
-The canvas is cleared before each render by default. Its background defaults to opaque white; use `background: null` for a transparent cleared canvas. With `clear: false` and no explicit background, existing pixels are preserved.
+The canvas is cleared before each render by default. Its background defaults to opaque white; use `background: null` for a transparent cleared canvas. With `clear: false` and no explicit background, existing pixels are preserved when the backing dimensions already match. Resizing a canvas necessarily resets its backing store.
 
-`OffscreenCanvas` uses the same API and can be used where its 2D context is supported, including worker contexts. The runtime capability declaration includes `browser-offscreen-canvas-2d` only when the current environment can create an OffscreenCanvas 2D context. The Canvas renderer supports the seven cell glyph methods, labels, scene text, and missing cells. It currently reports and rejects significance annotations, confidence intervals, legends, cluster regions, and plotmath labels rather than silently dropping them. Canvas rendering is unavailable from the Node runtime and fails with a `renderer.unsupported_feature` diagnostic.
+`OffscreenCanvas` uses the same API and can be used where its 2D context is supported, including worker contexts:
+
+```ts
+const offscreen = new OffscreenCanvas(640, 640);
+engine.renderToCanvas(scene, offscreen, {
+  width: 640,
+  height: 640,
+  devicePixelRatio: 1,
+});
+const bitmap = offscreen.transferToImageBitmap();
+```
+
+A worker can initialize the browser WASM engine, build the scene from transferred matrix data, render to an OffscreenCanvas, and transfer an ImageBitmap back to the main thread. OffscreenCanvas has no DOM element for CSS sizing or ARIA attributes. The runtime capability declaration includes `browser-offscreen-canvas-2d` only when the current environment can create an OffscreenCanvas 2D context. The Canvas renderer supports the seven cell glyph methods, labels, scene text, and missing cells. It currently reports and rejects significance annotations, confidence intervals, legends, cluster regions, and plotmath labels rather than silently dropping them. Canvas rendering is unavailable from the Node runtime and fails with a `renderer.unsupported_feature` diagnostic.
 
 `backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. `getRendererCapabilities("rust-core-scene")` optionally verifies the selected shared Rust renderer ID; `getCanvasRendererCapabilities()` describes the separate browser-owned Canvas target. Tests and advanced integrations may inject an adapter through `adapter`.
 

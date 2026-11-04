@@ -117,6 +117,9 @@ function validateScene(scene) {
       fail("renderer.output.invalid_scene", "scene text has invalid content, position, anchor, or font size", path);
     }
     colorCss(text.color, `${path}.color`);
+    if (text.semanticRole === "plotmath") {
+      fail("renderer.unsupported_feature", "Canvas 2D does not yet support plotmath labels", `${path}.semanticRole`);
+    }
     for (const field of ["fontFamily", "fontWeight", "fontStyle"]) {
       if (text[field] !== undefined && typeof text[field] !== "string") {
         fail("renderer.output.invalid_scene", `${field} must be a string`, `${path}.${field}`);
@@ -205,12 +208,15 @@ function drawGlyph(context, cell, glyph, fontFamily, path) {
       break;
     case "number":
       context.save();
-      context.font = `normal normal ${glyph.fontSize}px ${fontFamily}`;
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillStyle = fill;
-      context.fillText(glyph.text, cx, cy);
-      context.restore();
+      try {
+        context.font = `normal normal ${glyph.fontSize}px ${fontFamily}`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillStyle = fill;
+        context.fillText(glyph.text, cx, cy);
+      } finally {
+        context.restore();
+      }
       break;
     case "shade":
       context.beginPath();
