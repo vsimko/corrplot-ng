@@ -46,7 +46,7 @@ export interface SceneCellInput {
   visible: boolean;
   fill: RgbaColor;
   stroke: RgbaColor;
-  glyph?: CellGlyphInput;
+  glyph?: CellGlyphInput | null;
 }
 export interface SceneTextInput {
   text: string;
@@ -91,6 +91,45 @@ export interface RgbaOutput {
   pixelFormat: "rgba8"; alphaMode: "straight"; colorSpace: "srgb";
   dpi?: number; pixels: Uint8Array;
 }
+export type CanvasTarget =
+  | HTMLCanvasElement
+  | OffscreenCanvas
+  | CanvasRenderingContext2D
+  | OffscreenCanvasRenderingContext2D;
+export interface CanvasRenderOptions {
+  /** Logical CSS-pixel width; defaults to the scene width. */
+  width?: number;
+  /** Logical CSS-pixel height; defaults to the scene height. */
+  height?: number;
+  /** Backing-store scale; defaults to globalThis.devicePixelRatio or 1. */
+  devicePixelRatio?: number;
+  /** Defaults to white when clear is true; null keeps the cleared canvas transparent. */
+  background?: RgbaColor | null;
+  /** Clear the backing store before drawing. Defaults to true. */
+  clear?: boolean;
+  /** Set HTMLCanvasElement CSS dimensions to logical width/height. Defaults to true. */
+  setCssSize?: boolean;
+  /** Font family used when scene text does not specify one. */
+  fontFamily?: string;
+}
+export interface CanvasRenderResult {
+  canvas: HTMLCanvasElement | OffscreenCanvas;
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  widthPx: number;
+  heightPx: number;
+  devicePixelRatio: number;
+}
+export interface CanvasRendererCapabilities {
+  capability_schema_version: 1;
+  renderer: { id: string; name: string; version: string };
+  scene_schema_versions: number[];
+  output_formats: string[];
+  host_targets: Array<"browser-canvas-2d" | "browser-offscreen-canvas-2d">;
+  matrix_kinds: Array<"correlation_plot" | "general_matrix_plot">;
+  cell_methods: CellMethod[];
+  features: Record<string, boolean>;
+  negotiation_modes: Array<"strict" | "permissive">;
+}
 export interface DiagnosticV1 {
   schema_version: 1; code: string; severity: "error" | "warning";
   stage: string; message: string; path?: string; row?: number; column?: number;
@@ -115,6 +154,9 @@ export interface Engine {
   /** Compatibility path for callers that already hold a matrix-bearing scene-v1 JSON document. */
   render(sceneV1Json: string, options: SvgRenderOptions): string;
   render(sceneV1Json: string, options: RgbaRenderOptions): RgbaOutput;
+  /** Browser-only direct Canvas 2D rendering; Node backends report renderer.unsupported_feature. */
+  renderToCanvas(scene: SceneInput, target: CanvasTarget, options?: CanvasRenderOptions): CanvasRenderResult;
+  getCanvasRendererCapabilities(): CanvasRendererCapabilities;
   getRendererCapabilities(rendererId?: string): unknown;
   dispose(): void;
 }

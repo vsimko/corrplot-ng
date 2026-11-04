@@ -18,12 +18,13 @@ The machine-readable format is defined by
   accessible metadata;
 - supported negotiation modes.
 
-An optional host_targets array identifies host-owned targets that are not serialized files or buffers. The initial values are browser-canvas-2d and browser-offscreen-canvas-2d. A Canvas renderer still uses the same feature flags and strict/permissive negotiation rules; it does not add a second capability model. Existing declarations remain valid when this optional field is absent.
+An optional host_targets array identifies host-owned targets that are not serialized files or buffers. The browser TypeScript Canvas adapter always reports browser-canvas-2d and reports browser-offscreen-canvas-2d only when the current runtime can create an OffscreenCanvas 2D context. A Canvas renderer still uses the same feature flags and strict/permissive negotiation rules; it does not add a second capability model. Existing declarations remain valid when this optional field is absent.
 
 Current declarations:
 
 - [Python SVG prototype](../prototypes/shared-svg/renderer-capabilities.json)
 - [Rust standalone CLI SVG output](../tools/corrplot-ng/renderer-capabilities.json)
+- Browser TypeScript Canvas 2D adapter (runtime declaration returned by `engine.getCanvasRendererCapabilities()`)
 
 The Rust CLI is a matrix-to-SVG application, not a general scene-v1 renderer.
 Its scene-v1 input path extracts labels and cell values and then creates a
@@ -65,9 +66,15 @@ only when the caller explicitly marks them optional.
 The native Rust CLI supports circle and number cell methods for its matrix
 input and publication-config workflow. Its declaration is intentionally
 narrow. Do not infer feature parity between the Rust CLI and Python SVG
-prototype from their shared use of the word SVG. A future browser Canvas
-renderer declares its host target in host_targets; it does not pretend
-that a Canvas context is a PNG or raw RGBA file.
+prototype from their shared use of the word SVG. The browser TypeScript Canvas
+renderer draws the seven cell glyph methods, labels, figure text, and missing
+cells directly from the typed scene. Significance, confidence intervals,
+legends, cluster regions, and plotmath labels are declared unsupported and
+produce diagnostics rather than being silently omitted. The TypeScript browser
+smoke runs a checked-in glyph fixture against both Canvas and the shared Rust
+RGBA renderer, checking stable interior pixels and text/shade ink. Because
+Canvas is a host-owned target, its `output_formats` array is empty; it does not
+pretend that a Canvas context is a PNG or raw RGBA file.
 
 ## Adding a renderer
 

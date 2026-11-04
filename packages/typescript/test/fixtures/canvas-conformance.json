@@ -1,0 +1,314 @@
+{
+  "scene": {
+    "width": 80,
+    "height": 10,
+    "description": "Direct Canvas glyph visual conformance fixture",
+    "cells": [
+      {
+        "x": 0,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 255,
+          "blue": 255,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "circle",
+          "radius": 4,
+          "color": {
+            "red": 255,
+            "green": 0,
+            "blue": 0,
+            "alpha": 255
+          }
+        }
+      },
+      {
+        "x": 10,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 255,
+          "blue": 255,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "square",
+          "side": 6,
+          "color": {
+            "red": 255,
+            "green": 0,
+            "blue": 0,
+            "alpha": 255
+          }
+        }
+      },
+      {
+        "x": 20,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 255,
+          "blue": 255,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "ellipse",
+          "rx": 4,
+          "ry": 2,
+          "rotationDegrees": 25,
+          "color": {
+            "red": 255,
+            "green": 0,
+            "blue": 0,
+            "alpha": 255
+          }
+        }
+      },
+      {
+        "x": 30,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 255,
+          "blue": 255,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "pie",
+          "radius": 4,
+          "startRadians": 0,
+          "endRadians": 1.5707963267948966,
+          "color": {
+            "red": 255,
+            "green": 0,
+            "blue": 0,
+            "alpha": 255
+          }
+        }
+      },
+      {
+        "x": 40,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 255,
+          "blue": 255,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "number",
+          "text": "0.5",
+          "fontSize": 6,
+          "color": {
+            "red": 0,
+            "green": 0,
+            "blue": 0,
+            "alpha": 255
+          }
+        }
+      },
+      {
+        "x": 50,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 255,
+          "blue": 255,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "shade",
+          "color": {
+            "red": 255,
+            "green": 0,
+            "blue": 0,
+            "alpha": 255
+          }
+        }
+      },
+      {
+        "x": 60,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 255,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        },
+        "glyph": {
+          "kind": "color"
+        }
+      },
+      {
+        "x": 70,
+        "y": 0,
+        "size": 10,
+        "visible": true,
+        "fill": {
+          "red": 242,
+          "green": 242,
+          "blue": 242,
+          "alpha": 255
+        },
+        "stroke": {
+          "red": 0,
+          "green": 0,
+          "blue": 0,
+          "alpha": 255
+        }
+      }
+    ],
+    "texts": []
+  },
+  "expectedSamples": [
+    {
+      "label": "circle center",
+      "x": 5,
+      "y": 5,
+      "color": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "square center",
+      "x": 15,
+      "y": 5,
+      "color": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "ellipse center",
+      "x": 25,
+      "y": 5,
+      "color": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "pie center",
+      "x": 35,
+      "y": 5,
+      "color": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "color cell center",
+      "x": 65,
+      "y": 5,
+      "color": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "missing cell center",
+      "x": 75,
+      "y": 5,
+      "color": [
+        242,
+        242,
+        242,
+        255
+      ]
+    },
+    {
+      "label": "uncovered cell background",
+      "x": 1,
+      "y": 1,
+      "color": [
+        255,
+        255,
+        255,
+        255
+      ]
+    }
+  ],
+  "inkRegions": {
+    "number": {
+      "x": 41,
+      "y": 1,
+      "width": 8,
+      "height": 8
+    },
+    "shade": {
+      "x": 51,
+      "y": 1,
+      "width": 8,
+      "height": 8
+    }
+  }
+}
