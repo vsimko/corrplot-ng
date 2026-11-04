@@ -182,7 +182,8 @@ Remaining release/conformance gates include:
 - **#145 — unified TypeScript API:** the initial shared facade, normalized-matrix scene builder, typed-scene rendering, typed-array normalization, renderer-ID checking, package isolation, and Node/browser runtime tests are implemented. Full scene-v1 presentation parity remains outside this issue's initial API slice.
 - **#146 — broad parity and visual regression:** active; it remains the broader conformance/performance gate.
 - **#290 — npm workspace and non-publishing staging:** complete. Public publication remains separately deferred under #293.
-- **#291 and #292 — React and Vue:** framework adapters remain follow-up work and depend on the browser-facing API contract in #145.
+- **#291 — React:** implemented in `packages/react/` as a browser-only component and hook over `@corrplot-ng/wasm`; React is a peer dependency. Vite/esbuild bundles and browser lifecycle/error behavior are tested.
+- **#292 — Vue:** remains planned and depends on the browser-facing API contract in #145.
 - **#173 — CRAN and human-maintainer evidence:** remains a separate R release-readiness gate and does not block Node/WASM/TypeScript engineering.
 
 ## Rejected alternatives
@@ -229,7 +230,8 @@ The current workspace contains these installable packages:
 The following packages remain planned, not current workspace packages:
 
 - `@corrplot-ng/core`: runtime-neutral public types, diagnostics, and API contracts only; no native or WASM backend dependency.
-- `@corrplot-ng/react` and `@corrplot-ng/vue`: optional framework adapters that depend only on the browser-facing API; React/Vue are peer dependencies.
+- `@corrplot-ng/react`: implemented optional framework adapter. It depends directly on `@corrplot-ng/wasm` and declares React as a peer dependency.
+- `@corrplot-ng/vue`: planned optional framework adapter. It must depend only on the browser-facing API and declare Vue as a peer dependency.
 
 The existing Node package and platform package names under `bindings/node/` should be preserved unless a separately reviewed migration is justified. A universal package that installs both execution backends is rejected: conditional exports alone do not prevent npm from installing declared dependencies.
 

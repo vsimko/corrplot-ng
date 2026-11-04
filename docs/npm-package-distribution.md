@@ -11,7 +11,7 @@ The shared API contract and semantics should be consistent across runtimes. That
 
 ## Workspace
 
-The repository root is a private npm workspace, not a publishable package. Its workspace globs include the existing Node binding, browser WASM binding, and initial TypeScript facade. The four platform-specific native packages remain optional dependencies of the Node package but are deliberately not npm workspaces: their `os`/`cpu` constraints must not make a cross-platform workspace install fail. Their tarballs are built separately on matching runners. Working bindings remain in their current directories; no package relocation is required.
+The repository root is a private npm workspace, not a publishable package. Its workspace globs include the Node binding, browser WASM binding, TypeScript facade, and optional React adapter. The four platform-specific native packages remain optional dependencies of the Node package but are deliberately not npm workspaces: their `os`/`cpu` constraints must not make a cross-platform workspace install fail. Their tarballs are built separately on matching runners. Working bindings remain in their current directories; no package relocation is required.
 
 Install and validate locally with:
 
@@ -28,11 +28,11 @@ The planned `@corrplot-ng/core`, React, and Vue packages are not yet present. Th
 
 ## Current implementation status — 2026-11-04
 
-The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, and `@corrplot-ng/typescript`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
+The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, and `@corrplot-ng/react`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
 
 The native Node and browser WASM packages expose matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA operations, matrix-bearing scene-v1 SVG/RGBA operations, renderer capabilities, and diagnostic-v1 errors. The TypeScript facade validates array or typed-array `MatrixInput`, creates a renderer-neutral scene through the shared Rust builder, renders that scene to SVG/RGBA, retains matrix-bearing scene-v1 JSON rendering for compatibility, verifies an optional renderer ID, supports adapter injection, and disposes the backend. Node ESM/CommonJS and browser conditional-export usage are type-checked; runtime smoke tests exercise the native backend and a bundled browser/WASM facade.
 
-The scene-v1 parser used by the bindings currently supports the matrix-bearing subset, not every presentation field in the full scene-v1 contract. The browser smoke example draws returned RGBA bytes into a host-owned Canvas; it is not the direct scene-to-Canvas renderer tracked by #144. React and Vue adapters remain unimplemented under #291 and #292.
+The scene-v1 parser used by the bindings currently supports the matrix-bearing subset, not every presentation field in the full scene-v1 contract. The browser smoke example draws returned RGBA bytes into a host-owned Canvas; it is not the direct scene-to-Canvas renderer tracked by #144. The React adapter under #291 is implemented as a browser-only package. The Vue adapter remains unimplemented under #292.
 
 Public npm publication remains explicitly disabled and requires separate maintainer approval under #293.
 
@@ -76,6 +76,8 @@ The pull-request workspace workflow validates manifests, workspace links, Node b
 4. Stages the TypeScript facade after its runtime backends.
 5. Assembles all seven tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
 
+The staging workflow now includes the React adapter tarball after WASM and before the TypeScript facade. The current bundle contains eight tarballs: four native platform packages, WASM, the main Node package, React, and the TypeScript facade.
+
 The staging workflow must remain non-publishing: it must not run `npm publish`, use npm credentials, request OIDC publication permissions, or publish automatically from tags. The current stage is build/test/package only.
 
 ## Future publication order
@@ -102,16 +104,16 @@ The future publication issue is #293. It remains deferred until maintainers expl
 
 The framework packages are part of the intended ecosystem, but they are not prerequisites for completing the core/browser API:
 
-- React integration: #291.
-- Vue integration: #292.
+- React integration: #291 — implemented in `packages/react/`. It exports `Corrplot` and `useCorrplot`, initializes the WASM backend after mount, ignores results from cleaned-up effects, and renders inline SVG. React is a peer dependency; the only runtime package dependency is `@corrplot-ng/wasm`. Vite and esbuild production bundles are checked for Node-only dependencies, and browser smoke tests cover Strict Mode, updates, unmount/remount, initialization failures, and rendering errors.
+- Vue integration: #292 — planned. It must remain a thin browser host adapter and must not implement correlation or rendering semantics.
 
-Both must be thin host adapters. They must not implement correlation or rendering semantics, and their production bundles must be tested to ensure no Node native artifact or Node-only import is present.
+Framework packages must not pull native Node artifacts into browser dependency graphs.
 
 ## Work breakdown
 
 - #145 — shared TypeScript API contract and runtime package isolation (**normalized-matrix scene workflow, typed-scene SVG/RGBA, typed-array normalization, runtime isolation, Node ESM/CommonJS and browser type checks, and native/browser runtime smoke coverage implemented**).
 - #290 — workspace, versioning, CI, and non-publishing tarball/release preparation (**complete**).
-- #291 — React integration.
+- #291 — React integration (**component, hook, browser-only WASM dependency, Vite/esbuild bundling, and browser lifecycle/error coverage implemented**).
 - #292 — Vue integration.
 - #293 — later npm publication; explicitly deferred.
 
