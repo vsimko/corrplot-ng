@@ -50,7 +50,7 @@ This remains an opt-in experiment in the disposable package generator, not
 a production R-package migration or CRAN acceptance. The source-tarball size
 is separate from the installed package size. CRAN guidance is still needed
 on the remaining NOTE and production package acceptability. The proposed human maintainer-time comparison against C++/Rcpp was
- discontinued by #269 on 2026-11-04. No comparative timings were collected;
+discontinued by #269 on 2026-11-04. No comparative timings were collected;
 historical effort ranges remain unmeasured planning estimates and are not
 production-rollout gates.
 
