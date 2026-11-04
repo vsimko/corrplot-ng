@@ -80,7 +80,7 @@ The facade exposes the shared normalized-matrix scene workflow in both runtime e
 - `engine.dispose()`: releases the adapter when supported, is idempotent, and prevents subsequent engine operations.
 - `CorrplotError`: exposes the backend diagnostic through its `diagnostic` property.
 
-The Node and WASM bindings expose the same typed-scene and matrix-bearing scene-v1 operations used by the facade. The normalized-matrix builder currently produces the base scene subset; full presentation-scene semantics, significance/legend/cluster overlays from arbitrary input, and direct Canvas rendering remain separate work.
+The Node and WASM bindings expose the same typed-scene and matrix-bearing scene-v1 operations used by the facade. The normalized-matrix builder produces the base scene subset; full presentation-scene semantics remain incremental. Typed-scene bindings preserve supplied significance, legend, and cluster-region metadata, and the direct Canvas adapter renders the declared common subset.
 
 ### Remaining API work
 
@@ -103,13 +103,13 @@ Execution backend and output renderer are independent axes:
 | Concern | Examples | Owner |
 | --- | --- | --- |
 | Execution backend | Node-API native, browser WebAssembly | TypeScript facade and binding adapters |
-| Output renderer | SVG and RGBA raster (current facade formats); direct browser Canvas 2D (not implemented) | Renderer implementations and host adapters |
+| Output renderer | SVG and RGBA raster (serialized formats); direct browser Canvas 2D (host-owned target) | Renderer implementations and host adapters |
 | Renderer capability | Supported scene versions, cell methods, annotations, metadata | Existing renderer capability-v1 contract (#71) |
 | Interchange/conformance | normalized-matrix v1, scene-v1 | Versioned language-neutral contracts |
 
 The native and WASM backends must call the same Rust semantic implementation. They must not maintain separate renderer capability schemas. The existing capability-v1 declaration remains authoritative; each renderer reports only the features it actually preserves. Capability negotiation remains strict by default, and unsupported required features fail before output is written.
 
-The renderer-neutral contract in #153 and the RGBA raster implementation in #154 are complete. The current TypeScript facade advertises only `svg` and `rgba` formats; it does not advertise a PNG format. Direct scene-to-Canvas rendering remains a separate browser adapter in #144 and is not implemented. Canvas and DOM objects remain in TypeScript; Rust must not depend on browser object types. Canvas must consume the shared scene or a documented renderer command representation directly, not serialize to SVG and parse it again.
+The renderer-neutral contract in #153 and the RGBA raster implementation in #154 are complete. The current TypeScript facade advertises only `svg` and `rgba` formats; it does not advertise a PNG format. Direct scene-to-Canvas rendering is implemented as the separate browser adapter in #144. It consumes the typed scene directly and supports glyphs, labels, figure text, statistical overlays, legends, and cluster regions; plotmath remains unsupported. Canvas and DOM objects remain in TypeScript; Rust must not depend on browser object types. Canvas must consume the shared scene or a documented renderer command representation directly, not serialize to SVG and parse it again.
 
 The output contract defines pixel-buffer layout, dimensions, DPI, alpha, and background semantics. The remaining renderer work is integration and conformance, not initial contract definition.
 
