@@ -1,6 +1,7 @@
 import { createCorrplotEngine, CorrplotError } from "../../src/browser.js";
 
 const status = document.querySelector("#status");
+const benchmarkEnabled = new URLSearchParams(window.location.search).get("benchmark") === "1";
 
 try {
   let unavailableBackendError;
@@ -192,6 +193,109 @@ try {
     offscreenHeightPx = offscreenResult.heightPx;
   }
 
+  let canvasPerformance = null;
+  if (benchmarkEnabled) {
+    const benchmarkSize = 64;
+    const benchmarkLabels = Array.from(
+      { length: benchmarkSize },
+      (_, index) => "variable-" + String(index + 1).padStart(2, "0"),
+    );
+    const benchmarkValues = Array.from({ length: benchmarkSize * benchmarkSize }, (_, index) => {
+      const row = Math.floor(index / benchmarkSize);
+      const column = index % benchmarkSize;
+      if (row === column) return 1;
+      const first = Math.min(row, column);
+      const second = Math.max(row, column);
+      return ((first * 31 + second * 17) % 201 - 100) / 200;
+    });
+    const benchmarkSceneResult = engine.createScene({
+      labels: benchmarkLabels,
+      rows: benchmarkSize,
+      columns: benchmarkSize,
+      values: benchmarkValues,
+      kind: "correlation",
+    }, {
+      cellMethod: "ellipse",
+      title: "Browser Canvas performance fixture",
+      description: "Deterministic 64-variable correlation matrix.",
+      displayType: "upper",
+      showDiagonal: false,
+    });
+    if (benchmarkSceneResult.diagnostic) {
+      throw new Error("could not construct browser Canvas performance fixture");
+    }
+    const benchmarkScene = benchmarkSceneResult.scene;
+    const benchmarkWidthPx = 512;
+    const benchmarkHeightPx = 512;
+    const benchmarkCanvas = document.createElement("canvas");
+    const renderCanvas = () => engine.renderToCanvas(benchmarkScene, benchmarkCanvas, {
+      width: benchmarkWidthPx,
+      height: benchmarkHeightPx,
+      devicePixelRatio: 1,
+    });
+    const renderRgba = () => engine.render(benchmarkScene, {
+      format: "rgba",
+      widthPx: benchmarkWidthPx,
+      heightPx: benchmarkHeightPx,
+      background: { red: 255, green: 255, blue: 255, alpha: 255 },
+    });
+    const measureBrowserOperation = (operation, iterations = 10, warmupIterations = 3) => {
+      for (let index = 0; index < warmupIterations; index += 1) operation();
+      const samples = [];
+      for (let index = 0; index < iterations; index += 1) {
+        const start = performance.now();
+        operation();
+        samples.push(performance.now() - start);
+      }
+      const sorted = [...samples].sort((left, right) => left - right);
+      const percentile = p => {
+        const position = (sorted.length - 1) * p;
+        const lower = Math.floor(position);
+        const upper = Math.ceil(position);
+        return lower === upper
+          ? sorted[lower]
+          : sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+      };
+      return {
+        iterations,
+        warmupIterations,
+        medianMs: Number(percentile(0.5).toFixed(4)),
+        iqrMs: Number((percentile(0.75) - percentile(0.25)).toFixed(4)),
+        p95Ms: Number(percentile(0.95).toFixed(4)),
+        minMs: Number(sorted[0].toFixed(4)),
+        maxMs: Number(sorted[sorted.length - 1].toFixed(4)),
+        samplesMs: samples.map(value => Number(value.toFixed(4))),
+      };
+    };
+    const canvasTiming = measureBrowserOperation(renderCanvas);
+    const rgbaTiming = measureBrowserOperation(renderRgba);
+    const canvasOutput = renderCanvas();
+    const rgbaOutput = renderRgba();
+    if (canvasOutput.widthPx !== benchmarkWidthPx ||
+        canvasOutput.heightPx !== benchmarkHeightPx ||
+        rgbaOutput.widthPx !== benchmarkWidthPx ||
+        rgbaOutput.heightPx !== benchmarkHeightPx ||
+        rgbaOutput.pixels.byteLength !== benchmarkWidthPx * benchmarkHeightPx * 4) {
+      throw new Error("browser Canvas/RGBA benchmark output dimensions are inconsistent");
+    }
+    canvasPerformance = {
+      workload: {
+        rows: benchmarkSize,
+        columns: benchmarkSize,
+        cells: benchmarkScene.cells.length,
+        widthPx: benchmarkWidthPx,
+        heightPx: benchmarkHeightPx,
+        devicePixelRatio: 1,
+      },
+      outputBytes: {
+        canvasBackingStore: benchmarkCanvas.width * benchmarkCanvas.height * 4,
+        rgbaBuffer: rgbaOutput.pixels.byteLength,
+      },
+      directCanvas2d: canvasTiming,
+      wasmRgba: rgbaTiming,
+    };
+  }
+
   if (engine.backend !== "wasm") {
     throw new Error("expected WASM backend, received " + engine.backend);
   }
@@ -215,6 +319,7 @@ try {
     highDpiHeightPx: highDpiResult.heightPx,
     highDpiScale,
     highDpiOffsetY,
+    canvasPerformance,
     paintedPixels,
     canvasHostTargets: canvasCapabilities.host_targets,
     offscreenSupported,
