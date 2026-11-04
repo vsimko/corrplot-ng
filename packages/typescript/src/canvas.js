@@ -42,17 +42,40 @@ function validateScene(scene) {
     fail("renderer.output.invalid_scene", "scene description must be a string", "scene.description");
   }
 
-  for (const [field, label] of [
-    ["legend", "scene legends"],
-    ["clusterRegions", "cluster regions"],
-  ]) {
-    const value = scene[field];
-    if (value !== undefined && value !== null && !Array.isArray(value)) {
-      fail("renderer.output.invalid_scene", `${field} must be an array`, `scene.${field}`);
+  if (scene.legend !== undefined && scene.legend !== null && !Array.isArray(scene.legend)) {
+    fail("renderer.output.invalid_scene", "legend must be an array", "scene.legend");
+  }
+  for (const [index, entry] of (scene.legend ?? []).entries()) {
+    const path = `scene.legend[${index}]`;
+    if (!entry || !["stop", "interval", "missing"].includes(entry.kind) || typeof entry.label !== "string") {
+      fail("renderer.output.invalid_scene", "legend entry has invalid kind or label", path);
     }
-    if (value?.length) {
-      fail("renderer.unsupported_feature", `Canvas 2D does not yet support ${label}`, `scene.${field}`);
+    colorCss(entry.color, `${path}.color`);
+  }
+
+  if (scene.clusterRegions !== undefined && scene.clusterRegions !== null && !Array.isArray(scene.clusterRegions)) {
+    fail("renderer.output.invalid_scene", "clusterRegions must be an array", "scene.clusterRegions");
+  }
+  for (const [index, region] of (scene.clusterRegions ?? []).entries()) {
+    const path = `scene.clusterRegions[${index}]`;
+    const validIndices = values => Array.isArray(values) && values.length > 0 &&
+      values.every(value => Number.isSafeInteger(value) && value >= 0) &&
+      new Set(values).size === values.length;
+    const validNames = values => Array.isArray(values) && values.length > 0 &&
+      values.every(value => typeof value === "string" && value.length > 0) &&
+      new Set(values).size === values.length;
+    if (!region || typeof region.id !== "string" || !region.id.length ||
+        !validNames(region.variables) || !validIndices(region.sourceIndices) ||
+        region.variables.length !== region.sourceIndices.length ||
+        !Number.isSafeInteger(region.rowStart) || region.rowStart < 0 ||
+        !Number.isSafeInteger(region.rowEnd) || region.rowEnd < region.rowStart ||
+        !Number.isSafeInteger(region.columnStart) || region.columnStart < 0 ||
+        !Number.isSafeInteger(region.columnEnd) || region.columnEnd < region.columnStart ||
+        !finite(region.x) || !finite(region.y) || !positive(region.width) ||
+        !positive(region.height) || !positive(region.lineWidth)) {
+      fail("renderer.output.invalid_scene", "cluster region has invalid identity, indices, or geometry", path);
     }
+    colorCss(region.color, `${path}.color`);
   }
   if (scene.significance != null) {
     const policy = scene.significance;
@@ -256,6 +279,41 @@ function drawGlyph(context, cell, glyph, fontFamily, path) {
   }
 }
 
+function drawClusterRegions(context, regions) {
+  for (const [index, region] of regions.entries()) {
+    context.save();
+    try {
+      context.strokeStyle = colorCss(region.color, `scene.clusterRegions[${index}].color`);
+      context.lineWidth = region.lineWidth;
+      context.strokeRect(region.x, region.y, region.width, region.height);
+    } finally {
+      context.restore();
+    }
+  }
+}
+
+function drawLegend(context, entries, sceneHeight, fontFamily) {
+  if (!entries.length) return;
+  context.save();
+  try {
+    context.font = `normal normal 8px ${fontFamily}`;
+    context.textAlign = "left";
+    context.textBaseline = "hanging";
+    let x = 8;
+    const y = sceneHeight - 13;
+    for (const [index, entry] of entries.entries()) {
+      context.fillStyle = colorCss(entry.color, `scene.legend[${index}].color`);
+      context.fillRect(x, y + 1, 7, 7);
+      x += 11;
+      context.fillStyle = "rgba(0, 0, 0, 1)";
+      context.fillText(entry.label, x, y);
+      x += [...entry.label].length * 8 * 6 / 7 + 10;
+    }
+  } finally {
+    context.restore();
+  }
+}
+
 function drawText(context, text, defaultFontFamily, path) {
   const fontFamily = text.fontFamily || defaultFontFamily;
   const fontWeight = text.fontWeight || "normal";
@@ -410,6 +468,9 @@ export function renderSceneToCanvas(scene, target, options = {}) {
       }
     }
 
+    drawClusterRegions(context, scene.clusterRegions ?? []);
+    drawLegend(context, scene.legend ?? [], scene.height, fontFamily);
+
     for (const [index, text] of scene.texts.entries()) {
       drawText(context, text, fontFamily, `scene.texts[${index}]`);
     }
@@ -455,10 +516,10 @@ export function getCanvasRendererCapabilities() {
       cell_text_annotations: true,
       significance: true,
       confidence_intervals: true,
-      legend: false,
+      legend: true,
       figure_text: true,
       accessible_metadata: false,
-      cluster_regions: false,
+      cluster_regions: true,
     },
     negotiation_modes: ["strict"],
   };
