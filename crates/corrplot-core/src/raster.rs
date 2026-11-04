@@ -667,6 +667,8 @@ fn bitmap_glyph(character: char) -> [u8; 7] {
         ':' => [0,12,12,0,12,12,0], '/' => [1,1,2,4,8,16,16],
         '(' => [2,4,8,8,8,4,2], ')' => [8,4,2,2,2,4,8],
         '%' => [17,2,4,8,16,17,0], '_' => [0,0,0,0,0,0,31],
+        '*' => [0,4,21,14,21,4,0], '<' => [2,4,8,16,8,4,2],
+        '>' => [8,4,2,1,2,4,8], '=' => [0,31,0,31,0,0,0],
         ' ' => [0; 7], _ => [31,17,5,4,4,0,4],
     }
 }
@@ -1200,6 +1202,14 @@ mod tests {
             (78..90).any(|x| pixel(x, y) == [34, 34, 34, 255])
         });
         assert!(annotation_ink, "RGBA output should contain significance annotation ink");
+    }
+
+    #[test]
+    fn bitmap_font_supports_significance_symbols_and_p_value_operators() {
+        assert_eq!(bitmap_glyph('*'), [0, 4, 21, 14, 21, 4, 0]);
+        assert_eq!(bitmap_glyph('<'), [2, 4, 8, 16, 8, 4, 2]);
+        assert_eq!(bitmap_glyph('>'), [8, 4, 2, 1, 2, 4, 8]);
+        assert_eq!(bitmap_glyph('='), [0, 31, 0, 31, 0, 0, 0]);
     }
 
 }
