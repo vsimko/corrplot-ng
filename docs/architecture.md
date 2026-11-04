@@ -148,7 +148,7 @@ The following capabilities remain incomplete or separately gated:
 - **npm publication:** package build and tarball staging are non-publishing preparation. Public publication remains deferred under #293.
 - **Cross-runtime semantic and visual parity:** current tests cover specific operations and fixtures; they do not prove complete API or presentation parity.
 
-The Rust/rextendr integration remains a disposable evaluation adapter that proves shared-crate use for selected operations. C++/Rcpp remains an R-only fallback experiment, not a competing repository-wide shared-core direction. The controlled maintainer-time comparison and CRAN disposition remain open.
+The Rust/rextendr integration remains an evaluation adapter that proves shared-crate use for selected operations. Rust is the sole selected native implementation; C++/Rcpp has been rejected and its prototype and CI have been retired. CRAN disposition and sustainable Rust maintenance remain open.
 
 ## Decision boundaries
 
