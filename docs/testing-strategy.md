@@ -209,7 +209,7 @@ SVG/RGBA rendering, matrix-bearing scene-v1 compatibility rendering,
 typed-array normalization, capability lookup, diagnostics, and disposal.
 The initial API slice in #145 is implemented; full scene-v1 presentation
 semantics and broader cross-backend conformance remain separate work in #146.
-Direct Canvas (#144) and React/Vue adapters (#291/#292) remain unfinished.
+Direct Canvas (#144) remains unfinished; the React and Vue adapters (#291/#292) are implemented as browser-only packages and have framework-specific lifecycle and browser-bundle checks.
 The binding READMEs document their operation and runtime boundaries.
 
 ### Local command entry point
@@ -275,8 +275,9 @@ pull requests.
 The initial normalized-matrix TypeScript scene workflow in #145, Node native
 binding, and browser-WASM operations have dedicated test coverage. Full
 scene-v1 presentation semantics and broader semantic/visual parity remain
-incomplete (#146); direct Canvas (#144), worker orchestration, React/Vue
-adapters (#291/#292), and public npm publication (#293) remain separate work.
+incomplete (#146); direct Canvas (#144), worker orchestration, and public npm
+publication (#293) remain separate work. The React/Vue adapters (#291/#292)
+are implemented and have dedicated browser integration checks.
 
 When one of these interfaces is implemented:
 
