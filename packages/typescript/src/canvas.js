@@ -83,8 +83,8 @@ function validateScene(scene) {
         if (!finite(glyph.radius) || glyph.radius < 0) {
           fail("renderer.output.invalid_scene", "glyph radius must be finite and non-negative", `${path}.glyph.radius`);
         }
-        if (glyph.kind === "pie" && (!finite(glyph.startRadians) || !finite(glyph.endRadians))) {
-          fail("renderer.output.invalid_scene", "pie angles must be finite", `${path}.glyph`);
+        if (glyph.kind === "pie" && (!finite(glyph.startRadians) || !finite(glyph.endRadians) || !finite(glyph.endRadians - glyph.startRadians))) {
+          fail("renderer.output.invalid_scene", "pie angles and their difference must be finite", `${path}.glyph`);
         }
         break;
       case "square":
@@ -302,8 +302,12 @@ export function renderSceneToCanvas(scene, target, options = {}) {
       canvas.style.height = `${height}px`;
     }
     if (typeof canvas.setAttribute === "function") {
-      canvas.setAttribute("role", "img");
-      if (scene.description) canvas.setAttribute("aria-label", scene.description);
+      if (typeof canvas.getAttribute !== "function" || !canvas.getAttribute("role")) {
+        canvas.setAttribute("role", "img");
+      }
+      if (scene.description && (typeof canvas.getAttribute !== "function" || !canvas.getAttribute("aria-label"))) {
+        canvas.setAttribute("aria-label", scene.description);
+      }
     }
   } catch (error) {
     if (error instanceof CorrplotError) throw error;

@@ -64,7 +64,7 @@ const canvasCapabilities = engine.getCanvasRendererCapabilities();
 console.log(canvasCapabilities.host_targets);
 ```
 
-Width and height are logical CSS pixels and default to the scene dimensions. The backing store is scaled by `devicePixelRatio`, which defaults to the current environment's value or `1`. For an HTML canvas, CSS width and height are set to the logical dimensions by default; pass `setCssSize: false` to leave CSS layout to the caller. The renderer preserves the context's previous state, letterboxes rather than crops, clips drawing to the viewport, and sets the canvas role and accessible label from the scene description when available.
+Width and height are logical CSS pixels and default to the scene dimensions. The backing store is scaled by `devicePixelRatio`, which defaults to the current environment's value or `1`. For an HTML canvas, CSS width and height are set to the logical dimensions by default; pass `setCssSize: false` to leave CSS layout to the caller. The renderer saves and restores the context state during drawing, letterboxes rather than crops, clips drawing to the viewport, and supplies a canvas role and accessible label from the scene description when the caller has not already set them. Resizing the backing store resets Canvas state as required by the browser API; the renderer then applies its own drawing state.
 
 The canvas is cleared before each render by default. Its background defaults to opaque white; use `background: null` for a transparent cleared canvas. With `clear: false` and no explicit background, existing pixels are preserved when the backing dimensions already match. Resizing a canvas necessarily resets its backing store.
 
