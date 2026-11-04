@@ -1,3 +1,5 @@
+> **Historical evaluation — superseded for project direction.** This document records the CRAN policy comparison that informed the explicit decision to use Rust only. C++/Rcpp is not an approved implementation or fallback. Do not use this report to reopen the language choice; Rust/rextendr CRAN readiness remains an operational gate.
+
 # CRAN policy and release implications: Rust/rextendr vs C++/Rcpp
 
 **Reviewed:** 2026-10-31  
