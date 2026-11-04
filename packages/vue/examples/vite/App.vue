@@ -32,7 +32,7 @@ const sceneOptions = computed(() => ({
 }));
 
 const svgOptions = Object.freeze({ width: 240, height: 240 });
-const hookState = useCorrplot(matrix, sceneOptions, svgOptions);
+const { svg: hookSvg, loading: hookLoading, error: hookError } = useCorrplot(matrix, sceneOptions, svgOptions);
 
 function onError(error) {
   errorCount.value += 1;
@@ -59,10 +59,10 @@ function onError(error) {
     <output id="error-count">{{ errorCount }}</output>
     <output
       id="hook-status"
-      :data-status="hookState.loading ? 'loading' : hookState.error ? 'error' : 'ready'"
-      :data-svg-length="hookState.svg?.length ?? 0"
+      :data-status="hookLoading ? 'loading' : hookError ? 'error' : 'ready'"
+      :data-svg-length="hookSvg?.length ?? 0"
     >
-      {{ hookState.loading ? "loading" : hookState.error ? "error" : "ready" }}
+      {{ hookLoading ? "loading" : hookError ? "error" : "ready" }}
     </output>
     <Corrplot
       v-if="mounted"
