@@ -58,6 +58,54 @@ try {
   }
   if (paintedPixels === 0) throw new Error("direct Canvas renderer did not paint any scene pixels");
 
+
+  const fixtureResponse = await fetch("../fixtures/canvas-conformance.json");
+  if (!fixtureResponse.ok) throw new Error("could not load the Canvas visual conformance fixture");
+  const visualFixture = await fixtureResponse.json();
+  const visualCanvas = document.createElement("canvas");
+  engine.renderToCanvas(visualFixture.scene, visualCanvas, {
+    width: visualFixture.scene.width,
+    height: visualFixture.scene.height,
+    devicePixelRatio: 1,
+  });
+  const visualContext = visualCanvas.getContext("2d");
+  if (!visualContext) throw new Error("visual conformance Canvas has no 2D context");
+  const visualCanvasPixels = visualContext.getImageData(0, 0, visualCanvas.width, visualCanvas.height).data;
+  const visualRgba = engine.render(visualFixture.scene, {
+    format: "rgba",
+    widthPx: visualFixture.scene.width,
+    heightPx: visualFixture.scene.height,
+    background: { red: 255, green: 255, blue: 255, alpha: 255 },
+  });
+  const readPixel = (pixels, stride, x, y) => {
+    const offset = y * stride + x * 4;
+    return Array.from(pixels.slice(offset, offset + 4));
+  };
+  for (const sample of visualFixture.expectedSamples) {
+    const canvasPixel = readPixel(visualCanvasPixels, visualCanvas.width * 4, sample.x, sample.y);
+    const rgbaPixel = readPixel(visualRgba.pixels, visualRgba.strideBytes, sample.x, sample.y);
+    if (canvasPixel.some((channel, index) => channel !== sample.color[index]) ||
+        rgbaPixel.some((channel, index) => channel !== sample.color[index])) {
+      throw new Error("Canvas/RGBA visual fixture mismatch at " + sample.label +
+        ": Canvas=" + canvasPixel.join(",") + " RGBA=" + rgbaPixel.join(","));
+    }
+  }
+  const countInk = (pixels, stride, region) => {
+    let count = 0;
+    for (let y = region.y; y < region.y + region.height; y += 1) {
+      for (let x = region.x; x < region.x + region.width; x += 1) {
+        const pixel = readPixel(pixels, stride, x, y);
+        if (pixel[0] < 230 || pixel[1] < 230 || pixel[2] < 230) count += 1;
+      }
+    }
+    return count;
+  };
+  const numberInkPixels = countInk(visualCanvasPixels, visualCanvas.width * 4, visualFixture.inkRegions.number);
+  const shadeInkPixels = countInk(visualCanvasPixels, visualCanvas.width * 4, visualFixture.inkRegions.shade);
+  if (numberInkPixels === 0 || shadeInkPixels === 0) {
+    throw new Error("Canvas visual fixture did not render its number and shade glyphs");
+  }
+
   const canvasCapabilities = engine.getCanvasRendererCapabilities();
   if (!canvasCapabilities.host_targets.includes("browser-canvas-2d")) {
     throw new Error("Canvas capability declaration omitted browser-canvas-2d");
@@ -101,6 +149,9 @@ try {
     pixelLength: rgba.pixels.length,
     canvasWidthPx: canvasResult.widthPx,
     canvasHeightPx: canvasResult.heightPx,
+    visualSampleCount: visualFixture.expectedSamples.length,
+    numberInkPixels,
+    shadeInkPixels,
     paintedPixels,
     canvasHostTargets: canvasCapabilities.host_targets,
     offscreenSupported,

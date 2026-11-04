@@ -181,6 +181,7 @@ test("Engine exposes Canvas only when a browser renderer is supplied", () => {
     error => error instanceof CorrplotError && error.diagnostic.code === "renderer.unsupported_feature",
   );
   nodeEngine.dispose();
+  browserEngine.dispose();
   assert.throws(
     () => browserEngine.renderToCanvas({ width: 10, height: 10, cells: [], texts: [] }, canvas),
     error => error instanceof CorrplotError && error.diagnostic.code === "configuration.invalid_field",

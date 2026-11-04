@@ -103,6 +103,9 @@ try {
   assert.equal(facadeResult.pixelLength, 64 * 64 * 4);
   assert.equal(facadeResult.canvasWidthPx, 128);
   assert.equal(facadeResult.canvasHeightPx, 128);
+  assert.equal(facadeResult.visualSampleCount, 7);
+  assert.ok(facadeResult.numberInkPixels > 0, "number glyph visual fixture must contain ink");
+  assert.ok(facadeResult.shadeInkPixels > 0, "shade glyph visual fixture must contain ink");
   assert.ok(facadeResult.paintedPixels > 0, "direct Canvas renderer must paint scene pixels");
   assert.ok(facadeResult.canvasHostTargets.includes("browser-canvas-2d"));
   assert.equal(
