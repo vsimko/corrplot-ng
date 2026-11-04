@@ -109,10 +109,10 @@ Both must be thin host adapters. They must not implement correlation or renderin
 
 ## Work breakdown
 
-- #145 — shared TypeScript API contract and runtime package isolation (**initial facade implemented; Node, CommonJS, and browser usage type-checked; native and browser/WASM runtime smoke coverage added**).
+- #145 — shared TypeScript API contract and runtime package isolation (**normalized-matrix scene workflow, typed-scene SVG/RGBA, typed-array normalization, runtime isolation, Node ESM/CommonJS and browser type checks, and native/browser runtime smoke coverage implemented**).
 - #290 — workspace, versioning, CI, and non-publishing tarball/release preparation (**complete**).
 - #291 — React integration.
 - #292 — Vue integration.
 - #293 — later npm publication; explicitly deferred.
 
-The initial Node and WASM backend implementation slices in #141 and #142 are complete. Extend the existing packages rather than restarting them; #145 remains active for the broader public TypeScript API and package-isolation contract.
+The initial Node and WASM backend implementation slices in #141 and #142 are complete. The runtime-isolated TypeScript facade and normalized-matrix scene workflow in #145 are implemented. Full scene-v1 presentation semantics and broader cross-backend conformance remain tracked separately by #146; direct Canvas remains #144. Extend the existing packages rather than restarting them.
