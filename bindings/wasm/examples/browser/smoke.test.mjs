@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { appendFileSync } from "node:fs";
 import { chromium, firefox, webkit } from "playwright";
 
 const browserName = process.env.CORRPLOT_BROWSER ?? "chromium";
+const benchmarkOutputPath = process.env.CORRPLOT_BROWSER_BENCHMARK_OUTPUT;
 const browserTypes = { chromium, firefox, webkit };
 const browserType = browserTypes[browserName];
 assert(browserType, `unsupported CORRPLOT_BROWSER "${browserName}"`);
@@ -77,10 +79,9 @@ try {
   const facadePage = await browser.newPage();
   const facadeErrors = [];
   facadePage.on("pageerror", (error) => facadeErrors.push(error.message));
-  await facadePage.goto(
-    "http://127.0.0.1:4173/packages/typescript/test/browser/index.html",
-    { waitUntil: "networkidle" },
-  );
+  const facadeUrl = "http://127.0.0.1:4173/packages/typescript/test/browser/index.html" +
+    (benchmarkOutputPath ? "?benchmark=1" : "");
+  await facadePage.goto(facadeUrl, { waitUntil: "networkidle" });
   await facadePage.waitForFunction(
     () => {
       const status = document.querySelector("#status")?.textContent ?? "";
@@ -106,6 +107,13 @@ try {
   assert.equal(facadeResult.visualSampleCount, 7);
   assert.ok(facadeResult.numberInkPixels > 0, "number glyph visual fixture must contain ink");
   assert.ok(facadeResult.shadeInkPixels > 0, "shade glyph visual fixture must contain ink");
+  assert.equal(facadeResult.highDpiSampleCount, 7);
+  assert.equal(facadeResult.highDpiWidthPx, 320);
+  assert.equal(facadeResult.highDpiHeightPx, 80);
+  assert.equal(facadeResult.highDpiScale, 4);
+  assert.equal(facadeResult.highDpiOffsetY, 20);
+  assert.ok(facadeResult.highDpiNumberInkPixels > 0);
+  assert.ok(facadeResult.highDpiShadeInkPixels > 0);
   assert.ok(facadeResult.paintedPixels > 0, "direct Canvas renderer must paint scene pixels");
   assert.ok(facadeResult.canvasHostTargets.includes("browser-canvas-2d"));
   assert.equal(
@@ -116,6 +124,25 @@ try {
   if (facadeResult.offscreenSupported) {
     assert.equal(facadeResult.offscreenWidthPx, 64);
     assert.equal(facadeResult.offscreenHeightPx, 64);
+  }
+  if (benchmarkOutputPath) {
+    const metrics = facadeResult.canvasPerformance;
+    assert.ok(metrics, "scheduled browser run must produce Canvas/RGBA performance metrics");
+    assert.equal(metrics.workload.rows, 64);
+    assert.equal(metrics.workload.columns, 64);
+    assert.equal(metrics.workload.cells, 4096);
+    assert.equal(metrics.outputBytes.canvasBackingStore, 512 * 512 * 4);
+    assert.equal(metrics.outputBytes.rgbaBuffer, 512 * 512 * 4);
+    assert.equal(metrics.directCanvas2d.iterations, 10);
+    assert.equal(metrics.wasmRgba.iterations, 10);
+    assert.ok(metrics.directCanvas2d.medianMs > 0);
+    assert.ok(metrics.wasmRgba.medianMs > 0);
+    const userAgent = await facadePage.evaluate(() => navigator.userAgent);
+    appendFileSync(benchmarkOutputPath, JSON.stringify({
+      browser: browserName,
+      userAgent,
+      ...metrics,
+    }) + "\n");
   }
   assert.deepEqual(facadeErrors, [], "TypeScript facade page raised an uncaught error");
 
