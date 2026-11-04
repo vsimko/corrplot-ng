@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "kind": "correlation_plot",
+  "width": 380,
+  "height": 392,
+  "labels": [
+    {
+      "text": "alpha",
+      "row_x": 92,
+      "row_y": 118,
+      "column_x": 146,
+      "column_y": 60
+    },
+    {
+      "text": "beta",
+      "row_x": 92,
+      "row_y": 202,
+      "column_x": 230,
+      "column_y": 60
+    },
+    {
+      "text": "gamma",
+      "row_x": 92,
+      "row_y": 286,
+      "column_x": 314,
+      "column_y": 60
+    }
+  ],
+  "cells": [
+    {
+      "row": 0,
+      "column": 0,
+      "value": 1,
+      "x": 104,
+      "y": 76,
+      "center_x": 146,
+      "center_y": 118,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 36.12
+      },
+      "p_value": 0.001,
+      "significance": {
+        "p_value": 0.001,
+        "status": "significant",
+        "annotation": "**",
+        "blank": false
+      },
+      "confidence_interval": {
+        "lower": 0.6,
+        "upper": 0.9,
+        "x1": 112,
+        "x2": 180,
+        "y": 112,
+        "cap_height": 8,
+        "stroke_width": 2,
+        "color": "#222222"
+      }
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "value": 0.65,
+      "x": 188,
+      "y": 76,
+      "center_x": 230,
+      "center_y": 118,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.65,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 23.478
+      },
+      "p_value": 0.2,
+      "significance": {
+        "p_value": 0.2,
+        "status": "not_significant",
+        "annotation": null,
+        "blank": false
+      }
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "value": -0.4,
+      "x": 272,
+      "y": 76,
+      "center_x": 314,
+      "center_y": 118,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.4,
+        "sign": -1,
+        "color": "#b2182b",
+        "radius": 14.448
+      }
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "value": 0.65,
+      "x": 104,
+      "y": 160,
+      "center_x": 146,
+      "center_y": 202,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.65,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 23.478
+      }
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "value": 1,
+      "x": 188,
+      "y": 160,
+      "center_x": 230,
+      "center_y": 202,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 36.12
+      }
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "value": null,
+      "x": 272,
+      "y": 160,
+      "center_x": 314,
+      "center_y": 202,
+      "size": 84,
+      "p_value": null,
+      "significance": {
+        "p_value": null,
+        "status": "unknown",
+        "annotation": null,
+        "blank": false
+      }
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "value": -0.4,
+      "x": 104,
+      "y": 244,
+      "center_x": 146,
+      "center_y": 286,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 0.4,
+        "sign": -1,
+        "color": "#b2182b",
+        "radius": 14.448
+      },
+      "p_value": 0.04,
+      "significance": {
+        "p_value": 0.04,
+        "status": "significant",
+        "annotation": null,
+        "blank": true
+      },
+      "confidence_interval": {
+        "lower": -0.5,
+        "upper": 0.5,
+        "x1": 112,
+        "x2": 180,
+        "y": 280,
+        "cap_height": 8,
+        "stroke_width": 2,
+        "color": "#dc143c"
+      }
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "value": null,
+      "x": 188,
+      "y": 244,
+      "center_x": 230,
+      "center_y": 286,
+      "size": 84
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "value": 1,
+      "x": 272,
+      "y": 244,
+      "center_x": 314,
+      "center_y": 286,
+      "size": 84,
+      "encoding": {
+        "kind": "circle",
+        "magnitude": 1,
+        "sign": 1,
+        "color": "#2166ac",
+        "radius": 36.12
+      },
+      "visible": false,
+      "p_value": 0.001,
+      "significance": {
+        "p_value": 0.001,
+        "status": "significant",
+        "annotation": "HIDDEN",
+        "blank": false
+      },
+      "confidence_interval": {
+        "lower": 0.4,
+        "upper": 0.8,
+        "x1": 280,
+        "x2": 348,
+        "y": 280,
+        "cap_height": 8,
+        "stroke_width": 2,
+        "color": "#ff00ff"
+      }
+    }
+  ],
+  "annotation": "Prototype annotation: synthetic example only",
+  "style": {
+    "positive_color": "#2166ac",
+    "negative_color": "#b2182b",
+    "zero_color": "#bdbdbd",
+    "missing_fill": "#f2f2f2",
+    "grid_color": "#e0e0e0"
+  },
+  "title": "Example correlation matrix",
+  "description": "Synthetic correlations for alpha, beta, and gamma. Two pairwise values are unavailable.",
+  "glyph_method": "circle",
+  "text_annotations": [],
+  "significance": {
+    "mode": "stars",
+    "thresholds": [
+      0.05,
+      0.01
+    ],
+    "symbol": "*"
+  }
+}

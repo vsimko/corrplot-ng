@@ -308,21 +308,63 @@ pub fn render_rgba(
         canvas.stroke_rect(x, y, x + size, y + size, cell.stroke);
         let cx = x + size / 2.0;
         let cy = y + size / 2.0;
-        match &cell.glyph {
-            Some(CellGlyph::Circle { radius, color }) => canvas.fill_circle(cx, cy, *radius, *color),
-            Some(CellGlyph::Square { side, color }) => {
-                let half = side / 2.0;
-                canvas.fill_rect(cx - half, cy - half, cx + half, cy + half, *color);
+        let blank = cell.significance.as_ref().is_some_and(|significance| significance.blank);
+        if !blank {
+            match &cell.glyph {
+                Some(CellGlyph::Circle { radius, color }) => canvas.fill_circle(cx, cy, *radius, *color),
+                Some(CellGlyph::Square { side, color }) => {
+                    let half = side / 2.0;
+                    canvas.fill_rect(cx - half, cy - half, cx + half, cy + half, *color);
+                }
+                Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => canvas.fill_ellipse(cx, cy, *rx, *ry, *rotation_degrees, *color),
+                Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) =>
+                    canvas.fill_pie(cx, cy, *radius, *start_radians, *end_radians, *color),
+                Some(CellGlyph::Number { text, font_size, color }) =>
+                    canvas.draw_text(text, cx, cy - font_size / 2.0, *font_size, *color, TextAnchor::Middle),
+                Some(CellGlyph::Shade { color }) =>
+                    canvas.draw_line(x, y + size, x + size, y, *color),
+                Some(CellGlyph::Color) | None => {}
             }
-            Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => canvas.fill_ellipse(cx, cy, *rx, *ry, *rotation_degrees, *color),
-            Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) =>
-                canvas.fill_pie(cx, cy, *radius, *start_radians, *end_radians, *color),
-            Some(CellGlyph::Number { text, font_size, color }) =>
-                canvas.draw_text(text, cx, cy - font_size / 2.0, *font_size, *color, TextAnchor::Middle),
-            Some(CellGlyph::Shade { color }) =>
-                canvas.draw_line(x, y + size, x + size, y, *color),
-            Some(CellGlyph::Color) | None => {}
+            if let Some(interval) = &cell.confidence_interval {
+                let half_stroke = interval.stroke_width / 2.0;
+                let half_cap = interval.cap_height / 2.0;
+                canvas.fill_rect(
+                    interval.x1.min(interval.x2),
+                    interval.y - half_stroke,
+                    interval.x1.max(interval.x2),
+                    interval.y + half_stroke,
+                    interval.color,
+                );
+                for endpoint in [interval.x1, interval.x2] {
+                    canvas.fill_rect(
+                        endpoint - half_stroke,
+                        interval.y - half_cap,
+                        endpoint + half_stroke,
+                        interval.y + half_cap,
+                        interval.color,
+                    );
+                }
+            }
         }
+    }
+    for cell in &scene.cells {
+        if !cell.visible {
+            continue;
+        }
+        let Some(annotation) = cell.significance.as_ref().and_then(|significance| significance.annotation.as_deref()) else {
+            continue;
+        };
+        if annotation.is_empty() {
+            continue;
+        }
+        canvas.draw_text(
+            annotation,
+            cell.x + cell.size * 0.8,
+            cell.y + cell.size * 0.2,
+            10.0,
+            RgbaColor { red: 34, green: 34, blue: 34, alpha: 255 },
+            TextAnchor::Middle,
+        );
     }
     for region in &scene.cluster_regions {
         canvas.stroke_rect_width(region.x, region.y, region.x + region.width, region.y + region.height, region.line_width, region.color);
@@ -625,6 +667,8 @@ fn bitmap_glyph(character: char) -> [u8; 7] {
         ':' => [0,12,12,0,12,12,0], '/' => [1,1,2,4,8,16,16],
         '(' => [2,4,8,8,8,4,2], ')' => [8,4,2,2,2,4,8],
         '%' => [17,2,4,8,16,17,0], '_' => [0,0,0,0,0,0,31],
+        '*' => [0,4,21,14,21,4,0], '<' => [2,4,8,16,8,4,2],
+        '>' => [8,4,2,1,2,4,8], '=' => [0,31,0,31,0,0,0],
         ' ' => [0; 7], _ => [31,17,5,4,4,0,4],
     }
 }
@@ -685,49 +729,81 @@ impl Renderer<Scene> for SceneSvgRenderer {
             ));
             let cx = cell.x + cell.size / 2.0;
             let cy = cell.y + cell.size / 2.0;
-            match &cell.glyph {
-                Some(CellGlyph::Circle { radius, color }) => out.push_str(&format!(
-                    "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\" fill-opacity=\"{}\"/>",
-                    color_hex(*color), alpha(*color)
-                )),
-                Some(CellGlyph::Square { side, color }) => out.push_str(&format!(
-                    "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\" fill-opacity=\"{}\"/>",
-                    cx - side / 2.0, cy - side / 2.0, color_hex(*color), alpha(*color)
-                )),
-                Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => out.push_str(&format!(
-                    "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" transform=\"rotate({rotation_degrees} {cx} {cy})\" fill=\"{}\" fill-opacity=\"{}\"/>",
-                    color_hex(*color), alpha(*color)
-                )),
-                Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => {
-                    let start_x = cx + radius * start_radians.cos();
-                    let start_y = cy + radius * start_radians.sin();
-                    let end_x = cx + radius * end_radians.cos();
-                    let end_y = cy + radius * end_radians.sin();
-                    let span = (end_radians - start_radians).abs();
-                    if span >= std::f64::consts::TAU {
+            let blank = cell.significance.as_ref().is_some_and(|significance| significance.blank);
+            if !blank {
+                match &cell.glyph {
+                    Some(CellGlyph::Circle { radius, color }) => out.push_str(&format!(
+                        "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                        color_hex(*color), alpha(*color)
+                    )),
+                    Some(CellGlyph::Square { side, color }) => out.push_str(&format!(
+                        "<rect x=\"{}\" y=\"{}\" width=\"{side}\" height=\"{side}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                        cx - side / 2.0, cy - side / 2.0, color_hex(*color), alpha(*color)
+                    )),
+                    Some(CellGlyph::Ellipse { rx, ry, rotation_degrees, color }) => out.push_str(&format!(
+                        "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" transform=\"rotate({rotation_degrees} {cx} {cy})\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                        color_hex(*color), alpha(*color)
+                    )),
+                    Some(CellGlyph::Pie { radius, start_radians, end_radians, color }) => {
+                        let start_x = cx + radius * start_radians.cos();
+                        let start_y = cy + radius * start_radians.sin();
+                        let end_x = cx + radius * end_radians.cos();
+                        let end_y = cy + radius * end_radians.sin();
+                        let span = (end_radians - start_radians).abs();
+                        if span >= std::f64::consts::TAU {
+                            out.push_str(&format!(
+                                "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                                color_hex(*color), alpha(*color)
+                            ));
+                        } else {
+                            let large_arc = if span > std::f64::consts::PI { 1 } else { 0 };
+                            let sweep = if end_radians >= start_radians { 1 } else { 0 };
+                            out.push_str(&format!(
+                                "<path d=\"M {cx} {cy} L {start_x} {start_y} A {radius} {radius} 0 {large_arc} {sweep} {end_x} {end_y} Z\" fill=\"{}\" fill-opacity=\"{}\"/>",
+                                color_hex(*color), alpha(*color)
+                            ));
+                        }
+                    }
+                    Some(CellGlyph::Number { text, font_size, color }) => out.push_str(&format!(
+                        "<text x=\"{cx}\" y=\"{cy}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
+                        escape_xml(&svg.font_family), font_size, color_hex(*color), alpha(*color), escape_xml(text)
+                    )),
+                    Some(CellGlyph::Shade { color }) => out.push_str(&format!(
+                        "<path d=\"M {} {} L {} {}\" stroke=\"{}\" stroke-opacity=\"{}\" fill=\"none\"/>",
+                        cell.x, cell.y + cell.size, cell.x + cell.size, cell.y, color_hex(*color), alpha(*color)
+                    )),
+                    Some(CellGlyph::Color) | None => {}
+                }
+                if let Some(interval) = &cell.confidence_interval {
+                    let stroke = color_hex(interval.color);
+                    let opacity = alpha(interval.color);
+                    out.push_str(&format!(
+                        "<line class=\"confidence-interval\" x1=\"{:.2}\" y1=\"{:.2}\" x2=\"{:.2}\" y2=\"{:.2}\" stroke=\"{}\" stroke-opacity=\"{}\" stroke-width=\"{:.2}\"/>",
+                        interval.x1, interval.y, interval.x2, interval.y, stroke, opacity, interval.stroke_width
+                    ));
+                    let half_cap = interval.cap_height / 2.0;
+                    for endpoint in [interval.x1, interval.x2] {
                         out.push_str(&format!(
-                            "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{radius}\" fill=\"{}\" fill-opacity=\"{}\"/>",
-                            color_hex(*color), alpha(*color)
-                        ));
-                    } else {
-                        let large_arc = if span > std::f64::consts::PI { 1 } else { 0 };
-                        let sweep = if end_radians >= start_radians { 1 } else { 0 };
-                        out.push_str(&format!(
-                            "<path d=\"M {cx} {cy} L {start_x} {start_y} A {radius} {radius} 0 {large_arc} {sweep} {end_x} {end_y} Z\" fill=\"{}\" fill-opacity=\"{}\"/>",
-                            color_hex(*color), alpha(*color)
+                            "<line class=\"confidence-interval-cap\" x1=\"{:.2}\" y1=\"{:.2}\" x2=\"{:.2}\" y2=\"{:.2}\" stroke=\"{}\" stroke-opacity=\"{}\" stroke-width=\"{:.2}\"/>",
+                            endpoint, interval.y - half_cap, endpoint, interval.y + half_cap, stroke, opacity, interval.stroke_width
                         ));
                     }
                 }
-                Some(CellGlyph::Number { text, font_size, color }) => out.push_str(&format!(
-                    "<text x=\"{cx}\" y=\"{cy}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"{}\" fill=\"{}\" fill-opacity=\"{}\">{}</text>",
-                    escape_xml(&svg.font_family), font_size, color_hex(*color), alpha(*color), escape_xml(text)
-                )),
-                Some(CellGlyph::Shade { color }) => out.push_str(&format!(
-                    "<path d=\"M {} {} L {} {}\" stroke=\"{}\" stroke-opacity=\"{}\" fill=\"none\"/>",
-                    cell.x, cell.y + cell.size, cell.x + cell.size, cell.y, color_hex(*color), alpha(*color)
-                )),
-                Some(CellGlyph::Color) | None => {}
             }
+        }
+        for cell in &scene.cells {
+            if !cell.visible { continue; }
+            let Some(annotation) = cell.significance.as_ref().and_then(|significance| significance.annotation.as_deref()) else {
+                continue;
+            };
+            if annotation.is_empty() { continue; }
+            out.push_str(&format!(
+                "<text class=\"significance-annotation\" x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"{}\" font-size=\"10\" font-weight=\"bold\" fill=\"#222222\">{}</text>",
+                cell.x + cell.size * 0.8,
+                cell.y + cell.size * 0.2,
+                escape_xml(&svg.font_family),
+                escape_xml(annotation)
+            ));
         }
         for region in &scene.cluster_regions {
             out.push_str(&format!(
@@ -1041,4 +1117,99 @@ mod tests {
         invalid.width = f64::NAN;
         assert_eq!(render_rgba(&invalid, RasterOptions::new(10, 10)).unwrap_err().code, "renderer.output.invalid_options");
     }
+    #[test]
+    fn renders_scene_v1_statistical_overlays_in_svg_and_rgba() {
+        let mut scene = sample_scene();
+        let dark = RgbaColor { red: 34, green: 34, blue: 34, alpha: 255 };
+        let red = RgbaColor { red: 220, green: 20, blue: 60, alpha: 255 };
+        scene.cells[0].confidence_interval = Some(SceneConfidenceInterval {
+            lower: 0.6,
+            upper: 0.9,
+            x1: 22.0,
+            x2: 48.0,
+            y: 22.0,
+            cap_height: 6.0,
+            stroke_width: 2.0,
+            color: dark,
+        });
+        scene.cells[1].glyph = None;
+        scene.cells[1].significance = Some(SceneCellSignificance {
+            p_value: Some(0.01),
+            status: "significant".into(),
+            annotation: Some("A".into()),
+            blank: false,
+        });
+        scene.significance = Some(SceneSignificancePolicy {
+            mode: "stars".into(),
+            thresholds: vec![0.05, 0.01],
+            symbol: "*".into(),
+        });
+        scene.cells.push(SceneCell {
+            x: 10.0,
+            y: 60.0,
+            size: 20.0,
+            visible: true,
+            fill: RgbaColor::WHITE,
+            stroke: RgbaColor { red: 0, green: 0, blue: 0, alpha: 255 },
+            glyph: Some(CellGlyph::Circle { radius: 5.0, color: red }),
+            p_value: Some(0.04),
+            normalized_value: None,
+            significance: Some(SceneCellSignificance {
+                p_value: Some(0.04),
+                status: "significant".into(),
+                annotation: None,
+                blank: true,
+            }),
+            confidence_interval: Some(SceneConfidenceInterval {
+                lower: -0.5,
+                upper: 0.5,
+                x1: 12.0,
+                x2: 28.0,
+                y: 65.0,
+                cap_height: 6.0,
+                stroke_width: 2.0,
+                color: red,
+            }),
+        });
+
+        let svg_options = OutputOptions::Svg(crate::output::SvgOptions::new(
+            100.0,
+            100.0,
+            crate::output::SvgUnit::Pixels,
+        ));
+        let svg = SceneSvgRenderer.render(&scene, &svg_options).unwrap();
+        let RenderOutput::Svg(svg) = svg else { panic!("expected SVG output"); };
+        assert!(svg.contains("class=\"confidence-interval\""));
+        assert!(svg.contains("class=\"confidence-interval-cap\""));
+        assert!(svg.contains("class=\"significance-annotation\""));
+        assert!(svg.contains(">A</text>"));
+        assert!(!svg.contains("x1=\"12.00\""));
+
+        let rgba = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
+        let pixel = |x: usize, y: usize| {
+            let index = (y * rgba.width_px as usize + x) * 4;
+            [
+                rgba.pixels[index],
+                rgba.pixels[index + 1],
+                rgba.pixels[index + 2],
+                rgba.pixels[index + 3],
+            ]
+        };
+        assert_eq!(pixel(35, 22), [34, 34, 34, 255]);
+        assert_eq!(pixel(20, 65), [255, 255, 255, 255]);
+        assert_eq!(pixel(20, 70), [255, 255, 255, 255]);
+        let annotation_ink = (20..40).any(|y| {
+            (78..90).any(|x| pixel(x, y) == [34, 34, 34, 255])
+        });
+        assert!(annotation_ink, "RGBA output should contain significance annotation ink");
+    }
+
+    #[test]
+    fn bitmap_font_supports_significance_symbols_and_p_value_operators() {
+        assert_eq!(bitmap_glyph('*'), [0, 4, 21, 14, 21, 4, 0]);
+        assert_eq!(bitmap_glyph('<'), [2, 4, 8, 16, 8, 4, 2]);
+        assert_eq!(bitmap_glyph('>'), [8, 4, 2, 1, 2, 4, 8]);
+        assert_eq!(bitmap_glyph('='), [0, 31, 0, 31, 0, 0, 0]);
+    }
+
 }

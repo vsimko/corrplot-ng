@@ -2057,4 +2057,20 @@ mod tests {
     }
 
 
+    #[test]
+    fn scene_v1_statistical_overlays_are_retained() {
+        let source = include_str!("../../../prototypes/shared-svg/scene-v1-statistical-overlays.example.json");
+        let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
+        assert_eq!(scene.significance.as_ref().unwrap().mode, "stars");
+        assert_eq!(scene.cells[0].p_value, Some(0.001));
+        assert_eq!(scene.cells[0].significance.as_ref().unwrap().annotation.as_deref(), Some("**"));
+        assert!(scene.cells[0].confidence_interval.is_some());
+        assert_eq!(scene.cells[1].significance.as_ref().unwrap().status, "not_significant");
+        assert_eq!(scene.cells[5].significance.as_ref().unwrap().status, "unknown");
+        assert_eq!(scene.cells[6].significance.as_ref().unwrap().blank, true);
+        assert!(scene.cells[6].confidence_interval.is_some());
+        assert!(!scene.cells[8].visible);
+        assert_eq!(scene.cells[8].significance.as_ref().unwrap().annotation.as_deref(), Some("HIDDEN"));
+    }
+
 }
