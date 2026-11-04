@@ -63,11 +63,11 @@ export interface SceneCellInput {
   visible: boolean;
   fill: RgbaColorInput;
   stroke: RgbaColorInput;
-  glyph?: CellGlyphInput;
-  pValue?: number;
-  normalizedValue?: number;
-  significance?: SceneCellSignificanceInput;
-  confidenceInterval?: SceneConfidenceIntervalInput;
+  glyph?: CellGlyphInput | null;
+  pValue?: number | null;
+  normalizedValue?: number | null;
+  significance?: SceneCellSignificanceInput | null;
+  confidenceInterval?: SceneConfidenceIntervalInput | null;
 }
 
 export interface SceneTextInput {
@@ -115,12 +115,12 @@ export interface SceneClusterRegionInput {
 export interface SceneInput {
   width: number;
   height: number;
-  description?: string;
+  description?: string | null;
   cells: SceneCellInput[];
   texts: SceneTextInput[];
-  significance?: SceneSignificancePolicyInput;
-  legend?: SceneLegendEntryInput[];
-  clusterRegions?: SceneClusterRegionInput[];
+  significance?: SceneSignificancePolicyInput | null;
+  legend?: SceneLegendEntryInput[] | null;
+  clusterRegions?: SceneClusterRegionInput[] | null;
 }
 
 export interface SceneBuildOptionsInput {
