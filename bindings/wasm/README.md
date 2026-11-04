@@ -35,9 +35,10 @@ and wasm-pack.
 ~~~sh
 wasm-pack test --node
 npm run build
+npm run test:pack
 ~~~
 
-The npm package `@corrplot-ng/wasm` exports the generated browser ESM entry point from `pkg/`; run `npm pack --dry-run` to inspect the publishable package contents. The browser build is ESM and initializes asynchronously. Serve this directory
+The npm package `@corrplot-ng/wasm` exports the generated browser ESM entry point from `pkg/`. The build removes wasm-pack's generated nested ignore file, and `npm run test:pack` verifies that both the ESM entry point and WASM binary are present in the npm tarball. The browser build is ESM and initializes asynchronously. Serve this directory
 over HTTP (not `file://`) and open
 [`examples/browser/index.html`](examples/browser/index.html) to run the
 browser smoke example. The page checks matrix-to-SVG and matrix-to-RGBA output,
