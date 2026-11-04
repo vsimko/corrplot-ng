@@ -1004,9 +1004,9 @@ mod tests {
         assert!(svg.contains("stroke-width=\"2\""));
         assert!(svg.contains("class=\"legend-entry\""));
         assert!(svg.contains("NA"));
-        assert!(svg.contains("data-kind=\\"stop\\""));
+        assert!(svg.contains("data-kind=\"stop\""));
         let second_legend_x = 8.0 + 11.0 + 2.0 * 8.0 * 6.0 / 7.0 + 10.0;
-        assert!(svg.contains(&format!("x=\\"{second_legend_x}\\"")));
+        assert!(svg.contains(&format!("x=\"{second_legend_x}\"")));
 
         let rgba = render_rgba(&scene, RasterOptions::new(100, 100)).unwrap();
         let pixel = |x: usize, y: usize| {
