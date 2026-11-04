@@ -23,6 +23,8 @@ on:
       - "prototypes/shared-svg/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
   workflow_dispatch:
+  schedule:
+    - cron: '37 4 * * 4'
 
 permissions:
   contents: read
@@ -71,3 +73,19 @@ jobs:
         run: wasm-pack build --target nodejs --release --out-dir pkg-node
       - name: Compare Node and WASM semantics, SVG, and RGBA output
         run: node --test bindings/cross-backend/test-node-wasm-parity.cjs
+      - name: Smoke-test the Node/WASM benchmark harness without timing thresholds
+        if: github.event_name == 'pull_request'
+        run: node bindings/cross-backend/benchmark-node-wasm.mjs --smoke
+      - name: Measure native Node and Node-hosted WASM baselines
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        env:
+          CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/node-wasm-benchmark.json
+        run: node bindings/cross-backend/benchmark-node-wasm.mjs
+      - name: Upload native/WASM benchmark artifact
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        uses: actions/upload-artifact@v7
+        with:
+          name: node-wasm-benchmark-${{ github.run_id }}
+          path: ${{ runner.temp }}/node-wasm-benchmark.json
+          if-no-files-found: error
+          retention-days: 90
