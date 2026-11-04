@@ -73,8 +73,9 @@ The pull-request workspace workflow validates manifests, workspace links, Node b
 1. Builds each native platform package on its matching GitHub-hosted runner.
 2. Builds the browser WASM package.
 3. Stages the WASM and Node base package tarballs after the platform binaries.
-4. Stages the TypeScript facade after its runtime backends.
-5. Assembles all eight tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
+4. Stages the React adapter after the browser WASM package.
+5. Stages the TypeScript facade after its runtime backends.
+6. Assembles all eight tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
 
 The staging workflow now includes the React adapter tarball after WASM and before the TypeScript facade. The current bundle contains eight tarballs: four native platform packages, WASM, the main Node package, React, and the TypeScript facade.
 
