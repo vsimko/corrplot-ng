@@ -83,12 +83,12 @@ jobs:
         run: npm pack --dry-run
       - name: Install npm workspace dependencies for the TypeScript facade smoke
         run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
-      - name: Install the Linux esbuild executable omitted with optional dependencies
-        run: npm install --no-save --no-package-lock --ignore-scripts --omit=optional @esbuild/linux-x64@0.25.0
-      - name: Install the Rollup Linux binary omitted with optional dependencies
+      - name: Install Linux esbuild and Rollup binaries omitted with optional dependencies
         run: |
           rollup_version="$(node -p "require('./node_modules/rollup/package.json').version")"
-          npm install --no-save --no-package-lock --ignore-scripts --omit=optional "@rollup/rollup-linux-x64-gnu@${rollup_version}"
+          npm install --no-save --no-package-lock --ignore-scripts --omit=optional \
+            @esbuild/linux-x64@0.25.0 \
+            "@rollup/rollup-linux-x64-gnu@${rollup_version}"
       - name: Bundle the browser TypeScript facade against the built WASM package
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Build React Vite and esbuild browser bundles
