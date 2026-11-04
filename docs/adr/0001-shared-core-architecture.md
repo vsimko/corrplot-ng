@@ -156,12 +156,11 @@ guideline, while the installed package exceeds rextendr's 5 MB caution and
 needs explicit CRAN guidance before production R use. These are prototype
 measurements, not CRAN acceptance. The workflow verifies Rust/Cargo 1.78 and
 stable builds on Linux, macOS, and Windows. A controlled measurement of human
-maintainer time against C++/Rcpp has not been run; the existing 1–2 h versus
-2–4 h figures remain planning estimates, not observed effort.
+the C++/Rcpp comparison was discontinued by explicit project decision; historical 1–2 h versus 2–4 h figures remain planning estimates, not observed effort.
 
 ## Conditions for production rollout
 
-The strategic language decision and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern source-package policy, package footprint, and sustainable maintainer workflow.
+The strategic language decision (Rust only; C++/Rcpp rejected) and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern source-package policy, package footprint, and sustainable maintainer workflow.
 
 Before making the shared Rust crate a production R dependency:
 
@@ -185,5 +184,5 @@ No production package depends on either spike yet, so the shared-library rollout
 ## Revisit the rollout plan when
 
 - The shared-crate proof identifies a better crate boundary or binding strategy.
-- CRAN toolchain policy, Rcpp/rextendr maintenance costs, or binary distribution constraints change.
+- CRAN toolchain policy, rextendr maintenance costs, or binary distribution constraints change.
 - A full compatibility and performance comparison exists for representative corrplot workloads rather than only the current scene-v1 prototype.
