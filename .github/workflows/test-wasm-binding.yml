@@ -6,6 +6,7 @@ on:
       - "bindings/wasm/**"
       - "packages/typescript/**"
       - "packages/react/**"
+      - "packages/vue/**"
       - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
@@ -15,6 +16,7 @@ on:
       - "bindings/wasm/**"
       - "packages/typescript/**"
       - "packages/react/**"
+      - "packages/vue/**"
       - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
@@ -93,6 +95,8 @@ jobs:
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Build React Vite and esbuild browser bundles
         run: npm run build:browser-smoke --workspace=@corrplot-ng/react
+      - name: Build Vue Vite and esbuild browser bundles
+        run: npm run build:browser-smoke --workspace=@corrplot-ng/vue
       - name: Start React development server for Strict Mode smoke
         run: |
           nohup npm run dev:browser-smoke --workspace=@corrplot-ng/react -- --host 127.0.0.1 --port 4174 --strictPort > "$RUNNER_TEMP/react-vite.log" 2>&1 &
@@ -101,6 +105,15 @@ jobs:
             sleep 1
           done
           cat "$RUNNER_TEMP/react-vite.log"
+          exit 1
+      - name: Start Vue development server for browser smoke
+        run: |
+          nohup npm run dev:browser-smoke --workspace=@corrplot-ng/vue -- --host 127.0.0.1 --port 4175 --strictPort > "$RUNNER_TEMP/vue-vite.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4175/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/vue-vite.log"
           exit 1
       - name: Install Playwright
         if: matrix.node == 24
@@ -128,4 +141,5 @@ jobs:
           for browser in chromium firefox webkit; do
             echo "Running browser smoke test: $browser"
             CORRPLOT_BROWSER="$browser" node bindings/wasm/examples/browser/smoke.test.mjs
+            CORRPLOT_BROWSER="$browser" node packages/vue/test/browser/smoke.test.mjs
           done
