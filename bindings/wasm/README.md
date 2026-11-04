@@ -75,6 +75,12 @@ weekly/manual parity workflow uploads raw samples as a 90-day artifact; PRs
 only smoke-test the harness and never enforce timing thresholds. Memory
 deltas are snapshots, not peak-memory measurements.
 
+The same weekly/manual/main-branch browser run also records direct Canvas 2D
+versus WASM RGBA drawing for a deterministic 64×64 scene at 512×512 output.
+Chromium, Firefox, and WebKit each append timing samples and output sizes to a
+separate JSONL artifact. This is informational browser-runner evidence, not a
+pull-request timing gate.
+
 ## Browser threading and Canvas status
 
 The current build is single-threaded WebAssembly. It does not enable shared

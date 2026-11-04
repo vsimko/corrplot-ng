@@ -205,8 +205,10 @@ comprehensive runs use Node 24 and 26. Browser smoke coverage runs on Node
 informational WASM size/initialization/rendering baselines and a separate
 native Node versus Node-hosted WASM comparison. The latter records cold module
 loads, point-in-time memory snapshots, validation, scene construction, SVG,
-RGBA, and binary sizes for 2×2 and 64×64 workloads. These are informational
-artifacts, not per-PR performance gates.
+RGBA, and binary sizes for 2×2 and 64×64 workloads. The browser workflow also
+records direct Canvas 2D versus WASM RGBA drawing for a 64×64 scene at 512×512
+in Chromium, Firefox, and WebKit. These are informational artifacts, not
+per-PR performance gates.
 
 The TypeScript facade has tests in the foundation and npm-workspace
 workflows. It selects the runtime-specific Node or WASM backend and exposes
@@ -296,10 +298,15 @@ pull requests.
 The normalized-matrix TypeScript API (#145), direct Canvas (#144), Node and
 browser-WASM bindings, and React/Vue adapters (#291/#292) are implemented and
 have dedicated correctness or browser integration checks. Issue #146 remains
-partially open for broader scene-v1 semantics, CLI/R adapter fixture parity,
-additional reviewed visual comparisons, and performance baselines. R-host
-measurement evidence is tracked separately in #267/#238; worker orchestration
-and public npm publication (#293) remain separate or deferred work.
+partially open for broader scene-v1 presentation semantics, additional
+reviewed visual comparisons, and follow-up performance/resource evidence.
+The shared correlation fixture corpus is now exercised by the native CLI and
+R scene adapter, while Node/WASM scene, SVG, and RGBA parity is checked on
+shared workloads. Initial Node/WASM and browser Canvas timing artifacts are
+informational single-runner baselines, not production performance claims.
+R-host measurement evidence is tracked separately in #267/#238; worker
+orchestration and public npm publication (#293) remain separate or deferred
+work.
 
 When one of these interfaces is implemented:
 

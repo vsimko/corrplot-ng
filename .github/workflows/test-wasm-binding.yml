@@ -128,6 +128,7 @@ jobs:
         if: matrix.node == 24
         env:
           DEBUG: pw:api
+          CORRPLOT_BROWSER_BENCHMARK_OUTPUT: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && format('{0}/browser-canvas-benchmark.jsonl', runner.temp) || '' }}
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/corrplot-http.log 2>&1 &
           server_pid=$!
@@ -143,3 +144,11 @@ jobs:
             CORRPLOT_BROWSER="$browser" node bindings/wasm/examples/browser/smoke.test.mjs
             CORRPLOT_BROWSER="$browser" node packages/vue/test/browser/smoke.test.mjs
           done
+      - name: Upload browser Canvas performance artifact
+        if: matrix.node == 24 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-canvas-benchmark-${{ github.run_id }}
+          path: ${{ runner.temp }}/browser-canvas-benchmark.jsonl
+          if-no-files-found: error
+          retention-days: 90

@@ -37,7 +37,7 @@ every pull request:
 | --- | --- |
 | Native Rust CLI on Linux, macOS, and Windows | `test-rust-cli.yml`: manual dispatch and push to `main` |
 | Native Node binding on four OS/architectures and Node 22/24/26 | `test-node-native.yml`: manual dispatch and push to `main` |
-| Browser WASM on Node 24 and 26, including browser smoke and baseline artifact | `test-wasm-binding.yml`: manual dispatch, weekly schedule, and push to `main` |
+| Browser WASM on Node 24 and 26, including browser smoke and baseline artifacts | `test-wasm-binding.yml`: manual dispatch, weekly schedule, and push to `main`; Node 24 browser runs upload Canvas/RGBA timing samples for Chromium, Firefox, and WebKit |
 | Native Node vs Node-hosted WASM performance baseline | `test-node-wasm-parity.yml`: manual dispatch, weekly schedule, and push to `main`; PRs smoke-test the harness without timing thresholds |
 | WASM-in-R experiment on Ubuntu, Intel macOS, and Windows with pinned Wasmtime C API | `test-wasm-r-experiment.yml`: manual dispatch |
 | Generated rextendr offline package on Ubuntu, Intel macOS, and Windows | `rust-rextendr-offline-package.yml`: manual dispatch or pushes to the two experiment branches; the pull request still runs Ubuntu and the separate Windows binary smoke |
