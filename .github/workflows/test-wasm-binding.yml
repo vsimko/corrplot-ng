@@ -5,6 +5,7 @@ on:
     paths:
       - "bindings/wasm/**"
       - "packages/typescript/**"
+      - "packages/react/**"
       - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
