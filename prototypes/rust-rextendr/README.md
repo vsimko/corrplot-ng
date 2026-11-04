@@ -49,9 +49,10 @@ do not remove that metadata to suppress the NOTE.
 This remains an opt-in experiment in the disposable package generator, not
 a production R-package migration or CRAN acceptance. The source-tarball size
 is separate from the installed package size. CRAN guidance is still needed
-on the remaining NOTE and production package acceptability. Controlled human
-maintainer time versus the C++/Rcpp path remains unmeasured; existing effort
-ranges are planning estimates only.
+on the remaining NOTE and production package acceptability. The proposed human maintainer-time comparison against C++/Rcpp was
+discontinued by #269 on 2026-11-04. No comparative timings were collected;
+historical effort ranges remain unmeasured planning estimates and are not
+production-rollout gates.
 
 The generated R Cargo package uses Cargo's standard release profile. A
 controlled CI experiment compared it with a size-oriented profile

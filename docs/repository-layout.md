@@ -38,7 +38,7 @@ Future work may move these categories to clearer top-level locations such as `co
 - `implementations/r/` owns the production R-facing API and legacy compatibility behavior. Do not migrate it to rextendr as part of a layout cleanup.
 - `bindings/node/` is the experimental Node-API adapter. It exposes matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 compatibility rendering without duplicating semantics. `bindings/wasm/` exposes the corresponding browser-WASM operations over the same core. The runtime-isolated facade in `packages/typescript/` selects the appropriate backend. The optional React adapter in `packages/react/` and Vue adapter in `packages/vue/` consume only the browser WASM package and keep their frameworks as peer dependencies. Neither runtime binding or framework adapter may copy core algorithms.
 
-Rust is the accepted strategic shared-core implementation in ADR 0001. The scene-v1 JSON contract remains the language-neutral interchange and conformance format, not a competing implementation of the shared semantics. Production R rollout still requires CRAN guidance and measured maintainer effort.
+Rust is the accepted strategic shared-core implementation in ADR 0001. The scene-v1 JSON contract remains the language-neutral interchange and conformance format, not a competing implementation of the shared semantics. Production R adoption remains gated by CRAN disposition for the retained Cargo vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and evidence from the actual production package artifact. The C++/Rcpp maintainer-effort comparison was discontinued by #269.
 
 ## Shared fixture ownership
 
