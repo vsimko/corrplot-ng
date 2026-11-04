@@ -263,7 +263,7 @@ test("preserves typed-scene statistical metadata through the Node adapter", () =
         ...scene.cells[0],
         x: 10,
         significance: {
-          pValue: null, status: "unknown", annotation: null, blank: true,
+          status: "unknown", blank: true,
         },
         confidenceInterval: {
           lower: -0.5, upper: 0.5, x1: 12, x2: 18, y: 5,
