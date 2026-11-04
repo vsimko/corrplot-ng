@@ -83,6 +83,19 @@ try {
       !overlaySvg.includes('class="significance-annotation"')) {
     throw new Error("WASM typed-scene adapter dropped statistical overlays");
   }
+  const overlayRgba = engine.render(statisticalScene, {
+    format: "rgba",
+    widthPx: 100,
+    heightPx: 50,
+    background: { red: 255, green: 255, blue: 255, alpha: 255 },
+  });
+  const overlayIntervalOffset = (5 * overlayRgba.widthPx + 5) * 4;
+  if (overlayRgba.pixels[overlayIntervalOffset] !== 220 ||
+      overlayRgba.pixels[overlayIntervalOffset + 1] !== 20 ||
+      overlayRgba.pixels[overlayIntervalOffset + 2] !== 60 ||
+      overlayRgba.pixels[(5 * overlayRgba.widthPx + 15) * 4] === 220) {
+    throw new Error("WASM RGBA renderer did not preserve statistical overlay and blank-cell semantics");
+  }
   const overlayCanvas = document.createElement("canvas");
   engine.renderToCanvas(statisticalScene, overlayCanvas, {
     width: 100, height: 50, devicePixelRatio: 1,
