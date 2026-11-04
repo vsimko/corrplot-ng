@@ -58,6 +58,23 @@ per-pull-request performance gates. A weekly scheduled run and manual
 artifact retained for 90 days. Node.js 24/26 correctness tests still run on
 pull requests.
 
+The separate Node/native-WASM comparison is run from the repository root after
+building both backends:
+
+~~~sh
+(cd bindings/node && npm run build)
+(cd bindings/wasm && wasm-pack build --target nodejs --release --out-dir pkg-node)
+node bindings/cross-backend/benchmark-node-wasm.mjs
+~~~
+
+This benchmark first requires exact Node/WASM scene, SVG, RGBA metadata, and
+pixel parity. It then records cold module-load samples, point-in-time RSS/heap/
+external-memory deltas, validation and scene-construction timings for 2×2 and
+64×64 matrices, SVG/RGBA timings, and native-addon/WASM artifact sizes. The
+weekly/manual parity workflow uploads raw samples as a 90-day artifact; PRs
+only smoke-test the harness and never enforce timing thresholds. Memory
+deltas are snapshots, not peak-memory measurements.
+
 ## Browser threading and Canvas status
 
 The current build is single-threaded WebAssembly. It does not enable shared
