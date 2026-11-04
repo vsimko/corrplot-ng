@@ -64,7 +64,7 @@ const matrix = computed<MatrixInput>(() => ({
   kind: "correlation",
 }));
 
-const state = useCorrplot(matrix, () => ({
+const { svg, loading, error } = useCorrplot(matrix, () => ({
   title: "Revision " + revision.value,
   cellMethod: "ellipse",
 }));
@@ -72,13 +72,13 @@ const state = useCorrplot(matrix, () => ({
 
 <template>
   <button @click="revision += 1">Update matrix</button>
-  <p v-if="state.loading">Rendering…</p>
-  <p v-else-if="state.error" role="alert">{{ state.error.message }}</p>
+  <p v-if="loading">Rendering…</p>
+  <p v-else-if="error" role="alert">{{ error.message }}</p>
   <div
-    v-else-if="state.svg"
+    v-else-if="svg"
     role="img"
     aria-label="Correlation matrix"
-    v-html="state.svg"
+    v-html="svg"
   />
 </template>
 ~~~
