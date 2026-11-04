@@ -18,7 +18,7 @@ The machine-readable format is defined by
   accessible metadata;
 - supported negotiation modes.
 
-An optional host_targets array identifies host-owned targets that are not serialized files or buffers. The initial values are browser-canvas-2d and browser-offscreen-canvas-2d. A Canvas renderer still uses the same feature flags and strict/permissive negotiation rules; it does not add a second capability model. Existing declarations remain valid when this optional field is absent.
+An optional host_targets array identifies host-owned targets that are not serialized files or buffers. The browser TypeScript Canvas adapter always reports browser-canvas-2d and reports browser-offscreen-canvas-2d only when the current runtime can create an OffscreenCanvas 2D context. A Canvas renderer still uses the same feature flags and strict/permissive negotiation rules; it does not add a second capability model. Existing declarations remain valid when this optional field is absent.
 
 Current declarations:
 
