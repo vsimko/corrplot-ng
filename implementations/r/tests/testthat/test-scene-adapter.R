@@ -424,7 +424,7 @@ test_that("correlation scene adapter matches the shared correlation fixtures", {
       labels,
       info = case$id
     )
-    expect_length(scene$cells, length(labels)^2, info = case$id)
+    expect_length(scene$cells, length(labels)^2)
 
     scene_values <- matrix(
       vapply(scene$cells, function(cell) {
