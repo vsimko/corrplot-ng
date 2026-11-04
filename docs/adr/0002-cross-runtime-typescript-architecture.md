@@ -213,7 +213,7 @@ Deferred. They add cross-origin isolation, worker, browser-support, and deployme
 - Native and browser deployments require separate binding artifacts but do not maintain separate algorithms.
 - The TypeScript facade and binding packages add build and release work. Keep them thin and test their outputs against the shared Rust fixtures.
 - The core parses the matrix-bearing scene-v1 subset and constructs normalized-matrix scenes for Node/WASM SVG and RGBA operations. The TypeScript facade now exposes the initial normalized-matrix scene workflow and typed-scene rendering through runtime-isolated Node/browser entry points. Full scene-v1 presentation semantics and broader semantic/visual parity remain incomplete.
-- Production R adoption remains separately gated by the CRAN and maintainer-workflow conditions in ADR 0001.
+- Production R adoption remains separately gated by the CRAN vendor-metadata NOTE disposition, intended toolchain compatibility, and actual production-package evidence described in ADR 0001. The discontinued C++/Rcpp maintainer-effort comparison is not a gate.
 
 
 ## Package distribution and publication boundary
