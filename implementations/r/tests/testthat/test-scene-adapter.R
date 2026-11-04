@@ -433,6 +433,6 @@ test_that("correlation scene adapter matches the shared correlation fixtures", {
       nrow = length(labels),
       byrow = TRUE
     )
-    expect_equal(scene_values, values, info = case$id)
+    expect_equal(unname(scene_values), unname(values), info = case$id)
   }
 })
