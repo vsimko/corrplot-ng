@@ -4,6 +4,7 @@ import {
   type SceneBuildOptions,
   type SvgRenderOptions,
   type RgbaRenderOptions,
+  type CanvasRenderOptions,
 } from "@corrplot-ng/typescript";
 
 const matrix: MatrixInput = {
@@ -25,13 +26,20 @@ const rgbaOptions: RgbaRenderOptions = {
   heightPx: 256,
   background: { red: 255, green: 255, blue: 255, alpha: 255 },
 };
+const canvasOptions: CanvasRenderOptions = {
+  width: 256,
+  height: 256,
+  devicePixelRatio: 2,
+};
 
 export async function browserUsageExample() {
   const engine = await createCorrplotEngine({ backend: "wasm" });
   const scene = engine.createScene(matrix, sceneOptions);
   const svg: string = engine.render(scene, svgOptions);
   const rgba = engine.render(scene, rgbaOptions);
-  const capabilities = engine.getRendererCapabilities("rust-core-scene");
+  const canvas = document.createElement("canvas");
+  const canvasResult = engine.renderToCanvas(scene, canvas, canvasOptions);
+  const canvasCapabilities = engine.getCanvasRendererCapabilities();
   engine.dispose();
-  return { svg, rgba, capabilities };
+  return { svg, rgba, canvasResult, canvasCapabilities };
 }

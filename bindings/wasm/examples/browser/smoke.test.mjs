@@ -101,6 +101,19 @@ try {
   assert.equal(facadeResult.widthPx, 64);
   assert.equal(facadeResult.heightPx, 64);
   assert.equal(facadeResult.pixelLength, 64 * 64 * 4);
+  assert.equal(facadeResult.canvasWidthPx, 128);
+  assert.equal(facadeResult.canvasHeightPx, 128);
+  assert.ok(facadeResult.paintedPixels > 0, "direct Canvas renderer must paint scene pixels");
+  assert.ok(facadeResult.canvasHostTargets.includes("browser-canvas-2d"));
+  assert.equal(
+    facadeResult.offscreenSupported,
+    facadeResult.canvasHostTargets.includes("browser-offscreen-canvas-2d"),
+    "OffscreenCanvas capability must reflect the current browser runtime",
+  );
+  if (facadeResult.offscreenSupported) {
+    assert.equal(facadeResult.offscreenWidthPx, 64);
+    assert.equal(facadeResult.offscreenHeightPx, 64);
+  }
   assert.deepEqual(facadeErrors, [], "TypeScript facade page raised an uncaught error");
 
   const reactPage = await browser.newPage();
@@ -208,7 +221,7 @@ try {
   );
   assert.deepEqual(strictModeErrors, [], "React Strict Mode development page raised an uncaught error");
 
-  console.log(`${browserName} WASM, TypeScript facade, and React production/Strict Mode smoke passed.`);
+  console.log(`${browserName} WASM, TypeScript facade, direct Canvas/OffscreenCanvas, and React production/Strict Mode smoke passed.`);
 } finally {
   await browser.close();
 }

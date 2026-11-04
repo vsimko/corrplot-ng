@@ -42,9 +42,35 @@ const rgba = engine.render(scene, {
 engine.dispose();
 ```
 
-The facade exposes matrix validation, Rust-backed normalized-matrix-to-scene construction through `createScene()`, rendering of renderer-neutral scenes to SVG or RGBA, renderer capabilities, and idempotent disposal. `MatrixInput` uses row-major numeric values; ordinary arrays may contain explicit `null` cells, while numeric typed arrays use an optional boolean `missingMask` (`true` means missing). Scene construction currently requires a non-empty square matrix. The older `render(sceneV1Json, options)` path remains available for callers with a matrix-bearing scene-v1 JSON document. RGBA results contain JavaScript-owned `Uint8Array` pixels. Direct Canvas is not advertised until the browser adapter in #144 is implemented.
+The facade exposes matrix validation, Rust-backed normalized-matrix-to-scene construction through `createScene()`, rendering of renderer-neutral scenes to SVG or RGBA, renderer capabilities, diagnostic errors, and idempotent disposal. `MatrixInput` uses row-major numeric values; ordinary arrays may contain explicit `null` cells, while numeric typed arrays use an optional boolean `missingMask` (`true` means missing). Scene construction currently requires a non-empty square matrix. The older `render(sceneV1Json, options)` path remains available for callers with a matrix-bearing scene-v1 JSON document. RGBA results contain JavaScript-owned `Uint8Array` pixels.
 
-`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. `getRendererCapabilities("rust-core-scene")` optionally verifies the selected renderer ID. Tests and advanced integrations may inject an adapter through `adapter`.
+## Direct Canvas 2D rendering (browser only)
+
+The browser facade can draw the Rust-built renderer-neutral scene directly into a caller-owned `HTMLCanvasElement`, `OffscreenCanvas`, or Canvas 2D context. This path draws scene primitives with Canvas 2D; it does not serialize SVG or transfer an intermediate RGBA image.
+
+```ts
+const canvas = document.querySelector("canvas");
+if (!canvas) throw new Error("Canvas element is missing");
+
+const result = engine.renderToCanvas(scene, canvas, {
+  width: 640,
+  height: 640,
+  devicePixelRatio: window.devicePixelRatio,
+  background: { red: 255, green: 255, blue: 255, alpha: 255 },
+});
+
+console.log(result.widthPx, result.heightPx);
+const canvasCapabilities = engine.getCanvasRendererCapabilities();
+console.log(canvasCapabilities.host_targets);
+```
+
+Width and height are logical CSS pixels and default to the scene dimensions. The backing store is scaled by `devicePixelRatio`, which defaults to the current environment's value or `1`. For an HTML canvas, CSS width and height are set to the logical dimensions by default; pass `setCssSize: false` to leave CSS layout to the caller. The renderer preserves the context's previous state, letterboxes rather than crops, clips drawing to the viewport, and sets the canvas role and accessible label from the scene description when available.
+
+The canvas is cleared before each render by default. Its background defaults to opaque white; use `background: null` for a transparent cleared canvas. With `clear: false` and no explicit background, existing pixels are preserved.
+
+`OffscreenCanvas` uses the same API and can be used where its 2D context is supported, including worker contexts. The runtime capability declaration includes `browser-offscreen-canvas-2d` only when the current environment can create an OffscreenCanvas 2D context. The Canvas renderer supports the seven cell glyph methods, labels, scene text, and missing cells. It currently reports and rejects significance annotations, confidence intervals, legends, cluster regions, and plotmath labels rather than silently dropping them. Canvas rendering is unavailable from the Node runtime and fails with a `renderer.unsupported_feature` diagnostic.
+
+`backend: "auto"` selects native Node-API in Node.js and WebAssembly in browsers. Explicit unavailable backends fail with diagnostic-v1 errors. `getRendererCapabilities("rust-core-scene")` optionally verifies the selected shared Rust renderer ID; `getCanvasRendererCapabilities()` describes the separate browser-owned Canvas target. Tests and advanced integrations may inject an adapter through `adapter`.
 
 ## CommonJS on Node.js
 

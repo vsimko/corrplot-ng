@@ -72,7 +72,7 @@ function normalizeMatrixInput(input) {
   };
 }
 
-export function createEngine(adapter, backend) {
+export function createEngine(adapter, backend, canvasRenderer = null) {
   for (const method of ["validateMatrix", "renderMatrixSvg", "renderMatrixRgba", "getRendererCapabilities"]) {
     if (typeof adapter?.[method] !== "function") {
       fail("configuration.invalid_field", "configuration", `backend adapter is missing '${method}'`, `adapter.${method}`);
@@ -160,6 +160,20 @@ export function createEngine(adapter, backend) {
         return output;
       }
       fail("renderer.unsupported_feature", "renderer", `unsupported output format '${options?.format}'`, "output.format");
+    },
+    renderToCanvas(scene, target, options = {}) {
+      ensureActive();
+      if (typeof canvasRenderer?.render !== "function") {
+        fail("renderer.unsupported_feature", "direct Canvas rendering is available only in the browser runtime", "output.format");
+      }
+      return invoke(() => canvasRenderer.render(scene, target, options));
+    },
+    getCanvasRendererCapabilities() {
+      ensureActive();
+      if (typeof canvasRenderer?.getCapabilities !== "function") {
+        fail("renderer.unsupported_feature", "Canvas renderer capabilities are available only in the browser runtime", "renderer");
+      }
+      return invoke(() => canvasRenderer.getCapabilities());
     },
     getRendererCapabilities(rendererId) {
       ensureActive();

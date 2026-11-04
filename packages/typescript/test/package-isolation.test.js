@@ -21,6 +21,7 @@ test("browser facade and WASM package use the same canonical package name", asyn
   const browser = await readFile(new URL("src/browser.js", packageRoot), "utf8");
   assert.ok(browser.includes("@corrplot-ng/wasm"));
   assert.ok(!browser.includes("@corrplot-ng/native-node"));
+  assert.ok(browser.includes("./canvas.js"));
 });
 
 test("runtime entry points import only their matching backend", async () => {
@@ -31,6 +32,7 @@ test("runtime entry points import only their matching backend", async () => {
 
   assert.ok(node.includes("@corrplot-ng/native-node"));
   assert.ok(!node.includes("@corrplot-ng/wasm"));
+  assert.ok(!node.includes("./canvas.js"));
   assert.ok(commonJs.includes("@corrplot-ng/native-node"));
   assert.ok(!commonJs.includes("@corrplot-ng/wasm"));
 });

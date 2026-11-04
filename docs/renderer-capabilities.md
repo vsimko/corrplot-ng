@@ -24,6 +24,7 @@ Current declarations:
 
 - [Python SVG prototype](../prototypes/shared-svg/renderer-capabilities.json)
 - [Rust standalone CLI SVG output](../tools/corrplot-ng/renderer-capabilities.json)
+- Browser TypeScript Canvas 2D adapter (runtime declaration returned by `engine.getCanvasRendererCapabilities()`)
 
 The Rust CLI is a matrix-to-SVG application, not a general scene-v1 renderer.
 Its scene-v1 input path extracts labels and cell values and then creates a
