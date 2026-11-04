@@ -103,7 +103,112 @@ try {
   assert.equal(facadeResult.pixelLength, 64 * 64 * 4);
   assert.deepEqual(facadeErrors, [], "TypeScript facade page raised an uncaught error");
 
-  console.log(`${browserName} WASM and TypeScript facade smoke passed: SVG and Canvas outputs validated.`);
+  const reactPage = await browser.newPage();
+  const reactErrors = [];
+  reactPage.on("pageerror", error => reactErrors.push(error.message));
+  await reactPage.goto(
+    "http://127.0.0.1:4173/packages/react/test/browser/vite-dist/index.html",
+    { waitUntil: "networkidle" },
+  );
+  const reactPlot = reactPage.locator('[data-testid="corrplot"]');
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  let reactSvg = await reactPlot.locator("svg").evaluate(element => element.outerHTML);
+  assert.ok(reactSvg.includes("React smoke revision 0"), "React Strict Mode did not render the initial figure");
+
+  await reactPage.locator("#update").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"] svg')?.outerHTML.includes("React smoke revision 1"),
+    null,
+    { timeout: 15_000 },
+  );
+  reactSvg = await reactPlot.locator("svg").evaluate(element => element.outerHTML);
+  assert.ok(reactSvg.includes("gamma"), "React matrix update did not reach the rendered SVG");
+
+  await reactPage.locator("#toggle").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]') === null,
+    null,
+    { timeout: 10_000 },
+  );
+  await reactPage.locator("#toggle").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+
+  await reactPage.locator("#invalid").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "error",
+    null,
+    { timeout: 15_000 },
+  );
+  assert.ok(await reactPage.locator('[data-testid="corrplot"][role="alert"]').count());
+  await reactPage.waitForFunction(
+    () => document.querySelector("#error-count")?.textContent === "1",
+    null,
+    { timeout: 10_000 },
+  );
+  await reactPage.waitForTimeout(100);
+  assert.equal(await reactPage.locator("#error-count").textContent(), "1", "onError must not repeat when its callback rerenders the parent");
+
+  await reactPage.locator("#recover").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  await reactPage.locator("#invalid").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "error",
+    null,
+    { timeout: 15_000 },
+  );
+  await reactPage.waitForFunction(
+    () => document.querySelector("#error-count")?.textContent === "2",
+    null,
+    { timeout: 10_000 },
+  );
+  await reactPage.waitForTimeout(100);
+  assert.equal(await reactPage.locator("#error-count").textContent(), "2", "a later error should notify once again");
+  await reactPage.locator("#recover").click();
+  await reactPage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  assert.deepEqual(reactErrors, [], "React production integration page raised an uncaught error");
+
+  const strictModePage = await browser.newPage();
+  const strictModeErrors = [];
+  strictModePage.on("pageerror", error => strictModeErrors.push(error.message));
+  await strictModePage.goto("http://127.0.0.1:4174/", { waitUntil: "domcontentloaded" });
+  await strictModePage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  assert.ok(await strictModePage.locator('[data-testid="corrplot"] svg').count());
+
+  await strictModePage.locator("#toggle").click();
+  await strictModePage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]') === null,
+    null,
+    { timeout: 10_000 },
+  );
+  await strictModePage.locator("#toggle").click();
+  await strictModePage.waitForFunction(
+    () => document.querySelector('[data-testid="corrplot"]')?.getAttribute("data-status") === "ready",
+    null,
+    { timeout: 30_000 },
+  );
+  assert.deepEqual(strictModeErrors, [], "React Strict Mode development page raised an uncaught error");
+
+  console.log(`${browserName} WASM, TypeScript facade, and React production/Strict Mode smoke passed.`);
 } finally {
   await browser.close();
 }

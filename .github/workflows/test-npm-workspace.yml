@@ -49,6 +49,8 @@ jobs:
         run: npm run test:node
       - name: Test TypeScript facade
         run: npm run test:typescript
+      - name: Test React integration
+        run: npm run test:react
       - name: Test and build browser WASM binding
         working-directory: bindings/wasm
         run: |

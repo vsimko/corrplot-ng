@@ -5,6 +5,7 @@ on:
     paths:
       - "bindings/wasm/**"
       - "packages/typescript/**"
+      - "packages/react/**"
       - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
@@ -13,6 +14,7 @@ on:
     paths:
       - "bindings/wasm/**"
       - "packages/typescript/**"
+      - "packages/react/**"
       - "package.json"
       - "crates/corrplot-core/**"
       - ".github/workflows/test-wasm-binding.yml"
@@ -62,7 +64,7 @@ jobs:
         run: wasm-pack test --node
       - name: Build browser ESM package
         working-directory: bindings/wasm
-        run: wasm-pack build --target web --release --out-dir pkg
+        run: npm run build
       - name: Measure WASM size, initialization, and renderer baselines
         if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         env:
@@ -78,13 +80,28 @@ jobs:
           retention-days: 90
       - name: Verify browser WASM npm package contents
         working-directory: bindings/wasm
-        run: npm pack --dry-run
+        run: npm run test:pack
       - name: Install npm workspace dependencies for the TypeScript facade smoke
         run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
-      - name: Install the Linux esbuild executable omitted with optional dependencies
-        run: npm install --no-save --no-package-lock --ignore-scripts --omit=optional @esbuild/linux-x64@0.25.0
+      - name: Install Linux esbuild and Rollup binaries omitted with optional dependencies
+        run: |
+          rollup_version="$(node -p "require('./node_modules/rollup/package.json').version")"
+          npm install --no-save --no-package-lock --ignore-scripts --omit=optional \
+            @esbuild/linux-x64@0.25.0 \
+            "@rollup/rollup-linux-x64-gnu@${rollup_version}"
       - name: Bundle the browser TypeScript facade against the built WASM package
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
+      - name: Build React Vite and esbuild browser bundles
+        run: npm run build:browser-smoke --workspace=@corrplot-ng/react
+      - name: Start React development server for Strict Mode smoke
+        run: |
+          nohup npm run dev:browser-smoke --workspace=@corrplot-ng/react -- --host 127.0.0.1 --port 4174 --strictPort > "$RUNNER_TEMP/react-vite.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4174/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/react-vite.log"
+          exit 1
       - name: Install Playwright
         if: matrix.node == 24
         run: npm install --no-save --no-package-lock playwright@1.56.1
