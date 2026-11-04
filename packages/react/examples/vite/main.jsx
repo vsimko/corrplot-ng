@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Corrplot } from "@corrplot-ng/react";
 
@@ -19,7 +19,7 @@ function Demo() {
   const [mounted, setMounted] = useState(true);
   const [invalid, setInvalid] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
-  const matrix = invalid
+  const matrix = useMemo(() => invalid
     ? {
         labels: ["alpha", "beta"],
         rows: 2,
@@ -27,7 +27,13 @@ function Demo() {
         values: [1, 0.5],
         kind: "correlation",
       }
-    : validMatrix(revision);
+    : validMatrix(revision), [invalid, revision]);
+  const sceneOptions = useMemo(() => ({
+    cellMethod: "circle",
+    title: "React integration",
+    description: `React smoke revision ${revision}`,
+  }), [revision]);
+  const svgOptions = useMemo(() => ({ width: 240, height: 240 }), []);
 
   return (
     <section>
@@ -48,12 +54,8 @@ function Demo() {
       {mounted && (
         <Corrplot
           matrix={matrix}
-          sceneOptions={{
-            cellMethod: "circle",
-            title: "React integration",
-            description: `React smoke revision ${revision}`,
-          }}
-          svgOptions={{ width: 240, height: 240 }}
+          sceneOptions={sceneOptions}
+          svgOptions={svgOptions}
           ariaLabel="React integration smoke figure"
           onError={error => {
             setErrorCount(count => count + 1);
