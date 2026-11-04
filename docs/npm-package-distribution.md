@@ -24,7 +24,7 @@ npm run pack:dry-run
 
 The workspace uses Changesets for independent package versions and coordinated changelogs. Add a changeset for consumer-visible package changes with `npm run changeset`; do not add changesets for repository-only maintenance that does not alter published package contents.
 
-The planned `@corrplot-ng/core`, React, and Vue packages are not yet present. The initial `@corrplot-ng/typescript` facade and its public normalized-matrix scene workflow are implemented under #145; #291 and #292 cover the React and Vue adapters. Add each package to the workspace only when its own implementation establishes a manifest and public contract. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
+The planned `@corrplot-ng/core` and Vue packages are not yet present. The initial `@corrplot-ng/typescript` facade and its public normalized-matrix scene workflow are implemented under #145. The React adapter is implemented under #291 as a separate browser-only workspace package. The current facade remains named `@corrplot-ng/typescript`; renaming it is a separately reviewed migration, not part of workspace setup.
 
 ## Current implementation status — 2026-11-04
 
@@ -43,7 +43,7 @@ Public npm publication remains explicitly disabled and requires separate maintai
 | `@corrplot-ng/core` | Public TypeScript types, diagnostics, and runtime-neutral contracts | None; planned |
 | `@corrplot-ng/wasm` | Browser execution backend and WASM assets | WASM/browser only |
 | `@corrplot-ng/native-node` | Node.js execution backend | Node-API addon and matching platform package |
-| `@corrplot-ng/react` | Optional React components/hooks | React peer dependency and browser API; planned |
+| `@corrplot-ng/react` | Optional React component and hook | `@corrplot-ng/wasm`; React peer dependency; implemented |
 | `@corrplot-ng/vue` | Optional Vue components/composables | Vue peer dependency and browser API; planned |
 | `@corrplot-ng/typescript` | Initial runtime-selecting facade | Optional peer dependencies for the Node and WASM backends |
 
@@ -74,7 +74,7 @@ The pull-request workspace workflow validates manifests, workspace links, Node b
 2. Builds the browser WASM package.
 3. Stages the WASM and Node base package tarballs after the platform binaries.
 4. Stages the TypeScript facade after its runtime backends.
-5. Assembles all seven tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
+5. Assembles all eight tarballs into one CI artifact, records SHA-256 checksums, and documents the dependency order.
 
 The staging workflow now includes the React adapter tarball after WASM and before the TypeScript facade. The current bundle contains eight tarballs: four native platform packages, WASM, the main Node package, React, and the TypeScript facade.
 
