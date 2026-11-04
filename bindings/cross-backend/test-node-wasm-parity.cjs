@@ -30,9 +30,14 @@ const sceneV1Construction = fs.readFileSync(
   path.join(__dirname, "../../prototypes/shared-svg/scene-v1-construction.example.json"),
   "utf8",
 );
+const sceneV1Statistical = fs.readFileSync(
+  path.join(__dirname, "../../prototypes/shared-svg/scene-v1-statistical-overlays.example.json"),
+  "utf8",
+);
 const matrixFixtures = [
   { id: "canonical-missing-values", json: sceneV1 },
   { id: "construction-overrides-and-figure-text", json: sceneV1Construction },
+  { id: "statistical-overlays", json: sceneV1Statistical },
 ];
 const rgbaOptions = {
   widthPx: 380,
@@ -210,6 +215,36 @@ test("Node and WASM construct identical matrix RGBA across fixtures and cell met
       assert.deepEqual(Buffer.from(wasmOutput.pixels), nativeOutput.pixels, `${fixture.id} / ${method}: RGBA bytes differ`);
     }
   }
+});
+
+test("Node and WASM render scene-v1 statistical overlays identically", () => {
+  const nativeSvg = native.renderMatrixSvg(sceneV1Statistical, "circle");
+  const wasmSvg = unwrapSvg(wasm.renderMatrixSvg(sceneV1Statistical, "circle"));
+  assert.equal(wasmSvg, nativeSvg);
+  assert.ok(nativeSvg.includes('class="confidence-interval"'));
+  assert.ok(nativeSvg.includes('class="confidence-interval-cap"'));
+  assert.ok(nativeSvg.includes('class="significance-annotation"'));
+  assert.ok(nativeSvg.includes(">**</text>"));
+  assert.ok(!nativeSvg.includes('x1="112.00" y1="280.00" x2="180.00" y2="280.00"'));
+
+  const nativeOutput = native.renderMatrixRgba(sceneV1Statistical, "circle", rgbaOptions);
+  const wasmOutput = wasm.renderMatrixRgba(sceneV1Statistical, "circle", rgbaOptions);
+  assertRgbaParity(nativeOutput, wasmOutput, "scene-v1 statistical overlays");
+  const pixelAt = (output, x, y) => {
+    const offset = (y * output.widthPx + x) * 4;
+    return Array.from(output.pixels.subarray(offset, offset + 4));
+  };
+  assert.deepEqual(pixelAt(nativeOutput, 146, 112), [34, 34, 34, 255]);
+  assert.deepEqual(pixelAt(nativeOutput, 146, 280), [255, 255, 255, 255]);
+  const annotationInk = [];
+  for (let y = 86; y < 102; y++) {
+    for (let x = 166; x < 178; x++) {
+      if (pixelAt(nativeOutput, x, y).every((channel, index) => channel === [34, 34, 34, 255][index])) {
+        annotationInk.push([x, y]);
+      }
+    }
+  }
+  assert.ok(annotationInk.length > 0, "RGBA output should contain the supplied significance annotation");
 });
 
 
