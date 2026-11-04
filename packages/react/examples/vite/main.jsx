@@ -18,6 +18,7 @@ function Demo() {
   const [revision, setRevision] = useState(0);
   const [mounted, setMounted] = useState(true);
   const [invalid, setInvalid] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
   const matrix = invalid
     ? {
         labels: ["alpha", "beta"],
@@ -43,6 +44,7 @@ function Demo() {
         Recover plot
       </button>
       <output id="revision">{revision}</output>
+      <output id="error-count">{errorCount}</output>
       {mounted && (
         <Corrplot
           matrix={matrix}
@@ -54,6 +56,7 @@ function Demo() {
           svgOptions={{ width: 240, height: 240 }}
           ariaLabel="React integration smoke figure"
           onError={error => {
+            setErrorCount(count => count + 1);
             const output = document.querySelector("#error-message");
             if (output) output.textContent = error.message;
           }}
