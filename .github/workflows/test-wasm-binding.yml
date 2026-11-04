@@ -93,6 +93,15 @@ jobs:
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Build React Vite and esbuild browser bundles
         run: npm run build:browser-smoke --workspace=@corrplot-ng/react
+      - name: Start React development server for Strict Mode smoke
+        run: |
+          nohup npm run dev:browser-smoke --workspace=@corrplot-ng/react -- --host 127.0.0.1 --port 4174 --strictPort > "$RUNNER_TEMP/react-vite.log" 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4174/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/react-vite.log"
+          exit 1
       - name: Install Playwright
         if: matrix.node == 24
         run: npm install --no-save --no-package-lock playwright@1.56.1
