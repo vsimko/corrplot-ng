@@ -51,6 +51,8 @@ jobs:
         run: npm run test:typescript
       - name: Test React integration
         run: npm run test:react
+      - name: Test Vue integration
+        run: npm run test:vue
       - name: Test and build browser WASM binding
         working-directory: bindings/wasm
         run: |
