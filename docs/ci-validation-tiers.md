@@ -15,6 +15,7 @@ release packaging, and experimental measurements remain available on
 | `crates/corrplot-core/**`, `tools/corrplot-ng/**`, `prototypes/rust-rextendr/**` | `test-shared-rust-core.yml`: stable shared-core consumer, WASM portability, and declared MSRV checks |
 | `tools/corrplot-ng/**` or shared core / publication CLI inputs | `test-rust-cli.yml`: Ubuntu release build, CLI smoke, and installed-outside-checkout test |
 | `bindings/node/**` | `test-node-native.yml`: Linux x64 GNU on Node 24, including native addon tests and platform-package assembly |
+| `bindings/cross-backend/**` | `test-node-wasm-parity.yml`: Node 24 native/WASM semantic, SVG, and RGBA parity plus benchmark-harness smoke (no timing thresholds) |
 | `bindings/wasm/**`, `packages/typescript/**`, `package.json`, `crates/corrplot-core/**` | `test-wasm-binding.yml`: Node 24 WASM tests, browser ESM build, and TypeScript facade browser smoke |
 | `experiments/wasm-r/**` | `test-wasm-r-experiment.yml`: Ubuntu WASI and embedded-ABI builds, R/Node parity, and measurements |
 | `prototypes/rust-rextendr/**` | Ubuntu offline package/vendor build, shared-core consumer, Windows binary/install smoke, and the fast CRAN license-policy check |
