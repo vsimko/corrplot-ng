@@ -1,4 +1,4 @@
-import { createElement, useEffect, useState } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
 import { CorrplotError, renderMatrixToSvg } from "./renderer.js";
 
 export { CorrplotError };
@@ -44,9 +44,17 @@ export function Corrplot({
   onError,
 }) {
   const state = useCorrplot(matrix, sceneOptions, svgOptions);
+  const lastNotifiedError = useRef(null);
 
   useEffect(() => {
-    if (state.error) onError?.(state.error);
+    if (!state.error) {
+      lastNotifiedError.current = null;
+      return;
+    }
+    if (lastNotifiedError.current === state.error) return;
+
+    lastNotifiedError.current = state.error;
+    onError?.(state.error);
   }, [state.error, onError]);
 
   const { svg, loading, error } = state;
