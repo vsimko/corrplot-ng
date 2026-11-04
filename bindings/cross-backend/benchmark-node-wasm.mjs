@@ -196,7 +196,7 @@ const iterations = smoke
 const operations = {
   validateMatrix2x2: {
     native: measure(() => native.validateMatrix(smallMatrix), iterations.smallValidation, iterations.warmup),
-    wasm: measure(() => validateWasm(smallMatrix), iterations.smallValidation, iterations.warmup),
+    wasm: measure(() => wasm.validateMatrix(smallMatrix), iterations.smallValidation, iterations.warmup),
   },
   validateMatrix64x64: {
     native: measure(() => native.validateMatrix(largeMatrix), iterations.largeValidation, iterations.warmup),
