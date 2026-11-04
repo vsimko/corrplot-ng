@@ -190,6 +190,8 @@ test("Node and WASM construct identical matrix SVG across fixtures and cell meth
       const nativeSvg = native.renderMatrixSvg(fixture.json, method);
       const wasmSvg = unwrapSvg(wasm.renderMatrixSvg(fixture.json, method));
       assert.equal(wasmSvg, nativeSvg, `${fixture.id}: SVG output differs for ${method}`);
+      const expectedTitle = JSON.parse(fixture.json).title;
+      assert.ok(nativeSvg.includes(`<title id="scene-title">${expectedTitle}</title>`), `${fixture.id}: accessible SVG title missing`);
     }
   }
 });
