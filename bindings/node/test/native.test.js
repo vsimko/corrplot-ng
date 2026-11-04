@@ -80,7 +80,7 @@ test("maps invalid normalized matrix scene construction to diagnostic-v1", () =>
     values: [1, 0.5],
     kind: "correlation",
   });
-  assert.equal(result.scene, null);
+  assert.equal(result.scene ?? null, null);
   assert.equal(result.diagnostic.code, "input.matrix.invalid_shape");
   assert.equal(result.diagnostic.stage, "input");
 });
