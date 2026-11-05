@@ -85,12 +85,68 @@ jobs:
         run: npm run test:pack
       - name: Install npm workspace dependencies for the TypeScript facade smoke
         run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
-      - name: Install Linux esbuild and Rollup binaries omitted with optional dependencies
+      - name: Install matching Linux esbuild and Rollup binaries omitted with optional dependencies
+        shell: bash
         run: |
+          set -euo pipefail
+          root_esbuild_version="$(node -p "require('./node_modules/esbuild/package.json').version")"
           rollup_version="$(node -p "require('./node_modules/rollup/package.json').version")"
           npm install --no-save --no-package-lock --ignore-scripts --omit=optional \
-            @esbuild/linux-x64@0.25.0 \
+            "@esbuild/linux-x64@${root_esbuild_version}" \
             "@rollup/rollup-linux-x64-gnu@${rollup_version}"
+
+          # Vite can install its own esbuild version when it is incompatible
+          # with the workspace's direct esbuild dependency. Install the matching
+          # optional binary beside that nested host instead of reusing the
+          # workspace binary (which may have a different version).
+          vite_esbuild_package="node_modules/vite/node_modules/esbuild/package.json"
+          if [[ -f "$vite_esbuild_package" ]]; then
+            vite_esbuild_version="$(node -p "require('./${vite_esbuild_package}').version")"
+            npm install --prefix node_modules/vite --no-save --no-package-lock \
+              --ignore-scripts --omit=optional "@esbuild/linux-x64@${vite_esbuild_version}"
+          fi
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          function assertMatchingBinary(hostPath, binaryPath, label) {
+            if (!fs.existsSync(hostPath)) {
+              throw new Error(`${label}: esbuild host package is missing at ${hostPath}`);
+            }
+            if (!fs.existsSync(binaryPath)) {
+              throw new Error(`${label}: matching Linux binary is missing at ${binaryPath}`);
+            }
+            const hostVersion = require(hostPath).version;
+            const binaryVersion = require(binaryPath).version;
+            if (hostVersion !== binaryVersion) {
+              throw new Error(
+                `${label}: esbuild host ${hostVersion} does not match Linux binary ${binaryVersion}`,
+              );
+            }
+            console.log(`${label}: esbuild host and Linux binary both use ${hostVersion}`);
+          }
+
+          assertMatchingBinary(
+            "./node_modules/esbuild/package.json",
+            "./node_modules/@esbuild/linux-x64/package.json",
+            "workspace",
+          );
+
+          const viteHost = "./node_modules/vite/node_modules/esbuild/package.json";
+          if (fs.existsSync(viteHost)) {
+            assertMatchingBinary(
+              viteHost,
+              "./node_modules/vite/node_modules/@esbuild/linux-x64/package.json",
+              "Vite nested",
+            );
+          }
+
+          assertMatchingBinary(
+            "./node_modules/rollup/package.json",
+            "./node_modules/@rollup/rollup-linux-x64-gnu/package.json",
+            "Rollup",
+          );
+          NODE
       - name: Bundle the browser TypeScript facade against the built WASM package
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Build React Vite and esbuild browser bundles
