@@ -1,7 +1,7 @@
 ---
 type: Engineering Plan
 title: Shared-core benchmark plan
-description: Define a fair, reproducible comparison of candidate shared-core implementations for corrplot-ng.
+description: Archived historical plan for evaluating shared-core candidates before ADR 0001 selected Rust.
 tags:
   - architecture
   - benchmarks
