@@ -144,6 +144,10 @@ The completed nine-job matrix records:
 The C shim uses a monotonic high-resolution clock. Process-lifetime peak RSS includes R and Wasmtime allocations; it is not a WASM-only memory measurement. macOS peak RSS is unavailable through this `getrusage` path and is explicitly reported as unavailable. The process-based WASI RSS deltas describe only the parent R or Node process, not the spawned Wasmtime child.
 
 The raw artifacts and machine-readable summaries are linked from [the 2026-11-05 results report](results/benchmark-2026-11-05.md).
+
+Committed fixture JSON is pinned to LF in `.gitattributes`, and the workflow
+rejects CRLF fixture bytes before hashing. This removes the Windows checkout
+hash drift observed in the completed matrix for the five committed fixtures.
 Do not use this first JSON/stdin process path as the final high-throughput
 interface; it is a feasibility baseline.
 
