@@ -41,9 +41,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: npm-${{ runner.os }}-node-24-${{ hashFiles('package.json', '**/package.json') }}
+          key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('package.json', '**/package.json') }}
           restore-keys: |
-            npm-${{ runner.os }}-node-24-
+            npm-workspace-${{ runner.os }}-node-24-
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
