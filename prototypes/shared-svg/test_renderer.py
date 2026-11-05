@@ -18,7 +18,7 @@ class PlotSceneTests(unittest.TestCase):
             (HERE.parents[1] / "fixtures" / "matrix-input-v1" / "correlation-cases.json").read_text(encoding="utf-8")
         )["cases"]
         cls.golden_scene = json.loads(
-            (HERE / "scene-v1.example.json").read_text(encoding="utf-8")
+            (HERE.parents[1] / "fixtures" / "scene-v1" / "scene-v1.example.json").read_text(encoding="utf-8")
         )
 
     def test_scene_is_renderer_neutral_json_data(self):
