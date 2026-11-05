@@ -71,6 +71,6 @@ The hook accepts optional SVG settings as its third argument. Memoize matrix and
 
 ## Browser-only dependency boundary
 
-The runtime dependency is @corrplot-ng/wasm; React is a peer dependency. No native Node package, Node built-in, or Node-only runtime import is part of the browser dependency graph. Production bundling is checked with Vite and esbuild. The browser smoke test runs under Chromium, Firefox, and WebKit.
+The runtime dependency is @corrplot-ng/wasm; React is a peer dependency. No native Node package, Node built-in, or Node-only runtime import is part of the browser dependency graph. Production bundling is checked with Vite and esbuild. The Playwright browser smoke test runs under Chromium, Firefox, and WebKit. It verifies the initial Strict Mode render, matrix updates, unmount/remount, invalid-input error reporting, and recovery.
 
 Public npm publication remains deferred. The package is built and packed as part of the repository's non-publishing workspace and staging workflows.
