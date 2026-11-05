@@ -98,11 +98,11 @@ a complete language package or proof of shared compiled implementation.
 | R package | Provisional implementation | Default plotting delegates to upstream corrplot. It also provides normalized matrix/file adapters, statistical and palette helpers, and an experimental scene-v1 preparation path. It is not a complete replacement renderer. |
 | Python | Reference/prototype | The shared scene/SVG prototype exercises scene construction and deterministic SVG output. It is not a production package or selected shared core. |
 | Rust shared core and CLI | Partial shared implementation | `crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
-| Rust/rextendr and C++/Rcpp | Evaluation spikes | These experiments inform architecture and packaging decisions. They are not production R backends. |
-| TypeScript / Node.js | Experimental implementation | The Node native binding and runtime-isolated TypeScript facade implement matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA, matrix-bearing scene-v1 compatibility rendering, capabilities, and diagnostics. The packages are not publicly released. |
-| Browser WebAssembly / Canvas | Experimental WASM implementation; direct Canvas planned | The browser-WASM binding implements the shared-core validation, normalized-matrix scene construction, and SVG/RGBA operations. Direct scene-to-Canvas/OffscreenCanvas rendering is not implemented, and the package is not publicly released. |
+| Rust/rextendr | Disposable evaluation adapter | It proves shared-crate reuse for selected operations; it is not the production R backend. |\n| C++/Rcpp | Rejected and retired | The prototype and dedicated CI were removed; it is not an approved fallback. |
+| TypeScript / Node.js | Experimental implementation | The Node native binding and runtime-isolated TypeScript facade implement matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA, matrix-bearing scene-v1 compatibility rendering, capabilities, diagnostics, and direct browser Canvas in the browser facade. The packages are not publicly released. |
+| Browser WebAssembly / Canvas | Experimental WASM implementation; direct Canvas implemented in TypeScript | The browser-WASM binding implements shared-core validation, normalized-matrix scene construction, and SVG/RGBA operations. The TypeScript/browser facade implements direct Canvas 2D rendering, with OffscreenCanvas conditional on a working 2D context. The packages are not publicly released. |
 
-The current support and test details are maintained in
+| React / Vue | Experimental browser-only adapters | The React component/hook and Vue component/composable consume the browser-WASM package; their tests cover lifecycle, reactive updates, and browser bundling. The packages are not publicly released. |\n\nThe current support and test details are maintained in
 [the architecture document](architecture.md),
 [the R implementation guide](../implementations/r/README.md),
 [the native CLI guide](../tools/corrplot-ng/README.md), and
@@ -121,21 +121,23 @@ The current support and test details are maintained in
 - The current shared core is a partial implementation, not a complete
   visualization engine. Scene-v1 parsing/building and broader plot semantics
   remain in progress.
-- The production R package has not migrated to Rust/rextendr. CRAN guidance
-  on the vendor-metadata NOTE and installed package size, plus a controlled
-  human maintainer-time comparison, remain rollout gates tracked in #173.
+- The production R package has not migrated to Rust/rextendr. Its remaining
+  adoption gates are CRAN disposition for the vendor-metadata NOTE,
+  compatibility with the intended CRAN toolchain, and validation of the
+  actual production-package artifact and footprint (#173). The proposed
+  human maintainer-time comparison was discontinued by #269 and is not a gate.
   Do not claim CRAN acceptance or authorize a production R migration.
-- C++/Rcpp remains a possible R-only fallback if Rust packaging proves
-  unacceptable; it is not the selected repository-wide shared core.
-- TypeScript, Node native bindings, browser WASM, Canvas, and cross-backend
-  parity remain future work with explicit dependencies.
+- C++/Rcpp was rejected and retired; it is not an R-only fallback.
+- TypeScript, Node native bindings, browser WASM, direct Canvas, and the React
+  and Vue adapters have implemented slices. Full scene-v1 presentation
+  semantics and broader cross-backend conformance remain unfinished.
 - Linux distribution repository adoption and DEB/RPM automation remain
   deferred under [issue #99](https://github.com/vsimko/corrplot-ng/issues/99).
 
 The strategic shared-core choice is already made. Further implementation
 should expand the Rust core behind its stable crate boundary and keep runtime
 adapters thin. Production rollout into the R package remains conditional on
-the external and maintainer evidence listed above. Contract interoperability
+the CRAN and production-artifact evidence listed above. Contract interoperability
 remains a complementary interchange and conformance boundary; it does not
 replace shared Rust execution for common production semantics.
 
