@@ -85,9 +85,9 @@ The table uses the 512×512 fixture. Process-based values time one spawned wasmt
 
 | Platform | R-host Wasmtime CLI invocation ms | Node-host Wasmtime CLI invocation ms | Embedded Wasmtime init ms | Embedded first-call ms | R process peak RSS after first call | WASM linear memory after first call |
 |---|---:|---:|---:|---:|---:|---:|
-| Ubuntu Linux x86-64 | 23.0 [22.0–24.0] | 23.4 [22.1–25.5] | 45.9 [34.7–62.8] | 16.6 [14.5–25.8] | 104.85 MiB [104.09–105.55] MiB (n=9) | 10.75 MiB |
+| Ubuntu Linux x86-64 | 23.0 [22.0–24.0] | 23.4 [22.1–25.5] | 45.9 [34.7–62.8] | 16.6 [14.5–25.8] | 104.85 [104.09–105.55] MiB (n=9) | 10.75 MiB |
 | macOS 15 Intel x86-64 | 53.0 [45.0–73.0] | 39.2 [38.4–62.9] | 59.0 [43.1–74.2] | 20.8 [18.2–35.6] | Unavailable on Darwin; JSON null + note (n=9) | 10.75 MiB |
-| Windows x86-64 GNU | 40.0 [30.0–50.0] | 37.3 [24.0–40.8] | 53.5 [32.2–65.2] | 15.1 [10.2–18.5] | 99.91 MiB [99.38–100.70] MiB (n=9) | 10.75 MiB |
+| Windows x86-64 GNU | 40.0 [30.0–50.0] | 37.3 [24.0–40.8] | 53.5 [32.2–65.2] | 15.1 [10.2–18.5] | 99.91 [99.38–100.70] MiB (n=9) | 10.75 MiB |
 
 macOS does not expose process-lifetime ru_maxrss through the getrusage interface used here. The R host records current RSS snapshots but emits JSON null plus an explicit unavailability note for process peak RSS; it does not substitute an RSS snapshot and label it as a peak. Linux and Windows process peak RSS includes the R process and Wasmtime allocations, not WASM-only memory. WASM linear memory is reported separately.
 
