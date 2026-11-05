@@ -9,11 +9,13 @@ on:
       - ".github/workflows/rust-rextendr-offline-package.yml"
       - "prototypes/rust-rextendr/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
   workflow_dispatch:
   pull_request:
     paths:
       - "prototypes/rust-rextendr/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/rust-rextendr-offline-package.yml"
 
 permissions:
@@ -50,8 +52,6 @@ jobs:
         with:
           packages: |
             any::rextendr
-            any::devtools
-            any::usethis
             any::testthat
       - name: Generate temporary R package with rextendr
         run: Rscript prototypes/rust-rextendr/prepare-r-package.R
