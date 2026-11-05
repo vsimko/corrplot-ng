@@ -229,8 +229,12 @@ typed-array normalization, capability lookup, diagnostics, and disposal.
 The direct browser Canvas 2D adapter adds `renderToCanvas()` for HTMLCanvasElement,
 OffscreenCanvas, and caller-provided 2D contexts; its browser smoke uses a
 checked-in visual fixture compared with the shared Rust RGBA renderer. The
-React and Vue adapters (#291/#292) are browser-only packages with framework
-lifecycle and browser-bundle checks.
+React and Vue adapters (#291/#292) are browser-only packages with unit,
+type, and browser-bundle checks. The browser-WASM workflow also runs Playwright
+smoke tests for both adapters in Chromium, Firefox, and WebKit. The React smoke
+covers Strict Mode mounting, matrix updates, unmount/remount, invalid-input
+errors, and recovery; the Vue smoke covers component/composable lifecycle,
+reactive updates, errors, and recovery.
 
 The native CLI and R scene adapter consume the shared correlation and
 general-numeric fixture corpora where their input contracts support them.
