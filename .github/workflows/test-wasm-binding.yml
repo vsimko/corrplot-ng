@@ -198,6 +198,7 @@ jobs:
           for browser in chromium firefox webkit; do
             echo "Running browser smoke test: $browser"
             CORRPLOT_BROWSER="$browser" node bindings/wasm/examples/browser/smoke.test.mjs
+            CORRPLOT_BROWSER="$browser" node packages/typescript/test/browser/smoke.test.mjs
             CORRPLOT_BROWSER="$browser" node packages/react/test/browser/smoke.test.mjs
             CORRPLOT_BROWSER="$browser" node packages/vue/test/browser/smoke.test.mjs
           done
