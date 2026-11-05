@@ -225,7 +225,8 @@ to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
 Potential renderer and parity work includes:
 
-- [#144 — Direct browser Canvas rendering](https://github.com/vsimko/corrplot-ng/issues/144).
+Direct browser Canvas rendering was implemented under [#144](https://github.com/vsimko/corrplot-ng/issues/144) and is no longer future work. Remaining renderer and parity work includes:
+
 - [#143 — Multi-format renderer umbrella](https://github.com/vsimko/corrplot-ng/issues/143).
 - [#146 — Cross-backend parity, visual regression, and performance tests](https://github.com/vsimko/corrplot-ng/issues/146).
 
