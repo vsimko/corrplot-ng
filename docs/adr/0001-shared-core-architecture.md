@@ -146,6 +146,16 @@ Linux uses GNU `--strip-debug`, macOS uses Apple's `-S`, and Windows remains uns
 
 The remaining NOTE reports hidden Cargo `.cargo-checksum.json` and `.cargo_vcs_info.json` metadata. These files are retained for offline dependency integrity and source provenance; do not remove them merely to silence the NOTE. The source archives are about 1.0 MiB on all three platforms. These are disposable-prototype measurements, not CRAN acceptance or production-package measurements. The CRAN disposition is tracked in #268.
 
+## R-host WASM distribution experiment — 2026-11-05
+
+The completed manual R-host matrix in workflow run [#41981917849](https://github.com/vsimko/corrplot-ng/actions/runs/41981917849) passed all nine runner jobs (three repetitions each on Ubuntu Linux, Intel macOS, and Windows). Node and R invoked matching WASI and embedded-ABI module bytes within each platform, and all six fixture responses matched across Node, R/Wasmtime, R/V8, native Rust, and the native-R reference. The detailed toolchain/platform matrix, module hashes, raw artifact links, and machine-readable results are recorded in [the R-host WASM benchmark report](../experiments/wasm-r/results/benchmark-2026-11-05.md).
+
+At the tested JSON validation boundary, the native Rust R binding had the lowest median latency on all six fixtures and all three platforms. For the 512×512 fixture it measured 5.19 ms/call on Ubuntu, 9.42 ms/call on Intel macOS, and 5.90 ms/call on Windows. Embedded Wasmtime initialization was 45.9–59.0 ms median and first-call latency 15.1–20.8 ms median. Its shared library measured 65.5–102.7 MiB, compared with a 144 KiB embedded ABI module and a 0.63–2.22 MiB native Rust R binding library. V8 and Wasmtime did not have a universal relative throughput winner.
+
+The measurements distinguish current process RSS snapshots, process-lifetime peak RSS, and WASM linear memory. Peak RSS includes R and Wasmtime allocations; it is not a WASM-only metric. Darwin peak RSS is explicitly unavailable and represented as JSON null rather than inferred from an RSS snapshot. WASM linear memory after the 512×512 call was 10.75 MiB.
+
+**Experiment recommendation: retain native Rust as the R integration direction and WASM for Node/browser consumers.** Process-based WASI remains a portability/feasibility baseline, not the preferred high-throughput R interface. These synthetic validation microbenchmarks are not corrplot rendering or end-to-end package benchmarks, do not establish CRAN acceptance, and do not authorize migration or release of the production R package. The production package, full dependency/license closure, offline installation, R CMD check --as-cran, supported-platform behavior, and the CRAN vendor-metadata disposition in #268 remain separate rollout gates.
+
 ## Conditions for production rollout
 
 The strategic language decision (Rust only; C++/Rcpp rejected) and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern CRAN disposition for the vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and validation of the actual production R package artifact and its footprint. The proposed C++/Rcpp human-effort comparison was discontinued by #269 and is not a gate.
