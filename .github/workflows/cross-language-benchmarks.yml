@@ -6,8 +6,6 @@ on:
       - ".github/workflows/cross-language-benchmarks.yml"
       - "benchmarks/**"
       - "prototypes/rust-rextendr/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
   workflow_dispatch:
     inputs:
       include_stress:
