@@ -64,17 +64,20 @@ updates:
       timezone: Europe/Berlin
     open-pull-requests-limit: 0
 
-  # The only npm dependencies currently declared are this project's own
-  # platform packages. Ignore them until the platform packages are published;
-  # future external npm dependencies in this manifest will be maintained.
+  # The root package.json defines one npm workspace containing bindings/node,
+  # bindings/wasm, and packages/*. Configure Dependabot at the workspace root
+  # so updates include the root manifest and each workspace package manifest.
+  # The four platform-specific native packages are unpublished build artifacts,
+  # not registry dependencies; keep them excluded from registry updates.
   - package-ecosystem: npm
-    directory: /bindings/node
+    directory: /
     schedule:
       interval: weekly
       day: monday
       time: "05:00"
       timezone: Europe/Berlin
     open-pull-requests-limit: 5
+    versioning-strategy: increase
     ignore:
       - dependency-name: "@corrplot-ng/native-node-linux-x64-gnu"
       - dependency-name: "@corrplot-ng/native-node-darwin-x64"
