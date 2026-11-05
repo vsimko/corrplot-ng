@@ -215,7 +215,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           for path in sorted(Path("experiments/wasm-r/fixtures").glob("*.json")):
-              if b"\\r\\n" in path.read_bytes():
+              if b"\r\n" in path.read_bytes():
                   raise SystemExit(f"fixture contains CRLF bytes: {path}")
           PY
           for FIXTURE in experiments/wasm-r/fixtures/*.json; do
