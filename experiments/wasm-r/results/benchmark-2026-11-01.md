@@ -1,3 +1,8 @@
+> Historical baseline (2026-11-01). This report preserves the initial single-run
+> measurements. The completed three-platform, three-repetition R-host matrix
+> and current decision are in [benchmark-2026-11-05.md](benchmark-2026-11-05.md).
+> Do not treat the limitations below as the current measurement status.
+
 # R backend benchmark results — 2026-11-01 CI run
 
 ## Scope and method
