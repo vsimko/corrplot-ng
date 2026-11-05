@@ -183,7 +183,7 @@ The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142) — initial browser-WASM binding and cross-browser smoke coverage implemented.
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145) — runtime-isolated Node/browser facade, normalized-matrix scene workflow, typed-array input, typed-scene SVG/RGBA, and compatibility rendering implemented.
 
-Direct browser Canvas rendering was implemented under [#144](https://github.com/vsimko/corrplot-ng/issues/144). Remaining integration and conformance work includes [#146 — Cross-backend parity, visual regression, and performance tests](https://github.com/vsimko/corrplot-ng/issues/146).
+Direct Canvas rendering (#144) and the initial cross-backend parity/visual-conformance suite (#146) are complete. Full scene-v1 presentation semantics remain incomplete beyond the matrix-bearing slice; R-host measurements are tracked separately in #267.
 
 **Completed integration gate:** the CLI and disposable R/rextendr adapter
 depend on the exact same reusable crate and call its matrix-validation API.
@@ -221,14 +221,9 @@ to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
 ### Phase 4 — Add output backends and parity only when consumers exist
 
-**Status:** Future work, dependent on Phases 1–3.
+**Status:** The initial multi-format renderer, direct Canvas, and cross-backend conformance slice is implemented. Further output formats remain future work and should be added only when a consumer and contract exist.
 
-Potential renderer and parity work includes:
-
-Direct browser Canvas rendering was implemented under [#144](https://github.com/vsimko/corrplot-ng/issues/144) and is no longer future work. Remaining renderer and parity work includes:
-
-- [#143 — Multi-format renderer umbrella](https://github.com/vsimko/corrplot-ng/issues/143).
-- [#146 — Cross-backend parity, visual regression, and performance tests](https://github.com/vsimko/corrplot-ng/issues/146).
+The initial implementation tracked by #143 (renderer output contract and SVG/raster), #144 (direct browser Canvas), and #146 (shared-fixture parity, browser visual conformance, renderer capabilities, and informational performance baselines) is complete. These issues are closed. Full scene-v1 presentation semantics remain limited to the current matrix-bearing subset; do not imply that the complete scene-v1 contract is implemented.
 
 Canvas is a browser adapter, not an SVG intermediate. Raster and Canvas
 renderers must declare capabilities and preserve the scene contract. Visual
