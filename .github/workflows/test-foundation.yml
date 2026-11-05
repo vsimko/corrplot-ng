@@ -49,7 +49,7 @@ jobs:
               - 'schemas/**'
               - 'crates/corrplot-core/renderer-capabilities.json'
               - '**/*.schema.json'
-              - '.github/workflows/test-foundation.yml'
+              - '.gitignore'\n              - 'docs/root-directory-policy.md'\n              - 'tools/repository/**'\n              - '.github/workflows/test-foundation.yml'
 
   fixture-integrity:
     name: Validate shared test fixtures
