@@ -5,6 +5,7 @@ on:
     paths:
       - "prototypes/rust-rextendr/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-rust-windows-binary.yml"
       - "docs/cran-rust-dependency-audit-results.md"
   workflow_dispatch:

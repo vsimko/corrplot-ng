@@ -5,12 +5,14 @@ on:
     paths:
       - "bindings/node/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
   push:
     branches: [main]
     paths:
       - "bindings/node/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
 
   workflow_dispatch:

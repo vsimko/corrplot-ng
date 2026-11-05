@@ -9,6 +9,7 @@ on:
       - "packages/vue/**"
       - "package.json"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "packages/vue/**"
       - "package.json"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
   schedule:
