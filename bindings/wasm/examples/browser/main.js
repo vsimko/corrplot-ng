@@ -39,7 +39,7 @@ try {
   });
   assert(validation.valid, validation.diagnostic?.message ?? "matrix validation failed");
 
-  const fixtureResponse = await fetch("/prototypes/shared-svg/scene-v1.example.json");
+  const fixtureResponse = await fetch("/fixtures/scene-v1/scene-v1.example.json");
   assert(fixtureResponse.ok, "could not load the canonical scene-v1 fixture");
   const matrixSceneV1 = await fixtureResponse.text();
   const constructionFixtureResponse = await fetch("/prototypes/shared-svg/scene-v1-construction.example.json");

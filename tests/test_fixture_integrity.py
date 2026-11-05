@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "correlation-cases.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "matrix-input-v1" / "correlation-cases.json"
 LEGACY_VISUAL_PATH = Path(__file__).parent / "legacy-visual" / "cases.json"
 R_LEGACY_VISUAL_PATH = (
     Path(__file__).parent.parent
