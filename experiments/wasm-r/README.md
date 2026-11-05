@@ -106,17 +106,17 @@ can ship only the `.wasm` file: the R embedding still needs a platform-specific
 native `libwasmtime` and a C compiler/toolchain to build the small host shim.
 The module itself is portable, but the host runtime is not.
 
-The native-R reference benchmark now runs the same JSON request decoding and
-validation contract. Both R benchmarks warm up first, estimate per-call cost,
-and adapt the measured iteration count to target roughly 0.5 seconds (bounded
-to 100–10,000 calls), avoiding zero-millisecond readings for tiny fixtures. In addition to the small
-correlation fixtures, the suite includes a 64×64 symmetric correlation
-matrix and 32×32/128×128 general-numeric matrices with explicit missing values. CI compares semantic responses with the
-embedded Wasmtime result and reports per-call timings. The larger fixtures help
-expose input parsing, allocation, and linear-memory transfer costs; they are
-still synthetic microbenchmarks. This is a
-microbenchmark of the validation boundary, not a full plotting benchmark; the
-reference implementation is intentionally isolated from the production package.
+The native-R reference benchmark runs the same JSON request decoding and
+validation contract as the other backends. The manual matrix warms up first and
+uses ten timed batches per backend/fixture with an adaptive call-count target
+of roughly one second per batch (bounded to 100–10,000 calls); the pull-request
+smoke uses three batches targeting 0.1 seconds. This avoids zero-millisecond
+readings for tiny fixtures. The suite includes a 64×64 symmetric correlation
+matrix and 32×32, 128×128, and 512×512 general-numeric matrices with explicit
+missing values. CI compares semantic responses with the embedded Wasmtime
+result and reports per-call timings. These are synthetic microbenchmarks of the
+validation boundary, not a full plotting benchmark; the reference
+implementation is intentionally isolated from the production package.
 
 The embedded ABI CI matrix has now passed three independent runner
 repetitions on Ubuntu, Intel macOS (`macos-15-intel`), and Windows
@@ -182,10 +182,11 @@ Rscript experiments/wasm-r/r/run-native-rust.R \
 ```
 
 The CI workflow runs all three R backends against the same fixtures and checks
-their semantic responses against the Wasmtime/Node results. Each backend now runs
-10 separately timed batches per fixture, targeting one second per batch after
-warm-up. The reported mean per-call time and 95% Student-t confidence interval
-are calculated across those batch-level measurements. This captures
+their semantic responses against the Wasmtime/Node results. In the manual
+matrix, each backend runs ten separately timed batches per fixture, targeting
+one second per batch after warm-up; pull-request smoke runs three batches at
+0.1 seconds. The reported mean per-call time and 95% Student-t confidence
+interval are calculated across those batch-level measurements. This captures
 within-process batch variability, not independent machine-to-machine variation.
 Set `CORRPLOT_BENCH_SAMPLES` and `CORRPLOT_BENCH_TARGET_SECONDS` to adjust
 the defaults.
@@ -202,9 +203,8 @@ and V8 8.2.1 (with platform-specific embedded V8 engine versions). The full
 dependency closure and production-package installation size remain follow-up
 work; the measured library/package sizes below are component sizes only.
 
-The experiment workflow is also being tightened to write Node, Rust, Cargo,
-Wasmtime CLI, Wasmtime C API archive/hash, and Rscript version metadata directly
-into future runtime-size artifacts.
+The workflow now writes Node, Rust, Cargo, Wasmtime CLI, Wasmtime C API
+archive/hash, and Rscript version metadata directly into runtime-size artifacts.
 
 
 ## Benchmark results
