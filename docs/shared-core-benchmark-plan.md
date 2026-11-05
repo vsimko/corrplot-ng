@@ -7,10 +7,12 @@ tags:
   - benchmarks
   - performance
   - maintainability
-status: proposed
+status: archived
 ---
 
 # Shared-core benchmark plan
+
+> **Archive — historical candidate-evaluation plan, not current architecture or CI guidance.** ADR 0001 selected Rust as the strategic shared-core implementation; C++/Rcpp was rejected and its prototype/CI were retired by PR #332. The proposed human maintainer-effort comparison was discontinued by #269 on 2026-11-04. Candidate lists and workflow descriptions below are preserved as historical planning context only. For current architecture see [ADR 0001](adr/0001-shared-core-architecture.md) and [the architecture overview](architecture.md); for active triggers see [CI validation tiers](ci-validation-tiers.md) and `.github/workflows/cross-language-benchmarks.yml`.
 
 ## Purpose
 
@@ -90,7 +92,13 @@ A candidate that fails correctness is reported as **not comparable** for that wo
 
 ## CI execution policy
 
-Performance benchmarks are intentionally not triggered by pull requests. Routine PR workflows run correctness and compatibility checks only. The dedicated **Performance benchmarks** GitHub Actions workflow runs the regular shared-core and cross-language suites only when manually started with `workflow_dispatch`; it has no scheduled trigger. B03/B04 stress measurements and the Ubuntu/macOS/Windows native package smoke matrix are separate opt-in inputs for manual runs. This keeps long-running measurements deliberate and prevents unrelated PRs from consuming benchmark capacity.
+The trigger description in this archived plan is historical and is not the current
+workflow contract. The former **Performance benchmarks** workflow has been
+superseded by `.github/workflows/cross-language-benchmarks.yml`. Pull requests
+run its path-filtered correctness/harness smoke; manual dispatch runs the
+regular and B03/B04 stress benchmark workloads. The active workflow and
+[CI validation tiers](ci-validation-tiers.md) are the source of truth for
+current triggers and path coverage.
 
 ## Metrics
 
