@@ -47,7 +47,7 @@ jobs:
           workspaces: |
             crates/corrplot-core -> target
             tools/corrplot-ng -> target
-          shared-key: rust-cli
+          shared-key: shared-core-stable
       - name: Verify CLI depends only on the local shared core
         shell: bash
         run: |

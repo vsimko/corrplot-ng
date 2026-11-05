@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: prototypes/rust-rextendr -> target
+          shared-key: rextendr-consumer
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: "4.4"
