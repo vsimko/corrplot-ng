@@ -16,6 +16,7 @@ from pathlib import PurePosixPath
 from typing import Iterable
 
 ALLOWED_ROOT_FILES = {
+    ".editorconfig",
     ".gitattributes",
     ".gitignore",
     "CITATION.cff",
@@ -110,7 +111,7 @@ def validate_paths(paths: Iterable[str]) -> tuple[list[str], list[str]]:
             continue
         root_entries.add(parts[0])
 
-        if any(part in GENERATED_DIRECTORY_NAMES for part in parts):
+        if any(part in GENERATED_DIRECTORY_NAMES or part.endswith(".Rcheck") for part in parts):
             errors.append(
                 f"{path}: generated dependency/build directory is tracked; "
                 "remove it from Git and keep it ignored"
