@@ -35,6 +35,7 @@ jobs:
   test:
     name: Test CLI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:

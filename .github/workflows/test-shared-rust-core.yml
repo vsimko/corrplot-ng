@@ -27,6 +27,7 @@ jobs:
   rextendr-consumer:
     name: Compile shared-core R/rextendr consumer
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -52,6 +53,7 @@ jobs:
 
   wasm32-portability:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -73,6 +75,7 @@ jobs:
 
   minimum-supported-toolchain:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.78.0

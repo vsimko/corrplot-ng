@@ -27,6 +27,7 @@ jobs:
   license-policy:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -46,6 +47,7 @@ jobs:
     # manually dispatched runs also perform vendoring and offline validation.
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
