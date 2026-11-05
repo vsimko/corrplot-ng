@@ -49,6 +49,9 @@ jobs:
               - 'schemas/**'
               - 'crates/corrplot-core/renderer-capabilities.json'
               - '**/*.schema.json'
+              - '.gitignore'
+              - 'docs/root-directory-policy.md'
+              - 'tools/repository/**'
               - '.github/workflows/test-foundation.yml'
 
   fixture-integrity:
@@ -63,6 +66,10 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: Check repository root policy
+        run: python tools/repository/check_root_policy.py
+      - name: Test repository root policy checker
+        run: python -m unittest discover -s tools/repository/tests -p 'test_*.py' -v
       - name: Install scene schema validator
         run: python -m pip install -r requirements-dev.txt
       - name: Set up Node.js
