@@ -227,57 +227,26 @@ R-host results.
 
 ## Decision record — 2026-11-05
 
-**Recommendation: (B) native Rust integration for R, with WebAssembly retained
-for Node.js/browser consumers.** This updates the provisional 2026-11-03
-recommendation using the completed R-host matrix. It is a distribution/runtime
-recommendation for the tested validation boundary, not approval to migrate or
-release the production R package.
+**Recommendation: (B) native Rust integration for R, with WebAssembly retained for Node.js/browser consumers.** This uses the completed manual R-host matrix from workflow run [#41981917849](https://github.com/vsimko/corrplot-ng/actions/runs/41981917849). It is a runtime/distribution recommendation for the tested validation boundary, not approval to migrate or release the production R package.
 
 ### Evidence
 
-- The manual workflow completed 3× Ubuntu, 3× Intel macOS, and 3× Windows
-  runner repetitions. For both process-based WASI and the embedded ABI, Node
-  and R reported matching module and fixture hashes within each platform and
-  returned equivalent semantic responses across all six fixtures.
-- Native Rust was fastest by median for all six fixtures on all three
-  platforms. On the 512×512 fixture it measured 5.62 ms/call on Ubuntu,
-  11.00 ms/call on Intel macOS, and 5.90 ms/call on Windows.
-- V8 and Wasmtime trade places depending on fixture and platform; neither is
-  consistently faster. Both are slower than the native Rust binding in these
-  measurements.
-- The embedded ABI module is about 144 KiB, but the Wasmtime shared library
-  ranges from 65.5 MiB to 102.7 MiB and the installed V8 package from 34.5 MiB
-  to 47.5 MiB. The native Rust R binding library ranges from 0.63 MiB to
-  2.22 MiB.
-- Embedded Wasmtime initialization is roughly 46–55 ms median and first-call
-  latency roughly 16–19 ms for the 512×512 fixture. Process-lifetime peak RSS
-  is about 105 MiB on Ubuntu and 100 MiB on Windows; Darwin peak RSS is
-  unavailable through the current `getrusage` interface. Wasmtime linear
-  memory is 10.75 MiB after the 512×512 call.
-- The process-based WASI route proves cross-runtime portability and semantic
-  parity, but each invocation pays spawned-process startup and JSON/stdin
-  transport costs. It remains a feasibility baseline, not the high-throughput
-  interface.
+- The manual workflow completed 3× Ubuntu, 3× Intel macOS, and 3× Windows runner repetitions. For both process-based WASI and the embedded ABI, Node and R reported matching module and fixture hashes within each platform and returned equivalent semantic responses across all six fixtures. All six fixture hashes were identical across operating systems after the LF checkout rule.
+- Native Rust was fastest by median for all six fixtures on all three platforms. On the 512×512 fixture it measured 5.19 ms/call on Ubuntu, 9.42 ms/call on Intel macOS, and 5.90 ms/call on Windows.
+- V8 and Wasmtime trade places depending on fixture and platform; neither is consistently faster. Both were slower than the native Rust binding in these measurements.
+- The embedded ABI module is about 144 KiB, but the Wasmtime shared library ranges from 65.5 MiB to 102.7 MiB and the installed V8 package from 34.5 MiB to 47.5 MiB. The native Rust R binding library ranges from 0.63 MiB to 2.22 MiB.
+- Embedded Wasmtime initialization medians were 45.9–59.0 ms and first-call medians 15.1–20.8 ms for the 512×512 fixture. Process-lifetime peak RSS was 104.85 MiB on Ubuntu and 99.91 MiB on Windows; Darwin peak RSS is unavailable through the current getrusage interface. Wasmtime linear memory was 10.75 MiB after the 512×512 call.
+- The process-based WASI route proves cross-runtime portability and semantic parity, but each invocation pays spawned-process startup and JSON/stdin transport costs. It remains a feasibility baseline, not the high-throughput interface.
 
 ### Why not (A) WASM-only for R
 
-A portable module does not remove the host runtime requirement. Embedding
-Wasmtime or V8 adds a large platform-specific native dependency, and neither
-WASM host outperformed the native Rust binding consistently. The measured
-component sizes are not a complete package dependency closure, and CRAN
-suitability has not been established.
+A portable module does not remove the host runtime requirement. Embedding Wasmtime or V8 adds a large platform-specific native dependency, and neither WASM host outperformed the native Rust binding consistently. The measured component sizes are not a complete package dependency closure, and CRAN suitability has not been established.
 
 ### Remaining gates before any production decision
 
-1. Build and measure the actual production R package candidate, not only the
-   disposable `extendr` adapter.
+1. Build and measure the actual production R package candidate, not only the disposable extendr adapter.
 2. Record complete source-tarball and installed dependency/license inventories.
-3. Verify offline source installation, `R CMD check --as-cran`, supported
-   platform behavior, and Windows binary installation without Rust on the
-   end user's PATH.
-4. Obtain authoritative CRAN/maintainer guidance on the retained Cargo
-   checksum/provenance NOTE tracked by #268.
+3. Verify offline source installation, R CMD check --as-cran, supported platform behavior, and Windows binary installation without Rust on the end user's PATH.
+4. Obtain authoritative CRAN/maintainer guidance on the retained Cargo checksum/provenance NOTE tracked by #268.
 
-Until those gates and an explicit maintainer decision are complete, keep this
-as an isolated experiment. Do not replace the production R backend, claim CRAN
-compatibility, or treat the WASM experiment as a production migration approval.
+Until those gates and an explicit maintainer decision are complete, keep this as an isolated experiment. Do not replace the production R backend, claim CRAN compatibility, or treat the WASM experiment as a production migration approval.
