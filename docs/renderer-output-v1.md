@@ -8,7 +8,7 @@ This document defines output selection independently of figure semantics, the Ru
 
 - **Scene:** describes plot meaning, geometry, annotations, and accessibility metadata. It does not select a file format.
 - **Output options:** select a serialized output format and its dimensions, typography, background, and density metadata. In Rust these are OutputOptions.
-- **Renderer:** consumes an immutable prepared scene and validated output options. The generic Renderer<Input> trait allows a typed shared Scene to be introduced without changing the output types.
+- **Renderer:** consumes an immutable typed scene and validated output options. The generic `Renderer<Input>` trait accepts typed inputs; the current `SceneSvgRenderer` and `RgbaRenderer` implementations consume `corrplot_core::raster::Scene` without changing the output types.
 - **Execution backend:** Node-API or WebAssembly. It does not change output semantics.
 - **Host target:** browser Canvas 2D is owned by the TypeScript/browser adapter. It is not a serialized file or a raw pixel buffer.
 
@@ -18,11 +18,11 @@ The existing publication-config-v1 includes an SVG output path and a fixed SVG f
 
 The Rust OutputFormat enum currently defines:
 
-| Format | Rust result | Contract |
+| Format | Rust contract type | Current availability |
 | --- | --- | --- |
-| svg | RenderOutput::Svg(String) | UTF-8 SVG document. |
-| png | RenderOutput::Png(Vec<u8>) | Encoded PNG bytes with the PNG signature. |
-| rgba | RenderOutput::Rgba(RgbaBuffer) | Owned raw RGBA8 pixel buffer. |
+| svg | `RenderOutput::Svg(String)` | Implemented by the shared SVG renderer. |
+| png | `RenderOutput::Png(Vec<u8>)` | Declared in the output types, but no current renderer emits PNG; encoding remains planned. |
+| rgba | `RenderOutput::Rgba(RgbaBuffer)` | Implemented by `RgbaRenderer` as an owned raw RGBA8 pixel buffer. |
 
 OutputOptions is a format-tagged enum. A renderer must validate the options before allocating output and return the matching RenderOutput variant. Call RenderOutput::validate_for(options) at the adapter boundary to check the format and output invariants.
 
@@ -36,7 +36,7 @@ OutputOptions is a format-tagged enum. A renderer must validate the options befo
 - Preserve the scene aspect ratio and center the scene in the viewport. Do not stretch or crop the plot.
 - Typography is explicit through font family and point size. Font availability and glyph metrics remain viewer-dependent; renderers must not claim that fonts are embedded unless they are.
 
-The current publication SVG path retains its existing physical mm/in sizing, viewBox, typography, and deterministic element ordering. It now adapts through the shared Renderer/OutputOptions types. The transitional adapter still accepts the publication input and builds its scene-v1 JSON internally because the Rust core does not yet expose a typed Scene. Existing output is regression-tested against the previous convenience method. The direct matrix CLI SVG path remains supported with its current dimensions and glyph behavior.
+The current publication SVG path retains its existing physical mm/in sizing, viewBox, typography, and deterministic element ordering. It now adapts through the shared Renderer/OutputOptions types. The transitional publication adapter still accepts publication input and builds its scene-v1 JSON internally; it has not yet been migrated to consume `corrplot_core::raster::Scene` directly. This is an adapter migration boundary, not an absence of a typed scene API in the Rust core. Existing output is regression-tested against the previous convenience method. The direct matrix CLI SVG path remains supported with its current dimensions and glyph behavior.
 
 ### PNG and raw RGBA
 
@@ -44,7 +44,7 @@ The current publication SVG path retains its existing physical mm/in sizing, vie
 - dpi is optional density metadata. It does not silently change the requested pixel dimensions.
 - Scale uniformly to fit the scene in the output viewport and center it. Do not crop or distort. Fill unused viewport area with the requested background.
 - Raster dimensions and buffer-size multiplication are checked before allocation. The initial RGBA renderer enforces a 128 MiB per-render pixel-buffer limit.
-- PNG output, when implemented, is an encoded PNG byte vector. When DPI is supplied, the PNG encoder should write equivalent physical-density metadata. The current renderer provides raw RGBA only.
+- No current renderer emits PNG: the shared renderer capability declaration advertises only `svg` and `rgba`, and `RgbaRenderer` accepts only `OutputOptions::Rgba`. When PNG encoding is implemented, it should produce an encoded PNG byte vector and write equivalent physical-density metadata when DPI is supplied. The current raster renderer provides raw RGBA only.
 - Raw RGBA output owns its byte vector and exposes the row stride. A consumer must not retain a borrowed pointer into Rust or WebAssembly memory.
 
 **Raw RGBA rendering is implemented as the initial bitmap backend in #154.** The typed `corrplot_core::raster::Scene` is consumed by both `SceneSvgRenderer` and `RgbaRenderer`; the RGBA path rasterizes directly to pixels and does not serialize/reparse SVG. PNG byte encoding remains a follow-up. The current bitmap text path uses a built-in 5x7 ASCII font with a replacement glyph for unsupported characters; it does not claim full font-family or plotmath shaping.
@@ -61,13 +61,13 @@ Raw RGBA v1 uses:
 - explicit stride_bytes, which must be at least width_px * 4;
 - an owned byte vector whose length is exactly stride_bytes * height_px.
 
-The PNG renderer must preserve the same pixel meaning and straight-alpha interpretation. The background is an explicit sRGB RGBA color. White is the default for compatibility; alpha zero requests a transparent background. A renderer must not silently premultiply alpha or change color space.
+A future PNG renderer must preserve the same pixel meaning and straight-alpha interpretation. The background is an explicit sRGB RGBA color. White is the default for compatibility; alpha zero requests a transparent background. A renderer must not silently premultiply alpha or change color space.
 
 ## Determinism
 
 - For the same scene, options, and renderer version, SVG serialization is deterministic: stable element/attribute order and numeric formatting.
 - Raw RGBA bytes are deterministic for the same scene, options, and renderer version.
-- PNG output must be pixel-equivalent for the same inputs. Compressed byte equality is not guaranteed across encoder versions unless the encoder and compression settings are pinned.
+- A future PNG encoder should preserve pixel-equivalent output for the same inputs. Compressed byte equality is not guaranteed across encoder versions unless the encoder and compression settings are pinned.
 - Renderer identity and version remain in the renderer-capabilities declaration and should be included in reproducibility metadata where available.
 - Visual comparisons between SVG and raster output use documented tolerances; they do not require byte equality across different renderers.
 
