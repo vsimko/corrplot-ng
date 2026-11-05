@@ -1,6 +1,6 @@
 # CRAN readiness: Rust integration
 
-**Status (2026-10-31):** the isolated `prototypes/rust-rextendr` scene-v1 spike has a reproducible, cross-platform source-package validation path. It is **not** the production R package and has **not** been accepted by CRAN. The latest recorded result is **PASS WITH ONE NOTE / EXTERNAL GUIDANCE REQUIRED**, not a clean CRAN check.
+**Status updated 2026-11-05 (validation evidence snapshot: 2026-10-31):** the isolated `prototypes/rust-rextendr` scene-v1 spike has a reproducible, cross-platform source-package validation path. It is **not** the production R package and has **not** been accepted by CRAN. The latest recorded result is **PASS WITH ONE NOTE / EXTERNAL GUIDANCE REQUIRED**, not a clean CRAN check.
 
 ## Current validation evidence
 
@@ -42,7 +42,7 @@ The CI workflow disables CRAN incoming and remote incoming checks. Therefore the
 
 ## External questions requiring a maintainer response
 
-No CRAN response or controlled human-effort measurement is recorded yet. The precise outstanding questions are:
+No CRAN response is recorded yet. The proposed human maintainer-effort comparison was discontinued by #269 on 2026-11-04 and is not a production-R gate. The remaining external questions are:
 
 1. **Vendor metadata NOTE:** Is retaining `.cargo-checksum.json` for offline Cargo integrity and `.cargo_vcs_info.json` for source provenance acceptable when both are explained in submission comments? If not, what packaging alternative does CRAN recommend that preserves verifiable offline builds?
 2. **Installed package size:** Is a 6.0 MB installed package (5.9 MB in `libs`) acceptable for this use case despite rextendr's 5 MB caution? What evidence or mitigation would CRAN expect?
