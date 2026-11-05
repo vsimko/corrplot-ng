@@ -301,7 +301,14 @@ jobs:
           {
             echo "Platform: $(uname -s)-$(uname -m)"
             echo "Independent runner repetition: ${{ matrix.repeat_index }}"
-            echo "R: $(R --version | head -n 1)"
+            echo "Node: $(node --version)"
+            echo "Rust compiler:"
+            rustc -Vv
+            echo "Cargo: $(cargo --version)"
+            echo "Wasmtime CLI: $(wasmtime --version)"
+            echo "Wasmtime C API archive: ${{ matrix.wasmtime_archive }}"
+            echo "Wasmtime C API archive SHA-256: ${{ matrix.wasmtime_sha256 }}"
+            echo "R: $(Rscript -e 'cat(R.version.string)')"
             echo "V8 package:"
             # shellcheck disable=SC2016
             Rscript -e 'cat(as.character(packageVersion("V8")), "\n"); p <- find.package("V8"); cat("installed_bytes=", sum(file.info(list.files(p, recursive=TRUE, full.names=TRUE))$size, na.rm=TRUE), "\n", sep="")'
