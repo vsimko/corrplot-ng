@@ -212,6 +212,12 @@ jobs:
           with open("experiments/wasm-r/fixtures/valid-general-512.json", "w", encoding="utf-8") as stream:
               json.dump(fixture, stream, separators=(",", ":"))
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in sorted(Path("experiments/wasm-r/fixtures").glob("*.json")):
+              if b"\\r\\n" in path.read_bytes():
+                  raise SystemExit(f"fixture contains CRLF bytes: {path}")
+          PY
           for FIXTURE in experiments/wasm-r/fixtures/*.json; do
             NAME="$(basename "$FIXTURE" .json)"
             node experiments/wasm-r/node/run.mjs "$WASM_MODULE" "$FIXTURE" > "$RESULTS_DIR/node-$NAME.json"
