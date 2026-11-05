@@ -59,7 +59,7 @@ Record the date, contact or guidance source, exact package/toolchain snapshot, q
 - Keep Cargo parallelism resource-bounded.
 - Include third-party copyright and license notices.
 - Verify source-package checks on supported platforms and review all remaining warnings/NOTEs.
-- Keep the production R package independent of Rust until a separate architecture decision authorizes adoption.
+- Keep the production R package independent of Rust until the CRAN disposition, intended toolchain, and actual production-package artifact/footprint gates in #173 are satisfied and a maintainer explicitly approves migration. ADR 0001 has already selected Rust as the strategic shared-core implementation; that choice does not itself authorize production R migration.
 
 Canonical references:
 
