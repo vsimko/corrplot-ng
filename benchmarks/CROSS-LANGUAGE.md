@@ -1,9 +1,8 @@
+> **Historical report — 2026-10-30 prototype comparison.** This document preserves the original Python, pure-R, C++/Rcpp and Rust/rextendr benchmark evidence. The C++/Rcpp prototype was later rejected and retired by PR #332; the proposed maintainer-effort comparison was discontinued by #269. Historical measurements below are not current benchmark results, do not represent a Rust-only rerun, and must not be used to reopen the architecture decision.
+
 # Cross-language scene-v1 benchmark
 
-This experimental benchmark compares the same scene-v1 semantics for Python,
-pure R, C++/Rcpp and Rust/rextendr. All candidates use identical deterministic
-inputs and must pass a recursive comparison against the Python-generated
-expected scene before their timings are accepted.
+At the reviewed snapshot, this experimental benchmark compared the same scene-v1 semantics for Python, pure R, C++/Rcpp and Rust/rextendr. All candidates used identical deterministic inputs and passed a recursive comparison against the Python-generated expected scene before their timings were accepted.
 
 ## Workloads
 
@@ -36,34 +35,11 @@ The target sample duration and sample count are fixed across candidates. Batch
 sizes may differ because candidate speeds differ. Runtime measurements exclude
 package compilation and installation; those are separate packaging evidence.
 
-## Run
+## Historical run procedure
 
-    python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
-    python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
-    Rscript -e 'install.packages(c("Rcpp", "jsonlite", "rextendr", "devtools", "usethis"))'
-    Rscript -e 'Rcpp::compileAttributes("prototypes/cpp-rcpp")'
-    R CMD INSTALL prototypes/cpp-rcpp
-    Rscript prototypes/rust-rextendr/prepare-r-package.R
-    R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
-    Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
+The original 2026-10-30 run used the following sequence. The C++/Rcpp setup and install commands have been retired and are intentionally omitted; they are not valid against current `main`. The historical workflow run links below preserve the original artifacts and measurements.
 
-CI runs the same workflow on a common Ubuntu runner and uploads fixtures and
-machine-readable results as a 90-day artifact.
-
-The Python reference is projected onto the explicit native `scene-v1` contract
-before fixture export and during correctness checks. The Python scene model also
-exposes renderer-facing extensions (for example glyph encodings and typography);
-these are outside the current C++/Rust spike contract and are intentionally
-excluded from this cross-language parity gate. The projection retains schema
-version, dimensions, labels, cell values/geometry, annotation and shared style.
-Projection tests run alongside the Python invalid-input tests in CI.
-
-The Python timing still measures construction and JSON encoding of the full
-current Python scene, including those extra renderer-facing fields. Pure R,
-C++/Rcpp and Rust/rextendr currently produce only the smaller scene-v1 contract.
-Consequently, Python timings include additional work and are not a strict
-like-for-like performance comparison until all candidates implement the same
-extended scene model; use these results as prototype-path measurements only.
+For the current Python, pure-R and Rust/rextendr benchmark workflow, follow [benchmarks/README.md](README.md) and `.github/workflows/cross-language-benchmarks.yml`. The current workflow no longer installs Rcpp or references the removed C++ prototype.
 
 ## Input validation parity
 
@@ -153,32 +129,31 @@ Updated end-to-end median milliseconds:
 | B06, long labels | 22.983 | 6452 | 21.500 | 18.375 |
 | B07, reorder | 23.100 | 6431 | 21.375 | 18.250 |
 
-The follow-up confirms the earlier ordering: Rust/rextendr is about 14–16%
-faster than C++/Rcpp and around 20% faster than Python for these workloads.
-The pure-R end-to-end path remains dominated by JSON encoding: on B02 its
-isolated construction median is about 34.5 ms, while JSON encoding alone is
-about 6.33 seconds. This is a property of the current prototype and serializer,
-not a general statement about R performance.
+The follow-up confirmed the ordering at that snapshot: Rust/rextendr was about
+14–16% faster than C++/Rcpp and around 20% faster than Python for these
+workloads. The pure-R end-to-end path remained dominated by JSON encoding:
+on B02 its isolated construction median was about 34.5 ms, while JSON encoding
+alone was about 6.33 seconds. These are historical prototype results, not
+current workflow measurements or a general statement about R performance.
 
 The updated measurements are still implementation-specific and limited to
 scene-v1 on one Linux runner. The Windows/macOS jobs validate source builds and
 semantic behavior only; they do not measure cross-platform performance or
-binary distribution readiness. The result is evidence for continued Rust and
-C++ evaluation, not a production-language decision.
+binary distribution readiness. The result was historical evidence from the two then-existing prototypes.
+C++/Rcpp was subsequently rejected and retired by PR #332; Rust is the sole
+selected native implementation.
 
 The complete raw inputs and measurements are retained in the
 [workflow artifact](https://github.com/vsimko/corrplot-ng/actions/runs/41051285476).
 
 ## Cross-platform package smoke tests
 
-The `package-smoke` job in
-`.github/workflows/cross-language-benchmarks.yml` builds and installs the
-C++/Rcpp and Rust/rextendr prototype packages on Ubuntu, macOS and Windows.
-It then runs `benchmarks/test_native_scene_v1.R` against the same five
-deterministic fixtures and checks semantic parity for pure R and both native
-bindings. This job is separate from the Ubuntu-only performance comparison:
-it validates source-build portability and runtime behavior, not speed or
-binary distribution readiness.
+At the time of the original report, the `package-smoke` job built and installed
+the C++/Rcpp and Rust/rextendr prototype packages on Ubuntu, macOS and Windows,
+then checked semantic parity for pure R and both native bindings. PR #332 later
+retired the C++/Rcpp implementation. The current package-smoke job builds and
+tests only the Rust/rextendr adapter plus the pure-R implementation; see
+[benchmarks/README.md](README.md) for current workflow behavior.
 
 ## Python large-matrix stress run (2026-10-30)
 

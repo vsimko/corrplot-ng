@@ -5,7 +5,6 @@ output_path <- args[[2]]
 stress_mode <- length(args) == 3L && identical(args[[3]], "--stress-mode")
 
 suppressPackageStartupMessages(library(jsonlite))
-suppressPackageStartupMessages(library(corrplotngcppspike))
 suppressPackageStartupMessages(library(corrplotngrustspike))
 source("benchmarks/scene_v1_reference.R")
 
@@ -105,7 +104,6 @@ for (case in fixture$workloads) {
   }
 
   candidates <- list(
-    Cpp_Rcpp = function() build_scene_json_cpp(labels, matrix, annotation),
     Rust_rextendr = function() build_scene_json_rust(labels, matrix, annotation)
   )
   for (candidate_name in names(candidates)) {
@@ -121,7 +119,7 @@ for (case in fixture$workloads) {
 payload <- list(
   schema_version = 2L,
   suite = "corrplot-ng-cross-language-scene-v1",
-  candidates = if (stress_mode) c("Python", "Cpp_Rcpp", "Rust_rextendr") else c("Python", "R_pure", "Cpp_Rcpp", "Rust_rextendr"),
+  candidates = if (stress_mode) c("Python", "Rust_rextendr") else c("Python", "R_pure", "Rust_rextendr"),
   timing_method = list(
     clock = "R proc.time elapsed with calibrated repeated batches",
     target_sample_ms = target_sample_ms,
@@ -133,9 +131,7 @@ payload <- list(
   environment = list(
     R = R.version.string, platform = R.version$platform,
     os = Sys.info()[["sysname"]], machine = Sys.info()[["machine"]],
-    cxx_compiler = system2("R", c("CMD", "config", "CXX"), stdout = TRUE),
     rustc = system2("rustc", "--version", stdout = TRUE),
-    rcpp_version = as.character(packageVersion("Rcpp")),
     rextendr_version = as.character(packageVersion("rextendr")),
     jsonlite_version = as.character(packageVersion("jsonlite"))
   ),

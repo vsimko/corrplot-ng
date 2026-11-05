@@ -17,9 +17,9 @@ def project_scene_v1(scene: dict) -> dict:
     """Project the evolving Python scene onto the deliberately smaller native v1 contract.
 
     The Python scene model also contains renderer-facing fields (glyph encodings,
-    typography, title/description, etc.). The C++ and Rust spikes implement only
-    this stable geometry/data contract, so those later extensions must not make
-    otherwise equivalent native implementations fail the parity gate.
+    typography, title/description, etc.). The pure-R builder and Rust/rextendr
+    adapter implement this stable geometry/data contract, so those later
+    extensions must not make equivalent consumers fail the parity gate.
     """
     label_fields = ("text", "row_x", "row_y", "column_x", "column_y")
     cell_fields = ("row", "column", "value", "x", "y", "center_x", "center_y", "size")

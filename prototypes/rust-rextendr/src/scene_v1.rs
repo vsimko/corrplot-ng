@@ -35,8 +35,8 @@ fn json_number(value: f64) -> String {
 }
 
 /// Build renderer-neutral scene-v1 JSON from an R character vector and matrix.
-/// Invalid dimensions or matrix values raise an R error, matching the R and
-/// Rcpp implementations rather than returning an ambiguous empty string.
+/// Invalid dimensions or matrix values raise an R error using the same
+/// validation messages as the pure-R prototype.
 /// @export
 #[extendr]
 fn build_scene_json_rust(
@@ -59,7 +59,15 @@ fn build_scene_json_rust(
     validate_matrix(
         &label_values, matrix.nrows(), matrix.ncols(), &flat_values,
         MatrixKind::Correlation,
-    ).map_err(|error| error.to_string())?;
+    ).map_err(|error| match error.code {
+        "input.matrix.invalid_shape" => {
+            "labels and matrix dimensions must agree and be non-empty".to_string()
+        }
+        "input.matrix.out_of_range" | "input.matrix.non_finite_value" => {
+            "matrix values must be finite, NA, or between -1 and 1".to_string()
+        }
+        _ => error.to_string(),
+    })?;
 
     let max_label_width = label_values.iter()
         .map(|label| label.chars().count() as f64 * 13.0 * 0.6)
