@@ -1,5 +1,4 @@
 use super::*;
-    use super::*;
     fn input() -> NormalizedMatrixV1 {
         NormalizedMatrixV1 {
             schema_version: 1, kind: "normalized_matrix".into(),
