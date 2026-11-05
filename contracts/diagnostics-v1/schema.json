@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://corrplot-ng.invalid/schema/diagnostic-v1.schema.json",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/contracts/diagnostics-v1/schema.json",
   "title": "corrplot-ng diagnostic v1",
   "type": "object",
   "additionalProperties": false,

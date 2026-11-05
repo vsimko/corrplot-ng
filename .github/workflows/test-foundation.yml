@@ -33,6 +33,8 @@ jobs:
           filters: |
             foundation:
               - 'tests/**'
+              - 'contracts/**'
+              - 'fixtures/**'
               - 'packages/typescript/**'
               - 'bindings/wasm/package.json'
               - 'benchmarks/compare_runs.py'

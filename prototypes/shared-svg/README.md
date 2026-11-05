@@ -1,6 +1,6 @@
 # Shared SVG renderer spike
 
-This is a small architecture experiment, not production code and not a commitment to Python, Rust, or SVG as the final design. The generated scene is checked against the experimental JSON Schema in `scene-v1.schema.json`.
+This is a small architecture experiment, not production code and not a commitment to Python, Rust, or SVG as the final design. The generated scene is checked against the experimental JSON Schema in `../../contracts/scene-v1/schema.json`.
 
 It accepts a language-neutral JSON object and renders a correlation matrix as deterministic SVG. The example includes positive, negative, and missing values, plus one user-defined text annotation.
 
@@ -167,3 +167,4 @@ The R graphics integration question remains open and needs a separate R-based ex
 ## Accessible SVG metadata
 
 The input may provide an accessible `title` and concise `description`; the scene always carries both fields. The SVG backend emits a referenced `<title>` and, when a non-empty description is supplied, a referenced `<desc>`. Visible title, subtitle, caption, and footnote content is carried separately in `figure_text`. The root SVG uses `role="img"`, `aria-labelledby`, and (when applicable) `aria-describedby`. Metadata and visible text are XML-escaped. These labels improve figure identification but do not make a dense correlation matrix fully accessible; provide an accompanying data table when users need to inspect individual values.
+

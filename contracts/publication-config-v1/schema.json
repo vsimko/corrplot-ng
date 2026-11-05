@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://corrplot-ng.invalid/schema/publication-config-v1.schema.json",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/contracts/publication-config-v1/schema.json",
   "title": "corrplot-ng publication figure configuration v1",
   "description": "Language-neutral input configuration for reproducible correlation figures. This is distinct from the renderer-neutral prepared-scene contract.",
   "type": "object",

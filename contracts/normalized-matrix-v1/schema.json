@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/prototypes/normalized-matrix-v1/schema.json",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/contracts/normalized-matrix-v1/schema.json",
   "title": "corrplot-ng normalized matrix input v1",
   "description": "Language-neutral, renderer-independent representation of an already-computed square numeric matrix.",
   "type": "object",

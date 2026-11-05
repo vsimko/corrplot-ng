@@ -1438,7 +1438,7 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_applies_label_typography_and_collision_policy() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace("\"alpha\"", "\"a-very-long-variable-label\"")
             .replace(
                 "\"text\": \"a-very-long-variable-label\",",
@@ -1478,7 +1478,7 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_wraps_long_labels_and_rejects_plotmath() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace("\"alpha\"", "\"a very long variable label\"")
             .replace(
                 "\"glyph_method\": \"circle\",",
@@ -1501,7 +1501,7 @@ mod tests {
         ).unwrap();
         assert!(matches!(rgba, RenderOutput::Rgba(_)));
 
-        let plotmath_source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let plotmath_source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace(
                 "\"text\": \"alpha\",",
                 "\"text\": \"alpha\", \"plotmath\": {\"prefix\": \"=\", \"source\": \"alpha\"},",
@@ -1513,7 +1513,7 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_preserves_title_annotation_geometry_and_palette() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json");
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert_eq!((scene.width, scene.height), (380.0, 392.0));
         assert!(scene.texts.iter().any(|text| text.semantic_role.as_deref() == Some("document-title") && text.text == "Example correlation matrix"));
@@ -1540,7 +1540,7 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_preserves_typed_legend_and_cluster_regions() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace(
                 "\"annotation\": \"Prototype annotation: synthetic example only\",",
                 "\"annotation\": \"Prototype annotation: synthetic example only\",\n  \"legend\": [{\"kind\":\"missing\",\"label\":\"Not observed\",\"color\":\"#f2f2f2\"}],\n  \"cluster_regions\": [{\"id\":\"group-a\",\"variables\":[\"alpha\"],\"source_indices\":[0],\"row_start\":0,\"row_end\":0,\"column_start\":0,\"column_end\":0,\"x\":100,\"y\":72,\"width\":86,\"height\":86,\"color\":\"#2166ac\",\"line_width\":1.5}],"
@@ -1620,7 +1620,7 @@ mod tests {
 
     #[test]
     fn scene_v1_to_scene_preserves_cell_text_annotations() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace("\"text_annotations\": []", "\"text_annotations\": [{\"row\":1,\"column\":2,\"role\":\"coefficient\",\"text\":\"0.65\",\"color\":\"black\",\"font_size\":9,\"font_weight\":\"bold\",\"font_style\":\"normal\"}]");
         let scene = scene_v1_to_scene(&source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| {
@@ -1634,7 +1634,7 @@ mod tests {
 
     #[test]
     fn scene_v1_rejects_text_annotations_outside_matrix() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace("\"text_annotations\": []", "\"text_annotations\": [{\"row\":3,\"column\":0,\"role\":\"value\",\"text\":\"x\",\"color\":\"black\",\"font_size\":9,\"font_weight\":\"normal\",\"font_style\":\"normal\"}]");
         let error = scene_v1_to_scene(&source, CellMethod::Circle).unwrap_err();
         assert_eq!(error.code, "input.scene.cell_out_of_bounds");
@@ -1751,7 +1751,7 @@ mod tests {
 
     #[test]
     fn rejects_overflowing_json_numbers_as_invalid_json() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace(r#""width": 380"#, r#""width": 1e999"#);
         let error = parse_scene_v1_matrix(&source).unwrap_err();
         assert_eq!(error.code, "input.scene.invalid_json");
@@ -1927,7 +1927,7 @@ mod tests {
 
     #[test]
     fn parses_the_shared_canonical_scene_v1_fixture() {
-        let matrix = parse_scene_v1_matrix(include_str!("../../../prototypes/shared-svg/scene-v1.example.json")).unwrap();
+        let matrix = parse_scene_v1_matrix(include_str!("../../../fixtures/scene-v1/scene-v1.example.json")).unwrap();
         assert_eq!(matrix.labels, vec!["alpha", "beta", "gamma"]);
         assert_eq!(matrix.values[0], vec![Some(1.0), Some(0.65), Some(-0.4)]);
         assert_eq!(matrix.values[1][2], None);
@@ -1940,7 +1940,7 @@ mod tests {
 
     #[test]
     fn parser_preserves_triangle_display_options_for_scene_construction() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1.example.json")
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1.example.json")
             .replace(
                 "\"glyph_method\": \"circle\"",
                 "\"glyph_method\": \"circle\", \"display_type\": \"upper\", \"show_diagonal\": false",
@@ -2059,7 +2059,7 @@ mod tests {
 
     #[test]
     fn scene_v1_statistical_overlays_are_retained() {
-        let source = include_str!("../../../prototypes/shared-svg/scene-v1-statistical-overlays.example.json");
+        let source = include_str!("../../../fixtures/scene-v1/scene-v1-statistical-overlays.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert_eq!(scene.significance.as_ref().unwrap().mode, "stars");
         assert_eq!(scene.cells[0].p_value, Some(0.001));

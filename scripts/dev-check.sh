@@ -72,14 +72,15 @@ check_python_dependencies() {
 
 quick_checks() {
   check_python_dependencies
-  "$PYTHON_BIN" -m json.tool tests/fixtures/correlation-cases.json > /dev/null
+  # Check the canonical shared corpus before running language-specific contract tests.
+  "$PYTHON_BIN" -m json.tool fixtures/matrix-input-v1/correlation-cases.json > /dev/null
   "$PYTHON_BIN" -m unittest discover -s tests -v
   "$PYTHON_BIN" - <<'PY'
 import json
 import jsonschema
 from pathlib import Path
 
-schema = json.loads(Path("prototypes/renderer-capabilities-v1.schema.json").read_text())
+schema = json.loads(Path("contracts/renderer-capability-v1/schema.json").read_text())
 declaration = json.loads(Path("crates/corrplot-core/renderer-capabilities.json").read_text())
 jsonschema.validate(declaration, schema)
 PY

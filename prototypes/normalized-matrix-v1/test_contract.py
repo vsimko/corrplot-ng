@@ -10,10 +10,10 @@ import jsonschema
 from validate import validate_normalized_matrix
 
 
-ROOT = Path(__file__).resolve().parent
-SCHEMA = json.loads((ROOT / "schema.json").read_text(encoding="utf-8"))
-VALID = json.loads((ROOT / "fixtures" / "valid-cases.json").read_text(encoding="utf-8"))
-INVALID = json.loads((ROOT / "fixtures" / "invalid-cases.json").read_text(encoding="utf-8"))
+ROOT = Path(__file__).resolve().parents[2]
+SCHEMA = json.loads((ROOT / "contracts" / "normalized-matrix-v1" / "schema.json").read_text(encoding="utf-8"))
+VALID = json.loads((ROOT / "fixtures" / "normalized-matrix-v1" / "valid-cases.json").read_text(encoding="utf-8"))
+INVALID = json.loads((ROOT / "fixtures" / "normalized-matrix-v1" / "invalid-cases.json").read_text(encoding="utf-8"))
 
 
 class NormalizedMatrixV1Tests(unittest.TestCase):

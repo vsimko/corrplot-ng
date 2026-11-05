@@ -54,7 +54,7 @@ The fixture integrity tests use only the Python standard library. The shared SVG
 ## Normalized matrix input contract
 
 The language-neutral input boundary is defined in
-`prototypes/normalized-matrix-v1/`. Its schema and valid/invalid fixtures
+`contracts/normalized-matrix-v1/` defines the schema; valid/invalid examples live in `fixtures/normalized-matrix-v1/`
 specify square dimensions, unique Unicode labels, zero-based source-index
 mapping, and `null` missing values. All-missing and constant matrices remain
 valid at normalization time; scene construction decides whether they can be
@@ -93,6 +93,7 @@ Run the commands from a directory containing both `paper.tex` and `figure.png`. 
 
 ## Shared fixtures and unsupported behavior
 
-`tests/fixtures/correlation-cases.json` contains language-neutral correlation matrices. `tests/legacy-visual/cases.json` records the pinned visual case inventory. Use JSON `null` for missing values, explicit labels/dimensions, stable case IDs, and documented expected properties.
+`fixtures/matrix-input-v1/correlation-cases.json` contains language-neutral correlation matrices. `tests/legacy-visual/cases.json` records the pinned visual case inventory. Use JSON `null` for missing values, explicit labels/dimensions, stable case IDs, and documented expected properties.
 
 Unsupported legacy features remain explicit gaps in the compatibility inventory. Passing these fixtures does not establish complete API compatibility; add a fixture and a corresponding assertion before claiming support for a new behavior.
+
