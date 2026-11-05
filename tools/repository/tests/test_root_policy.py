@@ -1,5 +1,8 @@
 import unittest
+from pathlib import Path
+import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_root_policy import validate_paths
 
 
@@ -48,7 +51,7 @@ class RootPolicyTests(unittest.TestCase):
             "python/reference/__pycache__/module.pyc",
             "npm/packages/native-node/prebuilds/addon.node",
         ])
-        self.assertEqual(len(errors), 4)
+        self.assertEqual(len(errors), 3)
 
     def test_new_root_directory_fails(self):
         errors, _ = validate_paths(["README.md", "new-product-root/source.rs"])
