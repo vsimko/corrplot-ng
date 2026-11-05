@@ -243,10 +243,11 @@ including a letterboxed viewport and supplied statistical overlays, rather
 than byte equality. Renderer capability tests distinguish shared-core support
 for significance, confidence intervals, legends, and cluster regions from
 the narrower Canvas feature set; unsupported features must produce
-structured diagnostics rather than being silently omitted. Full scene-v1
-presentation fidelity and repeatable cross-runtime performance evidence remain
-tracked in #146 and related measurement issues, including the R-host work in
-#267.
+structured diagnostics rather than being silently omitted. The initial shared-fixture parity, browser Canvas visual conformance,
+renderer-capability assertions, and informational Node/browser performance
+baselines tracked by #146 are complete. Full scene-v1 presentation fidelity
+remains incomplete beyond the matrix-bearing subset. R-host measurement work
+is tracked separately in #267.
 The binding READMEs document runtime boundaries.
 
 ### Local command entry point
@@ -313,11 +314,13 @@ pull requests.
 
 The normalized-matrix TypeScript API (#145), direct Canvas (#144), Node and
 browser-WASM bindings, and React/Vue adapters (#291/#292) are implemented and
-have dedicated correctness or browser integration checks. Issue #146 remains
-partially open for broader scene-v1 presentation semantics, additional
-reviewed visual comparisons, and follow-up performance/resource evidence.
-The shared correlation fixture corpus is now exercised by the native CLI and
-R scene adapter, while Node/WASM scene, SVG, and RGBA parity is checked on
+have dedicated correctness or browser integration checks. Issue #146 closed
+on 2026-11-04 after the initial shared-fixture parity, visual-conformance,
+renderer-capability, and informational performance-baseline work was merged.
+That completion does not mean the full scene-v1 presentation contract is
+implemented; the current parser/builder still supports only the matrix-bearing
+subset. The shared correlation fixture corpus is exercised by the native CLI
+and R scene adapter, while Node/WASM scene, SVG, and RGBA parity is checked on
 shared workloads. Initial Node/WASM and browser Canvas timing artifacts are
 informational single-runner baselines, not production performance claims.
 R-host measurement evidence is tracked separately in #267/#238; worker

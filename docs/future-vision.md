@@ -159,7 +159,7 @@ the issue is deliberately reactivated.
 
 ### Phase 3 — Establish the shared Rust core
 
-**Status:** Strategic architecture selected; CLI/R crate-reuse proof, native Node and browser-WASM binding slices, normalized-matrix scene construction, and the initial runtime-isolated TypeScript facade are implemented. Full scene-v1 presentation semantics, direct Canvas, and production R rollout remain separate work.
+**Status:** Strategic architecture selected; CLI/R crate-reuse proof, native Node and browser-WASM binding slices, normalized-matrix scene construction, the runtime-isolated TypeScript facade, and direct browser Canvas rendering are implemented. Full scene-v1 presentation semantics and production R rollout remain separate work.
 
 The target is one authoritative Rust implementation of shared correlation,
 validation, scene construction, layout, and other common visualization
@@ -183,7 +183,7 @@ The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142) — initial browser-WASM binding and cross-browser smoke coverage implemented.
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145) — runtime-isolated Node/browser facade, normalized-matrix scene workflow, typed-array input, typed-scene SVG/RGBA, and compatibility rendering implemented.
 
-The remaining integration and conformance work includes [#144 — Direct browser Canvas rendering](https://github.com/vsimko/corrplot-ng/issues/144) and [#146 — Cross-backend parity, visual regression, and performance tests](https://github.com/vsimko/corrplot-ng/issues/146).
+Direct Canvas rendering (#144) and the initial cross-backend parity/visual-conformance suite (#146) are complete. Full scene-v1 presentation semantics remain incomplete beyond the matrix-bearing slice; R-host measurements are tracked separately in #267.
 
 **Completed integration gate:** the CLI and disposable R/rextendr adapter
 depend on the exact same reusable crate and call its matrix-validation API.
@@ -192,13 +192,18 @@ package checks, and measured source/installed package sizes. This proof does
 not establish a complete visualization engine or CRAN acceptance.
 
 **Remaining rollout gates:** obtain CRAN guidance on the vendor metadata
-NOTE and installed package size, and measure actual human maintainer effort
-against the R-only C++/Rcpp path. These gates apply to production R adoption;
-they must not block independent Node/WASM architecture and portability work.
+NOTE and installed package size, confirm compatibility with the intended
+CRAN toolchain, and validate the actual production-package artifact and
+footprint. The proposed human maintainer-effort comparison against C++/Rcpp
+was discontinued by #269 on 2026-11-04 and is not a gate. These CRAN/package
+gates apply only to production R adoption; they must not block independent
+Node/WASM architecture and portability work.
 
-**Next implementation gate:** extend the same crate with portable shared
-semantics and build it for native and WASM targets. Bindings must call that
-same crate; shared JSON fixtures alone are not proof.
+**Completed implementation gate:** the shared crate builds for native and
+WASM targets, and the CLI, Node, browser-WASM, and disposable R/rextendr
+adapters consume it for the operations implemented in each integration.
+Further work extends shared semantics and conformance; shared JSON fixtures
+alone are not proof of shared implementation.
 
 If the R integration cannot meet its packaging constraints, keep the Rust
 core authoritative for the CLI and future consumers and assess a narrowly
@@ -216,13 +221,9 @@ to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
 ### Phase 4 — Add output backends and parity only when consumers exist
 
-**Status:** Future work, dependent on Phases 1–3.
+**Status:** The initial multi-format renderer, direct Canvas, and cross-backend conformance slice is implemented. Further output formats remain future work and should be added only when a consumer and contract exist.
 
-Potential renderer and parity work includes:
-
-- [#144 — Direct browser Canvas rendering](https://github.com/vsimko/corrplot-ng/issues/144).
-- [#143 — Multi-format renderer umbrella](https://github.com/vsimko/corrplot-ng/issues/143).
-- [#146 — Cross-backend parity, visual regression, and performance tests](https://github.com/vsimko/corrplot-ng/issues/146).
+The initial implementation tracked by #143 (renderer output contract and SVG/raster), #144 (direct browser Canvas), and #146 (shared-fixture parity, browser visual conformance, renderer capabilities, and informational performance baselines) is complete. These issues are closed. Full scene-v1 presentation semantics remain limited to the current matrix-bearing subset; do not imply that the complete scene-v1 contract is implemented.
 
 Canvas is a browser adapter, not an SVG intermediate. Raster and Canvas
 renderers must declare capabilities and preserve the scene contract. Visual
