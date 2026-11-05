@@ -118,13 +118,13 @@ debug-only payload available to those tools. Windows was not stripped.
 
 ## Follow-up
 
-The measured prototype build-time reduction is now implemented and validated
+The measured prototype build-time reduction is implemented and validated
 on Linux/macOS. Do not repeat the experiment or enable Windows stripping
 without a validated PE/COFF method. Remaining work is external release
-readiness: obtain maintainer/CRAN guidance on the hidden Cargo checksum NOTE
-and actual production package acceptance, and complete the human maintainer
-time comparison against C++/Rcpp. No production R migration or CRAN
-acceptance is claimed.
+readiness: obtain CRAN guidance on the hidden Cargo checksum NOTE and actual
+production-package acceptance. The proposed human maintainer-time comparison
+against C++/Rcpp was discontinued by #269 on 2026-11-04 and is not required.
+No production R migration or CRAN acceptance is claimed.
 
 Do not remove Cargo checksum/provenance metadata, weaken offline
 verification, or duplicate shared-core logic to reduce package size.
