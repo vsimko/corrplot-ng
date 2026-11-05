@@ -98,11 +98,14 @@ a complete language package or proof of shared compiled implementation.
 | R package | Provisional implementation | Default plotting delegates to upstream corrplot. It also provides normalized matrix/file adapters, statistical and palette helpers, and an experimental scene-v1 preparation path. It is not a complete replacement renderer. |
 | Python | Reference/prototype | The shared scene/SVG prototype exercises scene construction and deterministic SVG output. It is not a production package or selected shared core. |
 | Rust shared core and CLI | Partial shared implementation | `crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
-| Rust/rextendr | Disposable evaluation adapter | It proves shared-crate reuse for selected operations; it is not the production R backend. |\n| C++/Rcpp | Rejected and retired | The prototype and dedicated CI were removed; it is not an approved fallback. |
+| Rust/rextendr | Disposable evaluation adapter | It proves shared-crate reuse for selected operations; it is not the production R backend. |
+| C++/Rcpp | Rejected and retired | The prototype and dedicated CI were removed; it is not an approved fallback. |
 | TypeScript / Node.js | Experimental implementation | The Node native binding and runtime-isolated TypeScript facade implement matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA, matrix-bearing scene-v1 compatibility rendering, capabilities, diagnostics, and direct browser Canvas in the browser facade. The packages are not publicly released. |
 | Browser WebAssembly / Canvas | Experimental WASM implementation; direct Canvas implemented in TypeScript | The browser-WASM binding implements shared-core validation, normalized-matrix scene construction, and SVG/RGBA operations. The TypeScript/browser facade implements direct Canvas 2D rendering, with OffscreenCanvas conditional on a working 2D context. The packages are not publicly released. |
 
-| React / Vue | Experimental browser-only adapters | The React component/hook and Vue component/composable consume the browser-WASM package; their tests cover lifecycle, reactive updates, and browser bundling. The packages are not publicly released. |\n\nThe current support and test details are maintained in
+| React / Vue | Experimental browser-only adapters | The React component/hook and Vue component/composable consume the browser-WASM package; their tests cover lifecycle, reactive updates, and browser bundling. The packages are not publicly released. |
+
+The current support and test details are maintained in
 [the architecture document](architecture.md),
 [the R implementation guide](../implementations/r/README.md),
 [the native CLI guide](../tools/corrplot-ng/README.md), and
