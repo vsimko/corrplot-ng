@@ -1,0 +1,59 @@
+import unittest
+
+from check_root_policy import validate_paths
+
+
+class RootPolicyTests(unittest.TestCase):
+    def test_current_migration_baseline_is_allowed_with_explicit_warnings(self):
+        paths = [
+            ".gitattributes",
+            ".gitignore",
+            "CITATION.cff",
+            "README.md",
+            "docs/architecture.md",
+            ".github/workflows/test-foundation.yml",
+            "tools/repository/check_root_policy.py",
+            "package.json",
+            "requirements-dev.txt",
+            "bindings/node/package.json",
+            "crates/corrplot-core/Cargo.toml",
+            "implementations/r/DESCRIPTION",
+            "experiments/wasm-r/README.md",
+        ]
+        errors, warnings = validate_paths(paths)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("package.json" in warning for warning in warnings))
+        self.assertTrue(any("requirements-dev.txt" in warning for warning in warnings))
+        self.assertTrue(any("experiments/" in warning for warning in warnings))
+
+    def test_unknown_root_entry_fails(self):
+        errors, _ = validate_paths(["README.md", "random-workspace/package.json"])
+        self.assertTrue(any("random-workspace" in error for error in errors))
+
+    def test_root_cargo_manifest_fails(self):
+        errors, _ = validate_paths(["Cargo.toml"])
+        self.assertTrue(any("Cargo.toml" in error for error in errors))
+
+    def test_generated_dependency_directories_fail_at_any_depth(self):
+        errors, _ = validate_paths([
+            "npm/packages/example/node_modules/example/index.js",
+            "rust/crates/example/target/debug/example",
+            "python/reference/.venv/bin/python",
+            "r/corrplotng/renv/library/R-4.4/example/DESCRIPTION",
+        ])
+        self.assertEqual(len(errors), 4)
+
+    def test_generated_bytecode_and_native_addons_fail(self):
+        errors, _ = validate_paths([
+            "python/reference/__pycache__/module.pyc",
+            "npm/packages/native-node/prebuilds/addon.node",
+        ])
+        self.assertEqual(len(errors), 4)
+
+    def test_new_root_directory_fails(self):
+        errors, _ = validate_paths(["README.md", "new-product-root/source.rs"])
+        self.assertTrue(any("new-product-root" in error for error in errors))
+
+
+if __name__ == "__main__":
+    unittest.main()
