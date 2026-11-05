@@ -5,6 +5,7 @@ on:
     paths:
       - "experiments/wasm-r/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-r-experiment.yml"
   workflow_dispatch:
 
