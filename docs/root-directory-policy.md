@@ -49,7 +49,7 @@ Run from a clean checkout:
 
 ```sh
 python3 tools/repository/check_root_policy.py
-python3 -m unittest tools/repository/tests/test_root_policy.py -v
+python3 -m unittest discover -s tools/repository/tests -p 'test_*.py' -v
 ```
 
 The foundation CI job runs both commands. When a migration removes a transitional root entry, remove its exception from `tools/repository/check_root_policy.py` and this table in the same PR.
