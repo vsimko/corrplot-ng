@@ -102,7 +102,6 @@ a complete language package or proof of shared compiled implementation.
 | C++/Rcpp | Rejected and retired | The prototype and dedicated CI were removed; it is not an approved fallback. |
 | TypeScript / Node.js | Experimental implementation | The Node native binding and runtime-isolated TypeScript facade implement matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA, matrix-bearing scene-v1 compatibility rendering, capabilities, diagnostics, and direct browser Canvas in the browser facade. The packages are not publicly released. |
 | Browser WebAssembly / Canvas | Experimental WASM implementation; direct Canvas implemented in TypeScript | The browser-WASM binding implements shared-core validation, normalized-matrix scene construction, and SVG/RGBA operations. The TypeScript/browser facade implements direct Canvas 2D rendering, with OffscreenCanvas conditional on a working 2D context. The packages are not publicly released. |
-
 | React / Vue | Experimental browser-only adapters | The React component/hook and Vue component/composable consume the browser-WASM package; their tests cover lifecycle, reactive updates, and browser bundling. The packages are not publicly released. |
 
 The current support and test details are maintained in
