@@ -99,7 +99,7 @@ GENERATED_PATH_PREFIXES = (
 
 def validate_paths(paths: Iterable[str]) -> tuple[list[str], list[str]]:
     """Return (errors, transitional warnings) for tracked repository paths."""
-    normalized = sorted({PurePosixPath(path).as_posix().lstrip("./") for path in paths if path})
+    normalized = sorted({PurePosixPath(path).as_posix().removeprefix("./").lstrip("/") for path in paths if path})
     errors: list[str] = []
     warnings: list[str] = []
     root_entries: set[str] = set()
