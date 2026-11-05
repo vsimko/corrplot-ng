@@ -98,46 +98,56 @@ WASMTIME_C_API_ROOT=/path/to/wasmtime-c-api \
 
 ## What this proves — and does not prove
 
-It proves that both process-based WASI and in-process embedding are viable
-integration shapes on Linux, provided the CI checks pass. It does **not** prove
-that a CRAN package can ship only the `.wasm` file: the R embedding still needs
-a platform-specific native `libwasmtime` and a C compiler/toolchain to build the
-small host shim. The module itself is portable, but the host runtime is not.
+It demonstrates that both process-based WASI and in-process embedding are viable
+integration shapes on Ubuntu Linux, Intel macOS, and Windows: the manual matrix
+in workflow run [#41861322600](https://github.com/vsimko/corrplot-ng/actions/runs/41861322600)
+completed all nine runner repetitions. It does **not** prove that a CRAN package
+can ship only the `.wasm` file: the R embedding still needs a platform-specific
+native `libwasmtime` and a C compiler/toolchain to build the small host shim.
+The module itself is portable, but the host runtime is not.
 
-The native-R reference benchmark now runs the same JSON request decoding and
-validation contract. Both R benchmarks warm up first, estimate per-call cost,
-and adapt the measured iteration count to target roughly 0.5 seconds (bounded
-to 100–10,000 calls), avoiding zero-millisecond readings for tiny fixtures. In addition to the small
-correlation fixtures, the suite includes a 64×64 symmetric correlation
-matrix and 32×32/128×128 general-numeric matrices with explicit missing values. CI compares semantic responses with the
-embedded Wasmtime result and reports per-call timings. The larger fixtures help
-expose input parsing, allocation, and linear-memory transfer costs; they are
-still synthetic microbenchmarks. This is a
-microbenchmark of the validation boundary, not a full plotting benchmark; the
-reference implementation is intentionally isolated from the production package.
+The native-R reference benchmark runs the same JSON request decoding and
+validation contract as the other backends. The manual matrix warms up first and
+uses ten timed batches per backend/fixture with an adaptive call-count target
+of roughly one second per batch (bounded to 100–10,000 calls); the pull-request
+smoke uses three batches targeting 0.1 seconds. This avoids zero-millisecond
+readings for tiny fixtures. The suite includes a 64×64 symmetric correlation
+matrix and 32×32, 128×128, and 512×512 general-numeric matrices with explicit
+missing values. CI compares semantic responses with the embedded Wasmtime
+result and reports per-call timings. These are synthetic microbenchmarks of the
+validation boundary, not a full plotting benchmark; the reference
+implementation is intentionally isolated from the production package.
 
-The embedded ABI CI matrix now includes Ubuntu, Intel macOS (`macos-15-intel`),
-and Windows (`windows-latest`). Windows uses the Wasmtime MinGW C API archive
-and the GNU Rust target so the native `extendr` DLL matches the Rtools toolchain.
-The R host selects the platform shared library (`.so`, `.dylib`, or `.dll`) and
-platform-specific linker flags. Windows support is considered experimental
-until the Windows CI job passes; do not treat the platform as validated merely
-because it is present in the matrix. Further work should measure larger matrix
-sizes and memory/transfer costs. The current
-wasm-bindgen artifact should not be reused for this purpose without its
-JavaScript runtime glue.
+The embedded ABI CI matrix has now passed three independent runner
+repetitions on Ubuntu, Intel macOS (`macos-15-intel`), and Windows
+(`windows-latest`). Windows uses the Wasmtime MinGW C API archive and the GNU
+Rust target so the native `extendr` DLL matches the Rtools toolchain. The R host
+selects the platform shared library (`.so`, `.dylib`, or `.dll`) and
+platform-specific linker flags. Darwin does not expose process-lifetime
+`ru_maxrss` through the `getrusage` interface used here; the runner records
+that peak as JSON `null` with an explicit note rather than substituting a
+snapshot. The current wasm-bindgen artifact should not be reused for this
+purpose without its JavaScript runtime glue.
 
-## Measurements to collect
+## Measurements collected — manual matrix 2026-11-04/05
 
-- Exact WASM SHA-256 and Wasmtime version.
-- Cold process startup and repeated invocation cost.
-- Input/output transfer overhead for small, medium, and large matrices.
-- Peak R/Node process memory and Wasmtime linear memory.
-- Installation and runtime dependency matrix for Windows, macOS, and Linux.
-- Native R adapter baseline using the same fixtures.
+The completed nine-job matrix records:
 
-The Node runners report first-call and memory/transfer snapshots. The embedded R/Wasmtime runner separates module initialization from the first validation call, records current R-process RSS snapshots and process-lifetime peak working-set/RSS values where the host OS exposes them. macOS does not expose ru_maxrss through struct rusage, so peak RSS is reported as unavailable there rather than mislabeling a current snapshot as a high-water mark. Wasmtime linear-memory size is reported separately. The C shim instruments allocation, input copy, guest execution, input free, output copy, and output free with a monotonic high-resolution clock. Each PR check uses one Ubuntu runner repetition to keep routine validation bounded. A manual workflow dispatch runs three independent runner repetitions on each of Ubuntu, Intel macOS, and Windows (nine runner jobs); each runner also launches three separate Rscript processes per fixture. Artifacts include the OS and runner-repetition index so the measurements can be grouped without collisions. This provides independent CI-runner trials for the manually dispatched comparison, while the three per-fixture Rscript invocations retain within-run process repeatability. Process-lifetime peak RSS includes R and Wasmtime allocations and is not a WASM-only memory measure. Node metrics do not substitute for R-host measurements.
+- SHA-256 for the process-based WASI module, the embedded ABI module, and each fixture;
+- Wasmtime CLI invocation time from the already-running R and Node hosts, embedded-runtime initialization, first-call latency, and warm repeated-call throughput;
+- current R/Node RSS snapshots, process-lifetime peak RSS where the OS exposes it, and Wasmtime linear-memory size;
+- request/response byte counts and separate allocation, input-copy, guest-execution, input-free, output-copy, and output-free timings;
+- six fixtures including the 512×512 general-numeric case;
+- three independent CI runner repetitions per OS, with three separate Rscript processes per fixture and runner;
+- exact R, Node, Rust, Wasmtime CLI/C API, and V8 runtime versions, plus runtime/module sizes.
 
+The C shim uses a monotonic high-resolution clock. Process-lifetime peak RSS includes R and Wasmtime allocations; it is not a WASM-only memory measurement. macOS peak RSS is unavailable through this `getrusage` path and is explicitly reported as unavailable. The process-based WASI RSS deltas describe only the parent R or Node process, not the spawned Wasmtime child.
+
+The raw artifacts and machine-readable summaries are linked from [the 2026-11-05 results report](results/benchmark-2026-11-05.md).
+
+Committed fixture JSON is pinned to LF in `.gitattributes`, and the workflow
+rejects CRLF fixture bytes before hashing. This removes the Windows checkout
+hash drift observed in the completed matrix for the five committed fixtures.
 Do not use this first JSON/stdin process path as the final high-throughput
 interface; it is a feasibility baseline.
 
@@ -176,10 +186,11 @@ Rscript experiments/wasm-r/r/run-native-rust.R \
 ```
 
 The CI workflow runs all three R backends against the same fixtures and checks
-their semantic responses against the Wasmtime/Node results. Each backend now runs
-10 separately timed batches per fixture, targeting one second per batch after
-warm-up. The reported mean per-call time and 95% Student-t confidence interval
-are calculated across those batch-level measurements. This captures
+their semantic responses against the Wasmtime/Node results. In the manual
+matrix, each backend runs ten separately timed batches per fixture, targeting
+one second per batch after warm-up; pull-request smoke runs three batches at
+0.1 seconds. The reported mean per-call time and 95% Student-t confidence
+interval are calculated across those batch-level measurements. This captures
 within-process batch variability, not independent machine-to-machine variation.
 Set `CORRPLOT_BENCH_SAMPLES` and `CORRPLOT_BENCH_TARGET_SECONDS` to adjust
 the defaults.
@@ -190,64 +201,83 @@ validation work more substantial. Existing smaller fixtures remain useful for
 exposing fixed call-boundary overhead. These are still synthetic microbenchmarks,
 not a full plotting benchmark or stable cross-machine performance claims.
 
-The comparison targets Ubuntu, Intel macOS, and Windows in CI. Windows timings
-should only be added to the cross-platform results after its job passes and its
-benchmark artifact has been checked. Complete package installation size
-(including V8 and Rust runtime dependencies), cold-start cost, and peak memory
-remain explicit follow-up measurements.
+The manual matrix completed and its nine artifacts were reviewed. The current
+run records R 4.6.2 on all platforms, Node 24.x, Rust 1.99.1, Wasmtime 50.0.1,
+and V8 8.2.1 (with platform-specific embedded V8 engine versions). The full
+dependency closure and production-package installation size remain follow-up
+work; the measured library/package sizes below are component sizes only.
+
+The workflow now writes Node, Rust, Cargo, Wasmtime CLI, Wasmtime C API
+archive/hash, and Rscript version metadata directly into runtime-size artifacts.
 
 
 ## Benchmark results
 
-The initial R backend measurements (Linux x86-64 and macOS Intel) are recorded in [results/benchmark-2026-11-01.md](results/benchmark-2026-11-01.md), with machine-readable values in [results/benchmark-2026-11-01.csv](results/benchmark-2026-11-01.csv). They are exploratory warm-throughput measurements; cold-start, RSS and Windows remain open.
+The completed three-platform, three-repetition R-host matrix is recorded in
+[results/benchmark-2026-11-05.md](results/benchmark-2026-11-05.md). The
+machine-readable warm-throughput data is in
+[results/benchmark-2026-11-05.csv](results/benchmark-2026-11-05.csv), and
+cold-start, memory, and transfer-phase process data is in
+[results/benchmark-2026-11-05-runtime.csv](results/benchmark-2026-11-05-runtime.csv).
+
+The [2026-11-01 report](results/benchmark-2026-11-01.md) and its CSV are
+retained as the historical baseline; they are not the current cross-platform
+R-host results.
 
 
-## Provisional decision record — 2026-11-03
+## Decision record — 2026-11-05
 
-**Recommendation: (B) native Rust integration for R, with WebAssembly retained for
-Node.js/browser consumers.** This is a distribution and runtime recommendation
-for the tested validation boundary, not approval to migrate the production R
-package.
+**Recommendation: (B) native Rust integration for R, with WebAssembly retained
+for Node.js/browser consumers.** This updates the provisional 2026-11-03
+recommendation using the completed R-host matrix. It is a distribution/runtime
+recommendation for the tested validation boundary, not approval to migrate or
+release the production R package.
 
 ### Evidence
 
-- The same host-neutral `.wasm` module bytes were invoked from Node and R via
-  both process-based WASI and embedded Wasmtime. The embedded module hash and
-  semantic responses matched across Ubuntu, Intel macOS, and Windows.
-- The embedded module is approximately 144 KiB, but the R host runtime is much
-  larger: the measured Wasmtime shared library ranged from 65.5 MiB to
-  102.7 MiB, while the installed V8 package ranged from 34.5 MiB to 47.5 MiB.
-- In the single recorded CI run, the native Rust R binding was fastest for all
-  six fixtures on all three platforms. On the 512×512 fixture it took about
-  5.78 ms/call on Linux, 13.65 ms/call on Intel macOS, and 5.89 ms/call on
-  Windows; the Wasmtime and V8 paths were slower in that run.
-- The process-based WASI route proves portability and semantic parity, but its
-  process startup and JSON/stdin boundary make it a feasibility baseline, not
-  a suitable high-throughput matrix API.
+- The manual workflow completed 3× Ubuntu, 3× Intel macOS, and 3× Windows
+  runner repetitions. For both process-based WASI and the embedded ABI, Node
+  and R reported matching module and fixture hashes within each platform and
+  returned equivalent semantic responses across all six fixtures.
+- Native Rust was fastest by median for all six fixtures on all three
+  platforms. On the 512×512 fixture it measured 5.62 ms/call on Ubuntu,
+  11.00 ms/call on Intel macOS, and 5.90 ms/call on Windows.
+- V8 and Wasmtime trade places depending on fixture and platform; neither is
+  consistently faster. Both are slower than the native Rust binding in these
+  measurements.
+- The embedded ABI module is about 144 KiB, but the Wasmtime shared library
+  ranges from 65.5 MiB to 102.7 MiB and the installed V8 package from 34.5 MiB
+  to 47.5 MiB. The native Rust R binding library ranges from 0.63 MiB to
+  2.22 MiB.
+- Embedded Wasmtime initialization is roughly 46–55 ms median and first-call
+  latency roughly 16–19 ms for the 512×512 fixture. Process-lifetime peak RSS
+  is about 105 MiB on Ubuntu and 100 MiB on Windows; Darwin peak RSS is
+  unavailable through the current `getrusage` interface. Wasmtime linear
+  memory is 10.75 MiB after the 512×512 call.
+- The process-based WASI route proves cross-runtime portability and semantic
+  parity, but each invocation pays spawned-process startup and JSON/stdin
+  transport costs. It remains a feasibility baseline, not the high-throughput
+  interface.
 
 ### Why not (A) WASM-only for R
 
 A portable module does not remove the host runtime requirement. Embedding
-Wasmtime or V8 adds a large platform-specific native dependency, and the
-measured warm validation path did not outperform the native Rust binding.
-CRAN suitability and the complete end-user installation footprint have not
-been established.
+Wasmtime or V8 adds a large platform-specific native dependency, and neither
+WASM host outperformed the native Rust binding consistently. The measured
+component sizes are not a complete package dependency closure, and CRAN
+suitability has not been established.
 
 ### Remaining gates before any production decision
 
-The current measurements are insufficient for a release decision:
+1. Build and measure the actual production R package candidate, not only the
+   disposable `extendr` adapter.
+2. Record complete source-tarball and installed dependency/license inventories.
+3. Verify offline source installation, `R CMD check --as-cran`, supported
+   platform behavior, and Windows binary installation without Rust on the
+   end user's PATH.
+4. Obtain authoritative CRAN/maintainer guidance on the retained Cargo
+   checksum/provenance NOTE tracked by #268.
 
-1. Measure cold process startup and first-call initialization separately from
-   warm repeated-call throughput.
-2. Record peak process RSS and Wasmtime linear-memory high-water marks on each
-   supported platform.
-3. Instrument input copy, guest execution, and output copy separately rather
-   than reporting only end-to-end JSON-call time.
-4. Repeat the measurements across independent CI runs and verify the complete
-   installed dependency closure and CRAN implications.
-5. Record a final tested/untested platform matrix and the exact R/runtime
-   versions used.
-
-Until those gates are met, keep this as an isolated experiment. Do not replace
-the production R backend, claim CRAN compatibility, or make the WASM experiment
-a blocker for native Node/browser engineering.
+Until those gates and an explicit maintainer decision are complete, keep this
+as an isolated experiment. Do not replace the production R backend, claim CRAN
+compatibility, or treat the WASM experiment as a production migration approval.
