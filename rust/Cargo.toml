@@ -1,3 +1,4 @@
+# The committed lockfile is authoritative; CI validates it with --locked.
 [workspace]
 resolver = "2"
 members = [

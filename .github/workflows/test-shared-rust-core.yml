@@ -40,21 +40,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - name: Generate the Rust workspace lockfile for bootstrap
-        run: |
-          rm -f rust/Cargo.lock
-          cargo generate-lockfile --manifest-path rust/Cargo.toml
-      - name: Emit generated workspace lockfile for review
-        run: |
-          echo "BEGIN_WORKSPACE_LOCKFILE_BASE64"
-          base64 -w0 rust/Cargo.lock
-          echo "END_WORKSPACE_LOCKFILE_BASE64"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: rust-workspace-lockfile
-          path: rust/Cargo.lock
-          if-no-files-found: error
-          retention-days: 1
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
@@ -77,10 +62,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.78.0
         with:
           targets: wasm32-unknown-unknown
-      - name: Generate the Rust workspace lockfile for MSRV bootstrap
-        run: |
-          rm -f rust/Cargo.lock
-          cargo generate-lockfile --manifest-path rust/Cargo.toml
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
