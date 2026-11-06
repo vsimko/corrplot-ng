@@ -50,8 +50,7 @@ TRANSITIONAL_ROOT_DIRECTORIES = {
     ".changeset": "#367 — move Changesets configuration under npm/",
     "benchmarks": "#364 — split cross-runtime orchestration and runtime-owned benchmarks",
     "bindings": "#366/#367 — split Rust binding crates from npm package content",
-    "crates": "#366 — move the shared Rust crate under rust/",
-    "experiments": "#364 — retain as a documented cross-runtime exception or approve another home",
+        "experiments": "#364 — retain as a documented cross-runtime exception or approve another home",
     "implementations": "#368 — move the R package under r/corrplotng/",
     "packages": "#367 — move npm workspace packages under npm/packages/",
     "prototypes": "#366/#369/#370 — split Rust, Python reference code, contracts and fixtures",
@@ -94,7 +93,7 @@ GENERATED_PATH_SUFFIXES = {".pyc", ".pyo", ".node"}
 GENERATED_PATH_PREFIXES = (
     "bindings/wasm/pkg/",
     "npm/packages/wasm/pkg/",
-    "prototypes/rust-rextendr/.ci-r-package/",
+    "rust/bindings/r/rextendr-prototype/.ci-r-package/",
 )
 
 

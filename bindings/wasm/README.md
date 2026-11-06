@@ -1,6 +1,6 @@
 # Browser WebAssembly binding (first slice)
 
-This package compiles the same `crates/corrplot-core` Rust library used by the
+This package compiles the same `rust/crates/corrplot-core` Rust library used by the
 native CLI and Node-API adapter. The binding contains only JavaScript value
 conversion; matrix validation and SVG/RGBA rendering remain in Rust.
 

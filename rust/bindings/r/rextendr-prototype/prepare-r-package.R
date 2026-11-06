@@ -57,7 +57,7 @@ if (length(edition_line) == 1L &&
     !any(grepl('^rust-version[[:space:]]*=', cargo_lines))) {
   cargo_lines <- append(cargo_lines, 'rust-version = "1.78"', after = edition_line)
 }
-core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-core" }'
+core_dependency <- 'corrplot-core = { path = "../../../../../../crates/corrplot-core" }'
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
 }

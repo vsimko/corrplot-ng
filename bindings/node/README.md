@@ -1,7 +1,7 @@
 # Native Node.js binding
 
 This package is a thin Node-API adapter over the repository's shared
-`crates/corrplot-core` Rust library. Matrix validation, scene construction,
+`rust/crates/corrplot-core` Rust library. Matrix validation, scene construction,
 diagnostics, and rendering semantics remain in Rust.
 
 ## Implemented operations
