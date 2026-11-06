@@ -18,3 +18,17 @@ wasm-bindgen = "=0.2.105"
 
 [dev-dependencies]
 wasm-bindgen-test = "=0.3.55"
+
+# Rust's current wasm32 target enables these WebAssembly features by default.
+# wasm-pack's bundled Binaryen needs them explicitly to validate the optimized
+# release artifact; keep wasm-opt enabled rather than weakening the release build.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = [
+    "-O",
+    "--enable-bulk-memory",
+    "--enable-nontrapping-float-to-int",
+    "--enable-sign-ext",
+    "--enable-mutable-globals",
+    "--enable-multivalue",
+    "--enable-reference-types",
+]
