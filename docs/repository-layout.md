@@ -6,7 +6,7 @@ This document defines where corrplot-ng code, contracts, fixtures, tests, and re
 
 | Path | Ownership and contents |
 | --- | --- |
-| `crates/` | Reusable Rust libraries that own shared implementation semantics. `rust/rust/crates/corrplot-core` is the authoritative Rust shared-core crate; it currently provides matrix validation, a parser for the matrix-bearing scene-v1 subset, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. Full scene-v1 presentation semantics remain incomplete. Keep consumer-specific command handling and bindings out of this directory. |
+| `rust/` | Reusable Rust libraries that own shared implementation semantics. `rust/rust/crates/corrplot-core` is the authoritative Rust shared-core crate; it currently provides matrix validation, a parser for the matrix-bearing scene-v1 subset, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. Full scene-v1 presentation semantics remain incomplete. Keep consumer-specific command handling and bindings out of this directory. |
 | `bindings/` | Runtime-specific native/WASM adapters over reusable Rust crates. `rust/bindings/node/` contains the experimental Node-API addon; `rust/bindings/wasm/` contains the browser WebAssembly adapter. The runtime-isolated TypeScript facade lives in `packages/typescript/`; the browser-only React adapter lives in `packages/react/`. |
 | `tools/` | Executable developer and user tools. `rust/tools/corrplot-cli` is the standalone Rust CLI and should remain a thin application adapter over shared crates. |
 | `implementations/` | Language-specific product packages and adapters. The R package owns R APIs, legacy compatibility, graphics-device behavior, and package-specific tests. |

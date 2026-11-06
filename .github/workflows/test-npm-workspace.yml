@@ -3,6 +3,8 @@ name: Test npm workspace
 on:
   pull_request:
     paths:
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "package.json"
       - "packages/**"
       - "bindings/node/**"
@@ -13,6 +15,8 @@ on:
   push:
     branches: [main]
     paths:
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "package.json"
       - "packages/**"
       - "bindings/node/**"

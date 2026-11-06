@@ -63,7 +63,7 @@ This document is the source-to-target map required before structural moves. It r
 | `implementations/r/DESCRIPTION`, `NAMESPACE` | R package metadata | `r/corrplotng/DESCRIPTION`, `NAMESPACE`; no `renv.lock` exists. Do not add renv merely for symmetry. |
 | Docker/Compose/Kubernetes manifests, Debian/RPM/Arch recipes, signing config | **None found in the tracked tree** | No packaging/deployment move is currently required. #374 should remain evidence-driven and must not create speculative empty packaging frameworks. |
 
-There is no root `Cargo.toml` or root Cargo workspace in this snapshot. Rust is currently several independent crates with three committed Cargo lockfiles; Node/WASM bindings and the three WASM-R experiment crates have no committed lockfiles. The npm workspace is the only current root package-manager manifest, and its missing lockfile is tracked separately by #265.
+The root has no Cargo manifest or lockfile. The Rust-owned crates now share `rust/Cargo.toml`; CI generates the workspace lockfile pending commit of the validated `rust/Cargo.lock`. The three WASM-R experiment crates remain independent and outside that workspace. The npm workspace is the only current root package-manager manifest, and its missing lockfile is tracked separately by #265.
 
 ## 3. Cross-runtime fixtures and generated artifacts
 

@@ -1,0 +1,3 @@
+/target/
+/bindings/r/rextendr-prototype/.ci-rust-target/
+/bindings/r/rextendr-prototype/.ci-r-package/

@@ -49,7 +49,7 @@ jobs:
               - 'prototypes/publication-config-v1/**'
               - 'prototypes/publication-svg-v1/**'
               - 'schemas/**'
-              - 'rust/crates/corrplot-core/renderer-capabilities.json'
+              - 'rust/**'
               - 'rust/**'
               - '**/*.schema.json'
               - '.gitignore'
