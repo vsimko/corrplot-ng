@@ -5,12 +5,14 @@ on:
     paths:
       - "bindings/node/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
   push:
     branches: [main]
     paths:
       - "bindings/node/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
 
   workflow_dispatch:
@@ -26,6 +28,7 @@ jobs:
   test:
     name: Node ${{ matrix.node }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +40,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: bindings/node -> target
+          shared-key: node-addon
       - name: Build native addon and run Node tests
         working-directory: bindings/node
         run: npm test

@@ -18,7 +18,7 @@ from scene import build_scene
 HERE = Path(__file__).parent
 ROOT = HERE.parents[1]
 CAPABILITY_SCHEMA = json.loads(
-    (ROOT / "prototypes" / "renderer-capabilities-v1.schema.json").read_text(encoding="utf-8")
+    (ROOT / "contracts" / "renderer-capability-v1" / "schema.json").read_text(encoding="utf-8")
 )
 RUST_CAPABILITIES = json.loads(
     (ROOT / "tools" / "corrplot-ng" / "renderer-capabilities.json").read_text(encoding="utf-8")

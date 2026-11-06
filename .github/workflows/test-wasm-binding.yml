@@ -9,6 +9,7 @@ on:
       - "packages/vue/**"
       - "package.json"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "packages/vue/**"
       - "package.json"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
   schedule:
@@ -35,7 +37,7 @@ jobs:
   test:
     name: WASM Node smoke (Node ${{ matrix.node }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -45,6 +47,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('package.json', '**/package.json') }}
+          restore-keys: |
+            npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown

@@ -15,8 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = (
-    (ROOT / "tests" / "fixtures" / "correlation-cases.json", "correlation", "correlation_plot"),
-    (ROOT / "tests" / "fixtures" / "general-matrix-cases.json", "general", "general_matrix_plot"),
+    (ROOT / "fixtures" / "matrix-input-v1" / "correlation-cases.json", "correlation", "correlation_plot"),
+    (ROOT / "fixtures" / "matrix-input-v1" / "general-matrix-cases.json", "general", "general_matrix_plot"),
 )
 
 

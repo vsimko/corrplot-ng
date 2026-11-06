@@ -5,6 +5,7 @@ on:
     paths:
       - "prototypes/rust-rextendr/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-rust-windows-binary.yml"
       - "docs/cran-rust-dependency-audit-results.md"
   workflow_dispatch:
@@ -19,17 +20,24 @@ concurrency:
 jobs:
   build-windows-binary:
     runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
+      CARGO_BUILD_JOBS: 2
     steps:
       - uses: actions/checkout@v7
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: prototypes/rust-rextendr -> .ci-rust-target
+          shared-key: rextendr-ci
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: |
             any::rextendr
-            any::devtools
             any::usethis
       - name: Generate temporary R package
         run: Rscript prototypes/rust-rextendr/prepare-r-package.R
@@ -50,6 +58,7 @@ jobs:
   install-without-toolchain:
     needs: build-windows-binary
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: r-lib/actions/setup-r@v2

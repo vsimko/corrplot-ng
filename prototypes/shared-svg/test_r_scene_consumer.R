@@ -3,7 +3,7 @@
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
   stop("jsonlite is required for this prototype test")
 }
-scene_path <- file.path("prototypes", "shared-svg", "scene-v1.example.json")
+scene_path <- file.path("fixtures", "scene-v1", "scene-v1.example.json")
 scene <- jsonlite::fromJSON(scene_path, simplifyVector = FALSE)
 
 stopifnot(identical(scene$schema_version, 1L) || identical(scene$schema_version, 1))

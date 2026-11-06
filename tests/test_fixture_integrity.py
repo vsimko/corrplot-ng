@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 
-FIXTURE_PATH = Path(__file__).parent / "fixtures" / "correlation-cases.json"
+FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "matrix-input-v1" / "correlation-cases.json"
 LEGACY_VISUAL_PATH = Path(__file__).parent / "legacy-visual" / "cases.json"
 R_LEGACY_VISUAL_PATH = (
     Path(__file__).parent.parent
@@ -23,17 +23,17 @@ R_LEGACY_VISUAL_PATH = (
 ROOT = Path(__file__).parent.parent
 NORMALIZED_FIXTURE_PAIRS = (
     (
-        ROOT / "prototypes" / "normalized-matrix-v1" / "fixtures" / "valid-cases.json",
+        ROOT / "fixtures" / "normalized-matrix-v1" / "valid-cases.json",
         ROOT / "implementations" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "valid-cases.json",
     ),
     (
-        ROOT / "prototypes" / "normalized-matrix-v1" / "fixtures" / "invalid-cases.json",
+        ROOT / "fixtures" / "normalized-matrix-v1" / "invalid-cases.json",
         ROOT / "implementations" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "invalid-cases.json",
     ),
 )
-CORRELATION_FIXTURE_PATH = ROOT / "tests" / "fixtures" / "correlation-cases.json"
+CORRELATION_FIXTURE_PATH = ROOT / "fixtures" / "matrix-input-v1" / "correlation-cases.json"
 R_CORRELATION_FIXTURE_PATH = ROOT / "implementations" / "r" / "inst" / "extdata" / "correlation-cases.json"
-GENERAL_MATRIX_PATH = ROOT / "tests" / "fixtures" / "general-matrix-cases.json"
+GENERAL_MATRIX_PATH = ROOT / "fixtures" / "matrix-input-v1" / "general-matrix-cases.json"
 R_GENERAL_MATRIX_PATH = ROOT / "implementations" / "r" / "inst" / "extdata" / "general-matrix-cases.json"
 EXPECTED_METHODS = {
     "circle",

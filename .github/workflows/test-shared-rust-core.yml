@@ -24,30 +24,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  rextendr-consumer:
-    name: Compile shared-core R/rextendr consumer
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: "4.4"
-      - name: Compile R/rextendr consumer
-        run: cargo check --locked --manifest-path prototypes/rust-rextendr/Cargo.toml
-      - name: Verify the consumer resolves the repository-local shared core
-        shell: bash
-        run: |
-          tree="$(cargo tree --manifest-path prototypes/rust-rextendr/Cargo.toml -i corrplot-core)"
-          echo "$tree"
-          echo "$tree" | grep -F "corrplot-core v0.1.0"
-          if ! echo "$tree" | grep -Fq 'crates/corrplot-core' && ! echo "$tree" | grep -Fq 'crates\\corrplot-core'; then
-            echo "R/rextendr consumer did not resolve the repository-local core crate" >&2
-            exit 1
-          fi
-
   wasm32-portability:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -69,6 +48,7 @@ jobs:
 
   minimum-supported-toolchain:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.78.0
@@ -92,3 +72,13 @@ jobs:
         run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
       - name: Compile rextendr consumer at the declared MSRV
         run: cargo check --locked --manifest-path prototypes/rust-rextendr/Cargo.toml
+      - name: Verify the consumer resolves the repository-local shared core
+        shell: bash
+        run: |
+          tree="$(cargo tree --manifest-path prototypes/rust-rextendr/Cargo.toml -i corrplot-core)"
+          echo "$tree"
+          echo "$tree" | grep -F "corrplot-core v0.1.0"
+          if ! echo "$tree" | grep -Fq 'crates/corrplot-core' && ! echo "$tree" | grep -Fq 'crates\\corrplot-core'; then
+            echo "R/rextendr consumer did not resolve the repository-local core crate" >&2
+            exit 1
+          fi

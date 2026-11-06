@@ -31,15 +31,36 @@ jobs:
   validate:
     name: Workspace validation (Node 24)
     runs-on: ubuntu-24.04
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('package.json', '**/package.json') }}
+          restore-keys: |
+            npm-workspace-${{ runner.os }}-node-24-
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            bindings/node -> target
+            bindings/wasm -> target
+          shared-key: npm-workspace
+      - name: Cache wasm-pack executable
+        id: wasm-pack-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/wasm-pack
+          key: wasm-pack-${{ runner.os }}-${{ runner.arch }}-0.13.1
       - name: Install wasm-pack
+        if: steps.wasm-pack-cache.outputs.cache-hit != 'true'
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Install workspace dependencies without lifecycle scripts
         run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false

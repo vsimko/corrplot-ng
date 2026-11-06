@@ -9,7 +9,7 @@ from scene import build_scene
 
 
 HERE = Path(__file__).parent
-SCHEMA_PATH = HERE / "scene-v1.schema.json"
+SCHEMA_PATH = HERE.parents[1] / "contracts" / "scene-v1" / "schema.json"
 EXAMPLE_PATH = HERE / "example.json"
 
 

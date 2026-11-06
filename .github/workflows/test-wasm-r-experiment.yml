@@ -5,6 +5,7 @@ on:
     paths:
       - "experiments/wasm-r/**"
       - "crates/corrplot-core/**"
+      - "!crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-r-experiment.yml"
   workflow_dispatch:
 
@@ -23,6 +24,7 @@ jobs:
       matrix:
         include: ${{ github.event_name == 'pull_request' && fromJSON('[{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":1}]') || fromJSON('[{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":1},{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":2},{"os":"ubuntu-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-linux-c-api.tar.xz","wasmtime_sha256":"e2c0c26e1aef52f82f0b9918ad6f34cc30f4b557aee3e261cb127a9462be8f4d","repeat_index":3},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5","repeat_index":1},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5","repeat_index":2},{"os":"macos-15-intel","wasmtime_archive":"wasmtime-v50.0.1-x86_64-macos-c-api.tar.xz","wasmtime_sha256":"b6d436cba5c0964785c6ff7c9b5a743131555a0227b4f742185c4fb520c502c5","repeat_index":3},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4","repeat_index":1},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4","repeat_index":2},{"os":"windows-latest","wasmtime_archive":"wasmtime-v50.0.1-x86_64-mingw-c-api.zip","wasmtime_sha256":"9001a5df99305f6bc4a22d1e38f020f953b26cc88755840743dfabd44d9eaea4","repeat_index":3}]') }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
     defaults:
       run:
         shell: bash
@@ -165,9 +167,14 @@ jobs:
           sudo apt-get install -y libcurl4-openssl-dev
 
       - name: Install R experiment dependencies
-        run: |
-          Rscript -e 'install.packages(c("jsonlite", "digest", "V8"), repos = "https://cloud.r-project.org")'
-          Rscript -e 'stopifnot(requireNamespace("V8", quietly = TRUE), requireNamespace("curl", quietly = TRUE))'
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::jsonlite
+            any::digest
+            any::V8
+      - name: Verify R experiment dependencies
+        run: Rscript -e 'stopifnot(requireNamespace("V8", quietly = TRUE), requireNamespace("curl", quietly = TRUE))'
 
       - name: Build native Rust R binding
         shell: bash

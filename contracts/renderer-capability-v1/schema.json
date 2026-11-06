@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://corrplot-ng.invalid/schema/renderer-capabilities-v1.schema.json",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/contracts/renderer-capability-v1/schema.json",
   "title": "corrplot-ng renderer capabilities v1",
   "type": "object",
   "additionalProperties": false,

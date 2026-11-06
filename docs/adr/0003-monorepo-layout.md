@@ -29,7 +29,8 @@ corrplot-ng/
 │   ├── normalized-matrix-v1/
 │   ├── scene-v1/
 │   ├── diagnostics-v1/
-│   └── renderer-capability-v1/
+│   ├── renderer-capability-v1/
+│   └── publication-config-v1/
 │
 ├── rust/
 │   ├── Cargo.toml                 # Rust workspace root
@@ -76,8 +77,9 @@ corrplot-ng/
 │   └── repository/                 # repo-wide scripts only
 │
 ├── fixtures/
-│   ├── normalized-matrix/
-│   └── scene-v1/
+│   ├── normalized-matrix-v1/
+│   ├── scene-v1/
+│   └── matrix-input-v1/
 │
 ├── docs/
 │   ├── adr/

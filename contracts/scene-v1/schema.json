@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://corrplot-ng.invalid/schema/scene-v1.schema.json",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/contracts/scene-v1/schema.json",
   "title": "corrplot-ng renderer-neutral scene v1",
   "description": "Output contract for a prepared correlation-plot scene. Coordinates are logical canvas units, not pixels.",
   "type": "object",

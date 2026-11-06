@@ -23,7 +23,7 @@ const scene = {
   texts: [],
 };
 const sceneV1 = fs.readFileSync(
-  path.join(__dirname, "../../prototypes/shared-svg/scene-v1.example.json"),
+  path.join(__dirname, "../../fixtures/scene-v1/scene-v1.example.json"),
   "utf8",
 );
 const sceneV1Construction = fs.readFileSync(
@@ -31,7 +31,7 @@ const sceneV1Construction = fs.readFileSync(
   "utf8",
 );
 const sceneV1Statistical = fs.readFileSync(
-  path.join(__dirname, "../../prototypes/shared-svg/scene-v1-statistical-overlays.example.json"),
+  path.join(__dirname, "../../fixtures/scene-v1/scene-v1-statistical-overlays.example.json"),
   "utf8",
 );
 const matrixFixtures = [
@@ -55,11 +55,11 @@ const matrix = {
 const cellMethods = ["circle", "square", "ellipse", "number", "shade", "color", "pie"];
 
 const correlationCorpus = JSON.parse(fs.readFileSync(
-  path.join(__dirname, "../../tests/fixtures/correlation-cases.json"),
+  path.join(__dirname, "../../fixtures/matrix-input-v1/correlation-cases.json"),
   "utf8",
 ));
 const generalMatrixCorpus = JSON.parse(fs.readFileSync(
-  path.join(__dirname, "../../tests/fixtures/general-matrix-cases.json"),
+  path.join(__dirname, "../../fixtures/matrix-input-v1/general-matrix-cases.json"),
   "utf8",
 ));
 const sharedMatrixFixtures = [

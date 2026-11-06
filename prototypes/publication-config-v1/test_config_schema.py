@@ -10,7 +10,7 @@ from ordering import resolve_ordering
 
 
 HERE = Path(__file__).parent
-SCHEMA = json.loads((HERE / "schema.json").read_text(encoding="utf-8"))
+SCHEMA = json.loads((HERE.parents[1] / "contracts" / "publication-config-v1" / "schema.json").read_text(encoding="utf-8"))
 EXAMPLES = sorted((HERE / "examples").glob("*.json"))
 
 
@@ -20,7 +20,7 @@ class PublicationConfigTests(unittest.TestCase):
         Draft202012Validator.check_schema(SCHEMA)
 
     def test_general_matrix_reference_fixtures_match_resolved_semantics(self):
-        fixture_path = HERE.parents[1] / "tests" / "fixtures" / "general-matrix-cases.json"
+        fixture_path = HERE.parents[1] / "fixtures" / "matrix-input-v1" / "general-matrix-cases.json"
         fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))
         for case in fixtures["cases"]:
             if case["id"] == "hidden-diagonal-negative-constant":

@@ -12,7 +12,7 @@ from scene import build_scene
 
 HERE = Path(__file__).parent
 ROOT = HERE.parents[1]
-SCHEMA = json.loads((ROOT / "prototypes" / "diagnostic-v1.schema.json").read_text(encoding="utf-8"))
+SCHEMA = json.loads((ROOT / "contracts" / "diagnostics-v1" / "schema.json").read_text(encoding="utf-8"))
 
 
 class DiagnosticContractTests(unittest.TestCase):

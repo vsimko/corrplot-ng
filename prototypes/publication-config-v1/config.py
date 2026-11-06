@@ -12,7 +12,7 @@ from color_scale import build_color_scale
 from ordering import resolve_ordering
 
 
-SCHEMA_PATH = Path(__file__).with_name("schema.json")
+SCHEMA_PATH = Path(__file__).parents[2] / "contracts" / "publication-config-v1" / "schema.json"
 SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
