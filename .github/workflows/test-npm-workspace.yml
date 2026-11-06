@@ -82,7 +82,7 @@ jobs:
       - name: Test and build browser WASM binding
         working-directory: bindings/wasm
         run: |
-          wasm-pack test ../../rust/bindings/wasm --node
+          wasm-pack test --node ../../rust/bindings/wasm
           npm run build
       - name: Verify package contents
         run: npm run pack:dry-run

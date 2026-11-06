@@ -78,7 +78,7 @@ jobs:
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Run WebAssembly binding tests in Node
         working-directory: bindings/wasm
-        run: wasm-pack test ../../rust/bindings/wasm --node
+        run: wasm-pack test --node ../../rust/bindings/wasm
       - name: Build browser ESM package
         working-directory: bindings/wasm
         run: npm run build
