@@ -33,7 +33,7 @@ Future work may move these categories to clearer top-level locations such as `co
 
 - `rust/crates/corrplot-core/` owns reusable, language-neutral Rust semantics. It currently provides shared matrix validation, a parser for the matrix-bearing scene-v1 subset, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. Full scene-v1 presentation semantics remain incomplete.
 - `rust/tools/corrplot-cli/` owns CLI parsing, file and process I/O, command orchestration, and executable packaging.
-- `rust/bindings/r/rextendr-prototype/` owns only the disposable R-binding proof and its generated package workflow.
+- `rust/bindings/r/rextendr-prototype/` owns only the disposable R-binding proof and its generated package workflow; it is intentionally excluded from the main Rust workspace to preserve its separately audited CRAN/offline lockfile.
 - `implementations/r/` owns the production R-facing API and legacy compatibility behavior. Do not migrate it to rextendr as part of a layout cleanup.
 - `rust/bindings/node/` is the experimental Node-API adapter. It exposes matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 compatibility rendering without duplicating semantics. `rust/bindings/wasm/` exposes the corresponding browser-WASM operations over the same core. The runtime-isolated facade in `packages/typescript/` selects the appropriate backend. The optional React adapter in `packages/react/` and Vue adapter in `packages/vue/` consume only the browser WASM package and keep their frameworks as peer dependencies. Neither runtime binding or framework adapter may copy core algorithms.
 

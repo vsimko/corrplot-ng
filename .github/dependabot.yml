@@ -52,6 +52,16 @@ updates:
           - patch
         group-by: dependency-name
 
+  # The excluded disposable R/rextendr prototype keeps a separate audited lockfile.
+  - package-ecosystem: cargo
+    directory: /rust/bindings/r/rextendr-prototype
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:30"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 0
+
   # The root package.json remains the private npm workspace until #367 moves it.
   # Platform-specific native packages are unpublished build artifacts.
   - package-ecosystem: npm

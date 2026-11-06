@@ -5,5 +5,7 @@ members = [
     "tools/corrplot-cli",
     "bindings/node",
     "bindings/wasm",
-    "bindings/r/rextendr-prototype",
 ]
+# The disposable R/rextendr prototype retains its own audited lockfile so
+# CRAN/offline vendoring remains isolated from Node/WASM workspace dependencies.
+exclude = ["bindings/r/rextendr-prototype"]

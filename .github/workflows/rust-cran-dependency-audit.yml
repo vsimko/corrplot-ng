@@ -7,6 +7,7 @@ on:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/bindings/r/rextendr-prototype/Cargo.toml"
+      - "rust/bindings/r/rextendr-prototype/Cargo.lock"
       - "rust/Cargo.lock"
       - "rust/bindings/r/rextendr-prototype/deny.toml"
       - "rust/bindings/r/rextendr-prototype/src/**"
@@ -117,7 +118,7 @@ jobs:
         with:
           name: rust-cran-dependency-audit
           path: |
-            rust/Cargo.lock
+            rust/bindings/r/rextendr-prototype/Cargo.lock
             rust/bindings/r/rextendr-prototype/cargo-metadata.json
             rust/bindings/r/rextendr-prototype/cargo-tree.txt
             rust/bindings/r/rextendr-prototype/dependency-licenses.tsv

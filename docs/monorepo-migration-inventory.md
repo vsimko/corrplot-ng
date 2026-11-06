@@ -55,7 +55,7 @@ This document preserves the pre-migration source-to-target map and path-coupling
 | `rust/bindings/node/Cargo.toml`, `rust/bindings/wasm/Cargo.toml` | Rust binding crates; both use relative path dependency `../../crates/corrplot-core` | `rust/bindings/{node,wasm}/Cargo.toml`; rewrite to the new workspace-relative core path. |
 | `rust/bindings/r/rextendr-prototype/Cargo.toml` | Disposable rextendr crate; path dependency `../../crates/corrplot-core` | `rust/bindings/r/rextendr-prototype/Cargo.toml`; preserve the pinned extendr version. |
 | `experiments/wasm-r/{native-r,wasm-abi,wasm-host}/Cargo.toml` (3) | Experiment crates; each path-depends on `../../../crates/corrplot-core` | Retain with the experiment or move as one experiment unit; rewrite all three paths if the experiment moves. |
-| `rust/Cargo.lock` (generated after the workspace is assembled) | Committed lockfile for the current core crate (currently only the core package) | Replace with the single `rust/Cargo.lock` only when the Rust workspace is established and validated. |
+| `rust/Cargo.lock` | Workspace lockfile for the core, CLI, Node and WASM members | Generate and validate in CI, then commit; the excluded R prototype keeps its own lockfile. |
 | consolidated into `rust/Cargo.lock` | Committed CLI lockfile | Consolidate into `rust/Cargo.lock`; preserve offline CLI builds. |
 | consolidated into `rust/Cargo.lock` | Committed prototype lockfile | Consolidate into the Rust workspace lockfile if the prototype becomes a workspace member; otherwise retain an explicit standalone lockfile. |
 | Root `package-lock.json` | **Absent** | Open issue #265 requires a real npm-generated lockfile. Current npm CI uses `--package-lock=false`; do not hand-author a lockfile. |
@@ -63,7 +63,7 @@ This document preserves the pre-migration source-to-target map and path-coupling
 | `implementations/r/DESCRIPTION`, `NAMESPACE` | R package metadata | `r/corrplotng/DESCRIPTION`, `NAMESPACE`; no `renv.lock` exists. Do not add renv merely for symmetry. |
 | Docker/Compose/Kubernetes manifests, Debian/RPM/Arch recipes, signing config | **None found in the tracked tree** | No packaging/deployment move is currently required. #374 should remain evidence-driven and must not create speculative empty packaging frameworks. |
 
-The root has no Cargo manifest or lockfile. Rust-owned crates share `rust/Cargo.toml`; CI generates the workspace lockfile pending commit of the validated `rust/Cargo.lock`. The three WASM-R experiment crates remain independent and outside that workspace. The npm workspace is the only current root package-manager manifest, and its missing lockfile is tracked separately by #265.
+The root has no Cargo manifest or lockfile. Core, CLI, Node and WASM share `rust/Cargo.toml` and `rust/Cargo.lock`; the disposable R/rextendr prototype is explicitly excluded and retains its audited standalone lockfile. The three WASM-R experiment crates remain independent. The npm workspace is the only current root package-manager manifest, and its missing lockfile is tracked separately by #265.
 
 ## 3. Cross-runtime fixtures and generated artifacts
 

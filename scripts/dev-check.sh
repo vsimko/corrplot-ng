@@ -130,8 +130,8 @@ test_wasm() {
   need_node
   need_rust
   need wasm-pack
-  (cd bindings/wasm && wasm-pack test --node)
-  (cd bindings/wasm && wasm-pack build --target web --release --out-dir pkg)
+  (cd bindings/wasm && wasm-pack test ../../rust/bindings/wasm --node)
+  (cd bindings/wasm && wasm-pack build ../../rust/bindings/wasm --target web --release --out-dir ../../../bindings/wasm/pkg)
 }
 
 build_cli() {
