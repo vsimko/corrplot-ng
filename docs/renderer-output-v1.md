@@ -2,7 +2,7 @@
 
 **Status:** Current contract; raw RGBA and direct browser Canvas 2D rendering are implemented. PNG encoding remains planned.
 
-This document defines output selection independently of figure semantics, the Rust API types in crates/corrplot-core/src/output.rs, and the host boundary required by the Node and WebAssembly adapters.
+This document defines output selection independently of figure semantics, the Rust API types in rust/crates/corrplot-core/src/output.rs, and the host boundary required by the Node and WebAssembly adapters.
 
 ## Separation of concerns
 

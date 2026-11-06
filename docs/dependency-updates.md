@@ -13,9 +13,9 @@ Dependabot checks these declared dependency sources weekly on Monday
 | pip | `requirements-dev.txt` | Python development/test dependencies; minor/patch updates grouped |
 
 The Cargo projects covered by routine version updates are
-`bindings/node`, `bindings/wasm`, `crates/corrplot-core`,
+`rust/bindings/node`, `rust/bindings/wasm`, `rust/crates/corrplot-core`,
 `experiments/wasm-r/native-r`, `experiments/wasm-r/wasm-abi`,
-`experiments/wasm-r/wasm-host`, and `tools/corrplot-ng`.
+`experiments/wasm-r/wasm-host`, `rust/tools/corrplot-cli`, and the standalone `rust/bindings/r/rextendr-prototype` lockfile.
 
 The npm workspace is rooted at `/` and declares `bindings/node`,
 `bindings/wasm`, and `packages/*` in the root `package.json`. Dependabot
@@ -29,7 +29,7 @@ dependencies of its own.
 
 ## Deliberate exclusions and manual coordination
 
-- `prototypes/rust-rextendr` is configured for security updates only. Its
+- `rust/bindings/r/rextendr-prototype` is configured for security updates only. Its
   `extendr-api` dependency is pinned to 0.9.0 in the Cargo manifest and in
   the generated-package preparation and license-provenance checks. A routine
   version change must update those pieces together and pass the three-platform

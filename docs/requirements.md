@@ -97,7 +97,7 @@ a complete language package or proof of shared compiled implementation.
 |---|---|---|
 | R package | Provisional implementation | Default plotting delegates to upstream corrplot. It also provides normalized matrix/file adapters, statistical and palette helpers, and an experimental scene-v1 preparation path. It is not a complete replacement renderer. |
 | Python | Reference/prototype | The shared scene/SVG prototype exercises scene construction and deterministic SVG output. It is not a production package or selected shared core. |
-| Rust shared core and CLI | Partial shared implementation | `crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
+| Rust shared core and CLI | Partial shared implementation | `rust/crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
 | Rust/rextendr | Disposable evaluation adapter | It proves shared-crate reuse for selected operations; it is not the production R backend. |
 | C++/Rcpp | Rejected and retired | The prototype and dedicated CI were removed; it is not an approved fallback. |
 | TypeScript / Node.js | Experimental implementation | The Node native binding and runtime-isolated TypeScript facade implement matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA, matrix-bearing scene-v1 compatibility rendering, capabilities, diagnostics, and direct browser Canvas in the browser facade. The packages are not publicly released. |
@@ -107,7 +107,7 @@ a complete language package or proof of shared compiled implementation.
 The current support and test details are maintained in
 [the architecture document](architecture.md),
 [the R implementation guide](../implementations/r/README.md),
-[the native CLI guide](../tools/corrplot-ng/README.md), and
+[the native CLI guide](../rust/tools/corrplot-cli/README.md), and
 [the testing strategy](testing-strategy.md).
 
 ## Architecture constraints and decision boundaries
@@ -117,7 +117,7 @@ The current support and test details are maintained in
   sharing a compiled library with the producer.
 - Rust is the selected strategic implementation for shared correlation and
   visualization semantics, as recorded in ADR 0001.
-- The reusable `crates/corrplot-core` library is used by the standalone CLI
+- The reusable `rust/crates/corrplot-core` library is used by the standalone CLI
   and the disposable R/rextendr evaluation adapter for matrix validation.
   The adapter is not part of the production R package.
 - The current shared core is a partial implementation, not a complete
