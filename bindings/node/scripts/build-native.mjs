@@ -12,7 +12,7 @@ if (!["x64", "arm64"].includes(arch)) {
   throw new Error(`Unsupported Node native architecture: ${arch}`);
 }
 
-execFileSync("cargo", ["build", "--release", "--manifest-path", manifest], {
+execFileSync("cargo", ["build", "--locked", "--release", "--manifest-path", manifest], {
   cwd: packageRoot,
   stdio: "inherit",
 });

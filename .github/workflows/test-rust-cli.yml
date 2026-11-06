@@ -47,9 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-      - name: Generate the Rust workspace lockfile
-        run: cargo generate-lockfile --manifest-path rust/Cargo.toml
-      - uses: Swatinem/rust-cache@v2
+            - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
             rust -> target
