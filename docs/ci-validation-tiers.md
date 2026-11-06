@@ -16,12 +16,12 @@ retired implementation and its comparison material are historical only.
 | --- | --- |
 | Test fixtures, schemas, normalized-matrix, shared SVG, publication config/SVG, renderer capability declaration | `test-foundation.yml`: fixture integrity, schema, Python contract tests, generated SVG checks, and legacy semantic-oracle validation |
 | `implementations/r/**` and R adapter tests | `test-r.yml` plus the foundation legacy-semantic check when its fixture paths change |
-| `rust/rust/crates/corrplot-core/**`, `rust/tools/corrplot-cli/**`, `rust/bindings/r/rextendr-prototype/**` | `test-shared-rust-core.yml`: stable shared-core consumer, WASM portability, and declared MSRV checks |
+| `rust/crates/corrplot-core/**`, `rust/tools/corrplot-cli/**`, `rust/bindings/r/rextendr-prototype/**` | `test-shared-rust-core.yml`: stable shared-core consumer, WASM portability, and declared MSRV checks |
 | `rust/tools/corrplot-cli/**`, shared core, or publication CLI inputs | `test-rust-cli.yml`: Ubuntu release build, CLI smoke, and installed-outside-checkout test |
-| `bindings/node/**`, `rust/bindings/node/**`, `rust/bindings/node/**` or `rust/rust/crates/corrplot-core/**` | `test-node-native.yml`: Linux x64 GNU on Node 24, including native addon tests and platform-package assembly |
-| `bindings/node/**`, `rust/bindings/node/**`, `rust/bindings/node/**`, `bindings/cross-backend/**`, `bindings/wasm/**`, `rust/bindings/wasm/**`, `rust/bindings/wasm/**`, `rust/rust/crates/corrplot-core/**`, shared fixtures, or the two shared-SVG scene examples | `test-node-wasm-parity.yml`: Node 24 native/WASM semantic, SVG, and RGBA parity plus benchmark-harness smoke (no timing thresholds) |
-| `package.json`, `packages/**`, `bindings/node/**`, `rust/bindings/node/**`, `rust/bindings/node/**`, `bindings/wasm/**`, `rust/bindings/wasm/**`, `rust/bindings/wasm/**`, or `.changeset/**` | `test-npm-workspace.yml`: workspace graph, Node, TypeScript, React, Vue, browser-WASM package, and package-content checks |
-| `bindings/wasm/**`, `rust/bindings/wasm/**`, `rust/bindings/wasm/**`, `packages/typescript/**`, `packages/react/**`, `packages/vue/**`, `package.json`, or `rust/rust/crates/corrplot-core/**` | `test-wasm-binding.yml`: Node 24 WASM tests, browser ESM build, TypeScript facade and direct Canvas browser conformance smoke, React Strict Mode lifecycle smoke, and Vue component/composable browser smoke |
+| `bindings/node/**`, `rust/bindings/node/**` or `rust/crates/corrplot-core/**` | `test-node-native.yml`: Linux x64 GNU on Node 24, including native addon tests and platform-package assembly |
+| `bindings/node/**`, `rust/bindings/node/**`, `bindings/cross-backend/**`, `bindings/wasm/**`, `rust/bindings/wasm/**`, `rust/crates/corrplot-core/**`, shared fixtures, or the two shared-SVG scene examples | `test-node-wasm-parity.yml`: Node 24 native/WASM semantic, SVG, and RGBA parity plus benchmark-harness smoke (no timing thresholds) |
+| `package.json`, `packages/**`, `bindings/node/**`, `rust/bindings/node/**`, `bindings/wasm/**`, `rust/bindings/wasm/**`, or `.changeset/**` | `test-npm-workspace.yml`: workspace graph, Node, TypeScript, React, Vue, browser-WASM package, and package-content checks |
+| `bindings/wasm/**`, `rust/bindings/wasm/**`, `packages/typescript/**`, `packages/react/**`, `packages/vue/**`, `package.json`, or `rust/crates/corrplot-core/**` | `test-wasm-binding.yml`: Node 24 WASM tests, browser ESM build, TypeScript facade and direct Canvas browser conformance smoke, React Strict Mode lifecycle smoke, and Vue component/composable browser smoke |
 | `experiments/wasm-r/**`, shared core, or the WASM/R experiment workflow | `test-wasm-r-experiment.yml`: Ubuntu WASI and embedded-ABI builds, R/Node parity, and measurements |
 | `rust/bindings/r/rextendr-prototype/**`, shared core, or the rextendr offline-package workflow | `rust-rextendr-offline-package.yml`: Ubuntu offline package/vendor build, shared-core consumer, and fast CRAN package checks |
 | `rust/bindings/r/rextendr-prototype/**`, shared core, `docs/cran-rust-dependency-audit-results.md`, or the Windows binary workflow | `test-rust-windows-binary.yml`: Windows binary package build and installation with a restricted PATH |
@@ -29,7 +29,7 @@ retired implementation and its comparison material are historical only.
 | `CITATION.cff` or `validate-citation.yml` | `validate-citation.yml`: citation metadata validation |
 | `.github/workflows/**` | `test-workflows.yml`: actionlint validates every workflow, including manually dispatched workflows |
 | `requirements-dev.txt` or `.github/dependabot.yml` | Foundation quick checks verify the declared Python test dependency and local command entry point |
-| `.github/workflows/cross-language-benchmarks.yml`, `benchmarks/**`, `rust/bindings/r/rextendr-prototype/**`, or `rust/rust/crates/corrplot-core/**` | `cross-language-benchmarks.yml`: benchmark-harness and shared-fixture parity smoke; timing/stress runs are reserved for manual dispatch |
+| `.github/workflows/cross-language-benchmarks.yml`, `benchmarks/**`, `rust/bindings/r/rextendr-prototype/**`, or `rust/crates/corrplot-core/**` | `cross-language-benchmarks.yml`: benchmark-harness and shared-fixture parity smoke; timing/stress runs are reserved for manual dispatch |
 
 `test-foundation.yml` and `test-r.yml` use pull-request path detection inside
 the workflow rather than event-level `paths` filters. Docs-only changes still
@@ -62,7 +62,7 @@ The weekly CRAN dependency audit is not removed or replaced by the fast tier.
 
 ## Shared-core fan-out
 
-A change under `rust/rust/crates/corrplot-core/**` intentionally fans out to all
+A change under `rust/crates/corrplot-core/**` intentionally fans out to all
 supported consumers: shared-core stable/MSRV/WASM checks, native CLI,
 Node-API, browser WASM, WASM/R, rextendr offline packaging, and the Windows
 R binary smoke. Each PR workflow runs its fast representative job; the full
