@@ -136,7 +136,7 @@ test_wasm() {
 
 build_cli() {
   need_rust
-  cargo build --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
+  cargo build --locked --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
 }
 
 build_node() {
