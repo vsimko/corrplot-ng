@@ -57,7 +57,19 @@ if (length(edition_line) == 1L &&
     !any(grepl('^rust-version[[:space:]]*=', cargo_lines))) {
   cargo_lines <- append(cargo_lines, 'rust-version = "1.78"', after = edition_line)
 }
-core_dependency <- 'corrplot-core = { path = "../../../../../../crates/corrplot-core" }'
+# A CRAN source tarball must be self-contained. The repository-relative
+# workspace path works for the disposable in-repository install, but escapes
+# the package after R CMD build. Include the small shared crate in src/rust
+# and use a package-relative Cargo path so source installs remain reproducible.
+core_source <- normalizePath(
+  file.path(root, "..", "..", "..", "crates", "corrplot-core"),
+  mustWork = TRUE
+)
+core_parent <- file.path(pkg_dir, "src", "rust")
+if (!file.copy(core_source, core_parent, recursive = TRUE)) {
+  stop("Could not copy corrplot-core into the generated R source package")
+}
+core_dependency <- 'corrplot-core = { path = "corrplot-core" }'
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
 }
