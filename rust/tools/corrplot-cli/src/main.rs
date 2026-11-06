@@ -824,7 +824,7 @@ mod tests {
         let temp = env::temp_dir().join(format!("corrplot-ng-batch-{}", process::id()));
         let _ = fs::remove_dir_all(&temp);
         fs::create_dir_all(&temp).unwrap();
-        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
         let valid_config = repo_root.join("prototypes/publication-config-v1/examples/basic.json");
         let manifest = temp.join("manifest.txt");
         fs::write(

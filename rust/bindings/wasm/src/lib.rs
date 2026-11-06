@@ -477,7 +477,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn renders_scene_v1_matrix_and_maps_invalid_method_to_diagnostic_v1() {
-        let scene_v1 = include_str!("../../../fixtures/scene-v1/scene-v1.example.json");
+        let scene_v1 = include_str!("../../../../fixtures/scene-v1/scene-v1.example.json");
 
         let output = render_matrix_svg_wasm(scene_v1.into(), "ellipse".into()).unwrap();
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
@@ -501,7 +501,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn renders_shared_scene_v1_construction_fixture() {
-        let fixture = include_str!("../../../prototypes/shared-svg/scene-v1-construction.example.json");
+        let fixture = include_str!("../../../../prototypes/shared-svg/scene-v1-construction.example.json");
         let output = render_matrix_svg_wasm(fixture.into(), "circle".into()).unwrap();
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
         let svg = output.svg.unwrap();
@@ -1077,7 +1077,7 @@ mod matrix_rgba_tests {
 
     #[wasm_bindgen_test]
     fn renders_scene_v1_matrix_to_owned_rgba_pixels() {
-        let fixture = include_str!("../../../fixtures/scene-v1/scene-v1.example.json");
+        let fixture = include_str!("../../../../fixtures/scene-v1/scene-v1.example.json");
         let options = RgbaOptionsInput {
             width_px: 380,
             height_px: 392,
@@ -1110,7 +1110,7 @@ mod matrix_rgba_tests {
 
     #[wasm_bindgen_test]
     fn maps_invalid_matrix_rgba_options_to_diagnostic_v1() {
-        let fixture = include_str!("../../../fixtures/scene-v1/scene-v1.example.json");
+        let fixture = include_str!("../../../../fixtures/scene-v1/scene-v1.example.json");
         let options = RgbaOptionsInput {
             width_px: 0,
             height_px: 392,
