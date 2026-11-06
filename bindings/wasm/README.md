@@ -33,7 +33,7 @@ Requirements: Rust 1.78+, the `wasm32-unknown-unknown` target, Node.js 24 or 26,
 and wasm-pack.
 
 ~~~sh
-wasm-pack test --node
+wasm-pack test --node ../../rust/bindings/wasm
 npm run build
 npm run test:pack
 ~~~
@@ -63,7 +63,7 @@ building both backends:
 
 ~~~sh
 (cd bindings/node && npm run build)
-(cd bindings/wasm && wasm-pack build --target nodejs --release --out-dir pkg-node)
+(cd bindings/wasm && wasm-pack build --target nodejs --release --out-dir ../../../bindings/wasm/pkg-node ../../rust/bindings/wasm)
 node bindings/cross-backend/benchmark-node-wasm.mjs
 ~~~
 
