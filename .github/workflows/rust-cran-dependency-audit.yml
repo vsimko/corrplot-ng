@@ -4,11 +4,11 @@ on:
   # Fast license-policy check for dependency-related changes.
   pull_request:
     paths:
-      - "prototypes/rust-rextendr/Cargo.toml"
-      - "prototypes/rust-rextendr/Cargo.lock"
-      - "prototypes/rust-rextendr/deny.toml"
-      - "prototypes/rust-rextendr/src/**"
-      - "crates/corrplot-core/Cargo.toml"
+      - "rust/bindings/r/rextendr-prototype/Cargo.toml"
+      - "rust/bindings/r/rextendr-prototype/Cargo.lock"
+      - "rust/bindings/r/rextendr-prototype/deny.toml"
+      - "rust/bindings/r/rextendr-prototype/src/**"
+      - "rust/crates/corrplot-core/Cargo.toml"
       - ".github/workflows/rust-cran-dependency-audit.yml"
   # Full vendoring and offline-build audit, weekly.
   schedule:
@@ -36,10 +36,10 @@ jobs:
         with:
           tool: cargo-deny
       - name: Verify committed lockfile is current
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: cargo metadata --locked --format-version 1 > /dev/null
       - name: Enforce dependency license policy
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: cargo deny check licenses
 
   full-audit:
@@ -56,27 +56,27 @@ jobs:
         with:
           tool: cargo-deny
       - name: Verify committed lockfile is current
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: cargo metadata --locked --format-version 1 > /dev/null
       - name: Enforce dependency license policy
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: cargo deny check licenses
       - name: Capture resolved dependency metadata
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: |
           cargo metadata --locked --format-version 1 > cargo-metadata.json
           cargo tree --locked --all-features > cargo-tree.txt
       - name: Vendor all resolved crate sources
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: cargo vendor --locked vendor > vendor-config.toml
       - name: Verify offline Cargo build from vendored sources
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: |
           mkdir -p .cargo
           cp vendor-config.toml .cargo/config.toml
           cargo build --locked --offline
       - name: Create dependency license inventory
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: |
           python3 - <<'PY'
           import json
@@ -101,17 +101,17 @@ jobs:
               print(f"  {package['name']} {package['version']}")
           PY
       - name: Archive vendored sources
-        working-directory: prototypes/rust-rextendr
+        working-directory: rust/bindings/r/rextendr-prototype
         run: tar -cJf vendor.tar.xz vendor
       - uses: actions/upload-artifact@v7
         with:
           name: rust-cran-dependency-audit
           path: |
-            prototypes/rust-rextendr/Cargo.lock
-            prototypes/rust-rextendr/cargo-metadata.json
-            prototypes/rust-rextendr/cargo-tree.txt
-            prototypes/rust-rextendr/dependency-licenses.tsv
-            prototypes/rust-rextendr/vendor-config.toml
-            prototypes/rust-rextendr/vendor.tar.xz
+            rust/bindings/r/rextendr-prototype/Cargo.lock
+            rust/bindings/r/rextendr-prototype/cargo-metadata.json
+            rust/bindings/r/rextendr-prototype/cargo-tree.txt
+            rust/bindings/r/rextendr-prototype/dependency-licenses.tsv
+            rust/bindings/r/rextendr-prototype/vendor-config.toml
+            rust/bindings/r/rextendr-prototype/vendor.tar.xz
           if-no-files-found: error
           retention-days: 14

@@ -81,7 +81,7 @@ import jsonschema
 from pathlib import Path
 
 schema = json.loads(Path("contracts/renderer-capability-v1/schema.json").read_text())
-declaration = json.loads(Path("crates/corrplot-core/renderer-capabilities.json").read_text())
+declaration = json.loads(Path("rust/crates/corrplot-core/renderer-capabilities.json").read_text())
 jsonschema.validate(declaration, schema)
 PY
   "$PYTHON_BIN" -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
@@ -110,11 +110,11 @@ test_r_legacy() {
 
 test_rust_cli() {
   need_rust
-  cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
-  cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
-  cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+  cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml
+  cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
+  cargo build --locked --offline --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
   need_python
-  tools/corrplot-ng/target/release/corrplot-ng render \
+  rust/target/release/corrplot-ng render \
     --config prototypes/publication-config-v1/examples/basic.json \
     --output "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
   "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
@@ -136,7 +136,7 @@ test_wasm() {
 
 build_cli() {
   need_rust
-  cargo build --release --manifest-path tools/corrplot-ng/Cargo.toml
+  cargo build --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
 }
 
 build_node() {

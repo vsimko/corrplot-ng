@@ -123,7 +123,7 @@ on repository-relative paths or build-time tooling.
 
 ## Supported release artifacts
 
-See the [CLI release instructions](../tools/corrplot-ng/README.md#release-binaries)
+See the [CLI release instructions](../rust/tools/corrplot-cli/README.md#release-binaries)
 for the current OS/architecture matrix, runtime library notes, checksums, and
 release provenance format. Linux DEB/RPM and distribution repository packages
 remain deferred to issue #99.

@@ -312,7 +312,7 @@ fn init_help_is_available_without_a_tty() {
 #[test]
 fn scene_v1_json_file_is_auto_detected_and_rendered() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/scene-v1/scene-v1.example.json");
+        .join("../../../fixtures/scene-v1/scene-v1.example.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["render", "--input"]).arg(&scene)
         .args(["--format", "scene-json"])
@@ -343,7 +343,7 @@ fn cli_renders_shared_scene_v1_construction_fixture() {
 #[test]
 fn scene_v1_json_can_be_read_from_stdin_with_explicit_format() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/scene-v1/scene-v1.example.json");
+        .join("../../../fixtures/scene-v1/scene-v1.example.json");
     let contents = fs::read(scene).unwrap();
     let mut child = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["validate", "--input", "-", "--input-format", "scene-json"])
@@ -412,7 +412,7 @@ fn inspect_reports_detected_input_format_and_matrix_metadata() {
     fs::remove_file(csv).ok();
 
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/scene-v1/scene-v1.example.json");
+        .join("../../../fixtures/scene-v1/scene-v1.example.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["inspect", "--input"]).arg(scene)
         .output().unwrap();

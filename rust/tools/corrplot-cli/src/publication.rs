@@ -1238,7 +1238,7 @@ mod tests {
 
     #[test]
     fn general_numeric_scale_matches_reference_fixtures() {
-        let fixture = parse_json(include_str!("../../../fixtures/matrix-input-v1/general-matrix-cases.json")).unwrap();
+        let fixture = parse_json(include_str!("../../../../fixtures/matrix-input-v1/general-matrix-cases.json")).unwrap();
         let root = object(&fixture, "fixture").unwrap();
         let cases = array(required(root, "cases", "fixture").unwrap(), "cases").unwrap();
         for case in cases {
@@ -1413,7 +1413,7 @@ pub(crate) fn parse_scene_matrix(source: &str) -> Result<(crate::Matrix, crate::
 mod scene_input_tests {
     use super::*;
 
-    const SCENE: &str = include_str!("../../../fixtures/scene-v1/scene-v1.example.json");
+    const SCENE: &str = include_str!("../../../../fixtures/scene-v1/scene-v1.example.json");
 
     #[test]
     fn imports_scene_v1_labels_values_and_kind() {

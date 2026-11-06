@@ -22,14 +22,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.99.1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: tools/corrplot-ng -> target
+          workspaces: rust -> target
           shared-key: release-cli
       - name: Check release tag matches package version
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: bash
         run: |
           tag_version="${GITHUB_REF_NAME#cli-v}"
-          package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' tools/corrplot-ng/Cargo.toml | head -n1)"
+          package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' rust/tools/corrplot-cli/Cargo.toml | head -n1)"
           test "$tag_version" = "$package_version"
       - name: Install musl toolchain
         run: |
@@ -38,14 +38,14 @@ jobs:
           rustup target add x86_64-unknown-linux-musl
       - name: Test and build static executable
         run: |
-          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --offline --release --target x86_64-unknown-linux-musl --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --offline --release --target x86_64-unknown-linux-musl --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Package and smoke-test
         shell: bash
         run: |
           mkdir -p dist
-          cp tools/corrplot-ng/target/x86_64-unknown-linux-musl/release/corrplot-ng dist/corrplot-ng
-          cp tools/corrplot-ng/README.md tools/corrplot-ng/LICENSE dist/
+          cp rust/target/x86_64-unknown-linux-musl/release/corrplot-ng dist/corrplot-ng
+          cp rust/tools/corrplot-cli/README.md rust/tools/corrplot-cli/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
           version: ${GITHUB_REF_NAME#cli-v}
           ref: ${GITHUB_REF}
@@ -102,31 +102,31 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.99.1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: tools/corrplot-ng -> target
+          workspaces: rust -> target
           shared-key: release-cli
       - name: Check release tag matches package version
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: bash
         run: |
           tag_version="${GITHUB_REF_NAME#cli-v}"
-          package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' tools/corrplot-ng/Cargo.toml | head -n1)"
+          package_version="$(sed -n 's/^version = "\(.*\)"/\1/p' rust/tools/corrplot-cli/Cargo.toml | head -n1)"
           test "$tag_version" = "$package_version"
       - name: Install Apple targets
         run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
       - name: Test and build both architectures
         run: |
-          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
-          cargo build --locked --offline --release --target x86_64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
-          cargo build --locked --offline --release --target aarch64-apple-darwin --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          cargo build --locked --offline --release --target x86_64-apple-darwin --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          cargo build --locked --offline --release --target aarch64-apple-darwin --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Create universal binary and smoke-test
         shell: bash
         run: |
           mkdir -p dist
           lipo -create \
-            tools/corrplot-ng/target/x86_64-apple-darwin/release/corrplot-ng \
-            tools/corrplot-ng/target/aarch64-apple-darwin/release/corrplot-ng \
+            rust/target/x86_64-apple-darwin/release/corrplot-ng \
+            rust/target/aarch64-apple-darwin/release/corrplot-ng \
             -output dist/corrplot-ng
-          cp tools/corrplot-ng/README.md tools/corrplot-ng/LICENSE dist/
+          cp rust/tools/corrplot-cli/README.md rust/tools/corrplot-cli/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
           version: ${GITHUB_REF_NAME#cli-v}
           ref: ${GITHUB_REF}
@@ -172,28 +172,28 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.99.1
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: tools/corrplot-ng -> target
+          workspaces: rust -> target
           shared-key: release-cli
       - name: Check release tag matches package version
         if: startsWith(github.ref, 'refs/tags/cli-v')
         shell: pwsh
         run: |
           $tagVersion = $env:GITHUB_REF_NAME.Substring(5)
-          $packageVersion = (Select-String -Path tools/corrplot-ng/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          $packageVersion = (Select-String -Path rust/tools/corrplot-cli/Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
           if ($tagVersion -ne $packageVersion) { throw "Tag version $tagVersion does not match package version $packageVersion" }
       - name: Test and build standalone executable
         shell: pwsh
         run: |
           rustup target add x86_64-pc-windows-msvc
-          cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
           $env:RUSTFLAGS = "-C target-feature=+crt-static"
-          cargo build --locked --offline --release --target x86_64-pc-windows-msvc --manifest-path tools/corrplot-ng/Cargo.toml
+          cargo build --locked --offline --release --target x86_64-pc-windows-msvc --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Package and smoke-test
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Copy-Item tools/corrplot-ng/target/x86_64-pc-windows-msvc/release/corrplot-ng.exe dist/
-          Copy-Item tools/corrplot-ng/README.md, tools/corrplot-ng/LICENSE dist/
+          Copy-Item rust/target/x86_64-pc-windows-msvc/release/corrplot-ng.exe dist/
+          Copy-Item rust/tools/corrplot-cli/README.md, rust/tools/corrplot-cli/LICENSE dist/
           @"
           version: $(if ($env:GITHUB_REF_NAME.StartsWith('cli-v')) { $env:GITHUB_REF_NAME.Substring(5) } else { $env:GITHUB_REF_NAME })
           ref: $env:GITHUB_REF
