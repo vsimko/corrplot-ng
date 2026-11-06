@@ -24,23 +24,24 @@ updates:
           - minor
           - patch
 
-  # Cargo projects with ordinary version-update automation. Group by
-  # dependency name across directories to avoid duplicate PRs for shared crates.
+  # One Cargo workspace owns the core, CLI and all production-facing bindings.
+  # The WASM-R experiment remains a separate set of independent Cargo projects.
   - package-ecosystem: cargo
     directories:
-      - /bindings/node
-      - /bindings/wasm
-      - /crates/corrplot-core
+      - /rust
       - /experiments/wasm-r/native-r
       - /experiments/wasm-r/wasm-abi
       - /experiments/wasm-r/wasm-host
-      - /tools/corrplot-ng
     schedule:
       interval: weekly
       day: monday
       time: "04:30"
       timezone: Europe/Berlin
     open-pull-requests-limit: 10
+    ignore:
+      # Keep the disposable R prototype's audited extendr API pin coordinated
+      # with its generated-package and CRAN/offline audit workflow.
+      - dependency-name: extendr-api
     groups:
       cargo-nonbreaking:
         applies-to: version-updates
@@ -51,24 +52,8 @@ updates:
           - patch
         group-by: dependency-name
 
-  # The rextendr prototype deliberately pins extendr-api 0.9.0 in both
-  # Cargo.toml and the generated-package preparation/CRAN audit path. Keep
-  # routine version updates manual and coordinated; security updates remain
-  # eligible because the zero limit applies only to version-update PRs.
-  - package-ecosystem: cargo
-    
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:30"
-      timezone: Europe/Berlin
-    open-pull-requests-limit: 0
-
-  # The root package.json defines one npm workspace containing bindings/node,
-  # bindings/wasm, and packages/*. Configure Dependabot at the workspace root
-  # so updates include the root manifest and each workspace package manifest.
-  # The four platform-specific native packages are unpublished build artifacts,
-  # not registry dependencies; keep them excluded from registry updates.
+  # The root package.json remains the private npm workspace until #367 moves it.
+  # Platform-specific native packages are unpublished build artifacts.
   - package-ecosystem: npm
     directory: /
     schedule:

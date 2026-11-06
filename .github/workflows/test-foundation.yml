@@ -50,7 +50,6 @@ jobs:
               - 'prototypes/publication-svg-v1/**'
               - 'schemas/**'
               - 'rust/**'
-              - 'rust/**'
               - '**/*.schema.json'
               - '.gitignore'
               - 'docs/root-directory-policy.md'
