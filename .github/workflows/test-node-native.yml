@@ -5,6 +5,8 @@ on:
     paths:
       - "bindings/node/**"
       - "rust/bindings/node/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
@@ -13,6 +15,8 @@ on:
     paths:
       - "bindings/node/**"
       - "rust/bindings/node/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"

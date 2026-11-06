@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "rust/tools/corrplot-cli/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
@@ -16,6 +18,8 @@ on:
     paths:
       - "docs/cli-installation.md"
       - "rust/tools/corrplot-cli/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"

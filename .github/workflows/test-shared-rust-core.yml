@@ -4,15 +4,23 @@ on:
   push:
     branches: [main]
     paths:
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "rust/tools/corrplot-cli/**"
       - "rust/bindings/r/rextendr-prototype/**"
+      - "rust/bindings/node/**"
+      - "rust/bindings/wasm/**"
       - ".github/workflows/test-shared-rust-core.yml"
   pull_request:
     paths:
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "rust/tools/corrplot-cli/**"
       - "rust/bindings/r/rextendr-prototype/**"
+      - "rust/bindings/node/**"
+      - "rust/bindings/wasm/**"
       - ".github/workflows/test-shared-rust-core.yml"
   workflow_dispatch:
 
@@ -34,6 +42,12 @@ jobs:
         run: |
           cargo generate-lockfile --manifest-path rust/Cargo.toml
           cargo fetch --manifest-path rust/Cargo.toml
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rust-workspace-lockfile
+          path: rust/Cargo.lock
+          if-no-files-found: error
+          retention-days: 1
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2

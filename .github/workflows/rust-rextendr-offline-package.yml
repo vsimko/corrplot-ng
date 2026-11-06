@@ -8,12 +8,16 @@ on:
     paths:
       - ".github/workflows/rust-rextendr-offline-package.yml"
       - "rust/bindings/r/rextendr-prototype/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
   workflow_dispatch:
   pull_request:
     paths:
       - "rust/bindings/r/rextendr-prototype/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/rust-rextendr-offline-package.yml"

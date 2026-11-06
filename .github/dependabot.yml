@@ -56,7 +56,7 @@ updates:
   # routine version updates manual and coordinated; security updates remain
   # eligible because the zero limit applies only to version-update PRs.
   - package-ecosystem: cargo
-    directory: /prototypes/rust-rextendr
+    
     schedule:
       interval: weekly
       day: monday
