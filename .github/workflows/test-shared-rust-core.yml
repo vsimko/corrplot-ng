@@ -40,7 +40,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-                  - name: Generate the Rust workspace lockfile for bootstrap
+      - name: Generate the Rust workspace lockfile for bootstrap
         run: |
           rm -f rust/Cargo.lock
           cargo generate-lockfile --manifest-path rust/Cargo.toml
@@ -77,7 +77,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.78.0
         with:
           targets: wasm32-unknown-unknown
-            - name: Generate the Rust workspace lockfile for MSRV bootstrap
+      - name: Generate the Rust workspace lockfile for MSRV bootstrap
         run: |
           rm -f rust/Cargo.lock
           cargo generate-lockfile --manifest-path rust/Cargo.toml

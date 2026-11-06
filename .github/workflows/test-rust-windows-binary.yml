@@ -32,7 +32,7 @@ jobs:
         with:
           use-public-rspm: true
       - uses: dtolnay/rust-toolchain@stable
-            - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust/bindings/r/rextendr-prototype -> .ci-rust-target
           shared-key: rextendr-ci
