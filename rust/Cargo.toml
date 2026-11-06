@@ -9,3 +9,9 @@ members = [
 # The disposable R/rextendr prototype retains its own audited lockfile so
 # CRAN/offline vendoring remains isolated from Node/WASM workspace dependencies.
 exclude = ["bindings/r/rextendr-prototype"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"

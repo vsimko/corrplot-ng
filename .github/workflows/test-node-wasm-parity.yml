@@ -77,7 +77,7 @@ jobs:
         run: npm run build
       - name: Build Node-compatible WASM backend
         working-directory: bindings/wasm
-        run: wasm-pack build --target nodejs --release --out-dir pkg-node
+        run: wasm-pack build --target nodejs --release --out-dir ../../../bindings/wasm/pkg-node ../../rust/bindings/wasm
       - name: Compare Node and WASM semantics, SVG, and RGBA output
         run: node --test bindings/cross-backend/test-node-wasm-parity.cjs
       - name: Smoke-test the Node/WASM benchmark harness without timing thresholds
