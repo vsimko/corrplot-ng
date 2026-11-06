@@ -95,7 +95,7 @@ No Docker build context, deployment descriptor, SBOM/provenance file, package-si
 
 ## 4. Workflow and path-assumption inventory
 
-All 18 current workflows are listed below. Workflows remain under `.github/workflows/`; this table identifies the path assumptions that #371 must update. The present workflows use a mixture of explicit path filters, internal changed-path detection, and unfiltered PR/push triggers.
+All 18 workflows remain under `.github/workflows/`. This table preserves the pre-migration source-path inventory and records the current Rust destinations; the remaining npm, R and Python paths are handled by their respective migration issues.
 
 | Workflow | Current source paths / behavior | Migration impact |
 |---|---|---|

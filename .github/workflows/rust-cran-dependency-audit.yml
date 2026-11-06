@@ -5,7 +5,6 @@ on:
   pull_request:
     paths:
       - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
       - "rust/bindings/r/rextendr-prototype/Cargo.toml"
       - "rust/bindings/r/rextendr-prototype/Cargo.lock"
       - "rust/Cargo.lock"

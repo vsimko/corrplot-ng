@@ -104,13 +104,13 @@ The standalone CLI consumes this core and supports its documented publication-co
 
 ### Native Node-API binding
 
-The experimental binding in `bindings/node/` calls the same Rust core. Its implemented operations include matrix validation, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 to SVG/RGBA, and renderer capability reporting. RGBA pixels are returned in an owned Node Buffer with metadata.
+The Rust crate in `rust/bindings/node/`, packaged through `bindings/node/` calls the same Rust core. Its implemented operations include matrix validation, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 to SVG/RGBA, and renderer capability reporting. RGBA pixels are returned in an owned Node Buffer with metadata.
 
 The binding's focused PR CI runs on Linux x64 with Node 24. Comprehensive CI covers Linux x64 GNU, macOS x64, macOS arm64, and Windows x64 on Node 22, 24, and 26. This is an experimental, non-published integration; package preparation does not mean npm publication or production support.
 
 ### Browser WebAssembly binding
 
-The binding in `bindings/wasm/` compiles the same Rust core for `wasm32-unknown-unknown`. It exposes matrix validation, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 to SVG/RGBA, and renderer capability reporting. RGBA pixels are copied into JavaScript-owned `Uint8Array` memory so they remain valid independently of later WASM calls.
+The Rust crate in `rust/bindings/wasm/`, packaged through `bindings/wasm/` compiles the same Rust core for `wasm32-unknown-unknown`. It exposes matrix validation, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 to SVG/RGBA, and renderer capability reporting. RGBA pixels are copied into JavaScript-owned `Uint8Array` memory so they remain valid independently of later WASM calls.
 
 Node-based WASM tests and package checks run on Node 24 and 26. The browser smoke suite exercises Chromium, Firefox, and WebKit on Ubuntu. The current WASM build is single-threaded. This does not establish support for every browser version or mobile webview. OffscreenCanvas is a separate TypeScript/browser host target and is used only when the runtime exposes a working 2D context. The package does not provide threaded WASM, worker transport, worker lifecycle, or worker protocols.
 

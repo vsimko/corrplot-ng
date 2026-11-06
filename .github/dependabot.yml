@@ -38,10 +38,6 @@ updates:
       time: "04:30"
       timezone: Europe/Berlin
     open-pull-requests-limit: 10
-    ignore:
-      # Keep the disposable R prototype's audited extendr API pin coordinated
-      # with its generated-package and CRAN/offline audit workflow.
-      - dependency-name: extendr-api
     groups:
       cargo-nonbreaking:
         applies-to: version-updates

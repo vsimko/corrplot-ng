@@ -38,6 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - name: Generate and fetch the Rust workspace lockfile
         run: |
           cargo generate-lockfile --manifest-path rust/Cargo.toml
@@ -48,8 +50,6 @@ jobs:
           path: rust/Cargo.lock
           if-no-files-found: error
           retention-days: 1
-        with:
-          targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
@@ -70,6 +70,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.78.0
         with:
           targets: wasm32-unknown-unknown
+      - name: Generate and fetch the Rust workspace lockfile
+        run: |
+          cargo generate-lockfile --manifest-path rust/Cargo.toml
+          cargo fetch --manifest-path rust/Cargo.toml
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |

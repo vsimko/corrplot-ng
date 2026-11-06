@@ -50,7 +50,7 @@ TRANSITIONAL_ROOT_DIRECTORIES = {
     ".changeset": "#367 — move Changesets configuration under npm/",
     "benchmarks": "#364 — split cross-runtime orchestration and runtime-owned benchmarks",
     "bindings": "#366/#367 — split Rust binding crates from npm package content",
-        "experiments": "#364 — retain as a documented cross-runtime exception or approve another home",
+    "experiments": "#364 — retain as a documented cross-runtime exception or approve another home",
     "implementations": "#368 — move the R package under r/corrplotng/",
     "packages": "#367 — move npm workspace packages under npm/packages/",
     "prototypes": "#366/#369/#370 — split Rust, Python reference code, contracts and fixtures",
