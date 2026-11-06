@@ -40,10 +40,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - name: Generate and fetch the Rust workspace lockfile
-        run: |
-          cargo generate-lockfile --manifest-path rust/Cargo.toml
-          cargo fetch --manifest-path rust/Cargo.toml
+      - name: Generate the Rust workspace lockfile
+        run: cargo generate-lockfile --manifest-path rust/Cargo.toml
       - uses: actions/upload-artifact@v7
         with:
           name: rust-workspace-lockfile
@@ -55,6 +53,8 @@ jobs:
           workspaces: |
             rust -> target
           shared-key: shared-core-stable
+      - name: Fetch Rust workspace dependencies after cache restore
+        run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - name: Compile shared core and its tests for WebAssembly
         run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path rust/crates/corrplot-core/Cargo.toml
       - name: Build shared core for WebAssembly
@@ -70,15 +70,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.78.0
         with:
           targets: wasm32-unknown-unknown
-      - name: Generate and fetch the Rust workspace lockfile
-        run: |
-          cargo generate-lockfile --manifest-path rust/Cargo.toml
-          cargo fetch --manifest-path rust/Cargo.toml
+      - name: Generate the Rust workspace lockfile
+        run: cargo generate-lockfile --manifest-path rust/Cargo.toml
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
             rust -> target
           shared-key: shared-core-msrv
+      - name: Fetch Rust workspace dependencies after cache restore
+        run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: "4.4"

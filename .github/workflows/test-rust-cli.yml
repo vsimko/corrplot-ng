@@ -47,15 +47,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-      - name: Generate and fetch the Rust workspace lockfile
-        run: |
-          cargo generate-lockfile --manifest-path rust/Cargo.toml
-          cargo fetch --manifest-path rust/Cargo.toml
+      - name: Generate the Rust workspace lockfile
+        run: cargo generate-lockfile --manifest-path rust/Cargo.toml
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
             rust -> target
           shared-key: shared-core-stable
+      - name: Fetch Rust workspace dependencies after cache restore
+        run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - name: Verify CLI depends only on the local shared core
         shell: bash
         run: |
