@@ -21,7 +21,7 @@ CAPABILITY_SCHEMA = json.loads(
     (ROOT / "contracts" / "renderer-capability-v1" / "schema.json").read_text(encoding="utf-8")
 )
 RUST_CAPABILITIES = json.loads(
-    (ROOT / "tools" / "corrplot-ng" / "renderer-capabilities.json").read_text(encoding="utf-8")
+    (ROOT / "rust" / "tools" / "corrplot-cli" / "renderer-capabilities.json").read_text(encoding="utf-8")
 )
 
 
