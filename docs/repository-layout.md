@@ -1,6 +1,6 @@
 # Repository layout and ownership
 
-This document defines where corrplot-ng code, contracts, fixtures, tests, and release assets belong. It describes the current layout; it does not authorize a broad directory migration.
+This document defines current ownership and the accepted ADR 0003 boundaries. It distinguishes production ecosystem roots from retained non-production experiments and transitional paths.
 
 ## Top-level directories
 
@@ -25,7 +25,6 @@ The remaining transitional paths are retained until their owning migration issue
 
 - **Normative, versioned contracts:** `normalized-matrix-v1/`, `publication-config-v1/`, `publication-svg-v1/`, the scene-v1 schema and fixtures, and `renderer-capabilities-v1.schema.json`. Their schemas and compatibility rules are normative; their current location under `prototypes/` is historical, not a statement that the contracts are throwaway.
 - **Reference implementation:** `shared-svg/` is the Python scene/SVG reference implementation. It is useful for semantic examples and conformance work, but it is not the selected production shared core.
-- **Rust integration experiment:** `rust/bindings/r/rextendr-prototype/` is an isolated evaluation spike. It demonstrates that an R binding and the CLI can call the same crate; it is not the production R package. C++/Rcpp was rejected and its prototype has been removed.
 
 Future work may move these categories to clearer top-level locations such as `contracts/`, `references/`, and `experiments/`. Do not move them until a separate staged change inventories and updates every relative link, package path, CI path filter, fixture consumer, and developer command.
 

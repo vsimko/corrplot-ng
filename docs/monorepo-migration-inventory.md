@@ -56,8 +56,8 @@ This document preserves the pre-migration source-to-target map and path-coupling
 | `rust/bindings/r/rextendr-prototype/Cargo.toml` | Disposable rextendr crate; path dependency `../../crates/corrplot-core` | `rust/bindings/r/rextendr-prototype/Cargo.toml`; preserve the pinned extendr version. |
 | `experiments/wasm-r/{native-r,wasm-abi,wasm-host}/Cargo.toml` (3) | Experiment crates; each path-depends on `../../../crates/corrplot-core` | Retain with the experiment or move as one experiment unit; rewrite all three paths if the experiment moves. |
 | `rust/Cargo.lock` | Workspace lockfile for the core, CLI, Node and WASM members | Generate and validate in CI, then commit; the excluded R prototype keeps its own lockfile. |
-| consolidated into `rust/Cargo.lock` | Committed CLI lockfile | Consolidate into `rust/Cargo.lock`; preserve offline CLI builds. |
-| consolidated into `rust/Cargo.lock` | Committed prototype lockfile | Consolidate into the Rust workspace lockfile if the prototype becomes a workspace member; otherwise retain an explicit standalone lockfile. |
+| Removed from old CLI path | Committed CLI lockfile | Consolidated into the generated `rust/Cargo.lock` workspace lockfile. |
+| `rust/bindings/r/rextendr-prototype/Cargo.lock` | Standalone audited lockfile for the excluded R/rextendr prototype | Retain separately to preserve CRAN/offline dependency isolation. |
 | Root `package-lock.json` | **Absent** | Open issue #265 requires a real npm-generated lockfile. Current npm CI uses `--package-lock=false`; do not hand-author a lockfile. |
 | `pyproject.toml`, `uv.lock`, `poetry.lock`, `Pipfile` | **Absent** | Python currently has only root `requirements-dev.txt` declaring `jsonschema`. Decide a Python project/environment file when isolating the reference implementation; do not imply a distributable Python package. |
 | `implementations/r/DESCRIPTION`, `NAMESPACE` | R package metadata | `r/corrplotng/DESCRIPTION`, `NAMESPACE`; no `renv.lock` exists. Do not add renv merely for symmetry. |
@@ -131,8 +131,8 @@ Additional path-sensitive references are in `scripts/dev-check.sh`, package buil
 
 ## 6. Risks and required sequencing
 
-1. **Accept ADR 0003 first.** Completed by merging PR #363. This inventory is based on that accepted target model.
-2. **Resolve the cross-runtime experiment exception.** Add `experiments/` explicitly to the ADR root allowlist (or approve a different home) before moving `experiments/wasm-r`.
+1. **Accept ADR 0003 first.** Accepted by maintainers; PR #363 records the initial review and this migration follows its ownership boundaries.
+2. **Preserve the cross-runtime experiment exception.** Accepted ADR 0003 explicitly retains `experiments/` for isolated non-production projects; do not merge `experiments/wasm-r` into the production Rust workspace.
 3. **Complete shared contracts/fixtures ownership (#370) and root policy (#365) early.** They affect all later ecosystem moves and can be implemented without moving production code.
 4. **Generate the npm lockfile before moving the npm workspace (#265).** It must be produced by the supported npm toolchain in a network-enabled checkout, then validated with `npm ci` across Node, WASM, TypeScript, React, Vue and package dry-runs. Do not fabricate it through GitHub file APIs.
 5. **Move Rust core and consumers as one coordinated sequence (#366).** Every current relative Cargo dependency points into `rust/crates/corrplot-core`; offline/MSRV workflows and release paths are sensitive.
