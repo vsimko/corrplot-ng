@@ -1,6 +1,6 @@
 # CRAN readiness: Rust integration
 
-**Status updated 2026-11-05 (validation evidence snapshot: 2026-10-31):** the isolated `prototypes/rust-rextendr` scene-v1 spike has a reproducible, cross-platform source-package validation path. It is **not** the production R package and has **not** been accepted by CRAN. The latest recorded result is **PASS WITH ONE NOTE / EXTERNAL GUIDANCE REQUIRED**, not a clean CRAN check.
+**Status updated 2026-11-05 (validation evidence snapshot: 2026-10-31):** the isolated `rust/bindings/r/rextendr-prototype` scene-v1 spike has a reproducible, cross-platform source-package validation path. It is **not** the production R package and has **not** been accepted by CRAN. The latest recorded result is **PASS WITH ONE NOTE / EXTERNAL GUIDANCE REQUIRED**, not a clean CRAN check.
 
 ## Current validation evidence
 
@@ -73,7 +73,7 @@ Canonical references:
 From the repository root, with R, stable Rust/Cargo, and the required R packages installed:
 
 ```sh
-Rscript prototypes/rust-rextendr/prepare-r-package.R
+Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
 ```
 
 The complete vendoring, offline install, source-tarball inspection, and `R CMD check --as-cran` procedure is automated in `.github/workflows/rust-rextendr-offline-package.yml`. Use that workflow as the reproducible reference rather than hand-editing the generated `.ci-r-package` tree.

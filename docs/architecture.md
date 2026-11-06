@@ -17,7 +17,7 @@ This document distinguishes implemented slices from experimental integrations an
 
 The normalized-matrix v1 and **scene-v1** contracts are language-neutral input and interchange/conformance boundaries. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration.
 
-The Rust shared core lives in `rust/crates/corrplot-core`. It currently provides matrix validation, an initial parser for the matrix-bearing subset of scene-v1, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. The standalone CLI, Node-API binding, browser-WASM binding, and disposable R/rextendr adapter consume this crate for the operations implemented by each integration. These are shared implementation paths, not proof of complete semantic parity or a finished visualization engine.
+The Rust shared core lives in `rust/rust/crates/corrplot-core`. It currently provides matrix validation, an initial parser for the matrix-bearing subset of scene-v1, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. The standalone CLI, Node-API binding, browser-WASM binding, and disposable R/rextendr adapter consume this crate for the operations implemented by each integration. These are shared implementation paths, not proof of complete semantic parity or a finished visualization engine.
 
 The TypeScript facade in `packages/typescript/` selects the native Node or browser-WASM backend through runtime-specific exports. It exposes matrix validation, Rust-backed normalized-matrix scene construction, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 JSON compatibility rendering, renderer capabilities with optional renderer-ID verification, diagnostic errors, adapter injection, and disposal. It accepts JavaScript arrays with explicit `null` values or numeric typed arrays with an explicit boolean missing-cell mask. The initial API slice tracked by #145 is implemented.
 
@@ -35,7 +35,7 @@ flowchart TB
     end
 
     subgraph Rust[Shared Rust implementation]
-      CORE[rust/crates/corrplot-core]
+      CORE[rust/rust/crates/corrplot-core]
       VALIDATE[Matrix validation]
       BUILD[Initial scene-v1 matrix parser and scene builder]
       RENDER[Typed-scene SVG / RGBA]
@@ -93,7 +93,7 @@ Contract versions and compatibility rules belong to the contract specifications.
 
 ### Rust shared core and standalone CLI
 
-The reusable library in `rust/crates/corrplot-core` is the strategic shared implementation. Its current slice includes:
+The reusable library in `rust/rust/crates/corrplot-core` is the strategic shared implementation. Its current slice includes:
 
 - Matrix validation with structured diagnostics.
 - Parsing and validation of the matrix-bearing portion of scene-v1 JSON.
@@ -156,7 +156,7 @@ The Rust/rextendr integration remains an evaluation adapter that proves shared-c
 |---|---|
 | Interoperability | Normalized-matrix v1 and scene-v1 contracts |
 | Diagnostics and capabilities | Diagnostic-v1 and renderer capability-v1 are used by the current Rust-backed integrations |
-| Strategic shared-core implementation | Rust (`rust/crates/corrplot-core`); matrix validation, initial scene-v1 matrix construction, typed-scene SVG/RGBA are implemented |
+| Strategic shared-core implementation | Rust (`rust/rust/crates/corrplot-core`); matrix validation, initial scene-v1 matrix construction, typed-scene SVG/RGBA are implemented |
 | Standalone CLI | Implemented Rust consumer of the shared core |
 | Native Node binding | Experimental Node-API integration; matrix validation, matrix-to-scene SVG/RGBA, typed-scene SVG/RGBA implemented |
 | Browser WASM | Experimental binding over the same Rust core; matrix-to-scene SVG/RGBA and typed-scene SVG/RGBA implemented |
