@@ -57,8 +57,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            bindings/node -> target
-            bindings/wasm -> target
+            rust -> target
           shared-key: node-wasm-parity
       - name: Cache wasm-pack executable
         id: wasm-pack-cache

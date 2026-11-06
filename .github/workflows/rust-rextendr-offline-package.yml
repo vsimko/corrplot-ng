@@ -44,6 +44,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: r-lib/actions/setup-r@v2
       - uses: dtolnay/rust-toolchain@stable
+      - name: Resolve and fetch the Rust workspace dependencies
+        run: |
+          cargo generate-lockfile --manifest-path rust/Cargo.toml
+          cargo fetch --manifest-path rust/Cargo.toml
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust/bindings/r/rextendr-prototype -> .ci-rust-target

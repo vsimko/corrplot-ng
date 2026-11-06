@@ -1,7 +1,7 @@
 # Generate a disposable R package using rextendr's supported scaffolding.
 # The generated package is intentionally not committed.
 args <- commandArgs(trailingOnly = TRUE)
-root <- if (length(args)) args[[1]] else "prototypes/rust-rextendr"
+root <- if (length(args)) args[[1]] else "rust/bindings/r/rextendr-prototype"
 root <- normalizePath(root, mustWork = TRUE)
 pkg_dir <- file.path(root, ".ci-r-package")
 
@@ -64,15 +64,17 @@ if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
 
 # Keep Cargo's standard release profile until a size reduction is
 # demonstrated across supported platforms. See the controlled CI comparison.
+cargo_lines <- c(cargo_lines, "", "[workspace]")
 writeLines(cargo_lines, cargo_manifest)
 
-# Reuse the reviewed transitive dependency graph from the committed spike
+# Reuse the reviewed transitive dependency graph from the Rust workspace
 # lockfile. Only the generated root package identity differs.
 package_name_idx <- grep("^name = ", cargo_lines)[1]
 package_version_idx <- grep("^version = ", cargo_lines)[1]
 package_name <- gsub('^name = "|"$', "", cargo_lines[package_name_idx])
 package_version <- gsub('^version = "|"$', "", cargo_lines[package_version_idx])
-lock_lines <- readLines(file.path(root, "Cargo.lock"), warn = FALSE)
+workspace_lock <- normalizePath(file.path(root, "..", "..", "..", "Cargo.lock"), mustWork = TRUE)
+lock_lines <- readLines(workspace_lock, warn = FALSE)
 root_name_idx <- grep('^name = "corrplotng_rust_spike"$', lock_lines)
 if (length(root_name_idx) != 1L) stop("Could not identify the prototype root package in Cargo.lock")
 lock_lines[root_name_idx] <- paste0('name = "', package_name, '"')

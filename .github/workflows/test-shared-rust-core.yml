@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
+      - name: Generate and fetch the Rust workspace lockfile
+        run: |
+          cargo generate-lockfile --manifest-path rust/Cargo.toml
+          cargo fetch --manifest-path rust/Cargo.toml
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2

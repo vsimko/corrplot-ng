@@ -34,7 +34,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: bindings/node -> target
+          workspaces: rust -> target
           shared-key: node-addon
       - name: Build native Node-API addon
         working-directory: bindings/node

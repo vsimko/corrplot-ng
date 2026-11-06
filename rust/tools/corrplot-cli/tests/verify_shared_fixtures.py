@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 FIXTURES = (
     (ROOT / "fixtures" / "matrix-input-v1" / "correlation-cases.json", "correlation", "correlation_plot"),
     (ROOT / "fixtures" / "matrix-input-v1" / "general-matrix-cases.json", "general", "general_matrix_plot"),
