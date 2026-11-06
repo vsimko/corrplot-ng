@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { arch, platform } from "node:process";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const manifest = resolve(packageRoot, "Cargo.toml");
+const repositoryRoot = resolve(packageRoot, "../..");
+const manifest = resolve(repositoryRoot, "rust", "bindings", "node", "Cargo.toml");
 
 if (!["x64", "arm64"].includes(arch)) {
   throw new Error(`Unsupported Node native architecture: ${arch}`);
@@ -28,7 +29,7 @@ if (!libraryName) {
   throw new Error(`Unsupported Node native platform: ${platform}`);
 }
 
-const source = resolve(packageRoot, "target", "release", libraryName);
+const source = resolve(repositoryRoot, "rust", "target", "release", libraryName);
 const destination = resolve(packageRoot, "index.node");
 copyFileSync(source, destination);
 process.stdout.write(`Built native addon: ${destination}\n`);

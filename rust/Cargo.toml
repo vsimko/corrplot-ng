@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/corrplot-core",
+    "tools/corrplot-cli",
+    "bindings/node",
+    "bindings/wasm",
+    "bindings/r/rextendr-prototype",
+]

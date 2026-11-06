@@ -3,8 +3,8 @@ name: Test native Rust CLI
 on:
   pull_request:
     paths:
-      - "tools/corrplot-ng/**"
-      - "crates/corrplot-core/**"
+      - "rust/tools/corrplot-cli/**"
+      - "rust/crates/corrplot-core/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
       - "docs/cli-installation.md"
@@ -15,8 +15,8 @@ on:
     branches: [main]
     paths:
       - "docs/cli-installation.md"
-      - "tools/corrplot-ng/**"
-      - "crates/corrplot-core/**"
+      - "rust/tools/corrplot-cli/**"
+      - "rust/crates/corrplot-core/**"
       - "prototypes/publication-config-v1/**"
       - "scripts/validate_svg.py"
       - "tests/fixtures/**"
@@ -46,13 +46,12 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            crates/corrplot-core -> target
-            tools/corrplot-ng -> target
+            rust -> target
           shared-key: shared-core-stable
       - name: Verify CLI depends only on the local shared core
         shell: bash
         run: |
-          tree="$(cargo tree --manifest-path tools/corrplot-ng/Cargo.toml --edges normal)"
+          tree="$(cargo tree --manifest-path rust/tools/corrplot-cli/Cargo.toml --edges normal)"
           echo "$tree"
           echo "$tree" | grep -F "corrplot-core v0.1.0"
           if echo "$tree" | grep -Eq "registry\\+|git\\+"; then
@@ -60,21 +59,21 @@ jobs:
             exit 1
           fi
       - name: Test shared matrix core
-        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
+        run: cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml
       - name: Test
-        run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+        run: cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Build release executable
-        run: cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+        run: cargo build --locked --offline --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Set up Python for shared fixture parity
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Verify native CLI against shared matrix fixtures
-        run: python tools/corrplot-ng/tests/verify_shared_fixtures.py --binary "tools/corrplot-ng/target/release/corrplot-ng${{ runner.os == 'Windows' && '.exe' || '' }}"
+        run: python rust/tools/corrplot-cli/tests/verify_shared_fixtures.py --binary "rust/target/release/corrplot-ng${{ runner.os == 'Windows' && '.exe' || '' }}"
       - name: Validate native CLI SVG artifact
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tools/corrplot-ng/target/release/corrplot-ng render --config prototypes/publication-config-v1/examples/basic.json --output "$RUNNER_TEMP/native-cli.svg"
+          rust/target/release/corrplot-ng render --config prototypes/publication-config-v1/examples/basic.json --output "$RUNNER_TEMP/native-cli.svg"
           python scripts/validate_svg.py "$RUNNER_TEMP/native-cli.svg"
 
       - name: Verify installed CLI outside the checkout (Unix)
@@ -83,7 +82,7 @@ jobs:
         run: |
           prefix="$RUNNER_TEMP/corrplot-install"
           mkdir -p "$prefix/bin" "$prefix/work"
-          install -m 0755 tools/corrplot-ng/target/release/corrplot-ng "$prefix/bin/corrplot-ng"
+          install -m 0755 rust/target/release/corrplot-ng "$prefix/bin/corrplot-ng"
           cd "$prefix/work"
           printf ',alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n' > matrix.csv
           "$prefix/bin/corrplot-ng" version
@@ -101,7 +100,7 @@ jobs:
           $bin = Join-Path $prefix "bin"
           $work = Join-Path $prefix "work"
           New-Item -ItemType Directory -Force $bin, $work | Out-Null
-          Copy-Item tools/corrplot-ng/target/release/corrplot-ng.exe (Join-Path $bin "corrplot-ng.exe")
+          Copy-Item rust/target/release/corrplot-ng.exe (Join-Path $bin "corrplot-ng.exe")
           @"
           ,alpha,beta
           alpha,1,0.5

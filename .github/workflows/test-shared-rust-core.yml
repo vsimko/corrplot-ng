@@ -4,15 +4,15 @@ on:
   push:
     branches: [main]
     paths:
-      - "crates/corrplot-core/**"
-      - "tools/corrplot-ng/**"
-      - "prototypes/rust-rextendr/**"
+      - "rust/crates/corrplot-core/**"
+      - "rust/tools/corrplot-cli/**"
+      - "rust/bindings/r/rextendr-prototype/**"
       - ".github/workflows/test-shared-rust-core.yml"
   pull_request:
     paths:
-      - "crates/corrplot-core/**"
-      - "tools/corrplot-ng/**"
-      - "prototypes/rust-rextendr/**"
+      - "rust/crates/corrplot-core/**"
+      - "rust/tools/corrplot-cli/**"
+      - "rust/bindings/r/rextendr-prototype/**"
       - ".github/workflows/test-shared-rust-core.yml"
   workflow_dispatch:
 
@@ -35,16 +35,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            crates/corrplot-core -> target
-            tools/corrplot-ng -> target
-            prototypes/rust-rextendr -> target
+            rust -> target
           shared-key: shared-core-stable
       - name: Compile shared core and its tests for WebAssembly
-        run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
+        run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path rust/crates/corrplot-core/Cargo.toml
       - name: Build shared core for WebAssembly
-        run: cargo build --locked --offline --lib --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
+        run: cargo build --locked --offline --lib --target wasm32-unknown-unknown --manifest-path rust/crates/corrplot-core/Cargo.toml
       - name: Run shared semantic tests on native target
-        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
+        run: cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml
 
   minimum-supported-toolchain:
     runs-on: ubuntu-latest
@@ -57,28 +55,26 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            crates/corrplot-core -> target
-            tools/corrplot-ng -> target
-            prototypes/rust-rextendr -> target
+            rust -> target
           shared-key: shared-core-msrv
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: "4.4"
       - name: Test shared core at the declared MSRV
-        run: cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
+        run: cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml
       - name: Check shared core for WebAssembly at the declared MSRV
-        run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path crates/corrplot-core/Cargo.toml
+        run: cargo check --locked --offline --all-targets --target wasm32-unknown-unknown --manifest-path rust/crates/corrplot-core/Cargo.toml
       - name: Test CLI consumer at the declared MSRV
-        run: cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
+        run: cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Compile rextendr consumer at the declared MSRV
-        run: cargo check --locked --manifest-path prototypes/rust-rextendr/Cargo.toml
+        run: cargo check --locked --manifest-path rust/bindings/r/rextendr-prototype/Cargo.toml
       - name: Verify the consumer resolves the repository-local shared core
         shell: bash
         run: |
-          tree="$(cargo tree --manifest-path prototypes/rust-rextendr/Cargo.toml -i corrplot-core)"
+          tree="$(cargo tree --manifest-path rust/bindings/r/rextendr-prototype/Cargo.toml -i corrplot-core)"
           echo "$tree"
           echo "$tree" | grep -F "corrplot-core v0.1.0"
-          if ! echo "$tree" | grep -Fq 'crates/corrplot-core' && ! echo "$tree" | grep -Fq 'crates\\corrplot-core'; then
+          if ! echo "$tree" | grep -Fq 'rust/crates/corrplot-core' && ! echo "$tree" | grep -Fq 'rust\\crates\\corrplot-core'; then
             echo "R/rextendr consumer did not resolve the repository-local core crate" >&2
             exit 1
           fi
