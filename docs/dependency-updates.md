@@ -8,14 +8,11 @@ Dependabot checks these declared dependency sources weekly on Monday
 | Ecosystem | Source | Policy |
 | --- | --- | --- |
 | GitHub Actions | `.github/workflows/` | Minor/patch updates grouped; major updates separate |
-| Cargo | Seven ordinary Cargo project directories | Minor/patch updates grouped by dependency name across projects; major updates separate |
+| Cargo | One production workspace at `/rust`, three independent WASM-R experiment crates, and one excluded standalone R/rextendr package | Workspace and experiment minor/patch updates grouped; R/rextendr routine updates disabled, security updates retained |
 | npm | Root npm workspace (`package.json`, `bindings/node`, `bindings/wasm`, and `packages/*`) | External dependencies across workspace manifests are maintained; four unpublished native platform-package references are ignored |
 | pip | `requirements-dev.txt` | Python development/test dependencies; minor/patch updates grouped |
 
-The Cargo projects covered by routine version updates are
-`rust/bindings/node`, `rust/bindings/wasm`, `rust/crates/corrplot-core`,
-`experiments/wasm-r/native-r`, `experiments/wasm-r/wasm-abi`,
-`experiments/wasm-r/wasm-host`, `rust/tools/corrplot-cli`, and the standalone `rust/bindings/r/rextendr-prototype` lockfile.
+The production-facing Cargo workspace is rooted at `/rust` and contains the shared core, CLI, Node and WASM crates. The three `experiments/wasm-r` crates remain independent projects. The excluded `rust/bindings/r/rextendr-prototype` package retains its own lockfile and a separate security-only Dependabot entry.
 
 The npm workspace is rooted at `/` and declares `bindings/node`,
 `bindings/wasm`, and `packages/*` in the root `package.json`. Dependabot
@@ -92,7 +89,7 @@ security updates enabled under **Settings → Security & analysis**.
 Dependabot pull requests must run the existing checks for the affected
 manifest paths:
 
-- Cargo changes in the shared core, CLI, Node, WASM, and WASM/R projects run
+- Cargo changes in the `/rust` workspace and independent WASM/R projects run
   their corresponding locked build/test workflows.
 - rextendr security updates run the offline package/vendor and R integration
   workflow, including all three supported operating systems.

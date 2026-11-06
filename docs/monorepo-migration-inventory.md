@@ -118,7 +118,7 @@ All 18 workflows remain under `.github/workflows/`. This table preserves the pre
 | `test-workflows.yml` | Runs actionlint over `.github/workflows/**` | Remains at root; must pass after every workflow path/filter edit. |
 | `validate-citation.yml` | Validates root `CITATION.cff` | Remains root-scoped; no ecosystem move expected. |
 
-Additional path-sensitive references are in `scripts/dev-check.sh`, package build/pack scripts, Cargo `path = "../../crates/corrplot-core"` dependencies, R package extdata paths, browser example Vite configs, package-isolation tests, and documentation links. These must be updated with the owning move, not in a later cleanup PR.
+Path-sensitive references in `scripts/dev-check.sh`, Node/WASM build scripts, Cargo dependencies, R package generation, browser examples, package-isolation tests, documentation links and CI filters were updated in #366. The remaining mixed npm package directories are intentionally left for #367.
 
 ## 5. Distribution, deployment and security inventory
 
