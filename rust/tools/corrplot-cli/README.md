@@ -7,7 +7,7 @@ This is a standalone Rust executable. It has **no third-party Cargo runtime depe
 From the repository root:
 
 ```sh
-cargo build --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
+cargo build --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
 ./rust/tools/corrplot-cli/target/release/corrplot-ng --help
 ```
 
@@ -349,8 +349,8 @@ and the wizard branch on the same machine:
 
 ```sh
 git worktree add /tmp/corrplot-ng-base origin/main
-cargo build --release --manifest-path /tmp/corrplot-ng-base/rust/tools/corrplot-cli/Cargo.toml
-cargo build --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
+cargo build --profile release-cli --manifest-path /tmp/corrplot-ng-base/rust/tools/corrplot-cli/Cargo.toml
+cargo build --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
 python benchmarks/cli_startup.py \
   --baseline /tmp/corrplot-ng-base/rust/tools/corrplot-cli/target/release/corrplot-ng \
   --candidate rust/tools/corrplot-cli/target/release/corrplot-ng \

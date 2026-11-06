@@ -39,12 +39,12 @@ jobs:
       - name: Test and build static executable
         run: |
           cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --offline --release --target x86_64-unknown-linux-musl --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc cargo build --locked --offline --profile release-cli --target x86_64-unknown-linux-musl --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Package and smoke-test
         shell: bash
         run: |
           mkdir -p dist
-          cp rust/target/x86_64-unknown-linux-musl/release/corrplot-ng dist/corrplot-ng
+          cp rust/target/x86_64-unknown-linux-musl/release-cli/corrplot-ng dist/corrplot-ng
           cp rust/tools/corrplot-cli/README.md rust/tools/corrplot-cli/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
           version: ${GITHUB_REF_NAME#cli-v}
@@ -62,7 +62,7 @@ jobs:
           ./dist/corrplot-ng --help >/dev/null
           ./dist/corrplot-ng version
           python3 benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target x86_64-unknown-linux-musl --output dist/RELEASE-AUDIT.json
-          docker run --rm --network none -v "$PWD/dist:/release:ro" alpine:3.21 /release/corrplot-ng --help >/dev/null
+          docker run --rm --network none -v "$PWD/dist:/release:ro" alpine:3.21 /release-cli/corrplot-ng --help >/dev/null
           tar -C dist -czf corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt RELEASE-AUDIT.json
           mkdir package-check
           tar -xzf corrplot-ng-linux-x86_64-musl.tar.gz -C package-check
@@ -81,7 +81,7 @@ jobs:
             mkdir -p /tmp/corrplot-install-smoke
             cd /tmp/corrplot-install-smoke
             printf ",alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n" > matrix.csv
-            /release/corrplot-ng render --input matrix.csv --output rendered.svg
+            /release-cli/corrplot-ng render --input matrix.csv --output rendered.svg
             test -s rendered.svg
             grep -q "<svg" rendered.svg
           '
@@ -116,15 +116,15 @@ jobs:
       - name: Test and build both architectures
         run: |
           cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
-          cargo build --locked --offline --release --target x86_64-apple-darwin --manifest-path rust/tools/corrplot-cli/Cargo.toml
-          cargo build --locked --offline --release --target aarch64-apple-darwin --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          cargo build --locked --offline --profile release-cli --target x86_64-apple-darwin --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          cargo build --locked --offline --profile release-cli --target aarch64-apple-darwin --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Create universal binary and smoke-test
         shell: bash
         run: |
           mkdir -p dist
           lipo -create \
-            rust/target/x86_64-apple-darwin/release/corrplot-ng \
-            rust/target/aarch64-apple-darwin/release/corrplot-ng \
+            rust/target/x86_64-apple-darwin/release-cli/corrplot-ng \
+            rust/target/aarch64-apple-darwin/release-cli/corrplot-ng \
             -output dist/corrplot-ng
           cp rust/tools/corrplot-cli/README.md rust/tools/corrplot-cli/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
@@ -187,12 +187,12 @@ jobs:
           rustup target add x86_64-pc-windows-msvc
           cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
           $env:RUSTFLAGS = "-C target-feature=+crt-static"
-          cargo build --locked --offline --release --target x86_64-pc-windows-msvc --manifest-path rust/tools/corrplot-cli/Cargo.toml
+          cargo build --locked --offline --profile release-cli --target x86_64-pc-windows-msvc --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Package and smoke-test
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Copy-Item rust/target/x86_64-pc-windows-msvc/release/corrplot-ng.exe dist/
+          Copy-Item rust/target/x86_64-pc-windows-msvc/release-cli/corrplot-ng.exe dist/
           Copy-Item rust/tools/corrplot-cli/README.md, rust/tools/corrplot-cli/LICENSE dist/
           @"
           version: $(if ($env:GITHUB_REF_NAME.StartsWith('cli-v')) { $env:GITHUB_REF_NAME.Substring(5) } else { $env:GITHUB_REF_NAME })

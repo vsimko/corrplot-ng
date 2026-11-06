@@ -69,17 +69,17 @@ jobs:
       - name: Test
         run: cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Build release executable
-        run: cargo build --locked --offline --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
+        run: cargo build --locked --offline --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
       - name: Set up Python for shared fixture parity
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Verify native CLI against shared matrix fixtures
-        run: python rust/tools/corrplot-cli/tests/verify_shared_fixtures.py --binary "rust/target/release/corrplot-ng${{ runner.os == 'Windows' && '.exe' || '' }}"
+        run: python rust/tools/corrplot-cli/tests/verify_shared_fixtures.py --binary "rust/target/release-cli/corrplot-ng${{ runner.os == 'Windows' && '.exe' || '' }}"
       - name: Validate native CLI SVG artifact
         if: matrix.os == 'ubuntu-latest'
         run: |
-          rust/target/release/corrplot-ng render --config prototypes/publication-config-v1/examples/basic.json --output "$RUNNER_TEMP/native-cli.svg"
+          rust/target/release-cli/corrplot-ng render --config prototypes/publication-config-v1/examples/basic.json --output "$RUNNER_TEMP/native-cli.svg"
           python scripts/validate_svg.py "$RUNNER_TEMP/native-cli.svg"
 
       - name: Verify installed CLI outside the checkout (Unix)
@@ -88,7 +88,7 @@ jobs:
         run: |
           prefix="$RUNNER_TEMP/corrplot-install"
           mkdir -p "$prefix/bin" "$prefix/work"
-          install -m 0755 rust/target/release/corrplot-ng "$prefix/bin/corrplot-ng"
+          install -m 0755 rust/target/release-cli/corrplot-ng "$prefix/bin/corrplot-ng"
           cd "$prefix/work"
           printf ',alpha,beta\nalpha,1,0.5\nbeta,0.5,1\n' > matrix.csv
           "$prefix/bin/corrplot-ng" version
@@ -106,7 +106,7 @@ jobs:
           $bin = Join-Path $prefix "bin"
           $work = Join-Path $prefix "work"
           New-Item -ItemType Directory -Force $bin, $work | Out-Null
-          Copy-Item rust/target/release/corrplot-ng.exe (Join-Path $bin "corrplot-ng.exe")
+          Copy-Item rust/target/release-cli/corrplot-ng.exe (Join-Path $bin "corrplot-ng.exe")
           @"
           ,alpha,beta
           alpha,1,0.5

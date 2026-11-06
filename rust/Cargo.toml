@@ -11,8 +11,10 @@ members = [
 # CRAN/offline vendoring remains isolated from Node/WASM workspace dependencies.
 exclude = ["bindings/r/rextendr-prototype"]
 
-# Preserve the former CLI's release settings for all workspace consumers.
-[profile.release]
+# Preserve the former standalone CLI release settings without applying
+# panic=abort to the Node/WASM bindings.
+[profile.release-cli]
+inherits = "release"
 strip = true
 lto = true
 codegen-units = 1

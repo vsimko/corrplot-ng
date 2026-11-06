@@ -112,9 +112,9 @@ test_rust_cli() {
   need_rust
   cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml
   cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
-  cargo build --locked --offline --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
+  cargo build --locked --offline --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
   need_python
-  rust/target/release/corrplot-ng render \
+  rust/target/release-cli/corrplot-ng render \
     --config prototypes/publication-config-v1/examples/basic.json \
     --output "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
   "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
@@ -136,7 +136,7 @@ test_wasm() {
 
 build_cli() {
   need_rust
-  cargo build --locked --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
+  cargo build --locked --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
 }
 
 build_node() {
