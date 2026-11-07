@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp rust/target/x86_64-unknown-linux-musl/release/corrplot-ng dist/corrplot-ng
+          cp rust/target/x86_64-unknown-linux-musl/release-cli/corrplot-ng dist/corrplot-ng
           cp rust/tools/corrplot-cli/README.md rust/tools/corrplot-cli/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
           version: ${GITHUB_REF_NAME#cli-v}
@@ -123,8 +123,8 @@ jobs:
         run: |
           mkdir -p dist
           lipo -create \
-            rust/target/x86_64-apple-darwin/release/corrplot-ng \
-            rust/target/aarch64-apple-darwin/release/corrplot-ng \
+            rust/target/x86_64-apple-darwin/release-cli/corrplot-ng \
+            rust/target/aarch64-apple-darwin/release-cli/corrplot-ng \
             -output dist/corrplot-ng
           cp rust/tools/corrplot-cli/README.md rust/tools/corrplot-cli/LICENSE dist/
           cat > dist/BUILD-INFO.txt <<EOF
@@ -192,7 +192,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Copy-Item rust/target/x86_64-pc-windows-msvc/release/corrplot-ng.exe dist/
+          Copy-Item rust/target/x86_64-pc-windows-msvc/release-cli/corrplot-ng.exe dist/
           Copy-Item rust/tools/corrplot-cli/README.md, rust/tools/corrplot-cli/LICENSE dist/
           @"
           version: $(if ($env:GITHUB_REF_NAME.StartsWith('cli-v')) { $env:GITHUB_REF_NAME.Substring(5) } else { $env:GITHUB_REF_NAME })
