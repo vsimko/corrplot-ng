@@ -17,7 +17,7 @@ const staging = mkdtempSync(join(tmpdir(), "corrplot-node-prebuilt-"));
 mkdirSync(outputDirectory, { recursive: true });
 try {
   copyFileSync(join(packageRoot, "index.node"), join(staging, "index.node"));
-  copyFileSync(join(packageRoot, "npm", packageName, "package.json"), join(staging, "package.json"));
+  copyFileSync(join(packageRoot, "..", "native-node-" + packageName, "package.json"), join(staging, "package.json"));
   execFileSync(process.execPath, [npmCli, "pack", "--json", "--pack-destination", outputDirectory], { cwd: staging, stdio: "inherit" });
 } finally {
   rmSync(staging, { recursive: true, force: true });
