@@ -5,6 +5,7 @@ on:
     paths:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
       - "npm/package.json"
       - "npm/package-lock.json"
       - "npm/packages/native-node-*/**"
@@ -19,6 +20,7 @@ on:
     paths:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
       - "npm/package.json"
       - "npm/package-lock.json"
       - "npm/packages/**"
