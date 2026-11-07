@@ -79,7 +79,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Install workspace dependencies from generated lockfile
-        run: npm ci --force --ignore-scripts --omit=optional --no-audit --no-fund
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
       - name: Validate workspace package graph
         run: npm ls --workspaces --depth=0
       - name: Test native Node binding
