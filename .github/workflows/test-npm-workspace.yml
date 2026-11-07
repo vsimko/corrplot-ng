@@ -106,7 +106,7 @@ jobs:
           tarballs="$staging/tarballs"
           consumer="$staging/project"
           mkdir -p "$tarballs" "$consumer"
-          printf '{"private":true}\\n' > "$consumer/package.json"
+          printf '{"private":true}\n' > "$consumer/package.json"
 
           export CORRPLOT_NODE_PLATFORM_PACKAGE=linux-x64-gnu
           export CORRPLOT_NODE_PACKAGE_OUTPUT="$tarballs"
@@ -185,8 +185,8 @@ jobs:
           const path = require("node:path");
           const root = path.join(process.env.RUNNER_TEMP, "corrplot-vite-rolldown-smoke");
           fs.mkdirSync(root, { recursive: true });
-          fs.writeFileSync(path.join(root, "index.html"), '<script type="module" src="/src.js"></script>\\n');
-          fs.writeFileSync(path.join(root, "src.js"), 'export const smoke = "ok";\\n');
+          fs.writeFileSync(path.join(root, "index.html"), '<script type="module" src="/src.js"></script>\n');
+          fs.writeFileSync(path.join(root, "src.js"), 'export const smoke = "ok";\n');
           NODE
           npm exec --workspace=@corrplot-ng/react -- vite build "$RUNNER_TEMP/corrplot-vite-rolldown-smoke" --outDir "$RUNNER_TEMP/corrplot-vite-rolldown-smoke-dist"
           node <<'NODE'
