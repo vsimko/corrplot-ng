@@ -17,8 +17,8 @@ The production-facing Cargo workspace is rooted at `/rust` and contains the shar
 The npm workspace is rooted at `/npm` and declares the five installable packages in `npm/package.json`. Dependabot is configured at that root so it can coordinate manifest and lockfile updates.
 The external npm dependencies currently declared by the root and workspaces
 include `@changesets/cli`, TypeScript, esbuild, React/React DOM and types,
-Vue and its Vite plugin, Vite, and the Node binding's optional platform
-package references. The `npm/packages/wasm` package has no external npm
+Vue and its Vite plugin, and Vite. The Node package's unpublished
+platform dependency versions are coordinated in `platform-dependencies.json`. The `npm/packages/wasm` package has no external npm
 dependencies of its own.
 
 ## Deliberate exclusions and manual coordination
