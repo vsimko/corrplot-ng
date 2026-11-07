@@ -51,7 +51,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('npm/package.json', 'npm/**/package.json') }}
+          key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('npm/package.json', 'npm/package-lock.json', 'npm/**/package.json') }}
           restore-keys: |
             npm-workspace-${{ runner.os }}-node-24-
       - uses: dtolnay/rust-toolchain@stable
@@ -73,15 +73,7 @@ jobs:
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Install workspace dependencies from committed lockfile
         working-directory: npm
-        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
-      - name: Install the TypeScript 7 native compiler for Linux CI
-        working-directory: npm
-        run: |
-          typescript_version="$(node -p "require('./node_modules/typescript/package.json').version")"
-          if [[ "$typescript_version" == 7.* ]]; then
-            npm install --no-save --no-package-lock --ignore-scripts --omit=optional --workspaces=false \
-              "@typescript/typescript-linux-x64@${typescript_version}"
-          fi
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Validate workspace package graph
         working-directory: npm
         run: npm ls --workspaces --depth=0
