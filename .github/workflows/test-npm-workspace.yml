@@ -70,7 +70,7 @@ jobs:
         if: steps.wasm-pack-cache.outputs.cache-hit != 'true'
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Generate workspace lockfile with npm 11
-        run: npm install --package-lock-only --force --ignore-scripts --no-audit --no-fund
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Upload generated workspace lockfile
         uses: actions/upload-artifact@v7
         with:
