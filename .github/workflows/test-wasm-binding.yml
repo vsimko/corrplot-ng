@@ -131,6 +131,30 @@ jobs:
               --ignore-scripts --omit=optional "@esbuild/linux-x64@${vite_esbuild_version}"
           fi
 
+          # Workspace packages can carry isolated esbuild versions. Restore
+          # each matching Linux binary locally because npm ci omits optional
+          # dependencies and the workspace hosts may differ from root esbuild.
+          for workspace in react typescript vue; do
+            workspace_esbuild_package="packages/${workspace}/node_modules/esbuild/package.json"
+            if [[ -f "$workspace_esbuild_package" ]]; then
+              workspace_esbuild_version="$(node -p "require('./${workspace_esbuild_package}').version")"
+              workspace_binary_dir="packages/${workspace}/node_modules/@esbuild/linux-x64"
+              workspace_tarball="$RUNNER_TEMP/esbuild-linux-x64-${workspace_esbuild_version}.tgz"
+              if [[ ! -f "$workspace_tarball" ]]; then
+                packed="$(npm pack "@esbuild/linux-x64@${workspace_esbuild_version}" --pack-destination "$RUNNER_TEMP" --silent)"
+                mv "$RUNNER_TEMP/$packed" "$workspace_tarball"
+              fi
+              mkdir -p "$workspace_binary_dir"
+              tar -xzf "$workspace_tarball" --strip-components=1 -C "$workspace_binary_dir"
+              installed_version="$(node -p "require('./${workspace_binary_dir}/package.json').version")"
+              if [[ "$installed_version" != "$workspace_esbuild_version" ]]; then
+                echo "Workspace $workspace esbuild $workspace_esbuild_version does not match Linux binary $installed_version" >&2
+                exit 1
+              fi
+              echo "Workspace $workspace: esbuild host and Linux binary both use $workspace_esbuild_version"
+            fi
+          done
+
           # Vite 8 uses Rolldown, whose platform binding is also optional.
           # Restore the Linux x64 binding explicitly because npm ci above omits
           # optional dependencies to keep the workspace install deterministic.
