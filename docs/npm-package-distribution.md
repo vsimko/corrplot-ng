@@ -11,12 +11,13 @@ The shared API contract and semantics should be consistent across runtimes. That
 
 ## Workspace
 
-The repository root is a private npm workspace, not a publishable package. Its workspace globs include the Node binding, browser WASM binding, TypeScript facade, and optional React and Vue adapters. The four platform-specific native packages remain optional dependencies of the Node package but are deliberately not npm workspaces: their `os`/`cpu` constraints must not make a cross-platform workspace install fail. Their tarballs are built separately on matching runners. Working bindings remain in their current directories; no package relocation is required.
+The private npm workspace is rooted at `npm/`, with its single `package-lock.json`. It owns `packages/native-node`, `packages/wasm`, `packages/typescript`, `packages/react`, and `packages/vue`; cross-backend tests live under `tests/cross-backend`. The four platform-specific native packages live beside `packages/native-node` as `packages/native-node-*` and remain outside the workspace because their `os`/`cpu` constraints must not make a cross-platform install fail. Their tarballs are built separately on matching runners. The native package's source workspace manifest keeps those unpublished optional packages out of the lockfile; `scripts/pack.mjs` injects the coordinated optional-dependency metadata from `platform-dependencies.json` into the distributable tarball.
 
 Install and validate locally with:
 
 ```sh
-npm install --ignore-scripts --omit=optional
+cd npm
+npm ci --ignore-scripts --omit=optional
 npm ls --workspaces --depth=0
 npm test
 npm run pack:dry-run
@@ -47,7 +48,7 @@ Public npm publication remains explicitly disabled and requires separate maintai
 | `@corrplot-ng/vue` | Optional Vue component and composable | `@corrplot-ng/wasm`; Vue peer dependency; implemented |
 | `@corrplot-ng/typescript` | Initial runtime-selecting facade | Optional peer dependencies for the Node and WASM backends |
 
-The Node package already has an implementation under `bindings/node/` and platform-specific package names. Preserve these names unless a separate migration is reviewed. Do not rename or recreate working native package artifacts as part of package-workspace preparation.
+The Node package already has an implementation under `npm/packages/native-node/` and platform-specific package names. Preserve these names unless a separate migration is reviewed. Do not rename or recreate working native package artifacts as part of package-workspace preparation.
 
 The browser package must not depend on, optionally install, import, or bundle the Node native package. React and Vue integrations must depend only on the browser-facing API. Frameworks remain optional peer dependencies and must not become dependencies of core or WASM.
 
@@ -105,8 +106,8 @@ The future publication issue is #293. It remains deferred until maintainers expl
 
 The framework packages are part of the intended ecosystem, but they are not prerequisites for completing the core/browser API:
 
-- React integration: #291 — implemented in `packages/react/`. It exports `Corrplot` and `useCorrplot`, initializes the WASM backend after mount, ignores results from cleaned-up effects, and renders inline SVG. React is a peer dependency; the only runtime package dependency is `@corrplot-ng/wasm`. Vite and esbuild production bundles are checked for Node-only dependencies, and browser smoke tests cover Strict Mode, updates, unmount/remount, initialization failures, and rendering errors.
-- Vue integration: #292 — implemented in `packages/vue/` as a browser-only component and composable over `@corrplot-ng/wasm`; Vue is a peer dependency. It remains a thin browser host adapter and does not implement correlation or rendering semantics.
+- React integration: #291 — implemented in `npm/packages/react/`. It exports `Corrplot` and `useCorrplot`, initializes the WASM backend after mount, ignores results from cleaned-up effects, and renders inline SVG. React is a peer dependency; the only runtime package dependency is `@corrplot-ng/wasm`. Vite and esbuild production bundles are checked for Node-only dependencies, and browser smoke tests cover Strict Mode, updates, unmount/remount, initialization failures, and rendering errors.
+- Vue integration: #292 — implemented in `npm/packages/vue/` as a browser-only component and composable over `@corrplot-ng/wasm`; Vue is a peer dependency. It remains a thin browser host adapter and does not implement correlation or rendering semantics.
 
 Framework packages must not pull native Node artifacts into browser dependency graphs.
 
