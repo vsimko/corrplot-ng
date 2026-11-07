@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { arch, platform } from "node:process";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const repositoryRoot = resolve(packageRoot, "../..");
+const repositoryRoot = resolve(packageRoot, "../../..");
 const manifest = resolve(repositoryRoot, "rust", "bindings", "node", "Cargo.toml");
 
 if (!["x64", "arm64"].includes(arch)) {
