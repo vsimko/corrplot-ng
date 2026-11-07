@@ -4,9 +4,11 @@
   "private": true,
   "description": "Private build workspace for Corrplot-ng npm packages",
   "workspaces": [
-    "bindings/node",
-    "bindings/wasm",
-    "packages/*"
+    "packages/native-node",
+    "packages/wasm",
+    "packages/typescript",
+    "packages/react",
+    "packages/vue"
   ],
   "scripts": {
     "test:node": "npm run test --workspace=@corrplot-ng/native-node",
