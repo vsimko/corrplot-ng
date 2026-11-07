@@ -87,7 +87,7 @@ jobs:
         working-directory: npm/packages/wasm
         run: npm run build
       - name: Measure WASM size, initialization, and renderer baselines
-        if: github.event_name == 'pull_request' || (matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')))
+        if: matrix.node == 26
         env:
           CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/wasm-baseline.json
         run: node npm/packages/wasm/benchmarks/measure.mjs
