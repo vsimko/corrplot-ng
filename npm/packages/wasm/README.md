@@ -63,7 +63,7 @@ building both backends:
 
 ~~~sh
 (cd npm/packages/native-node && npm run build)
-(cd npm/packages/wasm && wasm-pack build --target nodejs --release --out-dir pkg-node ../../../rust/bindings/wasm)
+(cd npm/packages/wasm && wasm-pack build --target nodejs --release --out-dir ../../../npm/packages/wasm/pkg-node ../../../rust/bindings/wasm)
 node npm/tests/cross-backend/benchmark-node-wasm.mjs
 ~~~
 
