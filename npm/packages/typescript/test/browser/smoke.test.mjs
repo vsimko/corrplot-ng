@@ -12,7 +12,7 @@ try {
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto("http://127.0.0.1:4173/packages/typescript/test/browser/index.html", {
+  await page.goto("http://127.0.0.1:4173/npm/packages/typescript/test/browser/index.html", {
     waitUntil: "domcontentloaded",
   });
 
