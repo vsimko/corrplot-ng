@@ -7,6 +7,8 @@ on:
       - "rust/Cargo.lock"
       - "npm/package.json"
       - "npm/package-lock.json"
+      - "npm/packages/native-node-*/**"
+      - "npm/tests/cross-backend/**"
       - "npm/.changeset/**"
       - "npm/packages/**"
       - "npm/packages/native-node/**"
@@ -115,16 +117,18 @@ jobs:
           GH_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          current_sha="$(gh api "repos/$GH_REPO/contents/npm/package-lock.json?ref=$GH_BRANCH" --jq .sha)"
-          gh api "repos/$GH_REPO/contents/npm/package-lock.json?ref=$GH_BRANCH" --jq .content | base64 --decode > "$RUNNER_TEMP/current-package-lock.json"
-          if cmp -s npm/package-lock.json "$RUNNER_TEMP/current-package-lock.json"; then
-            echo "Committed lockfile is already current."
-            exit 0
+          current_sha="$(gh api "repos/$GH_REPO/contents/npm/package-lock.json?ref=$GH_BRANCH" --jq .sha 2>/dev/null || true)"
+          if [[ -n "$current_sha" ]]; then
+            gh api "repos/$GH_REPO/contents/npm/package-lock.json?ref=$GH_BRANCH" --jq .content | base64 --decode > "$RUNNER_TEMP/current-package-lock.json"
+            if cmp -s npm/package-lock.json "$RUNNER_TEMP/current-package-lock.json"; then
+              echo "Committed lockfile is already current."
+              exit 0
+            fi
           fi
           jq -n \
             --arg message "build(npm): commit npm-generated workspace lockfile" \
             --arg content "$(base64 --wrap=0 npm/package-lock.json)" \
             --arg branch "$GH_BRANCH" \
             --arg sha "$current_sha" \
-            '{message: $message, content: $content, branch: $branch, sha: $sha}' \
+            '{message: $message, content: $content, branch: $branch} + (if $sha == "" then {} else {sha: $sha} end)' \
             | gh api --method PUT "repos/$GH_REPO/contents/npm/package-lock.json" --input -
