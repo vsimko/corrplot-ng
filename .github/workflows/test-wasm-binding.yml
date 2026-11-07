@@ -19,6 +19,7 @@ on:
     branches: [main]
     paths:
       - "npm/packages/wasm/**"
+      - "npm/package-lock.json"
       - "rust/bindings/wasm/**"
       - "npm/packages/typescript/**"
       - "npm/packages/react/**"
