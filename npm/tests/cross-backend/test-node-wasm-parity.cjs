@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const native = require("../../bindings/node");
-const wasm = require("../../bindings/wasm/pkg-node/corrplot_ng_wasm.js");
+const native = require("../../packages/native-node");
+const wasm = require("../../packages/wasm/pkg-node/corrplot_ng_wasm.js");
 
 const black = { red: 0, green: 0, blue: 0, alpha: 255 };
 const white = { red: 255, green: 255, blue: 255, alpha: 255 };
@@ -23,15 +23,15 @@ const scene = {
   texts: [],
 };
 const sceneV1 = fs.readFileSync(
-  path.join(__dirname, "../../fixtures/scene-v1/scene-v1.example.json"),
+  path.join(__dirname, "../../../fixtures/scene-v1/scene-v1.example.json"),
   "utf8",
 );
 const sceneV1Construction = fs.readFileSync(
-  path.join(__dirname, "../../prototypes/shared-svg/scene-v1-construction.example.json"),
+  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1-construction.example.json"),
   "utf8",
 );
 const sceneV1Statistical = fs.readFileSync(
-  path.join(__dirname, "../../fixtures/scene-v1/scene-v1-statistical-overlays.example.json"),
+  path.join(__dirname, "../../../fixtures/scene-v1/scene-v1-statistical-overlays.example.json"),
   "utf8",
 );
 const matrixFixtures = [
@@ -55,11 +55,11 @@ const matrix = {
 const cellMethods = ["circle", "square", "ellipse", "number", "shade", "color", "pie"];
 
 const correlationCorpus = JSON.parse(fs.readFileSync(
-  path.join(__dirname, "../../fixtures/matrix-input-v1/correlation-cases.json"),
+  path.join(__dirname, "../../../fixtures/matrix-input-v1/correlation-cases.json"),
   "utf8",
 ));
 const generalMatrixCorpus = JSON.parse(fs.readFileSync(
-  path.join(__dirname, "../../fixtures/matrix-input-v1/general-matrix-cases.json"),
+  path.join(__dirname, "../../../fixtures/matrix-input-v1/general-matrix-cases.json"),
   "utf8",
 ));
 const sharedMatrixFixtures = [
