@@ -31,7 +31,7 @@ function npm(args, cwd) {
 }
 
 try {
-  npm(["pack", "--pack-destination", packDirectory], packageRoot);
+  execFileSync(process.execPath, [join(packageRoot, "scripts", "pack.mjs"), "--pack-destination", packDirectory], { cwd: packageRoot, stdio: "inherit" });
   const baseTarballs = readdirSync(packDirectory).filter((name) => name.endsWith(".tgz"));
   assert.equal(baseTarballs.length, 1, "expected exactly one base package tarball");
   const baseTarball = join(packDirectory, baseTarballs[0]);
