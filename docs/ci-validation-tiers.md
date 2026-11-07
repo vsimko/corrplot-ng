@@ -2,9 +2,10 @@
 
 The CI is split into a **fast, path-filtered pull-request tier** and a
 **comprehensive tier**. Pull requests run the smallest relevant integration
-check for each changed component. Full operating-system and runtime matrices,
-release packaging, and experimental measurements remain available on
-`workflow_dispatch`, scheduled runs, or pushes to `main`.
+check for each changed component. Most broad operating-system and runtime
+matrices, release packaging, and experimental measurements remain available
+on `workflow_dispatch`, scheduled runs, or pushes to `main`; the targeted
+TypeScript/Rolldown native-toolchain matrix is also exercised on pull requests.
 
 The workflow names and triggers below are reconciled with the current files in
 `.github/workflows/`. There is no active C++/Rcpp package workflow; the
@@ -20,7 +21,7 @@ retired implementation and its comparison material are historical only.
 | `rust/tools/corrplot-cli/**`, shared core, or publication CLI inputs | `test-rust-cli.yml`: Ubuntu release build, CLI smoke, and installed-outside-checkout test |
 | `npm/packages/native-node/**`, `npm/packages/native-node-*/**`, `rust/bindings/node/**` or `rust/crates/corrplot-core/**` | `test-node-native.yml`: Linux x64 GNU on Node 24, including native addon tests and platform-package assembly |
 | `npm/packages/native-node/**`, `npm/packages/native-node-*/**`, `rust/bindings/node/**`, `npm/tests/cross-backend/**`, `npm/packages/wasm/**`, `rust/bindings/wasm/**`, `rust/crates/corrplot-core/**`, shared fixtures, or the two shared-SVG scene examples | `test-node-wasm-parity.yml`: Node 24 native/WASM semantic, SVG, and RGBA parity plus benchmark-harness smoke (no timing thresholds) |
-| `npm/package.json`, `npm/package-lock.json`, `npm/packages/**`, `npm/tests/cross-backend/**`, `npm/packages/native-node-*/**`, `npm/packages/native-node-*/**`, `rust/bindings/node/**`, `npm/packages/wasm/**`, `rust/bindings/wasm/**`, or `npm/.changeset/**` | `test-npm-workspace.yml`: workspace graph, Node, TypeScript, React, Vue, browser-WASM package, and package-content checks |
+| `npm/package.json`, `npm/package-lock.json`, `npm/packages/**`, `npm/tests/cross-backend/**`, `npm/packages/native-node-*/**`, `npm/packages/native-node-*/**`, `rust/bindings/node/**`, `npm/packages/wasm/**`, `rust/bindings/wasm/**`, or `npm/.changeset/**` | `test-npm-workspace.yml`: workspace graph, Node, TypeScript, React, Vue, browser-WASM package, and package-content checks; its Node 24 native-toolchain matrix also validates TypeScript 7 and Vite 8/Rolldown on Ubuntu x64, Intel macOS, Apple Silicon macOS, and Windows x64 |
 | `npm/packages/wasm/**`, `rust/bindings/wasm/**`, `npm/packages/typescript/**`, `npm/packages/react/**`, `npm/packages/vue/**`, `npm/package.json`, `npm/package-lock.json`, or `rust/crates/corrplot-core/**` | `test-wasm-binding.yml`: Node 24 WASM tests, browser ESM build, TypeScript facade and direct Canvas browser conformance smoke, React Strict Mode lifecycle smoke, and Vue component/composable browser smoke |
 | `experiments/wasm-r/**`, shared core, or the WASM/R experiment workflow | `test-wasm-r-experiment.yml`: Ubuntu WASI and embedded-ABI builds, R/Node parity, and measurements |
 | `rust/bindings/r/rextendr-prototype/**`, shared core, or the rextendr offline-package workflow | `rust-rextendr-offline-package.yml`: Ubuntu offline package/vendor build, shared-core consumer, and fast CRAN package checks |
