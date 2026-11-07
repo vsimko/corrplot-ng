@@ -9,6 +9,7 @@ on:
       - "npm/packages/react/**"
       - "npm/packages/vue/**"
       - "npm/package.json"
+      - "npm/package-lock.json"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
