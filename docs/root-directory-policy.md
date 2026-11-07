@@ -17,18 +17,14 @@ The following current entries are temporary and must be removed or relocated by 
 
 | Current root entry | Reason / destination |
 |---|---|
-| `package.json` (and future generated `package-lock.json`) | Forbidden at root; the private npm workspace and npm-generated lockfile now live under `npm/`. |
 | `requirements-dev.txt` | Current repository Python test dependency; move under `tools/repository/` or the owning Python project as part of #369/#372. |
-| `.changeset/` | npm release metadata; now owned by `npm/.changeset/`. |
 | `benchmarks/` | Mixed-runtime harness; split by ownership under #364. |
-| `bindings/` | Mixed npm/Rust roots; split under #366/#367. |
 | `implementations/` | Current R package; move to `r/corrplotng/` under #368. |
-| `packages/` | npm workspace packages; now owned by `npm/packages/`. |
 | `prototypes/` | Mixed contracts, Python reference code and Rust/rextendr experiment; split under #366/#369/#370. |
 | `scripts/`, `tests/` | Mixed repository and runtime utilities/fixtures; split under #364/#370. |
 | `experiments/` | Cross-runtime WASM/R experiment. ADR 0003's target tree does not yet show this root; #364 records it as a deliberate exception that must be explicitly retained or assigned another reviewed home before migration. |
 
-Do not remove these exceptions until the owning move and its CI/documentation updates have merged. The checker fails on unreviewed root entries and on new root dependency manifests outside the explicit transitional set.
+The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The remaining exceptions are tracked by their owning migration issues. The checker fails on unreviewed root entries and on new root dependency manifests.
 
 ## Generated paths that must never be committed
 
