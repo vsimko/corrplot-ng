@@ -33,7 +33,7 @@ Requirements: Rust 1.78+, the `wasm32-unknown-unknown` target, Node.js 24 or 26,
 and wasm-pack.
 
 ~~~sh
-wasm-pack test --node ../../rust/bindings/wasm
+wasm-pack test --node ../../../rust/bindings/wasm
 npm run build
 npm run test:pack
 ~~~
@@ -62,9 +62,9 @@ The separate Node/native-WASM comparison is run from the repository root after
 building both backends:
 
 ~~~sh
-(cd bindings/node && npm run build)
-(cd bindings/wasm && wasm-pack build --target nodejs --release --out-dir ../../../bindings/wasm/pkg-node ../../rust/bindings/wasm)
-node bindings/cross-backend/benchmark-node-wasm.mjs
+(cd npm/packages/native-node && npm run build)
+(cd npm/packages/wasm && wasm-pack build --target nodejs --release --out-dir pkg-node ../../../rust/bindings/wasm)
+node npm/tests/cross-backend/benchmark-node-wasm.mjs
 ~~~
 
 This benchmark first requires exact Node/WASM scene, SVG, RGBA metadata, and
@@ -92,14 +92,14 @@ package and have not been validated here. Shared-memory threading is therefore
 intentionally deferred; it would require an explicit browser compatibility
 policy (including cross-origin isolation) and dedicated CI coverage.
 
-The low-level browser example in `bindings/wasm/examples/browser` copies
+The low-level browser example in `npm/packages/wasm/examples/browser` copies
 returned RGBA pixels into a regular Canvas 2D context. That example demonstrates
 host-owned presentation of the WASM output; it is not the direct Canvas API.
-The browser TypeScript facade in `packages/typescript/` adds a separate direct
+The browser TypeScript facade in `npm/packages/typescript/` adds a separate direct
 Canvas 2D adapter that draws the same renderer-neutral scene without an SVG or
 RGBA intermediate. It supports caller-owned HTMLCanvasElement, OffscreenCanvas,
 and Canvas 2D contexts, including device-pixel-ratio scaling and letterboxing;
-see the [TypeScript facade README](../../packages/typescript/README.md).
+see the [TypeScript facade README](../typescript/README.md).
 OffscreenCanvas rendering is implemented by that facade where the runtime
 provides a 2D context. Worker startup, message protocols, transferable matrix
 buffers, cancellation, and worker-pool policy remain host responsibilities
