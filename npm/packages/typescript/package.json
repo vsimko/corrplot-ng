@@ -53,6 +53,6 @@
   "license": "MIT",
   "devDependencies": {
     "typescript": "^7.0.2",
-    "esbuild": "0.25.0"
+    "esbuild": "0.28.2"
   }
 }

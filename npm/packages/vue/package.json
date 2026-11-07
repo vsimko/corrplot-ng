@@ -12,7 +12,10 @@
       "import": "./src/index.js"
     }
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "test": "node --test test/renderer.test.js test/package-isolation.test.js && npm run test:types",
     "test:types": "tsc --noEmit --strict --module ESNext --moduleResolution Bundler --target ES2022 --lib ES2022,DOM test/types/usage.ts",
@@ -27,8 +30,8 @@
     "vue": "^3.3.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "6.0.1",
-    "esbuild": "0.25.0",
+    "@vitejs/plugin-vue": "6.0.10",
+    "esbuild": "0.28.2",
     "typescript": "^7.0.2",
     "vite": "7.0.0",
     "vue": "^3.5.13"
