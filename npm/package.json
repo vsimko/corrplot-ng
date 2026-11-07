@@ -26,7 +26,7 @@
     "pack:vue": "npm pack --dry-run --workspace=@corrplot-ng/vue"
   },
   "devDependencies": {
-    "@changesets/cli": "2.29.7"
+    "@changesets/cli": "3.0.3"
   },
   "engines": {
     "node": "^22 || ^24 || ^26",
