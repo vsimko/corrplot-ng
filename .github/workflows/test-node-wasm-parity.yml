@@ -4,9 +4,11 @@ on:
   pull_request:
     paths:
       - "npm/packages/native-node/**"
+      - "npm/packages/native-node-*/**"
       - "npm/tests/cross-backend/**"
       - "tests/fixtures/**"
       - "npm/packages/wasm/**"
+      - "npm/tests/cross-backend/**"
       - "rust/bindings/node/**"
       - "rust/bindings/wasm/**"
       - "rust/Cargo.toml"
@@ -89,7 +91,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         env:
           CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/node-wasm-benchmark.json
-        run: node bindings/cross-backend/benchmark-node-wasm.mjs
+        run: node npm/tests/cross-backend/benchmark-node-wasm.mjs
       - name: Upload native/WASM benchmark artifact
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v7
