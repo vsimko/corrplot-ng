@@ -8,7 +8,7 @@ From the repository root:
 
 ```sh
 cargo build --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
-./rust/tools/corrplot-cli/target/release/corrplot-ng --help
+rust/target/release-cli/corrplot-ng --help
 ```
 
 The executable is self-contained with respect to the application: no Python, R, or external CLI runtime is needed. Platform C runtime requirements depend on the Rust target and linker configuration.
@@ -349,11 +349,11 @@ and the wizard branch on the same machine:
 
 ```sh
 git worktree add /tmp/corrplot-ng-base origin/main
-cargo build --profile release-cli --manifest-path /tmp/corrplot-ng-base/rust/tools/corrplot-cli/Cargo.toml
+cargo build --release --manifest-path /tmp/corrplot-ng-base/tools/corrplot-ng/Cargo.toml
 cargo build --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
 python benchmarks/cli_startup.py \
-  --baseline /tmp/corrplot-ng-base/rust/tools/corrplot-cli/target/release/corrplot-ng \
-  --candidate rust/tools/corrplot-cli/target/release/corrplot-ng \
+  --baseline /tmp/corrplot-ng-base/tools/corrplot-ng/target/release/corrplot-ng \
+  --candidate rust/target/release-cli/corrplot-ng \
   --output cli-performance.json
 ```
 
