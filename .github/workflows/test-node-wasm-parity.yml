@@ -3,10 +3,10 @@ name: Test Node and browser-WASM backend parity
 on:
   pull_request:
     paths:
-      - "bindings/node/**"
-      - "bindings/cross-backend/**"
+      - "npm/packages/native-node/**"
+      - "npm/tests/cross-backend/**"
       - "tests/fixtures/**"
-      - "bindings/wasm/**"
+      - "npm/packages/wasm/**"
       - "rust/bindings/node/**"
       - "rust/bindings/wasm/**"
       - "rust/Cargo.toml"
@@ -19,10 +19,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "bindings/node/**"
-      - "bindings/cross-backend/**"
+      - "npm/packages/native-node/**"
+      - "npm/tests/cross-backend/**"
       - "tests/fixtures/**"
-      - "bindings/wasm/**"
+      - "npm/packages/wasm/**"
       - "rust/bindings/node/**"
       - "rust/bindings/wasm/**"
       - "rust/Cargo.toml"
@@ -75,16 +75,16 @@ jobs:
         if: steps.wasm-pack-cache.outputs.cache-hit != 'true'
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Build native Node-API backend
-        working-directory: bindings/node
+        working-directory: npm/packages/native-node
         run: npm run build
       - name: Build Node-compatible WASM backend
-        working-directory: bindings/wasm
-        run: wasm-pack build --target nodejs --release --out-dir ../../../bindings/wasm/pkg-node ../../rust/bindings/wasm
+        working-directory: npm/packages/wasm
+        run: wasm-pack build --target nodejs --release --out-dir pkg-node ../../../rust/bindings/wasm
       - name: Compare Node and WASM semantics, SVG, and RGBA output
-        run: node --test bindings/cross-backend/test-node-wasm-parity.cjs
+        run: node --test npm/tests/cross-backend/test-node-wasm-parity.cjs
       - name: Smoke-test the Node/WASM benchmark harness without timing thresholds
         if: github.event_name == 'pull_request'
-        run: node bindings/cross-backend/benchmark-node-wasm.mjs --smoke
+        run: node npm/tests/cross-backend/benchmark-node-wasm.mjs --smoke
       - name: Measure native Node and Node-hosted WASM baselines
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         env:
