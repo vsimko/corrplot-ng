@@ -52,16 +52,16 @@ foundations are implemented:
   inputs, publication-config v1 support, validation, and SVG output. It
   does not require Python or R at runtime and has native build/test coverage
   on Linux, macOS, and Windows.
-- **Native Node.js binding:** an experimental N-API addon in `bindings/node/`
+- **Native Node.js binding:** an experimental N-API addon in `npm/packages/native-node/`
   exposes shared matrix validation, normalized-matrix scene construction,
   typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 compatibility
   rendering. Its clean npm tarball install is tested without Cargo at runtime
   on Node.js 22, 24, and 26 across Linux, macOS, and Windows.
-- **Browser WebAssembly binding:** `bindings/wasm/` exposes the same initial
+- **Browser WebAssembly binding:** `npm/packages/wasm/` exposes the same initial
   Rust-backed validation, normalized-matrix scene construction, and typed-scene
   plus matrix-bearing scene-v1 SVG/RGBA operations. Node and browser smoke tests
   cover Node 24/26 and Chromium, Firefox, and WebKit.
-- **TypeScript facade:** `packages/typescript/` provides runtime-specific Node
+- **TypeScript facade:** `npm/packages/typescript/` provides runtime-specific Node
   ESM/CommonJS and browser exports, typed-array matrix input, normalized-matrix
   scene construction, typed-scene SVG/RGBA rendering, scene-v1 compatibility
   rendering, capabilities, diagnostics, adapter injection, and disposal.
