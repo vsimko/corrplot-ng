@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "npm/packages/native-node/**"
+      - "npm/packages/native-node-*/**"
       - "rust/bindings/node/**"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
