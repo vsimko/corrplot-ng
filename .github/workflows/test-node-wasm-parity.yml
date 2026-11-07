@@ -70,7 +70,7 @@ jobs:
           shared-key: node-wasm-parity
       - name: Cache wasm-pack executable
         id: wasm-pack-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/bin/wasm-pack
           key: wasm-pack-${{ runner.os }}-${{ runner.arch }}-0.13.1
