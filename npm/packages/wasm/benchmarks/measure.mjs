@@ -39,7 +39,7 @@ const scene = {
   texts: [],
 };
 const sceneV1Json = readFileSync(
-  fileURLToPath(new URL("../../../prototypes/shared-svg/scene-v1.example.json", import.meta.url)),
+  fileURLToPath(new URL("../../../../prototypes/shared-svg/scene-v1.example.json", import.meta.url)),
   "utf8",
 );
 const matrixRgbaOptions = {
