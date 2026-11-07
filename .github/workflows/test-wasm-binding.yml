@@ -13,6 +13,7 @@ on:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
+      - "fixtures/scene-v1/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   push:
@@ -28,6 +29,7 @@ on:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
+      - "fixtures/scene-v1/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
