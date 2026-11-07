@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -28,7 +28,10 @@ mkdirSync(platformDirectory, { recursive: true });
 writeFileSync(join(installDirectory, "package.json"), JSON.stringify({ private: true }));
 
 function pack(directory) {
-  const output = execFileSync(process.execPath, [npmCli, "pack", "--json", "--pack-destination", packDirectory], {
+  const args = directory === packageRoot
+    ? [join(packageRoot, "scripts", "pack.mjs"), "--json", "--pack-destination", packDirectory]
+    : [npmCli, "pack", "--json", "--pack-destination", packDirectory];
+  const output = execFileSync(process.execPath, args, {
     cwd: directory, encoding: "utf8", stdio: ["ignore", "pipe", "inherit"],
   });
   const jsonStart = output.indexOf("[");
@@ -42,12 +45,16 @@ try {
     "the base tarball must not contain a host-specific native binary");
 
   copyFileSync(join(packageRoot, "index.node"), join(platformDirectory, "index.node"));
-  copyFileSync(join(packageRoot, "npm", platformPackage, "package.json"), join(platformDirectory, "package.json"));
+  copyFileSync(join(packageRoot, "..", "native-node-" + platformPackage, "package.json"), join(platformDirectory, "package.json"));
   const nativePackage = pack(platformDirectory);
   assert.ok(nativePackage.files.some((file) => file.path === "index.node"),
     "the platform tarball must contain the native addon");
 
   const baseTarball = join(packDirectory, basePackage.filename);
+  const packedMetadata = JSON.parse(execFileSync("tar", ["-xOf", baseTarball, "package/package.json"], { encoding: "utf8" }));
+  const expectedOptionalDependencies = JSON.parse(readFileSync(join(packageRoot, "platform-dependencies.json"), "utf8"));
+  assert.deepEqual(packedMetadata.optionalDependencies, expectedOptionalDependencies,
+    "the published base package must declare all four optional platform packages");
   const nativeTarball = join(packDirectory, nativePackage.filename);
   execFileSync(process.execPath, [npmCli, "install", "--ignore-scripts", "--omit=optional", "--no-audit", "--no-fund", "--prefix", installDirectory, baseTarball],
     { cwd: temporaryRoot, stdio: "inherit" });
