@@ -238,7 +238,7 @@ const results = {
     wasmBrotliBytes: brotliCompressSync(wasmModule).byteLength,
   },
   initialization: {
-    nativeNodeApi: measureColdLoads(resolve(repoRoot, "bindings/node"), iterations.coldLoads),
+    nativeNodeApi: measureColdLoads(resolve(repoRoot, "npm/packages/native-node"), iterations.coldLoads),
     nodeHostedWasm: measureColdLoads(resolve(repoRoot, "npm/packages/wasm/pkg-node/corrplot_ng_wasm.js"), iterations.coldLoads),
   },
   workloads: {
