@@ -6,7 +6,8 @@
   "workspaces": [
     "bindings/node",
     "bindings/wasm",
-    "packages/*"
+    "packages/*",
+    "bindings/node/npm/*"
   ],
   "scripts": {
     "test:node": "npm run test --workspace=@corrplot-ng/native-node",
