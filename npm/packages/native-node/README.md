@@ -55,12 +55,12 @@ maintainer-approved release (#293). When that work is prioritized, publish
 the platform packages before `@corrplot-ng/native-node` so its optional
 dependencies can resolve. The broader non-publishing package/release
 preparation is tracked by #290 and documented in
-[`docs/npm-package-distribution.md`](../../docs/npm-package-distribution.md).
+[`docs/npm-package-distribution.md`](../../../docs/npm-package-distribution.md).
 
 ## Scope boundary
 
 This is the native Node backend. The runtime-isolated TypeScript facade
-in `packages/typescript/` selects this package for Node.js and the browser
+in `npm/packages/typescript/` selects this package for Node.js and the browser
 WASM package for browser builds. The initial shared normalized-matrix scene
 workflow and cross-runtime facade in #145 are implemented. Direct browser
 Canvas rendering is implemented by the TypeScript browser facade in #144;
