@@ -6,6 +6,8 @@ on:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "npm/package.json"
+      - "npm/package-lock.json"
+      - "npm/.changeset/**"
       - "npm/packages/**"
       - "npm/packages/native-node/**"
       - "npm/packages/wasm/**"
@@ -114,7 +116,7 @@ jobs:
         run: |
           set -euo pipefail
           current_sha="$(gh api "repos/$GH_REPO/contents/npm/package-lock.json?ref=$GH_BRANCH" --jq .sha)"
-          gh api "repos/$GH_REPO/contents/package-lock.json?ref=$GH_BRANCH" --jq .content | base64 --decode > "$RUNNER_TEMP/current-package-lock.json"
+          gh api "repos/$GH_REPO/contents/npm/package-lock.json?ref=$GH_BRANCH" --jq .content | base64 --decode > "$RUNNER_TEMP/current-package-lock.json"
           if cmp -s npm/package-lock.json "$RUNNER_TEMP/current-package-lock.json"; then
             echo "Committed lockfile is already current."
             exit 0
