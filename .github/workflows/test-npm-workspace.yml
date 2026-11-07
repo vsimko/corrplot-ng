@@ -29,7 +29,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: test-npm-workspace-${{ github.event.pull_request.number || github.ref }}
@@ -97,3 +97,24 @@ jobs:
           npm run build
       - name: Verify package contents
         run: npm run pack:dry-run
+      - name: Commit npm-generated lockfile to the PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          current_sha="$(gh api "repos/$GH_REPO/contents/package-lock.json?ref=$GH_BRANCH" --jq .sha)"
+          gh api "repos/$GH_REPO/contents/package-lock.json?ref=$GH_BRANCH" --jq .content | base64 --decode > "$RUNNER_TEMP/current-package-lock.json"
+          if cmp -s package-lock.json "$RUNNER_TEMP/current-package-lock.json"; then
+            echo "Committed lockfile is already current."
+            exit 0
+          fi
+          jq -n \
+            --arg message "build(npm): commit npm-generated workspace lockfile" \
+            --arg content "$(base64 --wrap=0 package-lock.json)" \
+            --arg branch "$GH_BRANCH" \
+            --arg sha "$current_sha" \
+            '{message: $message, content: $content, branch: $branch, sha: $sha}' \
+            | gh api --method PUT "repos/$GH_REPO/contents/package-lock.json" --input -
