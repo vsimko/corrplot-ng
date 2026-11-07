@@ -13,6 +13,7 @@ on:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
+      - "fixtures/scene-v1/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   push:
@@ -28,6 +29,7 @@ on:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
+      - "fixtures/scene-v1/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
@@ -49,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ${{ github.event_name == 'pull_request' && fromJSON('[24]') || fromJSON('[24,26]') }}
+        node: [24, 26]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -85,12 +87,12 @@ jobs:
         working-directory: npm/packages/wasm
         run: npm run build
       - name: Measure WASM size, initialization, and renderer baselines
-        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        if: matrix.node == 26
         env:
           CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/wasm-baseline.json
         run: node npm/packages/wasm/benchmarks/measure.mjs
       - name: Upload WASM baseline artifact
-        if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        if: matrix.node == 26
         uses: actions/upload-artifact@v7
         with:
           name: wasm-baseline-node-${{ matrix.node }}-${{ github.run_id }}
