@@ -53,7 +53,7 @@ test("Node facade preserves the matrix-bearing scene-v1 compatibility path", asy
   const engine = await createCorrplotEngine({ backend: "native" });
   try {
     const sceneV1Json = await readFile(
-      new URL("../../../fixtures/scene-v1/scene-v1.example.json", import.meta.url),
+      new URL("../../../../fixtures/scene-v1/scene-v1.example.json", import.meta.url),
       "utf8",
     );
     const svg = engine.render(sceneV1Json, { format: "svg", method: "circle" });
