@@ -16,16 +16,18 @@ class RootPolicyTests(unittest.TestCase):
             "docs/architecture.md",
             ".github/workflows/test-foundation.yml",
             "tools/repository/check_root_policy.py",
-            "package.json",
+            "npm/package.json",
+            "npm/package-lock.json",
+            "npm/packages/native-node/package.json",
+            "npm/.changeset/config.json",
             "requirements-dev.txt",
-            "bindings/node/package.json",
             "rust/crates/corrplot-core/Cargo.toml",
             "implementations/r/DESCRIPTION",
             "experiments/wasm-r/README.md",
         ]
         errors, warnings = validate_paths(paths)
         self.assertEqual(errors, [])
-        self.assertTrue(any("package.json" in warning for warning in warnings))
+        self.assertFalse(any("package.json" in warning for warning in warnings))
         self.assertTrue(any("requirements-dev.txt" in warning for warning in warnings))
         self.assertTrue(any("experiments/" in warning for warning in warnings))
 
