@@ -163,7 +163,7 @@ test("exposes the shared renderer capability declaration", () => {
 
 
 const sceneV1 = fs.readFileSync(
-  path.join(__dirname, "../../../fixtures/scene-v1/scene-v1.example.json"),
+  path.join(__dirname, "../../../../fixtures/scene-v1/scene-v1.example.json"),
   "utf8",
 );
 
@@ -174,7 +174,7 @@ test("constructs and renders a matrix through the shared core operation", () => 
 });
 
 const sceneV1Construction = fs.readFileSync(
-  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1-construction.example.json"),
+  path.join(__dirname, "../../../../prototypes/shared-svg/scene-v1-construction.example.json"),
   "utf8",
 );
 
