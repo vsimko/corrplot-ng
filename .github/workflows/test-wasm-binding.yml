@@ -100,6 +100,12 @@ jobs:
       - name: Verify browser WASM npm package contents
         working-directory: npm/packages/wasm
         run: npm run test:pack
+      - name: Bootstrap npm lockfile when absent
+        working-directory: npm
+        run: |
+          if [[ ! -f package-lock.json ]]; then
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          fi
       - name: Install npm workspace dependencies for the TypeScript facade smoke
         working-directory: npm
         run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
