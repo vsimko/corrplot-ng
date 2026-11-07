@@ -17,9 +17,9 @@ The production-facing Cargo workspace is rooted at `/rust` and contains the shar
 The npm workspace is rooted at `/npm` and declares the five installable packages in `npm/package.json`. Dependabot is configured at that root so it can coordinate manifest and lockfile updates.
 The external npm dependencies currently declared by the root and workspaces
 include `@changesets/cli`, TypeScript, esbuild, React/React DOM and types,
-Vue and its Vite plugin, and Vite. The Node package's unpublished
-platform dependency versions are coordinated in `platform-dependencies.json`. The `npm/packages/wasm` package has no external npm
-dependencies of its own.
+Vue and its Vite plugin, and Vite. The Node package's unpublished platform
+package versions are coordinated in `npm/packages/native-node/platform-dependencies.json`.
+The `npm/packages/wasm` package has no external npm dependencies of its own.
 
 ## Deliberate exclusions and manual coordination
 
@@ -31,9 +31,9 @@ dependencies of its own.
   routine version-update PRs for this directory; it does not disable security
   update PRs.
 - The four `@corrplot-ng/native-node-*` packages are unpublished internal
-  platform packages, not external npm dependencies. Their versions must move
-  together with the base package and prebuilt artifacts, so Dependabot ignores
-  those references rather than proposing unresolvable registry updates.
+  platform packages, not external npm dependencies. Their versions must move together with the base package and prebuilt artifacts.
+  Their coordinated metadata is kept outside the workspace manifest, so Dependabot
+  does not propose unresolvable registry updates.
 - Other `@corrplot-ng/*` package dependencies are workspace packages declared
   in the `npm/` workspace. They are resolved from the local workspace and are
   not intended to be updated from the public npm registry.
