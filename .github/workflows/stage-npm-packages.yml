@@ -37,10 +37,10 @@ jobs:
           workspaces: rust -> target
           shared-key: npm-native-addon
       - name: Build native addon
-        working-directory: bindings/node
+        working-directory: npm/packages/native-node
         run: npm run build
       - name: Package platform-specific binary
-        working-directory: bindings/node
+        working-directory: npm/packages/native-node
         env:
           CORRPLOT_NODE_PLATFORM_PACKAGE: ${{ matrix.package }}
           CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/npm-stage
@@ -66,28 +66,29 @@ jobs:
           targets: wasm32-unknown-unknown
       - name: Install wasm-pack
         run: cargo install wasm-pack --version 0.13.1 --locked
-      - name: Install workspace dependencies without lifecycle scripts
-        run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
+      - name: Install workspace dependencies from lockfile
+        working-directory: npm
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
       - name: Build browser WASM package
-        working-directory: bindings/wasm
+        working-directory: npm/packages/wasm
         run: npm run build
       - name: Verify browser WASM package contents
-        working-directory: bindings/wasm
+        working-directory: npm/packages/wasm
         run: npm run test:pack
       - name: Stage WASM tarball
-        working-directory: bindings/wasm
+        working-directory: npm/packages/wasm
         run: npm pack --pack-destination ${{ runner.temp }}
       - name: Stage Node package after platform binaries
-        working-directory: bindings/node
-        run: npm pack --pack-destination ${{ runner.temp }}
+        working-directory: npm/packages/native-node
+        run: npm run pack:tarball -- --pack-destination ${{ runner.temp }}
       - name: Stage React browser adapter
-        working-directory: packages/react
+        working-directory: npm/packages/react
         run: npm pack --pack-destination ${{ runner.temp }}
       - name: Stage Vue browser adapter
-        working-directory: packages/vue
+        working-directory: npm/packages/vue
         run: npm pack --pack-destination ${{ runner.temp }}
       - name: Stage TypeScript facade
-        working-directory: packages/typescript
+        working-directory: npm/packages/typescript
         run: npm pack --pack-destination ${{ runner.temp }}
       - uses: actions/upload-artifact@v7
         with:

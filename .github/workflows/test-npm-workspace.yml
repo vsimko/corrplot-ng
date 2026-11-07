@@ -5,26 +5,28 @@ on:
     paths:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
-      - "package.json"
-      - "packages/**"
-      - "bindings/node/**"
-      - "bindings/wasm/**"
+      - "npm/package.json"
+      - "npm/package-lock.json"
+      - "npm/packages/native-node-*/**"
+      - "npm/tests/cross-backend/**"
+      - "npm/.changeset/**"
+      - "npm/packages/**"
       - "rust/bindings/node/**"
       - "rust/bindings/wasm/**"
-      - ".changeset/**"
       - ".github/workflows/test-npm-workspace.yml"
   push:
     branches: [main]
     paths:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
-      - "package.json"
-      - "packages/**"
-      - "bindings/node/**"
-      - "bindings/wasm/**"
+      - "npm/package.json"
+      - "npm/package-lock.json"
+      - "npm/packages/**"
+      - "npm/packages/native-node-*/**"
+      - "npm/tests/cross-backend/**"
       - "rust/bindings/node/**"
       - "rust/bindings/wasm/**"
-      - ".changeset/**"
+      - "npm/.changeset/**"
       - ".github/workflows/test-npm-workspace.yml"
   workflow_dispatch:
 
@@ -49,7 +51,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('package.json', '**/package.json') }}
+          key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('npm/package.json', 'npm/**/package.json') }}
           restore-keys: |
             npm-workspace-${{ runner.os }}-node-24-
       - uses: dtolnay/rust-toolchain@stable
@@ -69,22 +71,39 @@ jobs:
       - name: Install wasm-pack
         if: steps.wasm-pack-cache.outputs.cache-hit != 'true'
         run: cargo install wasm-pack --version 0.13.1 --locked
-      - name: Install workspace dependencies without lifecycle scripts
-        run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
+      - name: Generate workspace lockfile with npm 11
+        working-directory: npm
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Upload generated workspace lockfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-package-lock-generated
+          path: npm/package-lock.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Install workspace dependencies from generated lockfile
+        working-directory: npm
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
       - name: Validate workspace package graph
+        working-directory: npm
         run: npm ls --workspaces --depth=0
       - name: Test native Node binding
+        working-directory: npm
         run: npm run test:node
       - name: Test TypeScript facade
+        working-directory: npm
         run: npm run test:typescript
       - name: Test React integration
+        working-directory: npm
         run: npm run test:react
       - name: Test Vue integration
+        working-directory: npm
         run: npm run test:vue
       - name: Test and build browser WASM binding
-        working-directory: bindings/wasm
+        working-directory: npm/packages/wasm
         run: |
-          wasm-pack test --node ../../rust/bindings/wasm
+          wasm-pack test --node ../../../rust/bindings/wasm
           npm run build
       - name: Verify package contents
+        working-directory: npm
         run: npm run pack:dry-run

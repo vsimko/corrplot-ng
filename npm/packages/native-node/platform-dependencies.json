@@ -1,0 +1,6 @@
+{
+  "@corrplot-ng/native-node-linux-x64-gnu": "0.1.0",
+  "@corrplot-ng/native-node-darwin-x64": "0.1.0",
+  "@corrplot-ng/native-node-darwin-arm64": "0.1.0",
+  "@corrplot-ng/native-node-win32-x64-msvc": "0.1.0"
+}

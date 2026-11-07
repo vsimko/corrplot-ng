@@ -3,12 +3,13 @@ name: Test browser WebAssembly binding
 on:
   pull_request:
     paths:
-      - "bindings/wasm/**"
+      - "npm/packages/wasm/**"
       - "rust/bindings/wasm/**"
-      - "packages/typescript/**"
-      - "packages/react/**"
-      - "packages/vue/**"
-      - "package.json"
+      - "npm/packages/typescript/**"
+      - "npm/packages/react/**"
+      - "npm/packages/vue/**"
+      - "npm/package.json"
+      - "npm/package-lock.json"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
@@ -17,12 +18,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "bindings/wasm/**"
+      - "npm/packages/wasm/**"
+      - "npm/package-lock.json"
       - "rust/bindings/wasm/**"
-      - "packages/typescript/**"
-      - "packages/react/**"
-      - "packages/vue/**"
-      - "package.json"
+      - "npm/packages/typescript/**"
+      - "npm/packages/react/**"
+      - "npm/packages/vue/**"
+      - "npm/package.json"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
@@ -57,7 +59,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('package.json', '**/package.json') }}
+          key: npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('npm/package.json', 'npm/**/package.json') }}
           restore-keys: |
             npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-
       - uses: dtolnay/rust-toolchain@stable
@@ -77,16 +79,16 @@ jobs:
         if: steps.wasm-pack-cache.outputs.cache-hit != 'true'
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Run WebAssembly binding tests in Node
-        working-directory: bindings/wasm
-        run: wasm-pack test --node ../../rust/bindings/wasm
+        working-directory: npm/packages/wasm
+        run: wasm-pack test --node ../../../rust/bindings/wasm
       - name: Build browser ESM package
-        working-directory: bindings/wasm
+        working-directory: npm/packages/wasm
         run: npm run build
       - name: Measure WASM size, initialization, and renderer baselines
         if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         env:
           CORRPLOT_BENCHMARK_OUTPUT: ${{ runner.temp }}/wasm-baseline.json
-        run: node bindings/wasm/benchmarks/measure.mjs
+        run: node npm/packages/wasm/benchmarks/measure.mjs
       - name: Upload WASM baseline artifact
         if: matrix.node == 26 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         uses: actions/upload-artifact@v7
@@ -96,11 +98,19 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Verify browser WASM npm package contents
-        working-directory: bindings/wasm
+        working-directory: npm/packages/wasm
         run: npm run test:pack
+      - name: Bootstrap npm lockfile when absent
+        working-directory: npm
+        run: |
+          if [[ ! -f package-lock.json ]]; then
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          fi
       - name: Install npm workspace dependencies for the TypeScript facade smoke
-        run: npm install --ignore-scripts --omit=optional --no-audit --no-fund --package-lock=false
+        working-directory: npm
+        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
       - name: Install matching Linux esbuild and Rollup binaries omitted with optional dependencies
+        working-directory: npm
         shell: bash
         run: |
           set -euo pipefail
@@ -163,12 +173,16 @@ jobs:
           );
           NODE
       - name: Bundle the browser TypeScript facade against the built WASM package
+        working-directory: npm
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
       - name: Build React Vite and esbuild browser bundles
+        working-directory: npm
         run: npm run build:browser-smoke --workspace=@corrplot-ng/react
       - name: Build Vue Vite and esbuild browser bundles
+        working-directory: npm
         run: npm run build:browser-smoke --workspace=@corrplot-ng/vue
       - name: Start React development server for Strict Mode smoke
+        working-directory: npm
         run: |
           nohup npm run dev:browser-smoke --workspace=@corrplot-ng/react -- --host 127.0.0.1 --port 4174 --strictPort > "$RUNNER_TEMP/react-vite.log" 2>&1 &
           for _ in $(seq 1 60); do
@@ -178,6 +192,7 @@ jobs:
           cat "$RUNNER_TEMP/react-vite.log"
           exit 1
       - name: Start Vue development server for browser smoke
+        working-directory: npm
         run: |
           nohup npm run dev:browser-smoke --workspace=@corrplot-ng/vue -- --host 127.0.0.1 --port 4175 --strictPort > "$RUNNER_TEMP/vue-vite.log" 2>&1 &
           for _ in $(seq 1 60); do
@@ -188,9 +203,11 @@ jobs:
           exit 1
       - name: Install Playwright
         if: matrix.node == 24
+        working-directory: npm
         run: npm install --no-save --no-package-lock playwright@1.56.1
       - name: Install Firefox and WebKit
         if: matrix.node == 24
+        working-directory: npm
         run: npx playwright install --with-deps firefox webkit
       - name: Verify preinstalled Chrome
         if: matrix.node == 24
@@ -205,17 +222,17 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for _ in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:4173/bindings/wasm/examples/browser/index.html >/dev/null; then
+            if curl --fail --silent http://127.0.0.1:4173/npm/packages/wasm/examples/browser/index.html >/dev/null; then
               break
             fi
             sleep 1
           done
           for browser in chromium firefox webkit; do
             echo "Running browser smoke test: $browser"
-            CORRPLOT_BROWSER="$browser" node bindings/wasm/examples/browser/smoke.test.mjs
-            CORRPLOT_BROWSER="$browser" node packages/typescript/test/browser/smoke.test.mjs
-            CORRPLOT_BROWSER="$browser" node packages/react/test/browser/smoke.test.mjs
-            CORRPLOT_BROWSER="$browser" node packages/vue/test/browser/smoke.test.mjs
+            CORRPLOT_BROWSER="$browser" node npm/packages/wasm/examples/browser/smoke.test.mjs
+            CORRPLOT_BROWSER="$browser" node npm/packages/typescript/test/browser/smoke.test.mjs
+            CORRPLOT_BROWSER="$browser" node npm/packages/react/test/browser/smoke.test.mjs
+            CORRPLOT_BROWSER="$browser" node npm/packages/vue/test/browser/smoke.test.mjs
           done
       - name: Upload browser Canvas performance artifact
         if: matrix.node == 24 && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))

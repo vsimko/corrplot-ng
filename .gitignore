@@ -29,8 +29,8 @@ pnpm-debug.log*
 
 # Generated native/WASM/R package outputs and benchmark scratch files
 **/*.node
-bindings/wasm/pkg/
 npm/packages/wasm/pkg/
+npm/packages/wasm/pkg-node/
 **/.ci-r-package/
 benchmark-results/
 

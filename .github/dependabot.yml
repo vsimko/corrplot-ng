@@ -58,10 +58,10 @@ updates:
       timezone: Europe/Berlin
     open-pull-requests-limit: 0
 
-  # The root package.json remains the private npm workspace until #367 moves it.
+  # The npm/ directory is the private workspace root.
   # Platform-specific native packages are unpublished build artifacts.
   - package-ecosystem: npm
-    directory: /
+    directory: /npm
     schedule:
       interval: weekly
       day: monday

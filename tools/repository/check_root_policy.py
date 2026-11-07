@@ -28,8 +28,6 @@ ALLOWED_ROOT_FILES = {
 }
 
 TRANSITIONAL_ROOT_FILES = {
-    "package.json": "#367 — move the npm workspace to npm/",
-    "package-lock.json": "#265/#367 — generate with npm, then move the workspace to npm/",
     "requirements-dev.txt": "#365/#369 — move repository Python tooling dependencies under tools/repository/",
 }
 
@@ -47,12 +45,9 @@ ALLOWED_ROOT_DIRECTORIES = {
 }
 
 TRANSITIONAL_ROOT_DIRECTORIES = {
-    ".changeset": "#367 — move Changesets configuration under npm/",
     "benchmarks": "#364 — split cross-runtime orchestration and runtime-owned benchmarks",
-    "bindings": "#366/#367 — split Rust binding crates from npm package content",
     "experiments": "#364 — retain as a documented cross-runtime exception or approve another home",
     "implementations": "#368 — move the R package under r/corrplotng/",
-    "packages": "#367 — move npm workspace packages under npm/packages/",
     "prototypes": "#366/#369/#370 — split Rust, Python reference code, contracts and fixtures",
     "scripts": "#365 — move repo-wide orchestration to tools/repository/ and R tools to r/",
     "tests": "#364/#370 — split canonical fixtures from repository/runtime-specific tests",
@@ -91,7 +86,6 @@ GENERATED_DIRECTORY_SEQUENCES = {
 
 GENERATED_PATH_SUFFIXES = {".pyc", ".pyo", ".node"}
 GENERATED_PATH_PREFIXES = (
-    "bindings/wasm/pkg/",
     "npm/packages/wasm/pkg/",
     "rust/bindings/r/rextendr-prototype/.ci-r-package/",
 )
@@ -153,10 +147,8 @@ def validate_paths(paths: Iterable[str]) -> tuple[list[str], list[str]]:
             continue
         if name in FORBIDDEN_ROOT_MANIFESTS:
             continue
-        # package.json and requirements-dev.txt are transitional files above;
+        # requirements-dev.txt is a transitional file above;
         # all other unknown root entries require an explicit policy decision.
-        if name in TRANSITIONAL_ROOT_FILES:
-            continue
         errors.append(
             f"{name}: unreviewed repository-root entry; add it to the documented "
             "root allowlist or place it under its owning project"
