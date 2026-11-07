@@ -123,15 +123,15 @@ test_rust_cli() {
 test_node() {
   need_node
   need_rust
-  (cd bindings/node && npm test)
+  (cd npm/packages/native-node && npm test)
 }
 
 test_wasm() {
   need_node
   need_rust
   need wasm-pack
-  (cd bindings/wasm && wasm-pack test --node ../../rust/bindings/wasm)
-  (cd bindings/wasm && wasm-pack build --target web --release --out-dir ../../../bindings/wasm/pkg ../../rust/bindings/wasm)
+  (cd npm/packages/wasm && wasm-pack test --node ../../../rust/bindings/wasm)
+  (cd npm/packages/wasm && wasm-pack build --target web --release --out-dir pkg ../../../rust/bindings/wasm)
 }
 
 build_cli() {
@@ -142,7 +142,7 @@ build_cli() {
 build_node() {
   need_node
   need_rust
-  (cd bindings/node && npm run build)
+  (cd npm/packages/native-node && npm run build)
 }
 
 benchmarks() {
