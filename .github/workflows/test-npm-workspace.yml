@@ -105,3 +105,51 @@ jobs:
       - name: Verify package contents
         working-directory: npm
         run: npm run pack:dry-run
+  native-toolchains:
+    name: Native toolchains (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, macos-15, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Cache npm downloads
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: npm-native-toolchains-${{ runner.os }}-node-24-${{ hashFiles('npm/package.json', 'npm/package-lock.json') }}
+          restore-keys: |
+            npm-native-toolchains-${{ runner.os }}-node-24-
+      - name: Install workspace dependencies and platform-native optional packages
+        working-directory: npm
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Test TypeScript 7 native compiler
+        working-directory: npm
+        run: npm run test:types --workspace=@corrplot-ng/typescript
+      - name: Build a minimal Vite 8 / Rolldown bundle
+        working-directory: npm
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const root = path.join(process.env.RUNNER_TEMP, "corrplot-vite-rolldown-smoke");
+          fs.mkdirSync(root, { recursive: true });
+          fs.writeFileSync(path.join(root, "index.html"), '<script type="module" src="/src.js"></script>\n');
+          fs.writeFileSync(path.join(root, "src.js"), 'export const smoke = "ok";\n');
+          NODE
+          npm exec --workspace=@corrplot-ng/react -- vite build "$RUNNER_TEMP/corrplot-vite-rolldown-smoke" --outDir "$RUNNER_TEMP/corrplot-vite-rolldown-smoke-dist"
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const output = path.join(process.env.RUNNER_TEMP, "corrplot-vite-rolldown-smoke-dist", "assets");
+          if (!fs.readdirSync(output).some((name) => name.endsWith(".js"))) {
+            throw new Error("Vite 8 / Rolldown smoke build did not emit a JavaScript asset");
+          }
+          console.log("Vite 8 / Rolldown native platform build succeeded");
+          NODE
