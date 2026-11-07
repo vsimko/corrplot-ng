@@ -3,7 +3,7 @@ name: Test native Node binding
 on:
   pull_request:
     paths:
-      - "bindings/node/**"
+      - "npm/packages/native-node/**"
       - "rust/bindings/node/**"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
@@ -13,7 +13,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "bindings/node/**"
+      - "npm/packages/native-node/**"
       - "rust/bindings/node/**"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
@@ -51,16 +51,16 @@ jobs:
           workspaces: rust -> target
           shared-key: node-addon
       - name: Build native addon and run Node tests
-        working-directory: bindings/node
+        working-directory: npm/packages/native-node
         run: npm test
       - name: Package platform-specific binary
-        working-directory: bindings/node
+        working-directory: npm/packages/native-node
         env:
           CORRPLOT_NODE_PLATFORM_PACKAGE: ${{ matrix.os == 'ubuntu-latest' && 'linux-x64-gnu' || matrix.os == 'macos-15-intel' && 'darwin-x64' || matrix.os == 'macos-15' && 'darwin-arm64' || 'win32-x64-msvc' }}
           CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/node-prebuilt
         run: npm run package:prebuilt
       - name: Install prebuilt tarballs in a clean consumer project
-        working-directory: bindings/node
+        working-directory: npm/packages/native-node
         env:
           CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/node-prebuilt
         run: npm run test:prebuilt
