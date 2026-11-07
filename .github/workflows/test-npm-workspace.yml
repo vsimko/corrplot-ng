@@ -97,6 +97,59 @@ jobs:
       - name: Verify package contents
         working-directory: npm
         run: npm run pack:dry-run
+      - name: Install packed npm packages in an isolated consumer
+        working-directory: npm
+        shell: bash
+        run: |
+          set -euo pipefail
+          staging="$RUNNER_TEMP/corrplot-npm-consumer"
+          tarballs="$staging/tarballs"
+          consumer="$staging/project"
+          mkdir -p "$tarballs" "$consumer"
+          printf '{"private":true}\\n' > "$consumer/package.json"
+
+          export CORRPLOT_NODE_PLATFORM_PACKAGE=linux-x64-gnu
+          export CORRPLOT_NODE_PACKAGE_OUTPUT="$tarballs"
+          npm run package:prebuilt --workspace=@corrplot-ng/native-node
+          npm run pack:tarball --workspace=@corrplot-ng/native-node -- --pack-destination "$tarballs"
+          npm pack --workspace=@corrplot-ng/wasm --pack-destination "$tarballs"
+          npm pack --workspace=@corrplot-ng/typescript --pack-destination "$tarballs"
+          npm pack --workspace=@corrplot-ng/react --pack-destination "$tarballs"
+          npm pack --workspace=@corrplot-ng/vue --pack-destination "$tarballs"
+
+          npm install --prefix "$consumer" --no-save --omit=optional --no-audit --no-fund \
+            "$tarballs"/*.tgz react@19 vue@3
+
+          cd "$consumer"
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import { createRequire } from "node:module";
+
+          const require = createRequire(import.meta.url);
+          const native = require("@corrplot-ng/native-node");
+          assert.equal(native.validateMatrix({
+            labels: ["alpha", "beta"],
+            rows: 2,
+            columns: 2,
+            values: [1, 0.5, 0.5, 1],
+            kind: "correlation",
+          }), true);
+
+          const facadeCjs = require("@corrplot-ng/typescript");
+          assert.equal(typeof facadeCjs.createCorrplotEngine, "function");
+
+          const [facade, wasm, react, vue] = await Promise.all([
+            import("@corrplot-ng/typescript"),
+            import("@corrplot-ng/wasm"),
+            import("@corrplot-ng/react"),
+            import("@corrplot-ng/vue"),
+          ]);
+          assert.equal(typeof facade.createCorrplotEngine, "function");
+          assert.equal(typeof wasm.default, "function");
+          assert.equal(typeof react.Corrplot, "function");
+          assert.ok(vue.Corrplot);
+          console.log("Isolated consumer installation and package entry-point smoke tests passed.");
+          NODE
   native-toolchains:
     name: Native toolchains (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -132,8 +185,8 @@ jobs:
           const path = require("node:path");
           const root = path.join(process.env.RUNNER_TEMP, "corrplot-vite-rolldown-smoke");
           fs.mkdirSync(root, { recursive: true });
-          fs.writeFileSync(path.join(root, "index.html"), '<script type="module" src="/src.js"></script>\n');
-          fs.writeFileSync(path.join(root, "src.js"), 'export const smoke = "ok";\n');
+          fs.writeFileSync(path.join(root, "index.html"), '<script type="module" src="/src.js"></script>\\n');
+          fs.writeFileSync(path.join(root, "src.js"), 'export const smoke = "ok";\\n');
           NODE
           npm exec --workspace=@corrplot-ng/react -- vite build "$RUNNER_TEMP/corrplot-vite-rolldown-smoke" --outDir "$RUNNER_TEMP/corrplot-vite-rolldown-smoke-dist"
           node <<'NODE'
