@@ -18,7 +18,7 @@ try {
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto(
-    "http://127.0.0.1:4173/bindings/wasm/examples/browser/index.html",
+    "http://127.0.0.1:4173/npm/packages/wasm/examples/browser/index.html",
     { waitUntil: "networkidle" },
   );
   await page.waitForFunction(
@@ -79,7 +79,7 @@ try {
   const facadePage = await browser.newPage();
   const facadeErrors = [];
   facadePage.on("pageerror", (error) => facadeErrors.push(error.message));
-  const facadeUrl = "http://127.0.0.1:4173/packages/typescript/test/browser/index.html" +
+  const facadeUrl = "http://127.0.0.1:4173/npm/packages/typescript/test/browser/index.html" +
     (benchmarkOutputPath ? "?benchmark=1" : "");
   await facadePage.goto(facadeUrl, { waitUntil: "networkidle" });
   await facadePage.waitForFunction(
@@ -150,7 +150,7 @@ try {
   const reactErrors = [];
   reactPage.on("pageerror", error => reactErrors.push(error.message));
   await reactPage.goto(
-    "http://127.0.0.1:4173/packages/react/test/browser/vite-dist/index.html",
+    "http://127.0.0.1:4173/npm/packages/react/test/browser/vite-dist/index.html",
     { waitUntil: "networkidle" },
   );
   const reactPlot = reactPage.locator('[data-testid="corrplot"]');
