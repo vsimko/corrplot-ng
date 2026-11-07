@@ -77,7 +77,10 @@ manifest paths:
   workflow, including all three supported operating systems.
 - npm workspace changes run `test-npm-workspace.yml`, which validates the
   workspace graph and exercises Node, TypeScript, React, Vue, and browser-WASM
-  package checks.
+  package checks. Its Node 24 native-toolchain matrix also installs the
+  committed platform-specific optional dependencies and verifies the
+  TypeScript 7 compiler and Vite 8/Rolldown bundle on Ubuntu x64, Intel macOS,
+  Apple Silicon macOS, and Windows x64.
 - npm changes under `npm/packages/native-node` also run the native Node test matrix;
   changes to the browser binding and framework packages run
   `test-wasm-binding.yml`.
