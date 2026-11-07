@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          key: npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('npm/package.json', 'npm/**/package.json') }}
+          key: npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('npm/package.json', 'npm/package-lock.json', 'npm/**/package.json') }}
           restore-keys: |
             npm-workspace-${{ runner.os }}-node-${{ matrix.node }}-
       - uses: dtolnay/rust-toolchain@stable
@@ -104,90 +104,7 @@ jobs:
         run: npm run test:pack
       - name: Install npm workspace dependencies for the TypeScript facade smoke
         working-directory: npm
-        run: npm ci --ignore-scripts --omit=optional --no-audit --no-fund
-      - name: Install matching Linux esbuild and Rollup binaries omitted with optional dependencies
-        working-directory: npm
-        shell: bash
-        run: |
-          set -euo pipefail
-          root_esbuild_version="$(node -p "require('./node_modules/esbuild/package.json').version")"
-          rollup_version="$(node -p "require('./node_modules/rollup/package.json').version")"
-          npm install --no-save --no-package-lock --ignore-scripts --omit=optional --workspaces=false \
-            "@esbuild/linux-x64@${root_esbuild_version}" \
-            "@rollup/rollup-linux-x64-gnu@${rollup_version}"
-
-          # Vite can install its own esbuild version when it is incompatible
-          # with the workspace's direct esbuild dependency. Install the matching
-          # optional binary beside that nested host instead of reusing the
-          # workspace binary (which may have a different version).
-          vite_esbuild_package="node_modules/vite/node_modules/esbuild/package.json"
-          if [[ -f "$vite_esbuild_package" ]]; then
-            vite_esbuild_version="$(node -p "require('./${vite_esbuild_package}').version")"
-            npm install --prefix node_modules/vite --no-save --no-package-lock --workspaces=false \
-              --ignore-scripts --omit=optional "@esbuild/linux-x64@${vite_esbuild_version}"
-          fi
-
-          # Vite 8 uses Rolldown, whose platform binding is also optional.
-          # Restore the Linux x64 binding explicitly because npm ci above omits
-          # optional dependencies to keep the workspace install deterministic.
-          rolldown_package="node_modules/rolldown/package.json"
-          if [[ -f "$rolldown_package" ]]; then
-            rolldown_version="$(node -p "require('./${rolldown_package}').version")"
-            npm install --no-save --no-package-lock --ignore-scripts --omit=optional --workspaces=false \
-              "@rolldown/binding-linux-x64-gnu@${rolldown_version}"
-          fi
-
-          node <<'NODE'
-          const fs = require("node:fs");
-
-          function assertMatchingBinary(hostPath, binaryPath, label) {
-            if (!fs.existsSync(hostPath)) {
-              throw new Error(`${label}: esbuild host package is missing at ${hostPath}`);
-            }
-            if (!fs.existsSync(binaryPath)) {
-              throw new Error(`${label}: matching Linux binary is missing at ${binaryPath}`);
-            }
-            const hostVersion = require(hostPath).version;
-            const binaryVersion = require(binaryPath).version;
-            if (hostVersion !== binaryVersion) {
-              throw new Error(
-                `${label}: esbuild host ${hostVersion} does not match Linux binary ${binaryVersion}`,
-              );
-            }
-            console.log(`${label}: esbuild host and Linux binary both use ${hostVersion}`);
-          }
-
-          assertMatchingBinary(
-            "./node_modules/esbuild/package.json",
-            "./node_modules/@esbuild/linux-x64/package.json",
-            "workspace",
-          );
-
-          const viteHost = "./node_modules/vite/node_modules/esbuild/package.json";
-          if (fs.existsSync(viteHost)) {
-            assertMatchingBinary(
-              viteHost,
-              "./node_modules/vite/node_modules/@esbuild/linux-x64/package.json",
-              "Vite nested",
-            );
-          }
-
-          assertMatchingBinary(
-            "./node_modules/rollup/package.json",
-            "./node_modules/@rollup/rollup-linux-x64-gnu/package.json",
-            "Rollup",
-          );
-
-          if (fs.existsSync("./node_modules/rolldown/package.json")) {
-            const binding = "./node_modules/@rolldown/binding-linux-x64-gnu/package.json";
-            if (!fs.existsSync(binding)) {
-              throw new Error("Rolldown: matching Linux x64 native binding is missing");
-            }
-            console.log(
-              `Rolldown ${require("./node_modules/rolldown/package.json").version}: Linux x64 binding installed`,
-            );
-          }
-          NODE
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Bundle the browser TypeScript facade against the built WASM package
         working-directory: npm
         run: npm run build:browser-smoke --workspace=@corrplot-ng/typescript
