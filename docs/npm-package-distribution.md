@@ -11,7 +11,7 @@ The shared API contract and semantics should be consistent across runtimes. That
 
 ## Workspace
 
-The private npm workspace is rooted at `npm/`, with its single `package-lock.json`. It owns `packages/native-node`, `packages/wasm`, `packages/typescript`, `packages/react`, and `packages/vue`; cross-backend tests live under `tests/cross-backend`. The four platform-specific native packages live beside `packages/native-node` as `packages/native-node-*` and remain outside the workspace because their `os`/`cpu` constraints must not make a cross-platform install fail. Their tarballs are built separately on matching runners. The native package's source workspace manifest keeps those unpublished optional packages out of the lockfile; `scripts/pack.mjs` injects the coordinated optional-dependency metadata from `platform-dependencies.json` into the distributable tarball.
+The private npm workspace is rooted at `npm/`, with its single `package-lock.json`. It owns `npm/packages/native-node`, `npm/packages/wasm`, `npm/packages/typescript`, `npm/packages/react`, and `npm/packages/vue`; cross-backend tests live under `npm/tests/cross-backend`. The four platform-specific native packages live beside `npm/packages/native-node` as `npm/packages/native-node-*` and remain outside the workspace because their `os`/`cpu` constraints must not make a cross-platform install fail. Their tarballs are built separately on matching runners. The native package's source workspace manifest keeps those unpublished optional packages out of the lockfile; `scripts/pack.mjs` injects the coordinated optional-dependency metadata from `platform-dependencies.json` into the distributable tarball.
 
 Install and validate locally with:
 
@@ -29,7 +29,7 @@ The planned `@corrplot-ng/core` package is not yet present. The initial `@corrpl
 
 ## Current implementation status — 2026-11-04
 
-The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, `@corrplot-ng/react`, and `@corrplot-ng/vue`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The root workspace remains private.
+The workspace and release-preparation infrastructure tracked by #290 are implemented. The current npm workspace package set is `@corrplot-ng/native-node`, `@corrplot-ng/wasm`, `@corrplot-ng/typescript`, `@corrplot-ng/react`, and `@corrplot-ng/vue`. The four platform-specific native packages are built as separate tarballs rather than workspace entries. The `npm/` workspace remains private.
 
 The native Node and browser WASM packages expose matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA operations, matrix-bearing scene-v1 SVG/RGBA operations, renderer capabilities, and diagnostic-v1 errors. The TypeScript facade validates array or typed-array `MatrixInput`, creates a renderer-neutral scene through the shared Rust builder, renders that scene to SVG/RGBA, retains matrix-bearing scene-v1 JSON rendering for compatibility, verifies an optional renderer ID, supports adapter injection, and disposes the backend. Node ESM/CommonJS and browser conditional-export usage are type-checked; runtime smoke tests exercise the native backend and a bundled browser/WASM facade.
 
