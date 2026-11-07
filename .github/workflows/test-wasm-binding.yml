@@ -131,6 +131,16 @@ jobs:
               --ignore-scripts --omit=optional "@esbuild/linux-x64@${vite_esbuild_version}"
           fi
 
+          # Vite 8 uses Rolldown, whose platform binding is also optional.
+          # Restore the Linux x64 binding explicitly because npm ci above omits
+          # optional dependencies to keep the workspace install deterministic.
+          rolldown_package="node_modules/rolldown/package.json"
+          if [[ -f "$rolldown_package" ]]; then
+            rolldown_version="$(node -p "require('./${rolldown_package}').version")"
+            npm install --no-save --no-package-lock --ignore-scripts --omit=optional --workspaces=false \
+              "@rolldown/binding-linux-x64-gnu@${rolldown_version}"
+          fi
+
           node <<'NODE'
           const fs = require("node:fs");
 
@@ -171,6 +181,16 @@ jobs:
             "./node_modules/@rollup/rollup-linux-x64-gnu/package.json",
             "Rollup",
           );
+
+          if (fs.existsSync("./node_modules/rolldown/package.json")) {
+            const binding = "./node_modules/@rolldown/binding-linux-x64-gnu/package.json";
+            if (!fs.existsSync(binding)) {
+              throw new Error("Rolldown: matching Linux x64 native binding is missing");
+            }
+            console.log(
+              `Rolldown ${require("./node_modules/rolldown/package.json").version}: Linux x64 binding installed`,
+            );
+          }
           NODE
       - name: Bundle the browser TypeScript facade against the built WASM package
         working-directory: npm
