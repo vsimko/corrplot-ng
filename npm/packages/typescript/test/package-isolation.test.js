@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const packageRoot = new URL("../", import.meta.url);
 const manifest = JSON.parse(await readFile(new URL("package.json", packageRoot), "utf8"));
-const wasmManifest = JSON.parse(await readFile(new URL("../../bindings/wasm/package.json", packageRoot), "utf8"));
+const wasmManifest = JSON.parse(await readFile(new URL("../wasm/package.json", packageRoot), "utf8"));
 
 test("backend packages are optional peers, never installed as facade dependencies", () => {
   assert.equal(manifest.dependencies, undefined);
