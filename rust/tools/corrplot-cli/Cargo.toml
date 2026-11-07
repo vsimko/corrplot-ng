@@ -12,9 +12,3 @@ path = "src/main.rs"
 
 [dependencies]
 corrplot-core = { path = "../../crates/corrplot-core" }
-
-[profile.release]
-strip = true
-lto = true
-codegen-units = 1
-panic = "abort"

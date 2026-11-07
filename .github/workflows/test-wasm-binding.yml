@@ -4,23 +4,29 @@ on:
   pull_request:
     paths:
       - "bindings/wasm/**"
+      - "rust/bindings/wasm/**"
       - "packages/typescript/**"
       - "packages/react/**"
       - "packages/vue/**"
       - "package.json"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   push:
     branches: [main]
     paths:
       - "bindings/wasm/**"
+      - "rust/bindings/wasm/**"
       - "packages/typescript/**"
       - "packages/react/**"
       - "packages/vue/**"
       - "package.json"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-wasm-binding.yml"
   workflow_dispatch:
   schedule:
@@ -59,7 +65,7 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: bindings/wasm -> target
+          workspaces: rust -> target
           shared-key: wasm-binding
       - name: Cache wasm-pack executable
         id: wasm-pack-cache
@@ -72,7 +78,7 @@ jobs:
         run: cargo install wasm-pack --version 0.13.1 --locked
       - name: Run WebAssembly binding tests in Node
         working-directory: bindings/wasm
-        run: wasm-pack test --node
+        run: wasm-pack test --node ../../rust/bindings/wasm
       - name: Build browser ESM package
         working-directory: bindings/wasm
         run: npm run build

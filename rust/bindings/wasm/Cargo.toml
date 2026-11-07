@@ -1,0 +1,34 @@
+[package]
+name = "corrplot-ng-wasm"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+corrplot-core = { path = "../../crates/corrplot-core" }
+js-sys = "=0.3.82"
+serde = { version = "=1.0.228", features = ["derive"] }
+serde-wasm-bindgen = "=0.6.5"
+wasm-bindgen = "=0.2.105"
+
+[dev-dependencies]
+wasm-bindgen-test = "=0.3.55"
+
+# Rust's current wasm32 target enables these WebAssembly features by default.
+# wasm-pack's bundled Binaryen needs them explicitly to validate the optimized
+# release artifact; keep wasm-opt enabled rather than weakening the release build.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = [
+    "-O",
+    "--enable-bulk-memory",
+    "--enable-nontrapping-float-to-int",
+    "--enable-sign-ext",
+    "--enable-mutable-globals",
+    "--enable-multivalue",
+    "--enable-reference-types",
+]

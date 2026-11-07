@@ -14,7 +14,7 @@ import tempfile
 
 
 PACKAGE = "corrplotngrustspike"
-SMOKE_TEST = "prototypes/rust-rextendr/test-r-integration.R"
+SMOKE_TEST = "rust/bindings/r/rextendr-prototype/test-r-integration.R"
 
 
 def run(command):

@@ -19,7 +19,7 @@ class RootPolicyTests(unittest.TestCase):
             "package.json",
             "requirements-dev.txt",
             "bindings/node/package.json",
-            "crates/corrplot-core/Cargo.toml",
+            "rust/crates/corrplot-core/Cargo.toml",
             "implementations/r/DESCRIPTION",
             "experiments/wasm-r/README.md",
         ]

@@ -2,7 +2,7 @@
 
 Audit run: [GitHub Actions run 41020325794](https://github.com/vsimko/corrplot-ng/actions/runs/41020325794)
 Audited revision: `c2e0f1317e5072faafdc0cfa063ec13e75db3173`
-Scope: the `prototypes/rust-rextendr` Cargo dependency graph only.
+Scope: the `rust/bindings/r/rextendr-prototype` Cargo dependency graph only.
 
 This is an initial dependency and vendoring inventory. It is not a legal opinion, a complete CRAN compliance review, or proof that the eventual R source package can be built offline.
 

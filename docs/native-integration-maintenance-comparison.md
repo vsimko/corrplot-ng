@@ -34,7 +34,7 @@ At the reviewed snapshot, both implementations produced the same scene-v1 shape,
 
 At the reviewed snapshot, the C++/Rcpp candidate was generated with `Rcpp::compileAttributes()` and installed as an ordinary R package; the Rust/rextendr candidate was generated into a disposable package and installed from that generated tree. The C++ source tree and its dedicated workflow were removed by PR #332, so the former C++ commands are intentionally not reproduced here and cannot be run on current `main`.
 
-The disposable Rust/rextendr adapter remains available for evaluation. Its current setup and package-generation instructions are maintained in the [Rust/rextendr spike README](../prototypes/rust-rextendr/README.md). Do not treat this historical report as a production R-package installation guide.
+The disposable Rust/rextendr adapter remains available for evaluation. Its current setup and package-generation instructions are maintained in the [Rust/rextendr spike README](../rust/bindings/r/rextendr-prototype/README.md). Do not treat this historical report as a production R-package installation guide.
 
 ## CI and platform comparison
 
@@ -148,7 +148,7 @@ The estimates above were not measured. No controlled human-effort comparison was
 ## Evidence index
 
 - [C++/Rcpp retirement PR #332](https://github.com/vsimko/corrplot-ng/pull/332) and the historical assessment preserved in this report. The retired source tree is not linked as a current repository path.
-- [Rust spike README](../prototypes/rust-rextendr/README.md), [Cargo manifest](../prototypes/rust-rextendr/Cargo.toml), [R package generator](../prototypes/rust-rextendr/prepare-r-package.R), [integration smoke test](../prototypes/rust-rextendr/test-r-integration.R).
+- [Rust spike README](../rust/bindings/r/rextendr-prototype/README.md), [Cargo manifest](../rust/bindings/r/rextendr-prototype/Cargo.toml), [R package generator](../rust/bindings/r/rextendr-prototype/prepare-r-package.R), [integration smoke test](../rust/bindings/r/rextendr-prototype/test-r-integration.R).
 - [Shared cross-language workflow](../.github/workflows/cross-language-benchmarks.yml).
 - [Rust offline package workflow](../.github/workflows/rust-rextendr-offline-package.yml), [dependency audit workflow](../.github/workflows/rust-cran-dependency-audit.yml), [Windows binary workflow](../.github/workflows/test-rust-windows-binary.yml).
 - [CRAN Rust readiness review](cran-rust-readiness.md) and [dependency audit results](cran-rust-dependency-audit-results.md).

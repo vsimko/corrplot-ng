@@ -1,14 +1,14 @@
 # Repository layout and ownership
 
-This document defines where corrplot-ng code, contracts, fixtures, tests, and release assets belong. It describes the current layout; it does not authorize a broad directory migration.
+This document defines current ownership and the accepted ADR 0003 boundaries. It distinguishes production ecosystem roots from retained non-production experiments and transitional paths.
 
 ## Top-level directories
 
 | Path | Ownership and contents |
 | --- | --- |
-| `crates/` | Reusable Rust libraries that own shared implementation semantics. `crates/corrplot-core` is the authoritative Rust shared-core crate; it currently provides matrix validation, a parser for the matrix-bearing scene-v1 subset, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. Full scene-v1 presentation semantics remain incomplete. Keep consumer-specific command handling and bindings out of this directory. |
-| `bindings/` | Runtime-specific native/WASM adapters over reusable Rust crates. `bindings/node/` contains the experimental Node-API addon; `bindings/wasm/` contains the browser WebAssembly adapter. The runtime-isolated TypeScript facade lives in `packages/typescript/`; the browser-only React adapter lives in `packages/react/`. |
-| `tools/` | Executable developer and user tools. `tools/corrplot-ng` is the standalone Rust CLI and should remain a thin application adapter over shared crates. |
+| `rust/` | Rust workspace root for the shared core, CLI, Node-API and browser-WASM crates. The disposable R/rextendr adapter is kept under `rust/bindings/r/` but excluded from the workspace with its own audited lockfile. |
+| `bindings/` | Transitional npm package roots for Node and browser-WASM package metadata, JavaScript entry points and tests. Rust crate sources live under `rust/bindings/`. |
+| `tools/` | Repository-wide orchestration only, under `tools/repository/`. |
 | `implementations/` | Language-specific product packages and adapters. The R package owns R APIs, legacy compatibility, graphics-device behavior, and package-specific tests. |
 | `prototypes/` | A transitional home for three distinct asset classes: normative versioned contracts, reference implementations, and disposable experiments. Do not treat every child directory as production code. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
@@ -16,27 +16,25 @@ This document defines where corrplot-ng code, contracts, fixtures, tests, and re
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
 | `docs/` | Architecture decisions, contracts and workflow documentation, testing guidance, and the roadmap. |
 | `.github/` | GitHub Actions workflows, issue templates, and repository automation. |
-| `.cargo/` | Shared Cargo configuration and dependency-vendoring metadata. |
 
 Root-level manifests and configuration files remain at the repository root when their tools expect them there.
 
 ## Categories currently grouped under `prototypes/`
 
-The current path layout is retained to avoid breaking references, package manifests, CI filters, and documented commands. The categories have different stability expectations:
+The remaining transitional paths are retained until their owning migration issues update package manifests, CI filters, and documented commands. The categories have different stability expectations:
 
 - **Normative, versioned contracts:** `normalized-matrix-v1/`, `publication-config-v1/`, `publication-svg-v1/`, the scene-v1 schema and fixtures, and `renderer-capabilities-v1.schema.json`. Their schemas and compatibility rules are normative; their current location under `prototypes/` is historical, not a statement that the contracts are throwaway.
 - **Reference implementation:** `shared-svg/` is the Python scene/SVG reference implementation. It is useful for semantic examples and conformance work, but it is not the selected production shared core.
-- **Rust integration experiment:** `rust-rextendr/` is an isolated evaluation spike. It demonstrates that an R binding and the CLI can call the same crate; it is not the production R package. C++/Rcpp was rejected and its prototype has been removed.
 
 Future work may move these categories to clearer top-level locations such as `contracts/`, `references/`, and `experiments/`. Do not move them until a separate staged change inventories and updates every relative link, package path, CI path filter, fixture consumer, and developer command.
 
 ## Rust package boundary
 
-- `crates/corrplot-core/` owns reusable, language-neutral Rust semantics. It currently provides shared matrix validation, a parser for the matrix-bearing scene-v1 subset, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. Full scene-v1 presentation semantics remain incomplete.
-- `tools/corrplot-ng/` owns CLI parsing, file and process I/O, command orchestration, and executable packaging.
-- `prototypes/rust-rextendr/` owns only the disposable R-binding proof and its generated package workflow.
+- `rust/crates/corrplot-core/` owns reusable, language-neutral Rust semantics. It currently provides shared matrix validation, a parser for the matrix-bearing scene-v1 subset, normalized-matrix-to-scene construction, and typed-scene SVG/RGBA rendering. Full scene-v1 presentation semantics remain incomplete.
+- `rust/tools/corrplot-cli/` owns CLI parsing, file and process I/O, command orchestration, and executable packaging.
+- `rust/bindings/r/rextendr-prototype/` owns only the disposable R-binding proof and its generated package workflow; it is intentionally excluded from the main Rust workspace to preserve its separately audited CRAN/offline lockfile.
 - `implementations/r/` owns the production R-facing API and legacy compatibility behavior. Do not migrate it to rextendr as part of a layout cleanup.
-- `bindings/node/` is the experimental Node-API adapter. It exposes matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 compatibility rendering without duplicating semantics. `bindings/wasm/` exposes the corresponding browser-WASM operations over the same core. The runtime-isolated facade in `packages/typescript/` selects the appropriate backend. The optional React adapter in `packages/react/` and Vue adapter in `packages/vue/` consume only the browser WASM package and keep their frameworks as peer dependencies. Neither runtime binding or framework adapter may copy core algorithms.
+- `rust/bindings/node/` is the experimental Node-API adapter. It exposes matrix validation, normalized-matrix scene construction, typed-scene SVG/RGBA rendering, and matrix-bearing scene-v1 compatibility rendering without duplicating semantics. `rust/bindings/wasm/` exposes the corresponding browser-WASM operations over the same core. The runtime-isolated facade in `packages/typescript/` selects the appropriate backend. The optional React adapter in `packages/react/` and Vue adapter in `packages/vue/` consume only the browser WASM package and keep their frameworks as peer dependencies. Neither runtime binding or framework adapter may copy core algorithms.
 
 Rust is the accepted strategic shared-core implementation in ADR 0001. The scene-v1 JSON contract remains the language-neutral interchange and conformance format, not a competing implementation of the shared semantics. Production R adoption remains gated by CRAN disposition for the retained Cargo vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and evidence from the actual production package artifact. The C++/Rcpp maintainer-effort comparison was discontinued by #269.
 
@@ -53,11 +51,11 @@ The canonical sources and package copies are:
 
 `tests/test_fixture_integrity.py` checks the exact copies and the declared general-matrix projection. Update that test and this table together if the ownership or projection changes. Do not edit package copies independently.
 
-The renderer capability declarations are intentionally backend-specific, not duplicate fixtures: the Python reference declaration is in `prototypes/shared-svg/renderer-capabilities.json`, while the Rust CLI declaration is in `tools/corrplot-ng/renderer-capabilities.json`. They must be validated against the shared schema, but their capability values are expected to differ.
+The renderer capability declarations are intentionally backend-specific, not duplicate fixtures: the Python reference declaration is in `prototypes/shared-svg/renderer-capabilities.json`, while the Rust CLI declaration is in `rust/tools/corrplot-cli/renderer-capabilities.json`. They must be validated against the shared schema, but their capability values are expected to differ.
 
 ## Change rules
 
-1. Put shared semantic behavior in `crates/corrplot-core`, not in CLI or binding adapters.
+1. Put shared semantic behavior in `rust/crates/corrplot-core`, not in CLI or binding adapters.
 2. Keep R-specific API compatibility and graphics-device side effects in `implementations/r`.
 3. Put cross-runtime conformance fixtures in `tests/` or alongside the normative contract they define. A package copy is allowed only when packaging or package-local tests require it.
 4. Give every package copy an explicit source-of-truth and an automated drift check.

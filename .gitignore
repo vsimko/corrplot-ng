@@ -33,3 +33,8 @@ bindings/wasm/pkg/
 npm/packages/wasm/pkg/
 **/.ci-r-package/
 benchmark-results/
+
+# Rust workspace build output and disposable generated rextendr package.
+/rust/target/
+/rust/bindings/r/rextendr-prototype/.ci-rust-target/
+/rust/bindings/r/rextendr-prototype/.ci-r-package/

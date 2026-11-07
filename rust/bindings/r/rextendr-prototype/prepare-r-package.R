@@ -1,7 +1,7 @@
 # Generate a disposable R package using rextendr's supported scaffolding.
 # The generated package is intentionally not committed.
 args <- commandArgs(trailingOnly = TRUE)
-root <- if (length(args)) args[[1]] else "prototypes/rust-rextendr"
+root <- if (length(args)) args[[1]] else "rust/bindings/r/rextendr-prototype"
 root <- normalizePath(root, mustWork = TRUE)
 pkg_dir <- file.path(root, ".ci-r-package")
 
@@ -57,16 +57,29 @@ if (length(edition_line) == 1L &&
     !any(grepl('^rust-version[[:space:]]*=', cargo_lines))) {
   cargo_lines <- append(cargo_lines, 'rust-version = "1.78"', after = edition_line)
 }
-core_dependency <- 'corrplot-core = { path = "../../../../../crates/corrplot-core" }'
+# A CRAN source tarball must be self-contained. The repository-relative
+# workspace path works for the disposable in-repository install, but escapes
+# the package after R CMD build. Include the small shared crate in src/rust
+# and use a package-relative Cargo path so source installs remain reproducible.
+core_source <- normalizePath(
+  file.path(root, "..", "..", "..", "crates", "corrplot-core"),
+  mustWork = TRUE
+)
+core_parent <- file.path(pkg_dir, "src", "rust")
+if (!file.copy(core_source, core_parent, recursive = TRUE)) {
+  stop("Could not copy corrplot-core into the generated R source package")
+}
+core_dependency <- 'corrplot-core = { path = "corrplot-core" }'
 if (!any(grepl("^corrplot-core[[:space:]]*=", cargo_lines))) {
   cargo_lines <- append(cargo_lines, core_dependency, after = extendr_dependency)
 }
 
 # Keep Cargo's standard release profile until a size reduction is
 # demonstrated across supported platforms. See the controlled CI comparison.
+cargo_lines <- c(cargo_lines, "", "[workspace]")
 writeLines(cargo_lines, cargo_manifest)
 
-# Reuse the reviewed transitive dependency graph from the committed spike
+# Reuse the reviewed transitive dependency graph from the isolated prototype
 # lockfile. Only the generated root package identity differs.
 package_name_idx <- grep("^name = ", cargo_lines)[1]
 package_version_idx <- grep("^version = ", cargo_lines)[1]

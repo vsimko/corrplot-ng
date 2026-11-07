@@ -167,7 +167,7 @@ R, Python, renderer, and CLI failures. See the
 
 ### 5. Shared Rust core and native CLI
 
-The dependency-free `crates/corrplot-core` library is the accepted strategic
+The dependency-free `rust/crates/corrplot-core` library is the accepted strategic
 shared implementation under ADR 0001. It currently tests matrix validation,
 the matrix-bearing scene-v1 parser and normalized-matrix-to-scene builder,
 and typed-scene SVG/RGBA rendering, including supplied scene-v1 confidence
@@ -190,9 +190,9 @@ validates an SVG and tests the installed executable outside the checkout.
 Run local core and CLI tests from the repository root:
 
 ```sh
-cargo test --locked --offline --manifest-path crates/corrplot-core/Cargo.toml
-cargo test --locked --offline --manifest-path tools/corrplot-ng/Cargo.toml
-cargo build --locked --offline --release --manifest-path tools/corrplot-ng/Cargo.toml
+cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml
+cargo test --locked --offline --manifest-path rust/tools/corrplot-cli/Cargo.toml
+cargo build --locked --offline --release --manifest-path rust/tools/corrplot-cli/Cargo.toml
 ```
 
 The standalone CLI remains a thin application adapter. Production R adoption
@@ -367,7 +367,7 @@ Use precise terms when reporting results:
   graphics environment.
 - **Shared implementation reuse:** multiple interfaces call the same
   compiled implementation for a stated operation. The CLI, Node, browser-WASM,
-  and disposable R/rextendr adapter currently reuse `crates/corrplot-core` for
+  and disposable R/rextendr adapter currently reuse `rust/crates/corrplot-core` for
   the operations implemented by each consumer. This does not establish
   complete semantic parity across their public APIs or renderers.
 - **Cross-runtime semantic parity:** independently exercised consumers

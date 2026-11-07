@@ -170,7 +170,7 @@ logic in one place.
 
 Rust is selected as the shared-core language because the standalone CLI is
 already Rust and the same source can serve native and WebAssembly targets.
-Merged PR #180 extracted `crates/corrplot-core` and proved that both the CLI
+Merged PR #180 extracted `rust/crates/corrplot-core` and proved that both the CLI
 and disposable R/rextendr adapter call its matrix-validation operation.
 This is a real but deliberately small compiled-library reuse proof; the core
 does not yet implement the complete visualization pipeline.

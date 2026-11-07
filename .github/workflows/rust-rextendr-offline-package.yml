@@ -7,15 +7,19 @@ on:
       - experiment/rust-binary-size-matrix
     paths:
       - ".github/workflows/rust-rextendr-offline-package.yml"
-      - "prototypes/rust-rextendr/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/bindings/r/rextendr-prototype/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
   workflow_dispatch:
   pull_request:
     paths:
-      - "prototypes/rust-rextendr/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/bindings/r/rextendr-prototype/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/rust-rextendr-offline-package.yml"
 
 permissions:
@@ -35,7 +39,7 @@ jobs:
       matrix:
         os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest","macos-15-intel","windows-latest"]') }}
     env:
-      CARGO_TARGET_DIR: ${{ github.workspace }}/prototypes/rust-rextendr/.ci-rust-target
+      CARGO_TARGET_DIR: ${{ github.workspace }}/rust/bindings/r/rextendr-prototype/.ci-rust-target
       CARGO_BUILD_JOBS: 2
       # Exercise the experimental post-link debug stripping flags on Linux/macOS.
       # The generator deliberately skips Windows until PE/COFF behavior is validated.
@@ -46,8 +50,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: prototypes/rust-rextendr -> .ci-rust-target
+          workspaces: rust/bindings/r/rextendr-prototype -> .ci-rust-target
           shared-key: rextendr-ci
+      - name: Fetch Rust workspace dependencies after cache restore
+        run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
         with:
@@ -59,12 +65,12 @@ jobs:
             any::rextendr
             any::testthat
       - name: Generate temporary R package with rextendr
-        run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+        run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Verify third-party license notice is included
         shell: bash
         run: |
           set -euxo pipefail
-          license_dir=prototypes/rust-rextendr/.ci-r-package/inst/licenses
+          license_dir=rust/bindings/r/rextendr-prototype/.ci-r-package/inst/licenses
           test -s "$license_dir/extendr-MIT.txt"
           grep -q "Copyright (c) 2021 The Extendr contributors" "$license_dir/extendr-MIT.txt"
           grep -q "extendr-api-v0.9.0" "$license_dir/README.md"
@@ -72,7 +78,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          cd prototypes/rust-rextendr/.ci-r-package/src/rust
+          cd rust/bindings/r/rextendr-prototype/.ci-r-package/src/rust
           cp ../../../deny.toml deny.toml
           cargo metadata --format-version 1 > /dev/null
           echo "Normal dependency tree for the R integration:"
@@ -144,9 +150,9 @@ jobs:
           CARGO_NET_OFFLINE: "true"
         run: |
           set -euxo pipefail
-          R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+          R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Test Rust function from R
-        run: Rscript -e "library(corrplotngrustspike); source('prototypes/rust-rextendr/test-r-integration.R')"
+        run: Rscript -e "library(corrplotngrustspike); source('rust/bindings/r/rextendr-prototype/test-r-integration.R')"
       - name: Build the current native extendr cdylib for a same-run comparison
         if: github.event_name == 'workflow_dispatch'
         shell: bash
@@ -160,10 +166,10 @@ jobs:
           fi
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --target x86_64-pc-windows-gnu --release
-            native_dir="prototypes/rust-rextendr/.ci-rust-target/x86_64-pc-windows-gnu/release"
+            native_dir="rust/bindings/r/rextendr-prototype/.ci-rust-target/x86_64-pc-windows-gnu/release"
           else
             R_HOME="$(R RHOME)" cargo build --manifest-path "$manifest" --release
-            native_dir="prototypes/rust-rextendr/.ci-rust-target/release"
+            native_dir="rust/bindings/r/rextendr-prototype/.ci-rust-target/release"
           fi
           native_library="$(find "$native_dir" -maxdepth 1 -type f | grep -E '(lib)?corrplot_r_native\.(so|dylib|dll)$' | head -n 1 || true)"
           if [[ -z "$native_library" ]]; then
@@ -191,7 +197,7 @@ jobs:
               ["Rscript", "-e", "cat(normalizePath(find.package('corrplotngrustspike')))"],
               text=True,
           ).strip())
-          target_dir = Path("prototypes/rust-rextendr/.ci-rust-target/release")
+          target_dir = Path("rust/bindings/r/rextendr-prototype/.ci-rust-target/release")
 
           def report(label, paths):
               paths = [path for path in paths if path.is_file()]
@@ -208,16 +214,16 @@ jobs:
       - name: Inspect retained native-library sections and symbols
         if: github.event_name == 'workflow_dispatch'
         shell: bash
-        run: python3 prototypes/rust-rextendr/inspect-native-library.py
+        run: python3 rust/bindings/r/rextendr-prototype/inspect-native-library.py
       - name: Experimentally strip debug data from a temporary installed library
         if: github.event_name == 'workflow_dispatch'
         shell: bash
-        run: python3 prototypes/rust-rextendr/experiment-strip-debug.py
+        run: python3 rust/bindings/r/rextendr-prototype/experiment-strip-debug.py
       - name: Build and inspect the actual R source tarball
         shell: bash
         run: |
           set -euxo pipefail
-          R CMD build --no-build-vignettes --no-manual prototypes/rust-rextendr/.ci-r-package
+          R CMD build --no-build-vignettes --no-manual rust/bindings/r/rextendr-prototype/.ci-r-package
           tarball=corrplotngrustspike_0.1.0.tar.gz
           test -s "$tarball"
           # R CMD build runs rextendr's clean target, which removes the expanded

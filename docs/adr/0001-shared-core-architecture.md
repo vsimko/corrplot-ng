@@ -24,7 +24,7 @@ C++/Rcpp was evaluated and explicitly rejected. The project will use Rust for th
 ## Shared-crate proof: Issue #173
 
 Merged PR #180 extracts validate_matrix into the dependency-free
-crates/corrplot-core library. Both the native CLI and the disposable
+rust/crates/corrplot-core library. Both the native CLI and the disposable
 R/rextendr adapter call this exact path dependency; neither consumer keeps a
 parallel implementation of the shared validation operation.
 
@@ -158,7 +158,7 @@ The measurements distinguish current process RSS snapshots, process-lifetime pea
 
 ## Conditions for production rollout
 
-The strategic language decision (Rust only; C++/Rcpp rejected) and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern CRAN disposition for the vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and validation of the actual production R package artifact and its footprint. The proposed C++/Rcpp human-effort comparison was discontinued by #269 and is not a gate.
+The strategic language decision (Rust only; C++/Rcpp rejected) and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `rust/crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern CRAN disposition for the vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and validation of the actual production R package artifact and its footprint. The proposed C++/Rcpp human-effort comparison was discontinued by #269 and is not a gate.
 
 Before making the shared Rust crate a production R dependency:
 

@@ -1,6 +1,6 @@
 # ADR 0003: Repository layout as a multi-ecosystem monorepo
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-05
 - **Decision owners:** corrplot-ng maintainers
 - **Related:** [ADR 0001](0001-shared-core-architecture.md), [ADR 0002](0002-cross-runtime-typescript-architecture.md), [current architecture](../architecture.md)
@@ -76,6 +76,9 @@ corrplot-ng/
 ├── tools/
 │   └── repository/                 # repo-wide scripts only
 │
+├── experiments/                  # isolated non-production research and cross-runtime proofs
+│   └── wasm-r/                    # independent experiment; excluded from production Rust workspace
+│
 ├── fixtures/
 │   ├── normalized-matrix-v1/
 │   ├── scene-v1/
@@ -108,6 +111,7 @@ The exact placement of a component may be adjusted during the inventory phase if
 | `packaging/` | OS distribution recipes, package metadata, file lists, signing/release helpers specific to distributable artifacts | Application source, ecosystem dependency manifests, CI workflow definitions |
 | `python/corrplot-ng/` | Only a future explicitly approved Python distribution | Unapproved duplicate production semantics |
 | `fixtures/` | Cross-language golden inputs and expected outputs | Runtime-specific test harnesses |
+| `experiments/` | Isolated, non-production research and cross-runtime experiments such as `experiments/wasm-r/`; each keeps an independent build/test boundary and remains outside production workspaces | Production APIs, authoritative semantics, release artifacts without separate approval |
 | `.github/` | CI orchestration, automation, release governance | Application/package implementation |
 
 A distributable component must have a clear owner directory, manifest, tests, build instructions, and declared dependency boundary. A component can be independently released without becoming a separate Git repository.
@@ -171,6 +175,7 @@ A distributable component must have a clear owner directory, manifest, tests, bu
 ## Root-level policy
 
 Allowed at repository root:
+- `experiments/` only for isolated, non-production research or cross-runtime proofs with their own declared manifests and test boundary; it is not part of the production Rust workspace.
 - Git and GitHub configuration, CODEOWNERS, contribution/security/governance documents.
 - Repository-wide documentation entry points and ADR index.
 - Shared editor settings and ignore rules.

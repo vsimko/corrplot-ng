@@ -1,14 +1,14 @@
 # corrplot-ng CLI (first native slice)
 
-This is a standalone Rust executable. It has **no third-party Cargo runtime dependencies**; its only application dependency is the local `crates/corrplot-core` library, shared with the rextendr spike. It does not invoke Python or R.
+This is a standalone Rust executable. It has **no third-party Cargo runtime dependencies**; its only application dependency is the local `rust/crates/corrplot-core` library, shared with the rextendr spike. It does not invoke Python or R.
 
 ## Build
 
 From the repository root:
 
 ```sh
-cargo build --release --manifest-path tools/corrplot-ng/Cargo.toml
-./tools/corrplot-ng/target/release/corrplot-ng --help
+cargo build --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
+rust/target/release-cli/corrplot-ng --help
 ```
 
 The executable is self-contained with respect to the application: no Python, R, or external CLI runtime is needed. Platform C runtime requirements depend on the Rust target and linker configuration.
@@ -350,10 +350,10 @@ and the wizard branch on the same machine:
 ```sh
 git worktree add /tmp/corrplot-ng-base origin/main
 cargo build --release --manifest-path /tmp/corrplot-ng-base/tools/corrplot-ng/Cargo.toml
-cargo build --release --manifest-path tools/corrplot-ng/Cargo.toml
+cargo build --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
 python benchmarks/cli_startup.py \
   --baseline /tmp/corrplot-ng-base/tools/corrplot-ng/target/release/corrplot-ng \
-  --candidate tools/corrplot-ng/target/release/corrplot-ng \
+  --candidate rust/target/release-cli/corrplot-ng \
   --output cli-performance.json
 ```
 

@@ -56,7 +56,7 @@ fn invalid_matrix_returns_nonzero() {
 
 #[test]
 fn publication_config_v1_validates_and_renders_svg() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/basic.json");
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../prototypes/publication-config-v1/examples/basic.json");
     let binary = env!("CARGO_BIN_EXE_corrplot-ng");
     let validated = Command::new(binary).args(["validate", "--config"]).arg(&root).output().unwrap();
     assert!(validated.status.success(), "{}", String::from_utf8_lossy(&validated.stderr));
@@ -74,7 +74,7 @@ fn publication_config_v1_validates_and_renders_svg() {
 
 #[test]
 fn publication_config_rejects_unsupported_semantics() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/significance.json");
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../prototypes/publication-config-v1/examples/significance.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng")).args(["validate", "--config"]).arg(&root).output().unwrap();
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("error:"), "expected an actionable validation diagnostic: {}", String::from_utf8_lossy(&output.stderr));
@@ -83,7 +83,7 @@ fn publication_config_rejects_unsupported_semantics() {
 
 #[test]
 fn publication_config_can_emit_renderer_neutral_scene_v1() {
-    let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../prototypes/publication-config-v1/examples/basic.json");
+    let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../prototypes/publication-config-v1/examples/basic.json");
     let output_path = std::env::temp_dir().join(format!("corrplot-ng-scene-{}.json", std::process::id()));
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["render", "--config"]).arg(&config)
@@ -135,7 +135,7 @@ fn publication_config_resolves_csv_paths_relative_to_config_file() {
 #[test]
 fn publication_svg_is_byte_for_byte_deterministic() {
     let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let directory = std::env::temp_dir().join(format!("corrplot-ng-deterministic-{}", std::process::id()));
     fs::create_dir_all(&directory).unwrap();
     let first_path = directory.join("first.svg");
@@ -155,7 +155,7 @@ fn publication_svg_is_byte_for_byte_deterministic() {
 #[test]
 fn invalid_publication_config_fails_before_creating_output() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(fixture).unwrap();
     let invalid = source.replace("\"method\": \"circle\"", "\"method\": \"square\"");
     let directory = std::env::temp_dir().join(format!("corrplot-ng-invalid-config-{}", std::process::id()));
@@ -179,7 +179,7 @@ fn invalid_publication_config_fails_before_creating_output() {
 #[test]
 fn publication_svg_respects_display_visibility_and_value_annotations() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(fixture).unwrap();
     let config = source
         .replace("\"display\": \"full\"", "\"display\": \"upper\"")
@@ -216,7 +216,7 @@ fn publication_svg_respects_display_visibility_and_value_annotations() {
 #[test]
 fn inline_and_relative_csv_inputs_produce_identical_scenes() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(fixture).unwrap();
     let directory = std::env::temp_dir().join(format!("corrplot-ng-input-equivalence-{}", std::process::id()));
     fs::create_dir_all(&directory).unwrap();
@@ -254,7 +254,7 @@ fn inline_and_relative_csv_inputs_produce_identical_scenes() {
 #[test]
 fn invalid_publication_matrix_fails_before_creating_output() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(fixture).unwrap();
     let invalid = source.replace("[1.0, -0.42, 0.71]", "[1.0, -0.41, 0.71]");
     let directory = std::env::temp_dir().join(format!("corrplot-ng-invalid-matrix-{}", std::process::id()));
@@ -290,7 +290,7 @@ fn ordinary_commands_remain_non_interactive() {
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["validate", "--config"])
         .arg(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../prototypes/publication-config-v1/examples/basic.json"))
+            .join("../../../prototypes/publication-config-v1/examples/basic.json"))
         .output()
         .unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
@@ -312,7 +312,7 @@ fn init_help_is_available_without_a_tty() {
 #[test]
 fn scene_v1_json_file_is_auto_detected_and_rendered() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/scene-v1/scene-v1.example.json");
+        .join("../../../fixtures/scene-v1/scene-v1.example.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["render", "--input"]).arg(&scene)
         .args(["--format", "scene-json"])
@@ -327,7 +327,7 @@ fn scene_v1_json_file_is_auto_detected_and_rendered() {
 #[test]
 fn cli_renders_shared_scene_v1_construction_fixture() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/shared-svg/scene-v1-construction.example.json");
+        .join("../../../prototypes/shared-svg/scene-v1-construction.example.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["render", "--input"]).arg(&scene)
         .args(["--format", "svg"])
@@ -343,7 +343,7 @@ fn cli_renders_shared_scene_v1_construction_fixture() {
 #[test]
 fn scene_v1_json_can_be_read_from_stdin_with_explicit_format() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/scene-v1/scene-v1.example.json");
+        .join("../../../fixtures/scene-v1/scene-v1.example.json");
     let contents = fs::read(scene).unwrap();
     let mut child = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["validate", "--input", "-", "--input-format", "scene-json"])
@@ -412,7 +412,7 @@ fn inspect_reports_detected_input_format_and_matrix_metadata() {
     fs::remove_file(csv).ok();
 
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/scene-v1/scene-v1.example.json");
+        .join("../../../fixtures/scene-v1/scene-v1.example.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["inspect", "--input"]).arg(scene)
         .output().unwrap();
@@ -456,7 +456,7 @@ fn help_documents_all_commands_and_input_format_options() {
 #[test]
 fn publication_general_numeric_config_uses_automatic_limits_and_sequential_palette() {
     let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(basic).unwrap().replace("\r\n", "\n");
     let config = source
         .replace(
@@ -489,7 +489,7 @@ fn publication_general_numeric_config_uses_automatic_limits_and_sequential_palet
 #[test]
 fn publication_general_numeric_config_honors_explicit_limits_and_rejects_outside_values() {
     let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(basic).unwrap().replace("\r\n", "\n");
     let general = source
         .replace(
@@ -525,7 +525,7 @@ fn publication_general_numeric_csv_requires_and_uses_explicit_limits() {
     fs::create_dir_all(&directory).unwrap();
     fs::write(directory.join("matrix.csv"), ",a,b\na,2,4\nb,4,8\n").unwrap();
     let basic = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../prototypes/publication-config-v1/examples/basic.json");
+        .join("../../../prototypes/publication-config-v1/examples/basic.json");
     let source = fs::read_to_string(basic).unwrap().replace("\r\n", "\n");
     let general = source
         .replace(

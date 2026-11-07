@@ -5,7 +5,7 @@ on:
     paths:
       - ".github/workflows/cross-language-benchmarks.yml"
       - "benchmarks/**"
-      - "prototypes/rust-rextendr/**"
+      - "rust/bindings/r/rextendr-prototype/**"
   workflow_dispatch:
     inputs:
       include_stress:
@@ -86,11 +86,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: prototypes/rust-rextendr -> .ci-rust-target
+          workspaces: rust/bindings/r/rextendr-prototype -> .ci-rust-target
           shared-key: rextendr-ci
       - name: Install R benchmark dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          cache: always
           packages: |
             any::jsonlite
             any::rextendr
@@ -102,10 +103,10 @@ jobs:
       - name: Export deterministic scene-v1 fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
       - name: Generate Rust/rextendr package
-        run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+        run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Install Rust/rextendr candidate
         shell: bash
-        run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+        run: R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Verify semantic parity for pure R and Rust/rextendr
         run: Rscript benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json
 
@@ -125,11 +126,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: prototypes/rust-rextendr -> .ci-rust-target
+          workspaces: rust/bindings/r/rextendr-prototype -> .ci-rust-target
           shared-key: rextendr-ci
       - name: Install R benchmark dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          cache: always
           packages: |
             any::jsonlite
             any::rextendr
@@ -141,10 +143,10 @@ jobs:
       - name: Benchmark Python reference on regular fixtures
         run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
       - name: Generate Rust/rextendr package
-        run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+        run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Install Rust/rextendr candidate
         shell: bash
-        run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+        run: R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Benchmark Pure R and Rust/rextendr on regular fixtures
         run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
       - name: Upload regular cross-language results
@@ -192,11 +194,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: prototypes/rust-rextendr -> .ci-rust-target
+          workspaces: rust/bindings/r/rextendr-prototype -> .ci-rust-target
           shared-key: rextendr-ci
       - name: Install R package build dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          cache: always
           packages: |
             any::jsonlite
             any::rextendr
@@ -204,9 +207,9 @@ jobs:
       - name: Export deterministic scene-v1 fixtures
         run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
       - name: Generate Rust/rextendr R package
-        run: Rscript prototypes/rust-rextendr/prepare-r-package.R
+        run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Build and install Rust/rextendr package
         shell: bash
-        run: R CMD INSTALL prototypes/rust-rextendr/.ci-r-package
+        run: R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Verify semantic parity for pure R and Rust/rextendr
         run: Rscript benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json

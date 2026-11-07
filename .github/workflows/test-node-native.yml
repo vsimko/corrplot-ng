@@ -4,15 +4,21 @@ on:
   pull_request:
     paths:
       - "bindings/node/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/bindings/node/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
   push:
     branches: [main]
     paths:
       - "bindings/node/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/bindings/node/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - ".github/workflows/test-node-native.yml"
 
   workflow_dispatch:
@@ -42,7 +48,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: bindings/node -> target
+          workspaces: rust -> target
           shared-key: node-addon
       - name: Build native addon and run Node tests
         working-directory: bindings/node

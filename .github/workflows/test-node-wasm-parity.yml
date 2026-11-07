@@ -7,8 +7,12 @@ on:
       - "bindings/cross-backend/**"
       - "tests/fixtures/**"
       - "bindings/wasm/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/bindings/node/**"
+      - "rust/bindings/wasm/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - "prototypes/shared-svg/scene-v1.example.json"
       - "prototypes/shared-svg/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
@@ -19,8 +23,12 @@ on:
       - "bindings/cross-backend/**"
       - "tests/fixtures/**"
       - "bindings/wasm/**"
-      - "crates/corrplot-core/**"
-      - "!crates/corrplot-core/src/scene_tests.rs"
+      - "rust/bindings/node/**"
+      - "rust/bindings/wasm/**"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - "prototypes/shared-svg/scene-v1.example.json"
       - "prototypes/shared-svg/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
@@ -55,8 +63,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            bindings/node -> target
-            bindings/wasm -> target
+            rust -> target
           shared-key: node-wasm-parity
       - name: Cache wasm-pack executable
         id: wasm-pack-cache
@@ -72,7 +79,7 @@ jobs:
         run: npm run build
       - name: Build Node-compatible WASM backend
         working-directory: bindings/wasm
-        run: wasm-pack build --target nodejs --release --out-dir pkg-node
+        run: wasm-pack build --target nodejs --release --out-dir ../../../bindings/wasm/pkg-node ../../rust/bindings/wasm
       - name: Compare Node and WASM semantics, SVG, and RGBA output
         run: node --test bindings/cross-backend/test-node-wasm-parity.cjs
       - name: Smoke-test the Node/WASM benchmark harness without timing thresholds

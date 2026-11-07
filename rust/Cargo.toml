@@ -1,0 +1,21 @@
+# The committed lockfile is authoritative; CI validates it with --locked.
+[workspace]
+resolver = "2"
+members = [
+    "crates/corrplot-core",
+    "tools/corrplot-cli",
+    "bindings/node",
+    "bindings/wasm",
+]
+# The disposable R/rextendr prototype retains its own audited lockfile so
+# CRAN/offline vendoring remains isolated from Node/WASM workspace dependencies.
+exclude = ["bindings/r/rextendr-prototype"]
+
+# Preserve the former standalone CLI release settings without applying
+# panic=abort to the Node/WASM bindings.
+[profile.release-cli]
+inherits = "release"
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
