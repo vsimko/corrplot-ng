@@ -9,13 +9,13 @@ import { fileURLToPath } from "node:url";
 import { brotliCompressSync, gzipSync } from "node:zlib";
 
 const require = createRequire(import.meta.url);
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const native = require("../node");
-const wasm = require("../wasm/pkg-node/corrplot_ng_wasm.js");
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const native = require("../../packages/native-node");
+const wasm = require("../../packages/wasm/pkg-node/corrplot_ng_wasm.js");
 const smoke = process.argv.includes("--smoke");
 
-const nativeAddonPath = resolve(repoRoot, "bindings/node/index.node");
-const wasmModulePath = resolve(repoRoot, "bindings/wasm/pkg-node/corrplot_ng_wasm_bg.wasm");
+const nativeAddonPath = resolve(repoRoot, "npm/packages/native-node/index.node");
+const wasmModulePath = resolve(repoRoot, "npm/packages/wasm/pkg-node/corrplot_ng_wasm_bg.wasm");
 const nativeAddonBytes = statSync(nativeAddonPath).size;
 
 const white = { red: 255, green: 255, blue: 255, alpha: 255 };
@@ -239,7 +239,7 @@ const results = {
   },
   initialization: {
     nativeNodeApi: measureColdLoads(resolve(repoRoot, "bindings/node"), iterations.coldLoads),
-    nodeHostedWasm: measureColdLoads(resolve(repoRoot, "bindings/wasm/pkg-node/corrplot_ng_wasm.js"), iterations.coldLoads),
+    nodeHostedWasm: measureColdLoads(resolve(repoRoot, "npm/packages/wasm/pkg-node/corrplot_ng_wasm.js"), iterations.coldLoads),
   },
   workloads: {
     matrix2x2: { rows: 2, columns: 2, values: smallMatrix.values.length },
