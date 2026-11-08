@@ -3,6 +3,8 @@ name: Test Node and browser-WASM backend parity
 on:
   pull_request:
     paths:
+      - "contracts/**"
+      - "fixtures/**"
       - "npm/packages/native-node/**"
       - "npm/packages/native-node-*/**"
       - "npm/tests/cross-backend/**"
@@ -21,6 +23,8 @@ on:
   push:
     branches: [main]
     paths:
+      - "contracts/**"
+      - "fixtures/**"
       - "npm/packages/native-node/**"
       - "npm/packages/native-node-*/**"
       - "npm/tests/cross-backend/**"
