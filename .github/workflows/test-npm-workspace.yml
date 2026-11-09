@@ -3,6 +3,9 @@ name: Test npm workspace
 on:
   pull_request:
     paths:
+      - "contracts/**"
+      - "fixtures/**"
+      - "tests/fixtures/**"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
@@ -18,6 +21,9 @@ on:
   push:
     branches: [main]
     paths:
+      - "contracts/**"
+      - "fixtures/**"
+      - "tests/fixtures/**"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
