@@ -22,7 +22,7 @@ The repository currently provides:
 
 - A provisional R package with a legacy-compatible delegation path, normalized-matrix adapters, and an experimental scene-v1 preparation path.
 - Versioned normalized-matrix v1 and scene-v1 contracts.
-- A Python scene/SVG reference prototype.
+- A non-production Python scene/SVG reference under [python/reference](../python/reference/README.md).
 - A standalone Rust CLI with its own native build and test workflow.
 - An experimental native Node-API package that exposes shared Rust validation, normalized-matrix scene construction, and typed-scene plus matrix-bearing scene-v1 SVG/RGBA rendering; its source-build package layout is tested across the declared Node.js/OS matrix.
 - An experimental browser WebAssembly package that exposes the corresponding shared-core operations, with Node-based and Chromium/Firefox/WebKit smoke coverage.
