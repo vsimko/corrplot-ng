@@ -9,7 +9,7 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `rust/` | Rust workspace root for the shared core, CLI, Node-API and browser-WASM crates. The disposable R/rextendr adapter is kept under `rust/bindings/r/` but excluded from the workspace with its own audited lockfile. |
 | `npm/` | Private npm workspace, lockfile, installable packages, platform-specific native package manifests, and cross-backend npm tests. Rust crate sources live under `rust/bindings/`. |
 | `tools/` | Repository-wide orchestration only, under `tools/repository/`. |
-| `implementations/` | Transitional location for language-specific product packages and adapters; the provisional R package currently lives under `r/corrplotng/` pending #368. |
+| `r/` | Production-facing R package at `r/corrplotng/`; owns R APIs, legacy compatibility, graphics-device behavior, and package tests. |
 | `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |
 | `experiments/` | Disposable cross-runtime experiments; non-production and not supported package backends. |
 | `prototypes/` | Transitional home for normative versioned contracts whose current location is historical, not a statement that they are throwaway. |
