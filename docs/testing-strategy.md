@@ -121,6 +121,7 @@ cd python/reference
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s . -p 'test_*.py' -v
 Rscript test_r_scene_consumer.R
+cd ../..
 ```
 
 These checks establish contract and targeted semantic conformance for the
