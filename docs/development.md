@@ -261,7 +261,8 @@ npm run test:pack
 Build the native addon directly from `npm/packages/native-node/` with
 `npm run build`. It requires the Rust toolchain.
 
-Validate package contents from `npm/`:
+After running the native Node tests and building the WASM package above,
+validate all workspace package contents from `npm/`:
 
 ```sh
 npm run pack:dry-run
