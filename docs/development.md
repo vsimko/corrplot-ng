@@ -89,8 +89,16 @@ Requirements: Python 3.10+ and pip.
 Create the virtual environment inside the reference project, not at the
 repository root:
 
+Linux, macOS, WSL, or Git Bash:
+
 ```sh
 python3 -m venv prototypes/shared-svg/.venv
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 -m venv prototypes/shared-svg/.venv
 ```
 
 Activate it:
