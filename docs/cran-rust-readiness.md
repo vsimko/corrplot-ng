@@ -80,4 +80,4 @@ The complete vendoring, offline install, source-tarball inspection, and `R CMD c
 
 ## Scope boundary
 
-This is validation of an isolated prototype only. It does not authorize adding rextendr or Rust dependencies to `implementations/r`, does not make a CRAN submission, and does not select Rust as the production shared-core language. See [ADR 0001](adr/0001-shared-core-architecture.md) for the current language decision.
+This is validation of an isolated prototype only. It does not authorize adding rextendr or Rust dependencies to `r/corrplotng`, does not make a CRAN submission, and does not select Rust as the production shared-core language. See [ADR 0001](adr/0001-shared-core-architecture.md) for the current language decision.
