@@ -8,11 +8,13 @@ Dependabot checks these declared dependency sources weekly on Monday
 | Ecosystem | Source | Policy |
 | --- | --- | --- |
 | GitHub Actions | `.github/workflows/` | Minor/patch updates grouped; major updates separate |
-| Cargo | One production workspace at `/rust`, three independent WASM-R experiment crates, and one excluded standalone R/rextendr package | Workspace and experiment minor/patch updates grouped; R/rextendr routine updates disabled, security updates retained |
+| Cargo | `/rust` workspace (committed lockfile), three independent WASM-R experiment projects (manifest-only; no committed lockfiles), and excluded standalone R/rextendr package (separate lockfile) | Workspace and experiment minor/patch updates grouped; R/rextendr routine updates disabled, security updates retained |
 | npm | npm workspace (`npm/package.json`, `npm/package-lock.json`, and `npm/packages/*`) | External dependencies across workspace manifests are maintained; four unpublished native platform-package references are ignored |
 | pip | `requirements-dev.txt` | Python development/test dependencies; minor/patch updates grouped |
 
 The production-facing Cargo workspace is rooted at `/rust` and contains the shared core, CLI, Node and WASM crates. The three `experiments/wasm-r` crates remain independent projects. The excluded `rust/bindings/r/rextendr-prototype` package retains its own lockfile and a separate security-only Dependabot entry.
+
+Only `/rust` and `rust/bindings/r/rextendr-prototype` currently commit Cargo lockfiles. The three WASM/R experiment projects have no committed `Cargo.lock`; Dependabot updates their manifests, and their CI builds resolve compatible versions without `--locked`. This is an explicit limitation of the disposable experiments, not a reproducible locked-build guarantee. If any experiment becomes a maintained or release input, add its lockfile and validate switching its workflow to `--locked` as a separate change.
 
 The npm workspace is rooted at `/npm` and declares the five installable packages in `npm/package.json`. Dependabot is configured at that root so it can coordinate manifest and lockfile updates.
 The external npm dependencies currently declared by the root and workspaces
@@ -47,13 +49,31 @@ The `npm/packages/wasm` package has no external npm dependencies of its own.
 - R package dependencies are declared in the relevant `DESCRIPTION` files.
   Dependabot does not provide an R package ecosystem; update these dependencies
   deliberately and validate them with the R package and cross-platform
-  integration workflows.
+  integration workflows. Some experiment/benchmark-only R packages are listed
+  directly in `setup-r-dependencies` workflow steps rather than a package
+  `DESCRIPTION`; maintain those lists manually as well.
 - There are no Docker manifests or independently maintained Python lockfiles
   in the repository, so no Docker or additional pip update jobs are configured.
 
+## Manually pinned CI tools and runtime dependencies
+
+The following tools are installed or pinned directly in workflow files rather than declared in a dependency manifest, so Dependabot does not update their versions. Update all occurrences of a shared pin together and run the listed validation:
+
+| Tool | Current pin | Source and manual validation |
+| --- | --- | --- |
+| Rust toolchain | `stable`; MSRV `1.78` | `dtolnay/rust-toolchain` is intentionally ignored by Dependabot because its tags are Rust releases, not semver action releases. Update stable/MSRV references manually and run affected Rust workflows. |
+| `wasm-pack` | `0.13.1` | Pinned in `stage-npm-packages.yml`, `test-node-wasm-parity.yml`, `test-npm-workspace.yml`, and `test-wasm-binding.yml`, including cache keys. Update every occurrence together; validate npm workspace, Node/WASM parity, browser-WASM, and staging workflows. |
+| Playwright | `1.56.1` | Installed transiently by `test-wasm-binding.yml`, outside the npm workspace manifest. Update the workflow pin and validate Chromium, Firefox, and WebKit smoke tests. |
+| Wasmtime CLI and C API | `50.0.1` | Pinned in `test-wasm-r-experiment.yml`; C API archives also have per-platform SHA-256 pins. Update version, archive names, and hashes together, then run the manual experiment matrix. |
+| actionlint | `1.7.12` | Pinned through `go run` in `test-workflows.yml`. Update manually and run the workflow-lint job. |
+| `cffconvert` | `2.0.0` | Installed directly by `validate-citation.yml`, outside `requirements-dev.txt`. Update manually and run citation validation. |
+| R experiment/benchmark packages | Workflow package lists | Packages such as `jsonlite`, `digest`, `V8`, `rextendr`, and `usethis` are installed by workflow `setup-r-dependencies` steps. Update those lists manually and run the owning R/experiment workflow. |
+
+Runtime versions (Node, R, Python) and runner-provided OS packages are maintained in their owning workflow/support-policy definitions rather than by the package ecosystem update jobs.
+
 ## npm reproducibility decision
 
-The npm workspace has a committed `npm/package-lock.json`, generated by npm 11 on Node 24 and validated with `npm ci`. CI installs from `npm/` and uses `--ignore-scripts --omit=optional` where required. The four unpublished native platform packages are intentionally excluded from the workspace and lockfile; their metadata is added to the base Node package only when its distributable tarball is created. Dependabot updates the `/npm` workspace and lockfile together.
+The npm workspace has a committed `npm/package-lock.json`, generated by npm 11 on Node 24 and validated with `npm ci`. Normal workspace validation uses `npm ci --ignore-scripts` with optional dependencies present. `--omit=optional` is reserved for the isolated consumer smoke test, which installs the separately staged platform tarballs directly. The four unpublished native platform packages are intentionally excluded from the workspace and lockfile; their metadata is added to the base Node package only when its distributable tarball is created. Dependabot updates the `/npm` workspace and lockfile together.
 
 ## Grouping and security updates
 
@@ -71,10 +91,8 @@ security updates enabled under **Settings → Security & analysis**.
 Dependabot pull requests must run the existing checks for the affected
 manifest paths:
 
-- Cargo changes in the `/rust` workspace and independent WASM/R projects run
-  their corresponding locked build/test workflows.
-- rextendr security updates run the offline package/vendor and R integration
-  workflow, including all three supported operating systems.
+- Cargo changes in the `/rust` workspace run the locked build/test workflows. The independent WASM/R experiment projects run their manifest-based build workflow without committed lockfiles; pull requests use the fast Ubuntu job, while the full OS matrix is manually dispatched.
+- rextendr security-update pull requests run the offline package/vendor and R integration workflow on Ubuntu. Its full Ubuntu/Intel macOS/Windows matrix is available through manual dispatch or the designated experiment-branch pushes, not on every pull request.
 - npm workspace changes run `test-npm-workspace.yml`, which validates the
   workspace graph and exercises Node, TypeScript, React, Vue, and browser-WASM
   package checks. Its Node 24 native-toolchain matrix also installs the
