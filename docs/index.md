@@ -35,6 +35,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 
 ## Documents
 
+- [Developer setup](development.md): clean, independent setup and build/test/artifact commands for Python, R, Rust, and npm.
 - [Top-level requirements](requirements.md): product and engineering requirements, priorities, and acceptance checks.
 - [Current architecture](architecture.md): implemented components, the selected Rust shared-core direction, versioned contracts, and remaining rollout gates.
 - [Repository layout](repository-layout.md): top-level directory ownership, contract/reference/experiment categories, and shared fixture sources of truth.
