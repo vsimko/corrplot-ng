@@ -151,11 +151,22 @@ Install the package locally:
 R CMD INSTALL implementations/r
 ```
 
-Build a source tarball outside the checkout:
+Build a source tarball outside the checkout.
+
+Linux, macOS, WSL, or Git Bash:
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
 (cd "${TMPDIR:-/tmp}" && R CMD build "$REPO/implementations/r")
+```
+
+Windows PowerShell:
+
+```powershell
+$repo = (git rev-parse --show-toplevel).Trim()
+Push-Location $env:TEMP
+R CMD build "$repo/implementations/r"
+Pop-Location
 ```
 
 The default `corrplot_ng()` path delegates to upstream corrplot. The
