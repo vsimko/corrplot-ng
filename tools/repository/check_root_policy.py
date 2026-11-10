@@ -43,7 +43,6 @@ ALLOWED_ROOT_DIRECTORIES = {
 TRANSITIONAL_ROOT_DIRECTORIES = {
     "benchmarks": "#364 — split cross-runtime orchestration and runtime-owned benchmarks",
     "experiments": "#364 — retain as a documented cross-runtime exception or approve another home",
-    "implementations": "#368 — move the R package under r/corrplotng/",
     "prototypes": "#366/#370 — relocate normative contracts and fixtures",
     "scripts": "#365 — move repo-wide orchestration to tools/repository/ and R tools to r/",
     "tests": "#364/#370 — split canonical fixtures from repository/runtime-specific tests",
