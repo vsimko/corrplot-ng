@@ -137,6 +137,8 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: any::jsonlite
+      - name: Verify R scene contract consumer
+        run: Rscript python/reference/test_r_scene_consumer.R
       - name: Verify legacy semantic oracle and export scene input
         run: Rscript python/reference/test_legacy_corrplot_oracle.R
       - name: Set up Python
