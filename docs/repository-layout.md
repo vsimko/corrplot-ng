@@ -11,7 +11,8 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `tools/` | Repository-wide orchestration only, under `tools/repository/`. |
 | `implementations/` | Transitional location for language-specific product packages and adapters; the provisional R package currently lives under `implementations/r/` pending #368. |
 | `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |
-| `prototypes/` | A transitional home for normative versioned contracts and disposable experiments. Do not treat every child directory as production code. |
+| `experiments/` | Disposable cross-runtime experiments; non-production and not supported package backends. |
+| `prototypes/` | Transitional home for normative versioned contracts whose current location is historical, not a statement that they are throwaway. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
 | `scripts/` | Maintainer and CI utilities that operate across packages or validate generated artifacts. |
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
@@ -25,8 +26,6 @@ Root-level manifests and configuration files remain at the repository root when 
 The remaining transitional paths are retained until their owning migration issues update package manifests, CI filters, and documented commands:
 
 - **Normative, versioned contracts:** `normalized-matrix-v1/`, `publication-config-v1/`, `publication-svg-v1/`, the scene-v1 schema and fixtures, and `renderer-capabilities-v1.schema.json`. Their schemas and compatibility rules are normative; their current location under `prototypes/` is historical, not a statement that the contracts are throwaway.
-- **Disposable experiments:** retained experiments remain non-production and must not be presented as supported backends.
-
 The Python scene/SVG reference is now owned by `python/reference/`; it is not part of the transitional `prototypes/` tree.
 
 ## Rust package boundary
