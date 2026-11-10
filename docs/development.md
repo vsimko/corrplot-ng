@@ -127,11 +127,11 @@ python -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -
 python -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
 ```
 
-Render and validate a reference SVG:
+On Linux, macOS, WSL, or Git Bash, render and validate a reference SVG:
 
 ```sh
-python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json > /tmp/corrplot-ng.svg
-python scripts/validate_svg.py /tmp/corrplot-ng.svg
+python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json > "${TMPDIR:-/tmp}/corrplot-ng.svg"
+python scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng.svg"
 ```
 
 **Check/lint:** there is no separate Python linter or formatter configured.
@@ -214,6 +214,12 @@ crates.
 Requirements: Rust 1.78+; stable is used for ordinary development. The
 committed lockfile is authoritative. Run Cargo commands from the repository
 root with explicit manifest paths or with `rust/` as the working directory.
+
+On a clean checkout, fetch the locked workspace dependencies once:
+
+```sh
+cargo fetch --locked --manifest-path rust/Cargo.toml
+```
 
 Run the shared core and CLI tests:
 
