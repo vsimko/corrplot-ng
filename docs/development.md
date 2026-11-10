@@ -115,9 +115,13 @@ python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json > /t
 python scripts/validate_svg.py /tmp/corrplot-ng.svg
 ```
 
-There is no Python wheel or source distribution to build. Do not add a
-production Python package or publish one without a separate maintainer
-decision. The future package boundary is tracked by #369.
+**Check/lint:** there is no separate Python linter or formatter configured.
+The unit tests, fixture-integrity checks, schema validation, and SVG validator
+are the current quality checks. There is no Python wheel or source
+distribution to build. The generated SVG in the example command is a test
+artifact, not a package artifact. Do not add a production Python package or
+publish one without a separate maintainer decision. The future package
+boundary is tracked by #369.
 
 ## R package
 
@@ -136,6 +140,10 @@ Run the package check from the repository root:
 ```sh
 R CMD check implementations/r
 ```
+
+`R CMD check` is the R package check/lint gate; no separate R linter is
+configured. It checks package metadata, installation, documentation, and
+tests.
 
 Install the package locally:
 
@@ -195,6 +203,11 @@ The executable is written to:
 - Linux/macOS: `rust/target/release-cli/corrplot-ng`
 - Windows: `rust/target/release-cli/corrplot-ng.exe`
 
+The current Rust quality gate is the locked core/CLI test and build commands
+above. There is no separate Clippy or rustfmt CI gate configured at present.
+The release workflow creates platform archives; a local release-profile build
+creates only the executable.
+
 Check the portable core for WebAssembly when changing shared semantics:
 
 ```sh
@@ -238,6 +251,19 @@ Run the workspace package tests:
 ```sh
 npm test
 ```
+
+The TypeScript, React, and Vue test scripts also run TypeScript declaration
+checks. To run those checks without the package runtime tests, use:
+
+```sh
+npm run test:types --workspace=@corrplot-ng/typescript
+npm run test:types --workspace=@corrplot-ng/react
+npm run test:types --workspace=@corrplot-ng/vue
+```
+
+There is no separate ESLint or Prettier configuration in the current npm
+workspace; package tests and TypeScript checks are its configured quality
+gates.
 
 The workspace test command runs native Node, TypeScript, React, and Vue tests.
 Run one package independently when possible:
