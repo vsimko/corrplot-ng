@@ -67,7 +67,7 @@ need_node() {
 check_python_dependencies() {
   need_python
   "$PYTHON_BIN" -c 'import jsonschema' >/dev/null 2>&1 ||
-    fail "Python test dependencies are missing. Install them with: $PYTHON_BIN -m pip install -r requirements-dev.txt"
+    fail "Python test dependencies are missing. Install them with: $PYTHON_BIN -m pip install -r python/reference/requirements-dev.txt"
 }
 
 quick_checks() {
@@ -85,17 +85,17 @@ declaration = json.loads(Path("rust/crates/corrplot-core/renderer-capabilities.j
 jsonschema.validate(declaration, schema)
 PY
   "$PYTHON_BIN" -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
-  "$PYTHON_BIN" -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
+  "$PYTHON_BIN" -m unittest discover -s python/reference -p 'test_*.py' -v
   "$PYTHON_BIN" -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
   "$PYTHON_BIN" -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
-  "$PYTHON_BIN" prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json > "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
+  "$PYTHON_BIN" python/reference/renderer.py python/reference/example.json > "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
   "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
 }
 
 test_r() {
   need_r
   Rscript -e 'stopifnot(as.character(utils::packageVersion("corrplot")) == "0.95", requireNamespace("jsonlite", quietly = TRUE))'
-  Rscript prototypes/shared-svg/test_r_scene_consumer.R
+  Rscript python/reference/test_r_scene_consumer.R
   R CMD check implementations/r
 }
 
@@ -104,8 +104,8 @@ test_r_legacy() {
   check_python_dependencies
   Rscript -e 'stopifnot(as.character(utils::packageVersion("corrplot")) == "0.95", requireNamespace("jsonlite", quietly = TRUE))'
   local output="${TMPDIR:-/tmp}/corrplot-legacy-scene-input.json"
-  Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R
-  "$PYTHON_BIN" prototypes/shared-svg/test_legacy_scene_bridge.py "$output"
+  Rscript python/reference/test_legacy_corrplot_oracle.R
+  "$PYTHON_BIN" python/reference/test_legacy_scene_bridge.py "$output"
 }
 
 test_rust_cli() {
