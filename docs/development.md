@@ -24,7 +24,7 @@ The current project roots are:
 | --- | --- | --- | --- |
 | Rust | `rust/` | `rust/Cargo.toml`, `rust/Cargo.lock` | Shared core, CLI, Node and WASM binding crates |
 | npm | `npm/` | `npm/package.json`, `npm/package-lock.json` | Private workspace; publication is deferred |
-| R | `r/corrplotng/` | `r/corrplotng/DESCRIPTION` | Provisional production-facing R package; relocation is tracked by #368 |
+| R | `r/corrplotng/` | `r/corrplotng/DESCRIPTION` | Production-facing R package; release rollout remains gated by CRAN and package-footprint evidence (#173/#268) |
 | Python | `python/reference/` and repository-level contract tests | `python/reference/requirements-dev.txt` | Reference/prototype only; no distributable package |
 
 The Python reference owns `python/reference/requirements-dev.txt`. Its
