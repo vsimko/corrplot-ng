@@ -16,7 +16,7 @@ retired implementation and its comparison material are historical only.
 | Changed paths | Pull-request validation |
 | --- | --- |
 | Test fixtures, schemas, normalized-matrix, shared SVG, publication config/SVG, renderer capability declaration | `test-foundation.yml`: fixture integrity, schema, Python contract tests, generated SVG checks, and legacy semantic-oracle validation |
-| `implementations/r/**` and R adapter tests | `test-r.yml` plus the foundation legacy-semantic check when its fixture paths change |
+| `r/corrplotng/**` and R adapter tests | `test-r.yml` plus the foundation legacy-semantic check when its fixture paths change |
 | `rust/crates/corrplot-core/**`, `rust/tools/corrplot-cli/**`, `rust/bindings/r/rextendr-prototype/**` | `test-shared-rust-core.yml`: stable shared-core consumer, WASM portability, and declared MSRV checks |
 | `rust/tools/corrplot-cli/**`, shared core, or publication CLI inputs | `test-rust-cli.yml`: Ubuntu release build, CLI smoke, and installed-outside-checkout test |
 | `npm/packages/native-node/**`, `npm/packages/native-node-*/**`, `rust/bindings/node/**` or `rust/crates/corrplot-core/**` | `test-node-native.yml`: Linux x64 GNU on Node 24, including native addon tests and platform-package assembly |
