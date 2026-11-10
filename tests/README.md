@@ -6,8 +6,8 @@ The compatibility suite separates three kinds of evidence. A passing layer is no
 
 | Layer | What it verifies | CI / command |
 | --- | --- | --- |
-| **Semantic** | The pinned legacy `corrplot` oracle preserves matrix ordering, labels, coordinates, values, and missingness; the same oracle output is passed through the renderer-neutral scene model. | `.github/workflows/test-foundation.yml`, job `legacy-r-oracle`; run `Rscript prototypes/shared-svg/test_legacy_corrplot_oracle.R` followed by `python prototypes/shared-svg/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json`. |
-| **Structural SVG** | Each legacy-derived matrix is rendered with all seven implemented methods. Tests parse the SVG XML and verify dimensions, cell count, labels, annotation placement, missing-cell labels, glyph-specific elements, and deterministic serialization. | The same `legacy-r-oracle` job runs the bridge test. The broader scene/SVG tests run with `python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v`. |
+| **Semantic** | The pinned legacy `corrplot` oracle preserves matrix ordering, labels, coordinates, values, and missingness; the same oracle output is passed through the renderer-neutral scene model. | `.github/workflows/test-foundation.yml`, job `legacy-r-oracle`; run `Rscript python/reference/test_legacy_corrplot_oracle.R` followed by `python python/reference/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json`. |
+| **Structural SVG** | Each legacy-derived matrix is rendered with all seven implemented methods. Tests parse the SVG XML and verify dimensions, cell count, labels, annotation placement, missing-cell labels, glyph-specific elements, and deterministic serialization. | The same `legacy-r-oracle` job runs the bridge test. The broader scene/SVG tests run with `python -m unittest discover -s python/reference -p 'test_*.py' -v`. |
 | **Pixel baseline** | Fifteen selected 900×900 PNGs are compared to saved renders from `corrplot` 0.95. This validates the R compatibility adapter in the pinned graphics environment. | `R CMD check implementations/r`, test `test-visual-regression.R`. Pixel mismatches include the fixture ID in the failure. |
 | **R scene adapter fixture parity** | The R scene adapter consumes all four shared correlation cases and the packaged general-matrix/normalized-matrix fixtures, checking scene kind, labels, missingness, and cell values. The packaged correlation corpus is kept byte-identical to the canonical fixture. | `R CMD check implementations/r`; tests `test-scene-adapter.R` and `test-normalized-matrix.R`. |
 | **Native CLI fixture parity** | The native CLI consumes every valid case in the shared correlation and general-numeric corpora. It validates each matrix and verifies normalized JSON and renderer-neutral scene JSON preserve labels, missingness, values, and matrix kind. | `.github/workflows/test-rust-cli.yml`; run `python rust/tools/corrplot-cli/tests/verify_shared_fixtures.py --binary rust/target/release-cli/corrplot-ng` after building the CLI. |
@@ -49,7 +49,7 @@ Run the general fixture checks with Python 3.10 or later:
 python -m unittest discover -s tests -v
 ```
 
-The fixture integrity tests use only the Python standard library. The shared SVG prototype suite additionally installs `jsonschema` as described in `prototypes/shared-svg/README.md`.
+The fixture integrity tests use only the Python standard library. The shared SVG prototype suite additionally installs `jsonschema` as described in `python/reference/README.md`.
 
 ## Normalized matrix input contract
 
