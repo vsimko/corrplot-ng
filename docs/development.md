@@ -25,13 +25,14 @@ The current project roots are:
 | Rust | `rust/` | `rust/Cargo.toml`, `rust/Cargo.lock` | Shared core, CLI, Node and WASM binding crates |
 | npm | `npm/` | `npm/package.json`, `npm/package-lock.json` | Private workspace; publication is deferred |
 | R | `implementations/r/` | `implementations/r/DESCRIPTION` | Provisional production-facing R package; relocation is tracked by #368 |
-| Python | `prototypes/shared-svg/` and repository-level contract tests | `requirements-dev.txt` | Reference/prototype only; relocation is tracked by #369 |
+| Python | `python/reference/` and repository-level contract tests | `python/reference/requirements-dev.txt` | Reference/prototype only; no distributable package |
 
-The Python requirements file is at the repository root because the same
-`jsonschema` dependency is used by repository-level fixture and contract
-checks. The Python reference itself is not an installable package and has no
-`pyproject.toml`. The Rust/rextendr proof under `rust/bindings/r/` is a
-separate disposable adapter, not the production R package.
+The Python reference owns `python/reference/requirements-dev.txt`. Its
+virtual environment and dependencies stay inside that project; the activated
+environment is also used by repository-level fixture and contract checks.
+The reference is not an installable package and has no `pyproject.toml`. The
+Rust/rextendr proof under `rust/bindings/r/` is a separate disposable adapter,
+not the production R package.
 
 ## Project boundaries
 
@@ -41,7 +42,7 @@ flowchart TB
     ROOT --> RUST["rust/\nCargo workspace + lockfile"]
     ROOT --> NPM["npm/\nprivate npm workspace + lockfile"]
     ROOT --> RPKG["implementations/r/\nR package DESCRIPTION"]
-    ROOT --> PY["prototypes/shared-svg/\nPython reference"]
+    ROOT --> PY["python/reference/\nPython reference"]
     ROOT --> TESTS["tests/, contracts/, fixtures/\nshared inputs and conformance"]
     ROOT --> ORCH["scripts/dev-check.sh\noptional orchestration"]
     RUST --> CORE["rust/crates/corrplot-core"]
