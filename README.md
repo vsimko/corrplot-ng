@@ -37,70 +37,30 @@ The Python scene/SVG prototype supports seven publication glyph methods. The cur
 
 ## Local development
 
-### Prerequisites
+Each ecosystem has its own project root, dependency manifest, and targeted
+commands. You do not need to install every toolchain to work on one component.
+See the [developer setup guide](docs/development.md) for clean setup, build,
+test, and package-artifact commands for Python, R, Rust, and npm.
 
-- Git and Bash (Linux, macOS, WSL, or Git Bash on Windows)
-- Python 3.10+ and `jsonschema`
-- R 4.x with `corrplot` 0.95, `testthat`, `jsonlite`, and `png`
-- Rust 1.78+ toolchain (for the native CLI and Node/WASM bindings)
-- Node.js 22, 24, or 26 and npm (the versions currently covered by binding CI)
-- `wasm-pack` (for browser-WASM checks)
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. It
+covers project ownership, focused validation, generated artifacts, Changesets,
+and release boundaries.
 
-Install the Python and R packages used by the local checks. Install the npm workspace once with `cd npm && npm ci`:
-
-```sh
-python3 -m pip install -r requirements-dev.txt
-Rscript -e 'install.packages(c("corrplot", "testthat", "jsonlite", "png"), repos = "https://cloud.r-project.org")'
-```
-
-### Unified local commands
-
-Run commands from the repository root through `bash scripts/dev-check.sh`:
+For optional repository-wide orchestration, run from the repository root:
 
 ```sh
-# Fast Python foundation checks, including fixture/schema and SVG validation
 bash scripts/dev-check.sh quick
-
-# Focused checks for an individual component
 bash scripts/dev-check.sh test-r
-bash scripts/dev-check.sh test-r-legacy
 bash scripts/dev-check.sh test-rust-cli
 bash scripts/dev-check.sh test-node
 bash scripts/dev-check.sh test-wasm
-
-# Full locally supported correctness suite
 bash scripts/dev-check.sh test-all
-
-# Builds
-bash scripts/dev-check.sh build-cli
-bash scripts/dev-check.sh build-node
-
-# Explicitly opt-in performance measurements
-bash scripts/dev-check.sh benchmarks
-bash scripts/dev-check.sh benchmarks-stress
 ```
 
-`quick` runs the Python foundation checks without stress benchmarks. The
-focused commands run the corresponding component checks; `test-all` combines
-the quick, R, native CLI, Node, browser-WASM, and pinned legacy-oracle checks.
-The R checks require the pinned `corrplot` 0.95 reference. Browser-WASM checks
-require `wasm-pack`. The experimental WASM/R host workflow additionally
-depends on the pinned Wasmtime C API and remains a separate opt-in workflow.
-
-The benchmark commands write result files under the system temporary
-directory. Stress workloads are never included in `quick` or `test-all`;
-run `benchmarks-stress` only when explicitly measuring the 500x500 and
-1000x1000 workloads. Set `PYTHON=/path/to/python` to select a non-default
-Python executable.
-
-The script is a Bash entry point; native Windows PowerShell is not supported.
-Use WSL or Git Bash on Windows. Individual CI workflows still provide the
-authoritative multi-platform checks.
-
-Performance benchmarks are run manually through the dedicated workflow;
-they are not part of ordinary pull-request CI.
-
-See the [testing strategy](docs/testing-strategy.md), [CI validation tiers](docs/ci-validation-tiers.md), [regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
+The script is Bash-only; use WSL or Git Bash on Windows. Each command requires
+only its listed ecosystem toolchains. `test-all` requires all of them.
+See the [testing strategy](docs/testing-strategy.md), [CI validation tiers](docs/ci-validation-tiers.md),
+[regression test guide](tests/README.md), and [benchmark operations](benchmarks/README.md).
 
 ## Citation
 
