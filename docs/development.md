@@ -47,11 +47,17 @@ flowchart TB
     RUST --> CORE["rust/crates/corrplot-core"]
     RUST --> NODE_BINDING["rust/bindings/node"]
     RUST --> WASM_BINDING["rust/bindings/wasm"]
-    NPM --> PKGS["npm/packages/*"]
-    NODE_BINDING --> PKGS
-    WASM_BINDING --> PKGS
+    NPM --> NATIVE_PKG["npm/packages/native-node"]
+    NPM --> WASM_PKG["npm/packages/wasm"]
+    NPM --> TS_PKG["npm/packages/typescript"]
+    NPM --> FRAME_PKG["npm/packages/react and vue"]
     CORE --> NODE_BINDING
     CORE --> WASM_BINDING
+    NODE_BINDING --> NATIVE_PKG
+    WASM_BINDING --> WASM_PKG
+    NATIVE_PKG --> TS_PKG
+    WASM_PKG --> TS_PKG
+    WASM_PKG --> FRAME_PKG
 ```
 
 The Rust core is the shared semantic implementation. npm bindings call it
