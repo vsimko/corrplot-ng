@@ -24,17 +24,17 @@ ROOT = Path(__file__).parent.parent
 NORMALIZED_FIXTURE_PAIRS = (
     (
         ROOT / "fixtures" / "normalized-matrix-v1" / "valid-cases.json",
-        ROOT / "r" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "valid-cases.json",
+        ROOT / "r" / "corrplotng" / "inst" / "extdata" / "normalized-matrix-v1" / "valid-cases.json",
     ),
     (
         ROOT / "fixtures" / "normalized-matrix-v1" / "invalid-cases.json",
-        ROOT / "r" / "r" / "inst" / "extdata" / "normalized-matrix-v1" / "invalid-cases.json",
+        ROOT / "r" / "corrplotng" / "inst" / "extdata" / "normalized-matrix-v1" / "invalid-cases.json",
     ),
 )
 CORRELATION_FIXTURE_PATH = ROOT / "fixtures" / "matrix-input-v1" / "correlation-cases.json"
-R_CORRELATION_FIXTURE_PATH = ROOT / "r" / "r" / "inst" / "extdata" / "correlation-cases.json"
+R_CORRELATION_FIXTURE_PATH = ROOT / "r" / "corrplotng" / "inst" / "extdata" / "correlation-cases.json"
 GENERAL_MATRIX_PATH = ROOT / "fixtures" / "matrix-input-v1" / "general-matrix-cases.json"
-R_GENERAL_MATRIX_PATH = ROOT / "r" / "r" / "inst" / "extdata" / "general-matrix-cases.json"
+R_GENERAL_MATRIX_PATH = ROOT / "r" / "corrplotng" / "inst" / "extdata" / "general-matrix-cases.json"
 EXPECTED_METHODS = {
     "circle",
     "square",
