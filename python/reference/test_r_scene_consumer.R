@@ -3,7 +3,11 @@
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
   stop("jsonlite is required for this prototype test")
 }
-scene_path <- file.path("fixtures", "scene-v1", "scene-v1.example.json")
+script_arg <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+script_path <- sub("^--file=", "", script_arg[[1]])
+script_dir <- dirname(normalizePath(script_path))
+repo_root <- normalizePath(file.path(script_dir, "../.."))
+scene_path <- file.path(repo_root, "fixtures", "scene-v1", "scene-v1.example.json")
 scene <- jsonlite::fromJSON(scene_path, simplifyVector = FALSE)
 
 stopifnot(identical(scene$schema_version, 1L) || identical(scene$schema_version, 1))

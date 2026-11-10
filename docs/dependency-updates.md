@@ -10,7 +10,7 @@ Dependabot checks these declared dependency sources weekly on Monday
 | GitHub Actions | `.github/workflows/` | Minor/patch updates grouped; major updates separate |
 | Cargo | `/rust` workspace (committed lockfile), three independent WASM-R experiment projects (manifest-only; no committed lockfiles), and excluded standalone R/rextendr package (separate lockfile) | Workspace and experiment minor/patch updates grouped; R/rextendr routine updates disabled, security updates retained |
 | npm | npm workspace (`npm/package.json`, `npm/package-lock.json`, and `npm/packages/*`) | External dependencies across workspace manifests are maintained; four unpublished native platform-package references are ignored |
-| pip | `requirements-dev.txt` | Python development/test dependencies; minor/patch updates grouped |
+| pip | `python/reference/requirements-dev.txt` | Python development/test dependencies; minor/patch updates grouped |
 
 The production-facing Cargo workspace is rooted at `/rust` and contains the shared core, CLI, Node and WASM crates. The three `experiments/wasm-r` crates remain independent projects. The excluded `rust/bindings/r/rextendr-prototype` package retains its own lockfile and a separate security-only Dependabot entry.
 
@@ -44,7 +44,7 @@ The `npm/packages/wasm` package has no external npm dependencies of its own.
   ordinary semver action releases, which caused Dependabot to propose
   nonexistent versions. Update the stable and pinned MSRV toolchains manually
   and validate the affected Rust workflows.
-- Python packages are declared in `requirements-dev.txt`. There is no
+- Python packages are declared in `python/reference/requirements-dev.txt`. There is no
   separate `pyproject.toml` or Python packaging manifest.
 - R package dependencies are declared in the relevant `DESCRIPTION` files.
   Dependabot does not provide an R package ecosystem; update these dependencies
@@ -66,7 +66,7 @@ The following tools are installed or pinned directly in workflow files rather th
 | Playwright | `1.56.1` | Installed transiently by `test-wasm-binding.yml`, outside the npm workspace manifest. Update the workflow pin and validate Chromium, Firefox, and WebKit smoke tests. |
 | Wasmtime CLI and C API | `50.0.1` | Pinned in `test-wasm-r-experiment.yml`; C API archives also have per-platform SHA-256 pins. Update version, archive names, and hashes together, then run the manual experiment matrix. |
 | actionlint | `1.7.12` | Pinned through `go run` in `test-workflows.yml`. Update manually and run the workflow-lint job. |
-| `cffconvert` | `2.0.0` | Installed directly by `validate-citation.yml`, outside `requirements-dev.txt`. Update manually and run citation validation. |
+| `cffconvert` | `2.0.0` | Installed directly by `validate-citation.yml`, outside `python/reference/requirements-dev.txt`. Update manually and run citation validation. |
 | R experiment/benchmark packages | Workflow package lists | Packages such as `jsonlite`, `digest`, `V8`, `rextendr`, and `usethis` are installed by workflow `setup-r-dependencies` steps. Update those lists manually and run the owning R/experiment workflow. |
 
 Runtime versions (Node, R, Python) and runner-provided OS packages are maintained in their owning workflow/support-policy definitions rather than by the package ecosystem update jobs.

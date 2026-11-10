@@ -17,8 +17,7 @@ on:
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
-      - "prototypes/shared-svg/scene-v1.example.json"
-      - "prototypes/shared-svg/scene-v1-construction.example.json"
+      - "python/reference/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
   push:
     branches: [main]
@@ -36,8 +35,7 @@ on:
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "!rust/crates/corrplot-core/src/scene_tests.rs"
-      - "prototypes/shared-svg/scene-v1.example.json"
-      - "prototypes/shared-svg/scene-v1-construction.example.json"
+      - "python/reference/scene-v1-construction.example.json"
       - ".github/workflows/test-node-wasm-parity.yml"
   workflow_dispatch:
   schedule:

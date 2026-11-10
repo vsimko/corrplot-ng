@@ -27,7 +27,7 @@ const sceneV1 = fs.readFileSync(
   "utf8",
 );
 const sceneV1Construction = fs.readFileSync(
-  path.join(__dirname, "../../../prototypes/shared-svg/scene-v1-construction.example.json"),
+  path.join(__dirname, "../../../python/reference/scene-v1-construction.example.json"),
   "utf8",
 );
 const sceneV1Statistical = fs.readFileSync(

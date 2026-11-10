@@ -160,7 +160,7 @@ use super::*;
 
     #[test]
     fn scene_v1_to_scene_honors_root_encoding_and_per_cell_glyph_methods() {
-        let source = include_str!("../../../../prototypes/shared-svg/scene-v1-construction.example.json");
+        let source = include_str!("../../../../python/reference/scene-v1-construction.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(matches!(&scene.cells[0].glyph, Some(CellGlyph::Square { .. })));
         assert!(matches!(&scene.cells[1].glyph, Some(CellGlyph::Pie { .. })));
@@ -169,7 +169,7 @@ use super::*;
 
     #[test]
     fn scene_v1_to_scene_lays_out_figure_text_lines() {
-        let source = include_str!("../../../../prototypes/shared-svg/scene-v1-construction.example.json");
+        let source = include_str!("../../../../python/reference/scene-v1-construction.example.json");
         let scene = scene_v1_to_scene(source, CellMethod::Circle).unwrap();
         assert!(scene.texts.iter().any(|text| text.text == "A caption"
             && text.x == 50.0 && text.y == 90.0 && text.font_size == 10.0

@@ -104,7 +104,7 @@ R CMD check implementations/r
 ### 3. Scene-v1 contract and renderer-neutral behavior
 
 The Python scene/SVG prototype has its own tests under
-`prototypes/shared-svg/`. They cover scene construction, validation,
+`python/reference/`. They cover scene construction, validation,
 layout, labels, annotations, missing values, deterministic SVG output, and
 the seven prototype glyph methods. The R scene consumer checks that the R
 adapter can consume and produce the documented scene-v1 representation.
@@ -114,12 +114,14 @@ corresponding scene and input-normalization paths. The legacy-to-scene bridge
 uses actual matrix output from the pinned legacy oracle to check selected
 semantic edge cases.
 
-Run the Python prototype tests with:
+Run the Python reference tests from its project root:
 
 ```sh
-python -m pip install jsonschema
-python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
-Rscript prototypes/shared-svg/test_r_scene_consumer.R
+cd python/reference
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s . -p 'test_*.py' -v
+Rscript test_r_scene_consumer.R
+cd ../..
 ```
 
 These checks establish contract and targeted semantic conformance for the

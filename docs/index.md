@@ -22,7 +22,7 @@ The repository currently provides:
 
 - A provisional R package with a legacy-compatible delegation path, normalized-matrix adapters, and an experimental scene-v1 preparation path.
 - Versioned normalized-matrix v1 and scene-v1 contracts.
-- A Python scene/SVG reference prototype.
+- A non-production Python scene/SVG reference under [python/reference](../python/reference/README.md).
 - A standalone Rust CLI with its own native build and test workflow.
 - An experimental native Node-API package that exposes shared Rust validation, normalized-matrix scene construction, and typed-scene plus matrix-bearing scene-v1 SVG/RGBA rendering; its source-build package layout is tested across the declared Node.js/OS matrix.
 - An experimental browser WebAssembly package that exposes the corresponding shared-core operations, with Node-based and Chromium/Firefox/WebKit smoke coverage.
@@ -36,6 +36,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 ## Documents
 
 - [Developer setup](development.md): clean, independent setup and build/test/artifact commands for Python, R, Rust, and npm.
+- [Python scene/SVG reference](../python/reference/README.md): non-production scene construction and deterministic SVG prototype.
 - [Top-level requirements](requirements.md): product and engineering requirements, priorities, and acceptance checks.
 - [Current architecture](architecture.md): implemented components, the selected Rust shared-core direction, versioned contracts, and remaining rollout gates.
 - [Repository layout](repository-layout.md): top-level directory ownership, contract/reference/experiment categories, and shared fixture sources of truth.
@@ -58,7 +59,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 
 The R package lives in [implementations/r](../implementations/r/README.md). It delegates legacy plotting to upstream `corrplot` by default, exposes a mixed legacy wrapper, and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
 
-The shared Rust library lives in [rust/crates/corrplot-core](../rust/crates/corrplot-core/README.md), and the standalone CLI lives in [rust/tools/corrplot-cli](../rust/tools/corrplot-cli/README.md). The `prototypes/` tree currently groups versioned contracts, a Python reference implementation, and disposable experiments; their different ownership and stability levels are documented in the [repository layout](repository-layout.md). The Rust/rextendr adapter is disposable evaluation infrastructure, not a production R backend. The C++/Rcpp prototype and its CI were retired by PR #332 and must not be presented as a current implementation or fallback.
+The shared Rust library lives in [rust/crates/corrplot-core](../rust/crates/corrplot-core/README.md), and the standalone CLI lives in [rust/tools/corrplot-cli](../rust/tools/corrplot-cli/README.md). The `prototypes/` tree currently groups versioned contracts and disposable experiments. The Python reference is owned by [python/reference](../python/reference/README.md). Their different ownership and stability levels are documented in the [repository layout](repository-layout.md). The Rust/rextendr adapter is disposable evaluation infrastructure, not a production R backend. The C++/Rcpp prototype and its CI were retired by PR #332 and must not be presented as a current implementation or fallback.
 
 ## Editing guidelines
 

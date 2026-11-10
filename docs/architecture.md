@@ -51,7 +51,7 @@ flowchart TB
     WASM[Browser WASM binding]
     R[Disposable R/rextendr adapter]
     TS[TypeScript facade]
-    PY[Python scene/SVG reference]
+    PY[python/reference: Python scene/SVG reference]
     RPKG[Provisional R package]
     CANVAS[TypeScript/browser Canvas 2D adapter]
     FRAME[React / Vue adapters]
@@ -134,7 +134,7 @@ The production R package has not migrated to the shared Rust core. The separate 
 
 ### Python reference implementation
 
-The Python shared-scene/SVG implementation serves as a reference and prototype for scene construction and SVG output. It is not the selected production shared core and does not establish parity with the Rust renderer.
+The Python reference in `python/reference/` serves as a prototype for scene construction and SVG output. It is not the selected production shared core and does not establish parity with the Rust renderer.
 
 ## Experimental and planned work
 
