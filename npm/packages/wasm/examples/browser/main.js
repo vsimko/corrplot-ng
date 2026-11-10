@@ -42,7 +42,7 @@ try {
   const fixtureResponse = await fetch("/fixtures/scene-v1/scene-v1.example.json");
   assert(fixtureResponse.ok, "could not load the canonical scene-v1 fixture");
   const matrixSceneV1 = await fixtureResponse.text();
-  const constructionFixtureResponse = await fetch("/prototypes/shared-svg/scene-v1-construction.example.json");
+  const constructionFixtureResponse = await fetch("/python/reference/scene-v1-construction.example.json");
   assert(constructionFixtureResponse.ok, "could not load the scene-v1 construction fixture");
   const matrixSceneV1Construction = await constructionFixtureResponse.text();
   const matrixFixtures = [
