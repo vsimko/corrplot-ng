@@ -20,7 +20,7 @@ class RootPolicyTests(unittest.TestCase):
             "npm/package-lock.json",
             "npm/packages/native-node/package.json",
             "npm/.changeset/config.json",
-            "requirements-dev.txt",
+            "python/reference/requirements-dev.txt",
             "rust/crates/corrplot-core/Cargo.toml",
             "implementations/r/DESCRIPTION",
             "experiments/wasm-r/README.md",
@@ -28,7 +28,7 @@ class RootPolicyTests(unittest.TestCase):
         errors, warnings = validate_paths(paths)
         self.assertEqual(errors, [])
         self.assertFalse(any("package.json" in warning for warning in warnings))
-        self.assertTrue(any("requirements-dev.txt" in warning for warning in warnings))
+        self.assertFalse(any("requirements-dev.txt" in warning for warning in warnings))
         self.assertTrue(any("experiments/" in warning for warning in warnings))
 
     def test_unknown_root_entry_fails(self):
