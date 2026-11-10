@@ -9,8 +9,8 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `rust/` | Rust workspace root for the shared core, CLI, Node-API and browser-WASM crates. The disposable R/rextendr adapter is kept under `rust/bindings/r/` but excluded from the workspace with its own audited lockfile. |
 | `npm/` | Private npm workspace, lockfile, installable packages, platform-specific native package manifests, and cross-backend npm tests. Rust crate sources live under `rust/bindings/`. |
 | `tools/` | Repository-wide orchestration only, under `tools/repository/`. |
-| `implementations/` | Language-specific product packages and adapters. The R package owns R APIs, legacy compatibility, graphics-device behavior, and package-specific tests. |
-| `prototypes/` | A transitional home for three distinct asset classes: normative versioned contracts, reference implementations, and disposable experiments. Do not treat every child directory as production code. |
+| `implementations/` | Transitional location for language-specific product packages and adapters; the provisional R package currently lives under `implementations/r/` pending #368. |
+| `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |\n| `prototypes/` | A transitional home for normative versioned contracts and disposable experiments. Do not treat every child directory as production code. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
 | `scripts/` | Maintainer and CI utilities that operate across packages or validate generated artifacts. |
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
@@ -21,12 +21,12 @@ Root-level manifests and configuration files remain at the repository root when 
 
 ## Categories currently grouped under `prototypes/`
 
-The remaining transitional paths are retained until their owning migration issues update package manifests, CI filters, and documented commands. The categories have different stability expectations:
+The remaining transitional paths are retained until their owning migration issues update package manifests, CI filters, and documented commands:
 
 - **Normative, versioned contracts:** `normalized-matrix-v1/`, `publication-config-v1/`, `publication-svg-v1/`, the scene-v1 schema and fixtures, and `renderer-capabilities-v1.schema.json`. Their schemas and compatibility rules are normative; their current location under `prototypes/` is historical, not a statement that the contracts are throwaway.
-- **Reference implementation:** `shared-svg/` is the Python scene/SVG reference implementation. It is useful for semantic examples and conformance work, but it is not the selected production shared core.
+- **Disposable experiments:** retained experiments remain non-production and must not be presented as supported backends.
 
-Future work may move these categories to clearer top-level locations such as `contracts/`, `references/`, and `experiments/`. Do not move them until a separate staged change inventories and updates every relative link, package path, CI path filter, fixture consumer, and developer command.
+The Python scene/SVG reference is now owned by `python/reference/`; it is not part of the transitional `prototypes/` tree.
 
 ## Rust package boundary
 
@@ -51,7 +51,7 @@ The canonical sources and package copies are:
 
 `tests/test_fixture_integrity.py` checks the exact copies and the declared general-matrix projection. Update that test and this table together if the ownership or projection changes. Do not edit package copies independently.
 
-The renderer capability declarations are intentionally backend-specific, not duplicate fixtures: the Python reference declaration is in `prototypes/shared-svg/renderer-capabilities.json`, while the Rust CLI declaration is in `rust/tools/corrplot-cli/renderer-capabilities.json`. They must be validated against the shared schema, but their capability values are expected to differ.
+The renderer capability declarations are intentionally backend-specific, not duplicate fixtures: the Python reference declaration is in `python/reference/renderer-capabilities.json`, while the Rust CLI declaration is in `rust/tools/corrplot-cli/renderer-capabilities.json`. They must be validated against the shared schema, but their capability values are expected to differ.
 
 ## Change rules
 
