@@ -86,52 +86,57 @@ and schema validation. It does not create a distributable Python package.
 
 Requirements: Python 3.10+ and pip.
 
-Create the virtual environment inside the reference project, not at the
+Create the virtual environment inside the Python project, not at the
 repository root:
 
 Linux, macOS, WSL, or Git Bash:
 
 ```sh
-python3 -m venv prototypes/shared-svg/.venv
+python3 -m venv python/reference/.venv
 ```
 
 Windows PowerShell:
 
 ```powershell
-py -3 -m venv prototypes/shared-svg/.venv
+py -3 -m venv python/reference/.venv
 ```
 
 Activate it:
 
 ```sh
 # Linux / macOS / WSL / Git Bash
-source prototypes/shared-svg/.venv/bin/activate
+source python/reference/.venv/bin/activate
 
 # Windows PowerShell
-prototypes/shared-svg/.venv/Scripts/Activate.ps1
+python/reference/.venv/Scripts/Activate.ps1
 ```
 
-Install the shared Python test dependency from the repository root:
+From the repository root, enter the project and install its dependencies:
 
 ```sh
+cd python/reference
 python -m pip install -r requirements-dev.txt
+python -m unittest discover -s . -p 'test_*.py' -v
 ```
 
-Run the relevant tests from the repository root:
+Run repository-level fixture and contract tests from the repository root
+with the same activated environment:
 
 ```sh
+cd ../..
 python -m unittest discover -s tests -v
 python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
-python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
 python -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
 python -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
 ```
 
-On Linux, macOS, WSL, or Git Bash, render and validate a reference SVG:
+On Linux, macOS, WSL, or Git Bash, render and validate a reference SVG from
+`python/reference/`:
 
 ```sh
-python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json > "${TMPDIR:-/tmp}/corrplot-ng.svg"
-python scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng.svg"
+cd python/reference
+python renderer.py example.json > "${TMPDIR:-/tmp}/corrplot-ng.svg"
+python ../../scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng.svg"
 ```
 
 **Check/lint:** there is no separate Python linter or formatter configured.
@@ -139,8 +144,7 @@ The unit tests, fixture-integrity checks, schema validation, and SVG validator
 are the current quality checks. There is no Python wheel or source
 distribution to build. The generated SVG in the example command is a test
 artifact, not a package artifact. Do not add a production Python package or
-publish one without a separate maintainer decision. The future package
-boundary is tracked by #369.
+publish one without a separate maintainer decision.
 
 ## R package
 
@@ -196,7 +200,7 @@ change that release boundary as part of a documentation or layout task.
 For the R scene consumer, run:
 
 ```sh
-Rscript prototypes/shared-svg/test_r_scene_consumer.R
+Rscript python/reference/test_r_scene_consumer.R
 ```
 
 For the pinned legacy semantic oracle, use the root command
