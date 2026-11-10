@@ -10,7 +10,7 @@ from scene import build_scene
 
 
 HERE = Path(__file__).parent
-SCHEMA = json.loads((HERE.parents[1] / "contracts" / "scene-v1" / "schema.json").read_text(encoding="utf-8"))
+SCHEMA = json.loads((HERE.parents[2] / "contracts" / "scene-v1" / "schema.json").read_text(encoding="utf-8"))
 
 
 class FigureTextTests(unittest.TestCase):
