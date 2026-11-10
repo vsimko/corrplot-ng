@@ -106,7 +106,7 @@ a complete language package or proof of shared compiled implementation.
 
 The current support and test details are maintained in
 [the architecture document](architecture.md),
-[the R implementation guide](../implementations/r/README.md),
+[the R implementation guide](../r/corrplotng/README.md),
 [the native CLI guide](../rust/tools/corrplot-cli/README.md), and
 [the testing strategy](testing-strategy.md).
 
