@@ -1,17 +1,17 @@
-# Shared SVG renderer spike
+# Python scene/SVG reference
 
-This is a small architecture experiment, not production code and not a commitment to Python, Rust, or SVG as the final design. The generated scene is checked against the experimental JSON Schema in `../../contracts/scene-v1/schema.json`.
+This is a non-production reference implementation and architecture experiment, not a distributable Python package or a commitment to Python, Rust, or SVG as the final design. The generated scene is checked against the experimental JSON Schema in `../../contracts/scene-v1/schema.json`.
 
 It accepts a language-neutral JSON object and renders a correlation matrix as deterministic SVG. The example includes positive, negative, and missing values, plus one user-defined text annotation.
 
-Run from the repository root:
+Run from this project directory:
 
 ```sh
-python prototypes/shared-svg/renderer.py prototypes/shared-svg/example.json
-python prototypes/shared-svg/renderer.py prototypes/shared-svg/figure-text-example.json
-python -m pip install jsonschema
-python -m unittest discover -s prototypes/shared-svg -p 'test_*.py' -v
-Rscript prototypes/shared-svg/test_r_scene_consumer.R
+python renderer.py example.json
+python renderer.py figure-text-example.json
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s . -p 'test_*.py' -v
+Rscript test_r_scene_consumer.R
 ```
 
 ## Label layout
