@@ -41,13 +41,13 @@ for `add = TRUE`. Device closure remains the caller's responsibility.
 The R package regression suite covers successful plotting, `add = TRUE`
 composition, restoration after a rendering error, unchanged active-device
 identity, and the scene engine's no-device-side-effect guarantee. See
-`implementations/r/tests/testthat/test-graphics-device.R`.
+`r/corrplotng/tests/testthat/test-graphics-device.R`.
 
 ## Cluster rectangles
 
 The exported `corrRect()` adapter accepts one of three legacy forms: increasing one-based index boundaries, ordered variable-name boundaries, or `namesMat` cell-coordinate pairs resolved through `corrPos`. Index/name ranges are converted into the shared scene-v1 cluster-region request shape (`id`, `variables` or zero-based `indices`, `color`, `line_width`) before drawing. Diagonal square `namesMat` rectangles can be converted to the same request; arbitrary cell-coordinate rectangles remain R-only drawing annotations because the shared cluster-region contract describes diagonal variable groups.
 
-`corrRect.hclust()` clusters `1 - corr` with the selected legacy `hclust` method, cuts the tree, orders groups by dendrogram leaves, and creates one region request per contiguous group. The main `corrplot_ng()` pass-through also retains upstream `addrect`, `rect.col`, and `rect.lwd` arguments unchanged. Both helpers draw on the caller-owned active device and do not open or close it. Index/name inputs require identical row and column names; `namesMat` supports distinct row/column labels. See the [scene-v1 schema](../prototypes/shared-svg/scene-v1.schema.json) and the R help pages for [`corrRect()`](../implementations/r/man/corrRect.Rd) and [`corrRect.hclust()`](../implementations/r/man/corrRect.hclust.Rd).
+`corrRect.hclust()` clusters `1 - corr` with the selected legacy `hclust` method, cuts the tree, orders groups by dendrogram leaves, and creates one region request per contiguous group. The main `corrplot_ng()` pass-through also retains upstream `addrect`, `rect.col`, and `rect.lwd` arguments unchanged. Both helpers draw on the caller-owned active device and do not open or close it. Index/name inputs require identical row and column names; `namesMat` supports distinct row/column labels. See the [scene-v1 schema](../python/reference/scene-v1.schema.json) and the R help pages for [`corrRect()`](../r/corrplotng/man/corrRect.Rd) and [`corrRect.hclust()`](../r/corrplotng/man/corrRect.hclust.Rd).
 
 ## Standalone color legend helper
 
