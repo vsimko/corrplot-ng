@@ -4,7 +4,7 @@ This prototype adds a deterministic publication-oriented SVG export boundary on 
 
 ## API
 
-Call `render_publication_svg(scene, width_mm=..., height_mm=..., font_family=..., font_size_pt=...)` with a scene produced by `prototypes/shared-svg/scene.py`.
+Call `render_publication_svg(scene, width_mm=..., height_mm=..., font_family=..., font_size_pt=...)` with a scene produced by `python/reference/scene.py`.
 
 - Width and height are required physical dimensions in millimetres and are written to the SVG root as `mm` lengths.
 - The viewBox remains in scene logical units. `preserveAspectRatio="xMidYMid meet"` avoids distorting cells when the requested page aspect ratio differs from the scene.
