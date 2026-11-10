@@ -98,7 +98,7 @@ snapshot regeneration procedure, fixture inventory, and platform limitations.
 Run the package check from the repository root:
 
 ```sh
-R CMD check r/corrplotng
+R CMD check --as-cran r/corrplotng
 ```
 
 ### 3. Scene-v1 contract and renderer-neutral behavior
