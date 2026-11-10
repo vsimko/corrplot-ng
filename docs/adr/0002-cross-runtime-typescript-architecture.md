@@ -164,8 +164,8 @@ The following evidence is already present:
 - TypeScript declaration fixtures compile Node ESM, Node CommonJS, and browser conditional-export usage examples. A bundled browser-facade smoke test runs the actual WASM backend in Chromium, Firefox, and WebKit; the Node facade integration test runs against the actual native addon.
 
 Remaining release/conformance gates include:
-- Continue expanding full-scene semantic and visual regression coverage across the backends in #146. The existing Node/WASM parity tests do not establish complete legacy corrplot or full presentation-scene parity.
-- Keep performance thresholds and noisy measurements informational until the broader evidence and repeatability work in #146 supports stable budgets.
+- The initial cross-backend parity, visual-regression, and informational performance-baseline work tracked by #146 is complete. It does not establish complete legacy corrplot compatibility or full scene-v1 presentation semantics; any further expansion must be tracked as separately scoped work.
+- Keep performance measurements and thresholds informational unless repeatable evidence justifies explicit budgets. #146 did not establish stable release-blocking performance thresholds.
 - Preserve scene-v1 and diagnostic-v1 compatibility. A runtime binding must not silently change either contract.
 
 ## Relationship to existing issues
@@ -179,11 +179,11 @@ Remaining release/conformance gates include:
 - **#236 — scene-v1 parsing and matrix-to-scene construction:** complete for the matrix-bearing subset used by the current bindings; full presentation-scene semantics remain outside that initial slice.
 - **#144 — direct Canvas:** implemented as a browser TypeScript adapter. It renders the shared typed scene directly and supports the declared Canvas feature subset, including supplied significance annotations and confidence intervals.
 - **#145 — unified TypeScript API:** the initial shared facade, normalized-matrix scene builder, typed-scene rendering, typed-array normalization, renderer-ID checking, package isolation, and Node/browser runtime tests are implemented. Full scene-v1 presentation parity remains outside this issue's initial API slice.
-- **#146 — broad parity and visual regression:** active; it remains the broader conformance/performance gate.
+- **#146 — broad parity and visual regression:** the initial cross-backend parity, visual-regression, and informational performance-baseline suite is complete. Full scene-v1 presentation semantics and exhaustive legacy corrplot parity remain outside that completed scope.
 - **#290 — npm workspace and non-publishing staging:** complete. Public publication remains separately deferred under #293.
 - **#291 — React:** implemented in `packages/react/` as a browser-only component and hook over `@corrplot-ng/wasm`; React is a peer dependency. Vite/esbuild bundles and browser lifecycle/error behavior are tested.
 - **#292 — Vue:** implemented in `packages/vue/` as a browser-only component and composable over `@corrplot-ng/wasm`; Vue is a peer dependency.
-- **#173 — CRAN and human-maintainer evidence:** remains a separate R release-readiness gate and does not block Node/WASM/TypeScript engineering.
+- **#173 — CRAN and production-R package readiness:** remains a separate R release-readiness gate covering CRAN disposition and evidence from the actual production package. It does not block Node/WASM/TypeScript engineering.
 
 ## Rejected alternatives
 
