@@ -213,7 +213,13 @@ and tests are owned by the npm workspace.
 Vue packages.
 
 Requirements: Node.js 22, 24, or 26; npm 10 or later; Rust 1.78+ for native
-builds; and `wasm-pack` 0.13.1 for WASM tests/builds.
+builds; and `wasm-pack` 0.13.1 for WASM tests/builds. Install Rust with
+rustup. Install the pinned WASM tool when needed:
+
+```sh
+cargo install wasm-pack --version 0.13.1 --locked
+rustup target add wasm32-unknown-unknown
+```
 
 Install from the npm workspace root:
 
