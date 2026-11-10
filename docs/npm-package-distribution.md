@@ -23,7 +23,7 @@ npm test
 npm run pack:dry-run
 ```
 
-Use the committed lockfile without omitting optional dependencies for normal workspace development and validation. The native-toolchain CI matrix relies on platform-specific optional packages when checking TypeScript and Vite/Rolldown tooling. `--omit=optional` is reserved for the isolated consumer smoke test, which deliberately installs the separately staged platform tarballs and excludes optional dependencies from that test installation.
+Use the committed lockfile without omitting optional dependencies for normal workspace development and validation. The native-toolchain CI matrix relies on optional platform-specific dependencies of native build tools, including the TypeScript and Vite/Rolldown toolchains. `--omit=optional` is reserved for the isolated consumer smoke test, which deliberately installs the separately staged platform tarballs and excludes optional dependencies from that test installation.
 
 The workspace uses Changesets for independent package versions and coordinated changelogs. Add a changeset for consumer-visible package changes with `npm run changeset`; do not add changesets for repository-only maintenance that does not alter published package contents.
 
