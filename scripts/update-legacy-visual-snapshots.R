@@ -14,9 +14,9 @@ if (length(missing)) {
   stop("Install required packages first: ", paste(missing, collapse = ", "))
 }
 
-manifest_path <- "implementations/r/tests/testthat/fixtures/legacy-visual-cases.json"
-cases_path <- "implementations/r/tests/testthat/helper-legacy-visual-cases.R"
-snapshot_dir <- "implementations/r/tests/testthat/fixtures/legacy-visual"
+manifest_path <- "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json"
+cases_path <- "r/corrplotng/tests/testthat/helper-legacy-visual-cases.R"
+snapshot_dir <- "r/corrplotng/tests/testthat/fixtures/legacy-visual"
 
 manifest <- jsonlite::fromJSON(manifest_path)
 if (as.character(utils::packageVersion("corrplot")) != manifest$reference_version) {
