@@ -2,7 +2,7 @@
 
 **Reference:** `corrplot` 0.95, commit `62532f700e6c9d04b93ffbf0bf56e264b0e0368e`  
 **Upstream:** [taiyun/corrplot](https://github.com/taiyun/corrplot/tree/62532f700e6c9d04b93ffbf0bf56e264b0e0368e)  
-**Machine-readable inventory:** [legacy-api-inventory.json](../implementations/r/tests/testthat/fixtures/legacy-api-inventory.json)
+**Machine-readable inventory:** [legacy-api-inventory.json](../r/corrplotng/tests/testthat/fixtures/legacy-api-inventory.json)
 
 This is a compatibility baseline, not a promise that every legacy option belongs in the cross-language API. The pinned upstream `NAMESPACE` exports nine functions; the inventory records each function's formal arguments, defaults, and documented choice sets. The inventory is deliberately versioned separately from the renderer-neutral scene contract.
 
@@ -85,7 +85,7 @@ From the repository root, install the pinned upstream reference package and the 
 ```sh
 R -e 'remotes::install_github("taiyun/corrplot@62532f700e6c9d04b93ffbf0bf56e264b0e0368e")'
 R -e 'install.packages(c("testthat", "jsonlite", "png"))'
-R CMD check implementations/r
+R CMD check --as-cran r/corrplotng
 ```
 
 The manifest check fails if the installed reference version differs from 0.95 or the fixture IDs drift from the executable case list. The API inventory test compares every exported function's formal argument names against the pinned inventory. The visual test checks candidate output against committed upstream snapshots under a fixed Cairo PNG configuration.
