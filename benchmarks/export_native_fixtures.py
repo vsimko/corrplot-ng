@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "benchmarks"))
-sys.path.insert(0, str(ROOT / "prototypes" / "shared-svg"))
+sys.path.insert(0, str(ROOT / "python" / "reference"))
 from run_shared_core import make_cases
 from scene import build_scene
 
