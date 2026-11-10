@@ -327,7 +327,7 @@ fn scene_v1_json_file_is_auto_detected_and_rendered() {
 #[test]
 fn cli_renders_shared_scene_v1_construction_fixture() {
     let scene = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../../python/reference/scene-v1-construction.example.json");
+        .join("../../../python/reference/scene-v1-construction.example.json");
     let output = Command::new(env!("CARGO_BIN_EXE_corrplot-ng"))
         .args(["render", "--input"]).arg(&scene)
         .args(["--format", "svg"])
