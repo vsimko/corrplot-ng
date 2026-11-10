@@ -24,7 +24,7 @@ The current project roots are:
 | --- | --- | --- | --- |
 | Rust | `rust/` | `rust/Cargo.toml`, `rust/Cargo.lock` | Shared core, CLI, Node and WASM binding crates |
 | npm | `npm/` | `npm/package.json`, `npm/package-lock.json` | Private workspace; publication is deferred |
-| R | `implementations/r/` | `implementations/r/DESCRIPTION` | Provisional production-facing R package; relocation is tracked by #368 |
+| R | `r/corrplotng/` | `r/corrplotng/DESCRIPTION` | Provisional production-facing R package; relocation is tracked by #368 |
 | Python | `python/reference/` and repository-level contract tests | `python/reference/requirements-dev.txt` | Reference/prototype only; no distributable package |
 
 The Python reference owns `python/reference/requirements-dev.txt`. Its
@@ -41,7 +41,7 @@ flowchart TB
     ROOT["Repository root\nREADME, CONTRIBUTING, docs, thin scripts"]
     ROOT --> RUST["rust/\nCargo workspace + lockfile"]
     ROOT --> NPM["npm/\nprivate npm workspace + lockfile"]
-    ROOT --> RPKG["implementations/r/\nR package DESCRIPTION"]
+    ROOT --> RPKG["r/corrplotng/\nR package DESCRIPTION"]
     ROOT --> PY["python/reference/\nPython reference"]
     ROOT --> TESTS["tests/, contracts/, fixtures/\nshared inputs and conformance"]
     ROOT --> ORCH["scripts/dev-check.sh\noptional orchestration"]
@@ -145,7 +145,7 @@ publish one without a separate maintainer decision.
 
 ## R package
 
-**Use this section for:** the provisional R package in `implementations/r/`.
+**Use this section for:** the production-facing R package in `r/corrplotng/`.
 
 Requirements: R 4.x, `corrplot` 0.95, `testthat`, `jsonlite`, and `png`.
 
@@ -158,7 +158,7 @@ Rscript -e 'install.packages(c("corrplot", "testthat", "jsonlite", "png"), repos
 Run the package check from the repository root:
 
 ```sh
-R CMD check implementations/r
+R CMD check --as-cran r/corrplotng
 ```
 
 `R CMD check` is the R package check/lint gate; no separate R linter is
@@ -168,7 +168,7 @@ tests.
 Install the package locally:
 
 ```sh
-R CMD INSTALL implementations/r
+R CMD INSTALL r/corrplotng
 ```
 
 Build a source tarball outside the checkout.
@@ -177,7 +177,7 @@ Linux, macOS, WSL, or Git Bash:
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
-(cd "${TMPDIR:-/tmp}" && R CMD build "$REPO/implementations/r")
+(cd "${TMPDIR:-/tmp}" && R CMD build "$REPO/r/corrplotng")
 ```
 
 Windows PowerShell:
@@ -185,7 +185,7 @@ Windows PowerShell:
 ```powershell
 $repo = (git rev-parse --show-toplevel).Trim()
 Push-Location $env:TEMP
-R CMD build "$repo/implementations/r"
+R CMD build "$repo/r/corrplotng"
 Pop-Location
 ```
 
@@ -203,9 +203,9 @@ Rscript python/reference/test_r_scene_consumer.R
 For the pinned legacy semantic oracle, use the root command
 `bash scripts/dev-check.sh test-r-legacy` (requires both R and Python).
 
-The production R package is expected to move to `r/corrplotng/` under #368.
-Until that migration is merged, `implementations/r/` is the authoritative
-package root.
+The production R package root is `r/corrplotng/`. The separate
+`rust/bindings/r/rextendr-prototype/` adapter remains disposable evaluation
+infrastructure and is not the production package.
 
 ## Rust workspace and CLI
 
