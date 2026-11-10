@@ -501,7 +501,7 @@ mod tests {
 
     #[wasm_bindgen_test]
     fn renders_shared_scene_v1_construction_fixture() {
-        let fixture = include_str!("../../../../prototypes/shared-svg/scene-v1-construction.example.json");
+        let fixture = include_str!("../../../../python/reference/scene-v1-construction.example.json");
         let output = render_matrix_svg_wasm(fixture.into(), "circle".into()).unwrap();
         let output: SvgResult = serde_wasm_bindgen::from_value(output).unwrap();
         let svg = output.svg.unwrap();
