@@ -45,8 +45,13 @@ flowchart TB
     ROOT --> TESTS["tests/, contracts/, fixtures/\nshared inputs and conformance"]
     ROOT --> ORCH["scripts/dev-check.sh\noptional orchestration"]
     RUST --> CORE["rust/crates/corrplot-core"]
+    RUST --> NODE_BINDING["rust/bindings/node"]
+    RUST --> WASM_BINDING["rust/bindings/wasm"]
     NPM --> PKGS["npm/packages/*"]
-    CORE --> NPM
+    NODE_BINDING --> PKGS
+    WASM_BINDING --> PKGS
+    CORE --> NODE_BINDING
+    CORE --> WASM_BINDING
 ```
 
 The Rust core is the shared semantic implementation. npm bindings call it
@@ -338,10 +343,18 @@ bash scripts/dev-check.sh build-node
 | `test-node` | Node/npm and Rust |
 | `test-wasm` | Node/npm, Rust, and wasm-pack |
 | `test-all` | Python, R, Rust, Node/npm, and wasm-pack |
+| `build-cli` | Rust |
+| `build-node` | Node/npm and Rust |
+| `benchmarks`, `benchmarks-stress` | Python |
 
 `test-all` is the full local suite and therefore requires every listed
 toolchain. It is not required for a change isolated to one ecosystem when
 that ecosystem's targeted checks are sufficient.
+
+Performance measurements are opt-in and write results to the system temporary
+directory. Stress workloads are excluded from `quick` and `test-all`; run
+`benchmarks-stress` only when explicitly measuring the larger stress cases.
+Set `PYTHON=/path/to/python` to select a non-default Python executable.
 
 The script is Bash-only. On Windows, use WSL or Git Bash. CI remains the
 authoritative source for the full operating-system/runtime matrix.
