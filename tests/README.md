@@ -7,11 +7,11 @@ The compatibility suite separates three kinds of evidence. A passing layer is no
 | Layer | What it verifies | CI / command |
 | --- | --- | --- |
 | **Semantic** | The pinned legacy `corrplot` oracle preserves matrix ordering, labels, coordinates, values, and missingness; the same oracle output is passed through the renderer-neutral scene model. | `.github/workflows/test-foundation.yml`, job `legacy-r-oracle`; run `Rscript python/reference/test_legacy_corrplot_oracle.R` followed by `python python/reference/test_legacy_scene_bridge.py /tmp/corrplot-legacy-scene-input.json`. |
-| **Structural SVG** | Each legacy-derived matrix is rendered with all seven implemented methods. Tests parse the SVG XML and verify dimensions, cell count, labels, annotation placement, missing-cell labels, glyph-specific elements, and deterministic serialization. | The same `legacy-r-oracle` job runs the bridge test. The broader scene/SVG tests run with `python -m unittest discover -s python/reference -p 'test_*.py' -v`. |
+| **Structural SVG** | Each legacy-derived matrix is rendered with all seven implemented methods. Tests parse the SVG XML and verify dimensions, cell count, labels, annotation placement, missing-cell labels, glyph-specific elements, and deterministic serialization. | The same `legacy-r-oracle` job runs the bridge test. The broader scene/SVG tests run from the Python project root with `python -m unittest discover -s . -p 'test_*.py' -v`. |
 | **Pixel baseline** | Fifteen selected 900×900 PNGs are compared to saved renders from `corrplot` 0.95. This validates the R compatibility adapter in the pinned graphics environment. | `R CMD check implementations/r`, test `test-visual-regression.R`. Pixel mismatches include the fixture ID in the failure. |
 | **R scene adapter fixture parity** | The R scene adapter consumes all four shared correlation cases and the packaged general-matrix/normalized-matrix fixtures, checking scene kind, labels, missingness, and cell values. The packaged correlation corpus is kept byte-identical to the canonical fixture. | `R CMD check implementations/r`; tests `test-scene-adapter.R` and `test-normalized-matrix.R`. |
 | **Native CLI fixture parity** | The native CLI consumes every valid case in the shared correlation and general-numeric corpora. It validates each matrix and verifies normalized JSON and renderer-neutral scene JSON preserve labels, missingness, values, and matrix kind. | `.github/workflows/test-rust-cli.yml`; run `python rust/tools/corrplot-cli/tests/verify_shared_fixtures.py --binary rust/target/release-cli/corrplot-ng` after building the CLI. |
-| **Cross-runtime parity** | Native Node and Node-hosted WASM consume the common correlation and general-numeric matrix fixtures. The test compares validation, normalized-matrix scene construction, SVG, and RGBA for all seven cell methods, plus a deterministic 64×64 correlation matrix. | `.github/workflows/test-node-wasm-parity.yml`; run `node --test bindings/cross-backend/test-node-wasm-parity.cjs` after building the native and Node-WASM bindings. |
+| **Cross-runtime parity** | Native Node and Node-hosted WASM consume the common correlation and general-numeric matrix fixtures. The test compares validation, normalized-matrix scene construction, SVG, and RGBA for all seven cell methods, plus a deterministic 64×64 correlation matrix. | `.github/workflows/test-node-wasm-parity.yml`; run `node --test npm/tests/cross-backend/test-node-wasm-parity.cjs` after building the native and Node-WASM bindings. |
 | **Scene-v1 statistical overlays** | The shared Rust SVG/RGBA renderers draw supplied confidence-interval geometry and per-cell significance annotations. Blank cells suppress their glyph and interval, hidden cells are omitted, and missing p-values do not generate annotations. | Core renderer tests and `.github/workflows/test-node-wasm-parity.yml`; run `cargo test --locked --offline --manifest-path rust/crates/corrplot-core/Cargo.toml` and the cross-runtime parity command above. |
 | **Browser Canvas conformance** | A checked-in scene fixture compares stable interior pixels from direct Canvas 2D output with the shared Rust RGBA renderer and checks number/shade glyph ink. It deliberately avoids byte-for-byte comparison across different text rasterizers. | Browser smoke in `.github/workflows/test-wasm-binding.yml` on Chromium, Firefox, and WebKit; the workspace workflow checks the package tests and browser bundle without launching a browser. |
 
@@ -36,7 +36,7 @@ The semantic and structural tests are the cross-platform contract; they do not r
 ## Current scope
 
 - The R package remains a provisional scaffold. Its default exported `corrplot_ng()` delegates to `corrplot::corrplot()`; the PNG baseline therefore verifies that adapter path.
-- The Python scene/SVG prototype is independent and experimental. The bridge runs actual matrices exported by the pinned legacy oracle through all seven prototype glyph methods, but this is not proof that the R scene engine or every legacy option is compatible.
+- The Python scene/SVG reference under `python/reference/` is independent and experimental. The bridge runs actual matrices exported by the pinned legacy oracle through all seven prototype glyph methods, but this is not proof that the R scene engine or every legacy option is compatible.
 - The native CLI and Node/WASM parity workflows consume the shared correlation and general-numeric matrix corpora. The CLI verifies normalized input and scene JSON; Node/WASM additionally compare scene construction, SVG, and RGBA across all seven cell methods. The R scene adapter also consumes all four shared correlation cases, alongside the normalized-matrix and general-matrix fixture sets, through its own adapter tests.
 - The shared JSON fixture tests validate schema and matrix properties; they do not replace the pinned legacy oracle or exercise every R-specific `col_limits`, mapping, and palette normalization option.
 - The Node/WASM parity workflow also generates a deterministic 64×64 correlation matrix to cover a larger input without introducing a timing threshold.
@@ -49,7 +49,7 @@ Run the general fixture checks with Python 3.10 or later:
 python -m unittest discover -s tests -v
 ```
 
-The fixture integrity tests use only the Python standard library. The shared SVG prototype suite additionally installs `jsonschema` as described in `python/reference/README.md`.
+The fixture integrity tests use only the Python standard library. The Python reference suite additionally installs `jsonschema` from `python/reference/requirements-dev.txt` as described in its README.
 
 ## Normalized matrix input contract
 
@@ -79,7 +79,7 @@ Run it against an exported artifact:
 python scripts/validate_svg.py figures/correlation.svg
 ```
 
-CI validates both the shared Python SVG prototype and a native Rust CLI export. The `svg-interoperability` job also rasterizes the Python SVG with `rsvg-convert` (librsvg), so XML parsing is not the only acceptance check.
+CI validates both the Python reference SVG and a native Rust CLI export. The `svg-interoperability` job also rasterizes the Python SVG with `rsvg-convert` (librsvg), so XML parsing is not the only acceptance check.
 
 A manual LaTeX embedding smoke test can be run with librsvg and a TeX installation:
 
