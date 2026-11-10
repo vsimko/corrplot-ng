@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Callable
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "prototypes" / "shared-svg"))
+sys.path.insert(0, str(ROOT / "python" / "reference"))
 from scene import build_scene
 from export_native_fixtures import project_scene_v1
 
