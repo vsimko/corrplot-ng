@@ -16,7 +16,7 @@ from scene import build_scene
 
 
 HERE = Path(__file__).parent
-ROOT = HERE.parents[1]
+ROOT = HERE.parents[2]
 CAPABILITY_SCHEMA = json.loads(
     (ROOT / "contracts" / "renderer-capability-v1" / "schema.json").read_text(encoding="utf-8")
 )
