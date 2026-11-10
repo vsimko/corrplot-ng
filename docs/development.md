@@ -112,18 +112,13 @@ source python/reference/.venv/bin/activate
 python/reference/.venv/Scripts/Activate.ps1
 ```
 
-From the repository root, enter the project and install its dependencies:
+From the repository root, install the project dependencies and run both
+project-local and repository-level tests with the activated environment:
 
 ```sh
 cd python/reference
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s . -p 'test_*.py' -v
-```
-
-Run repository-level fixture and contract tests from the repository root
-with the same activated environment:
-
-```sh
 cd ../..
 python -m unittest discover -s tests -v
 python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
@@ -138,6 +133,7 @@ On Linux, macOS, WSL, or Git Bash, render and validate a reference SVG from
 cd python/reference
 python renderer.py example.json > "${TMPDIR:-/tmp}/corrplot-ng.svg"
 python ../../scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng.svg"
+cd ../..
 ```
 
 **Check/lint:** there is no separate Python linter or formatter configured.
