@@ -32,7 +32,7 @@ jobs:
         with:
           filters: |
             r_package:
-              - 'implementations/r/**'
+              - 'r/corrplotng/**'
               - 'python/reference/**'
               - 'tests/fixtures/**'
               - 'schemas/**'
@@ -55,8 +55,7 @@ jobs:
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          working-directory: implementations/r
-          extra-packages: any::rcmdcheck
+          working-directory: r/corrplotng
           needs: check
       - name: Check pinned legacy corrplot reference
         shell: Rscript {0}
@@ -66,8 +65,9 @@ jobs:
           }
       - name: Check R scene contract consumer
         run: Rscript python/reference/test_r_scene_consumer.R
-      - name: Check package
-        uses: r-lib/actions/check-r-package@v2
-        with:
-          working-directory: implementations/r
-          error-on: '"warning"'
+      - name: Build source package
+        working-directory: r
+        run: R CMD build corrplotng
+      - name: Check source package as CRAN
+        working-directory: r
+        run: R CMD check --as-cran --no-manual corrplotng_*.tar.gz
