@@ -99,7 +99,7 @@ test_r() {
   need_r
   Rscript -e 'stopifnot(as.character(utils::packageVersion("corrplot")) == "0.95", requireNamespace("jsonlite", quietly = TRUE))'
   Rscript python/reference/test_r_scene_consumer.R
-  R CMD check implementations/r
+  R CMD check --as-cran r/corrplotng
 }
 
 test_r_legacy() {
