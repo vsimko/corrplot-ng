@@ -85,7 +85,10 @@ declaration = json.loads(Path("rust/crates/corrplot-core/renderer-capabilities.j
 jsonschema.validate(declaration, schema)
 PY
   "$PYTHON_BIN" -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
-  "$PYTHON_BIN" -m unittest discover -s python/reference -p 'test_*.py' -v
+  (
+    cd "$ROOT_DIR/python/reference"
+    "$PYTHON_BIN" -m unittest discover -s . -p 'test_*.py' -v
+  )
   "$PYTHON_BIN" -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
   "$PYTHON_BIN" -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
   "$PYTHON_BIN" python/reference/renderer.py python/reference/example.json > "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
