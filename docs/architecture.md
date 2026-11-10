@@ -130,7 +130,7 @@ The R implementation currently has distinct paths:
 - **Normalized-matrix path:** adapts normalized matrix input.
 - **Experimental scene path:** produces scene-v1 data; it is not a complete replacement renderer and does not imply full rendering parity.
 
-The production R package has not migrated to the shared Rust core. The separate R/rextendr adapter is disposable evaluation evidence only. See [R implementation notes](../implementations/r/README.md).
+The production R package has not migrated to the shared Rust core. The separate R/rextendr adapter is disposable evaluation evidence only. See [R implementation notes](../r/corrplotng/README.md).
 
 ### Python reference implementation
 
