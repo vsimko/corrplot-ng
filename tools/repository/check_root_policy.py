@@ -27,10 +27,6 @@ ALLOWED_ROOT_FILES = {
     "LICENSE",
 }
 
-TRANSITIONAL_ROOT_FILES = {
-    "requirements-dev.txt": "#365/#369 — move repository Python tooling dependencies under tools/repository/",
-}
-
 ALLOWED_ROOT_DIRECTORIES = {
     ".github",
     "docs",
@@ -130,8 +126,6 @@ def validate_paths(paths: Iterable[str]) -> tuple[list[str], list[str]]:
                     f"{path}: ecosystem manifest/lockfile is not allowed at repository root; "
                     "move it to its owning ecosystem directory"
                 )
-            elif name in TRANSITIONAL_ROOT_FILES:
-                warnings.append(f"{path}: transitional root file — {TRANSITIONAL_ROOT_FILES[name]}")
             elif name not in ALLOWED_ROOT_FILES and name not in FORBIDDEN_ROOT_MANIFESTS:
                 # The root-entry check below reports this once, with the same
                 # guidance as for an unexpected top-level directory.
@@ -140,15 +134,12 @@ def validate_paths(paths: Iterable[str]) -> tuple[list[str], list[str]]:
     for name in sorted(root_entries):
         if name in ALLOWED_ROOT_FILES or name in ALLOWED_ROOT_DIRECTORIES:
             continue
-        if name in TRANSITIONAL_ROOT_FILES:
-            continue
         if name in TRANSITIONAL_ROOT_DIRECTORIES:
             warnings.append(f"{name}/: transitional root directory — {TRANSITIONAL_ROOT_DIRECTORIES[name]}")
             continue
         if name in FORBIDDEN_ROOT_MANIFESTS:
             continue
-        # requirements-dev.txt is a transitional file above;
-        # all other unknown root entries require an explicit policy decision.
+        # Unknown root entries require an explicit policy decision.
         errors.append(
             f"{name}: unreviewed repository-root entry; add it to the documented "
             "root allowlist or place it under its owning project"
