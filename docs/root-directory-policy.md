@@ -17,10 +17,9 @@ The following current entries are temporary and must be removed or relocated by 
 
 | Current root entry | Reason / destination |
 |---|---|
-| `requirements-dev.txt` | Current repository Python test dependency; move under `tools/repository/` or the owning Python project as part of #369/#372. |
 | `benchmarks/` | Mixed-runtime harness; split by ownership under #364. |
 | `implementations/` | Current R package; move to `r/corrplotng/` under #368. |
-| `prototypes/` | Mixed contracts, Python reference code and Rust/rextendr experiment; split under #366/#369/#370. |
+| `prototypes/` | Normative contracts and disposable experiments; Python reference moved to `python/reference/` under #369; remaining split under #366/#370. |
 | `scripts/`, `tests/` | Mixed repository and runtime utilities/fixtures; split under #364/#370. |
 | `experiments/` | Cross-runtime WASM/R experiment. ADR 0003's target tree does not yet show this root; #364 records it as a deliberate exception that must be explicitly retained or assigned another reviewed home before migration. |
 
