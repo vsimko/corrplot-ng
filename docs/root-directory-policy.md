@@ -18,7 +18,6 @@ The following current entries are temporary and must be removed or relocated by 
 | Current root entry | Reason / destination |
 |---|---|
 | `benchmarks/` | Mixed-runtime harness; split by ownership under #364. |
-| `implementations/` | Current R package; move to `r/corrplotng/` under #368. |
 | `prototypes/` | Normative versioned contracts; remaining contract relocation is tracked under #366/#370. |
 | `scripts/`, `tests/` | Mixed repository and runtime utilities/fixtures; split under #364/#370. |
 | `experiments/` | Cross-runtime WASM/R experiment. ADR 0003's target tree does not yet show this root; #364 records it as a deliberate exception that must be explicitly retained or assigned another reviewed home before migration. |
