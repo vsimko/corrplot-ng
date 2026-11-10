@@ -10,7 +10,8 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `npm/` | Private npm workspace, lockfile, installable packages, platform-specific native package manifests, and cross-backend npm tests. Rust crate sources live under `rust/bindings/`. |
 | `tools/` | Repository-wide orchestration only, under `tools/repository/`. |
 | `implementations/` | Transitional location for language-specific product packages and adapters; the provisional R package currently lives under `implementations/r/` pending #368. |
-| `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |\n| `prototypes/` | A transitional home for normative versioned contracts and disposable experiments. Do not treat every child directory as production code. |
+| `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |
+| `prototypes/` | A transitional home for normative versioned contracts and disposable experiments. Do not treat every child directory as production code. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
 | `scripts/` | Maintainer and CI utilities that operate across packages or validate generated artifacts. |
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
