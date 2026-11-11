@@ -10,7 +10,7 @@ the Extendr MIT notice is also copied to inst/licenses/extendr-MIT.txt.
 - once_cell 1.21.4: Aleksey Kladov (MIT OR Apache-2.0)
 - paste 1.0.15, quote 1.0.45, readonly 0.2.13, syn 2.0.117,
   unicode-ident 1.0.24: David Tolnay (MIT OR Apache-2.0; unicode-ident also
-  carries the Unicode-3.0 license)
+  carries the Unicode-3.0 license, copyright © 1991-2023 Unicode, Inc.)
 - proc-macro2 1.0.106: David Tolnay and Alex Crichton (MIT OR Apache-2.0)
 
 The corresponding copyright-holder attributions are also declared in

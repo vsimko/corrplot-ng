@@ -7,7 +7,8 @@ Authors@R: c(
     person("Marvin", "Löbel", role = "cph"),
     person("Aleksey", "Kladov", role = "cph"),
     person("David", "Tolnay", role = "cph"),
-    person("Alex", "Crichton", role = "cph")
+    person("Alex", "Crichton", role = "cph"),
+    person("Unicode, Inc.", role = "cph")
     )
 Description: An R adapter for corrplot-ng. It retains a legacy-compatible
     plotting path through the upstream corrplot package and provides an
