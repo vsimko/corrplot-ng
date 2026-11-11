@@ -1,0 +1,22 @@
+{
+  "config_version": 1,
+  "input": {
+    "kind": "matrix_csv",
+    "path": "data/study-correlation-matrix.csv",
+    "delimiter": ",",
+    "header": true,
+    "row_labels": true
+  },
+  "matrix": { "kind": "correlation", "method": "kendall", "missing": "error" },
+  "plot": {
+    "method": "color",
+    "display": "lower",
+    "ordering": "hclust",
+    "show_values": false,
+    "significance": { "enabled": false, "p_values": null, "thresholds": [0.001, 0.01, 0.05] }
+  },
+  "colors": { "negative": "#b2182b", "neutral": "#f7f7f7", "positive": "#2166ac", "missing": "#d9d9d9" },
+  "dimensions": { "width": 178, "height": 132, "unit": "mm" },
+  "typography": { "family": "serif", "base_size": 8 },
+  "output": { "format": "svg", "path": "figures/study-correlation.svg" }
+}
