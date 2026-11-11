@@ -259,5 +259,5 @@ jobs:
           exit 1
 
       - name: Report successful aggregate result
-        if: "!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')"
+        if: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
         run: echo "All applicable PR workflows succeeded; intentionally skipped workflows are accepted."
