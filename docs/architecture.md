@@ -13,7 +13,7 @@ status: current
 
 ## Purpose and status
 
-This document distinguishes implemented slices from experimental integrations and planned work. Rust is the accepted strategic shared-core implementation. Production rollout of the Rust core into the R package remains gated by CRAN disposition, compatibility with the intended CRAN toolchain, and validation of the actual production-package artifact and footprint. The proposed maintainer-effort comparison was discontinued by #269 and is not a gate.
+This document distinguishes implemented slices from experimental integrations and planned work. Rust is the accepted strategic shared-core implementation. The production R package now embeds the shared Rust core and exposes an opt-in Rust-backed SVG renderer for a documented scene-v1 subset (PR #417). The legacy corrplot path remains the default; this is a bounded experimental integration, not a wholesale replacement renderer or a CRAN release. The proposed maintainer-effort comparison was discontinued by #269 and is not a gate.
 
 The normalized-matrix v1 and **scene-v1** contracts are language-neutral input and interchange/conformance boundaries. Renderer capability declarations describe which scene semantics each output backend preserves; they do not alter the public figure configuration.
 
@@ -23,7 +23,7 @@ The Rust shared core lives in `rust/crates/corrplot-core`. It currently provides
 
 The TypeScript facade in `npm/packages/typescript/` selects the native Node or browser-WASM backend through runtime-specific exports. It exposes matrix validation, Rust-backed normalized-matrix scene construction, typed-scene SVG/RGBA rendering, matrix-bearing scene-v1 JSON compatibility rendering, renderer capabilities with optional renderer-ID verification, diagnostic errors, adapter injection, and disposal. It accepts JavaScript arrays with explicit `null` values or numeric typed arrays with an explicit boolean missing-cell mask. The initial API slice tracked by #145 is implemented.
 
-Rust is the accepted strategic shared-core implementation. The remaining #173 production-R adoption gates are CRAN disposition for the retained Cargo vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and validation of the actual production package artifact and its footprint. The proposed human maintainer-time comparison was discontinued by #269 and is not a gate. No production R migration is authorized by the existing shared-operation proof. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md) and [ADR 0002: Cross-runtime TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md).
+Rust is the accepted strategic shared-core implementation. PR #417 integrated the shared core into the production R package behind an opt-in SVG renderer. The production package candidate passed offline source installation, renderer smoke tests, and `R CMD check --as-cran --no-manual` with `Status: OK` and no NOTE on Linux, macOS, and Windows; the Windows binary ZIP also installed and passed its smoke test without Cargo/rustc on PATH. The recorded Ubuntu source tarball was 2,610,492 bytes and the installed package was 2,631,354 bytes. This is engineering and packaging evidence, not CRAN acceptance. Issue #268 tracks the separate historical prototype NOTE disposition; the current production archive retains Cargo integrity metadata inside the compressed vendor archive and does not reproduce that NOTE. See [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md), [ADR 0002: Cross-runtime TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md), and [issue #173](https://github.com/vsimko/corrplot-ng/issues/173).
 
 ## Architecture at a glance
 
@@ -52,7 +52,8 @@ flowchart TB
     R[Disposable R/rextendr adapter]
     TS[TypeScript facade]
     PY[python/reference: Python scene/SVG reference]
-    RPKG[Provisional R package]
+    RPKG[Production R package]
+    RPROD[Production R Rust/extendr adapter]
     CANVAS[TypeScript/browser Canvas 2D adapter]
     FRAME[React / Vue adapters]
 
@@ -64,6 +65,8 @@ flowchart TB
     CORE --> NODE
     CORE --> WASM
     CORE --> R
+    CORE --> RPROD
+    RPROD --> RPKG
     NODE --> TS
     WASM --> TS
     PY --> SC
@@ -73,7 +76,7 @@ flowchart TB
     WASM -. browser-only framework adapters .-> FRAME
 ```
 
-Solid edges represent implemented integration paths or contract use. Dashed edges represent host-owned boundaries. React and Vue are thin browser adapters over WASM; they do not implement correlation semantics. The browser binding provides shared SVG/RGBA operations; direct Canvas drawing is implemented separately by the TypeScript/browser adapter. The R/rextendr adapter is a disposable evaluation integration, not the production R package.
+Solid edges represent implemented integration paths or contract use. Dashed edges represent host-owned boundaries. React and Vue are thin browser adapters over WASM; they do not implement correlation semantics. The browser binding provides shared SVG/RGBA operations; direct Canvas drawing is implemented separately by the TypeScript/browser adapter. The production R package has its own embedded Rust/extendr adapter and opt-in SVG renderer; the separate prototype R/rextendr adapter remains a disposable evaluation integration.
 
 ## Contracts: stable boundaries, not a shared runtime
 
@@ -129,8 +132,9 @@ The R implementation currently has distinct paths:
 - **Legacy compatibility path:** delegates to the original corrplot behavior by default.
 - **Normalized-matrix path:** adapts normalized matrix input.
 - **Experimental scene path:** produces scene-v1 data; it is not a complete replacement renderer and does not imply full rendering parity.
+- **Opt-in Rust SVG path:** uses the shared Rust core through the package's embedded extendr adapter to render the documented supported scene-v1 subset. It is experimental and does not replace the default legacy plotting path or establish full scene-v1 parity.
 
-The production R package has not migrated to the shared Rust core. The separate R/rextendr adapter is disposable evaluation evidence only. See [R implementation notes](../r/corrplotng/README.md).
+The production R package now embeds the shared Rust core for this bounded renderer integration. The separate `rust/bindings/r/rextendr-prototype` package remains a disposable evaluation adapter. See [R implementation notes](../r/corrplotng/README.md).
 
 ### Python reference implementation
 
@@ -140,7 +144,7 @@ The Python reference in `python/reference/` serves as a prototype for scene cons
 
 The following capabilities remain incomplete or separately gated:
 
-- **Production R integration:** gated by CRAN disposition for the vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and evidence from the actual production-package artifact and footprint (#173).
+- **Broader production R renderer scope:** the current opt-in Rust SVG renderer is limited to its documented scene-v1 subset; expanding semantics and presentation fidelity requires separate conformance evidence. The production package candidate has passed the current three-platform packaging and CRAN-mode checks, but this is not CRAN acceptance.
 - **Full scene-v1 semantics and presentation fidelity:** the current parser and builder cover the matrix-bearing slice, not all scene-v1 fields and presentation behavior.
 - **Cross-backend conformance:** the initial shared-fixture parity, browser visual-regression, renderer-capability, and informational performance-baseline suite was completed under #146. The parser and builder still cover only the matrix-bearing scene-v1 subset; full presentation semantics remain incomplete.
 - **Direct browser Canvas:** implemented by the TypeScript/browser adapter (#144), which draws the shared scene directly with Canvas 2D. The WASM binding still exposes SVG/RGBA operations and does not implement Canvas drawing. OffscreenCanvas is feature-detected and available only when the runtime supplies a working 2D context.
@@ -150,7 +154,7 @@ The following capabilities remain incomplete or separately gated:
 - **npm publication:** package build and tarball staging are non-publishing preparation. Public publication remains deferred under #293.
 - **Cross-runtime semantic and visual parity:** current tests cover specific operations and fixtures; they do not prove complete API or presentation parity.
 
-The Rust/rextendr integration remains an evaluation adapter that proves shared-crate use for selected operations. Rust is the sole selected native implementation; C++/Rcpp has been rejected and its prototype and CI have been retired. CRAN disposition and sustainable Rust maintenance remain open.
+The disposable Rust/rextendr prototype remains separate from the production R package. The production package now embeds the shared core for its opt-in SVG renderer. Rust is the sole selected native implementation; C++/Rcpp has been rejected and its prototype and CI have been retired. The historical prototype NOTE disposition and sustainable Rust maintenance remain open.
 
 ## Decision boundaries
 
@@ -163,7 +167,7 @@ The Rust/rextendr integration remains an evaluation adapter that proves shared-c
 | Native Node binding | Experimental Node-API integration; matrix validation, matrix-to-scene SVG/RGBA, typed-scene SVG/RGBA implemented |
 | Browser WASM | Experimental binding over the same Rust core; matrix-to-scene SVG/RGBA and typed-scene SVG/RGBA implemented |
 | TypeScript facade | Runtime-isolated Node/browser API, normalized-matrix scene construction, typed-scene SVG/RGBA, typed-array input, scene-v1 compatibility rendering, capabilities and diagnostics implemented; full scene-v1 parity remains incomplete |
-| R compatibility | Legacy path plus normalized-input and experimental scene paths; production Rust integration not approved |
+| R compatibility | Legacy default path plus normalized-input/scene preparation and an opt-in experimental Rust-backed SVG renderer in the production package |
 | Rust/rextendr | Disposable evaluation adapter; consumes the shared Rust core for implemented operations |
 | C++/Rcpp | Rejected; prototype and CI retired; not an approved fallback |
 | Python shared-scene/SVG | Reference/prototype implementation |
@@ -171,7 +175,7 @@ The Rust/rextendr integration remains an evaluation adapter that proves shared-c
 | Workers and threaded WASM | Worker transport, lifecycle/protocols, shared-memory threading are not provided |
 | npm publication | Explicitly deferred |
 
-The accepted Rust shared-core direction now has working CLI, Node, and browser-WASM consumers for the implemented operation slice. That does not imply complete semantic parity, full scene-v1 presentation support, or production status for the bindings. Keep language-specific adapters thin, preserve scene-v1 as the versioned interchange/conformance contract, and keep production R rollout and npm publication behind their separate gates.
+The accepted Rust shared-core direction now has working CLI, Node, browser-WASM, and production R consumers for the implemented operation slice. The Node/WASM packages remain experimental and unpublished; the production R SVG renderer is opt-in and experimental while the legacy plotting path remains the default. This does not imply complete semantic parity, full scene-v1 presentation support, or CRAN acceptance. Keep language-specific adapters thin, preserve scene-v1 as the versioned interchange/conformance contract, and keep broader R renderer expansion and npm publication behind their separate gates.
 
 ## Dependency principles
 
