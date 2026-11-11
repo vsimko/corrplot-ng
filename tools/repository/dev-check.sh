@@ -150,14 +150,14 @@ build_node() {
 
 benchmarks() {
   check_python_dependencies
-  "$PYTHON_BIN" -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
-  "$PYTHON_BIN" benchmarks/run_shared_core.py --iterations 20 --output "${TMPDIR:-/tmp}/corrplot-ng-shared-core-benchmarks.json"
-  "$PYTHON_BIN" benchmarks/run_scalability.py --iterations 5 --output "${TMPDIR:-/tmp}/corrplot-ng-scalability-benchmarks.json"
+  "$PYTHON_BIN" -m unittest discover -s tools/repository/benchmarks -p 'test_timing_method.py' -v
+  "$PYTHON_BIN" tools/repository/benchmarks/run_shared_core.py --iterations 20 --output "${TMPDIR:-/tmp}/corrplot-ng-shared-core-benchmarks.json"
+  "$PYTHON_BIN" tools/repository/benchmarks/run_scalability.py --iterations 5 --output "${TMPDIR:-/tmp}/corrplot-ng-scalability-benchmarks.json"
 }
 
 benchmarks_stress() {
   check_python_dependencies
-  "$PYTHON_BIN" benchmarks/run_scalability.py --iterations 3 --include-stress --output "${TMPDIR:-/tmp}/corrplot-ng-scalability-stress.json"
+  "$PYTHON_BIN" tools/repository/benchmarks/run_scalability.py --iterations 3 --include-stress --output "${TMPDIR:-/tmp}/corrplot-ng-scalability-stress.json"
 }
 
 command_name="${1:-help}"
