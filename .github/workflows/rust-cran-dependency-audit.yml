@@ -10,7 +10,10 @@ on:
       - "rust/Cargo.lock"
       - "rust/bindings/r/rextendr-prototype/deny.toml"
       - "rust/bindings/r/rextendr-prototype/src/**"
-      - "rust/crates/corrplot-core/Cargo.toml"
+      - "rust/crates/corrplot-core/**"
+      - "r/corrplotng/DESCRIPTION"
+      - "r/corrplotng/tools/prepare-rust-package.R"
+      - "r/corrplotng/src/rust/**"
       - ".github/workflows/rust-cran-dependency-audit.yml"
   # Full vendoring and offline-build audit, weekly.
   schedule:
@@ -45,6 +48,96 @@ jobs:
       - name: Enforce dependency license policy
         working-directory: rust/bindings/r/rextendr-prototype
         run: cargo deny check licenses
+
+
+  production-r-license-policy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: r-lib/actions/setup-r@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prepare the production R package and its locked vendor sources
+        run: Rscript r/corrplotng/tools/prepare-rust-package.R
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Verify production R Cargo lockfile
+        working-directory: r/corrplotng/src/rust
+        run: cargo metadata --locked --format-version 1 > /dev/null
+      - name: Enforce production R dependency license policy
+        working-directory: r/corrplotng/src/rust
+        run: cargo deny check licenses
+
+  production-r-full-audit:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: r-lib/actions/setup-r@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prepare the production R package and its locked vendor sources
+        run: Rscript r/corrplotng/tools/prepare-rust-package.R
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Verify production R Cargo lockfile
+        working-directory: r/corrplotng/src/rust
+        run: cargo metadata --locked --format-version 1 > cargo-metadata.json
+      - name: Enforce production R dependency license policy
+        working-directory: r/corrplotng/src/rust
+        run: cargo deny check licenses
+      - name: Capture production R dependency tree
+        working-directory: r/corrplotng/src/rust
+        run: cargo tree --locked --all-features > cargo-tree.txt
+      - name: Verify production R offline build from vendored sources
+        working-directory: r/corrplotng/src
+        run: |
+          tar -xf rust/vendor.tar.xz
+          mkdir -p .cargo
+          cp rust/vendor-config.toml .cargo/config.toml
+          CARGO_HOME="$PWD/.cargo" cargo build --locked --offline --release --manifest-path=rust/Cargo.toml --target-dir=rust/target --lib
+      - name: Create production R dependency license inventory
+        working-directory: r/corrplotng/src/rust
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          metadata = json.loads(Path("cargo-metadata.json").read_text())
+          packages = sorted(metadata["packages"], key=lambda p: (p["name"], p["version"]))
+          lines = ["name\\tversion\\tlicense\\tlicense_file\\tsource"]
+          for package in packages:
+              lines.append("\\t".join([
+                  package["name"],
+                  package["version"],
+                  package.get("license") or "MISSING",
+                  package.get("license_file") or "",
+                  package.get("source") or "workspace",
+              ]))
+          Path("dependency-licenses.tsv").write_text("\\n".join(lines) + "\\n")
+          missing = [p for p in packages if not p.get("license") and not p.get("license_file")]
+          print(f"Resolved packages: {len(packages)}")
+          print(f"Packages without SPDX license or license-file metadata: {len(missing)}")
+          for package in missing:
+              print(f"  {package['name']} {package['version']}")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: production-r-cargo-dependency-audit
+          path: |
+            r/corrplotng/src/rust/Cargo.lock
+            r/corrplotng/src/rust/cargo-metadata.json
+            r/corrplotng/src/rust/cargo-tree.txt
+            r/corrplotng/src/rust/dependency-licenses.tsv
+            r/corrplotng/src/rust/vendor-config.toml
+            r/corrplotng/src/rust/vendor.tar.xz
+          if-no-files-found: error
+          retention-days: 14
 
   full-audit:
     # PRs run only the inexpensive license-policy check. Scheduled and
