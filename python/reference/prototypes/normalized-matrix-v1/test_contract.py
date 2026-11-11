@@ -10,7 +10,7 @@ import jsonschema
 from validate import validate_normalized_matrix
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[4]
 SCHEMA = json.loads((ROOT / "contracts" / "normalized-matrix-v1" / "schema.json").read_text(encoding="utf-8"))
 VALID = json.loads((ROOT / "fixtures" / "normalized-matrix-v1" / "valid-cases.json").read_text(encoding="utf-8"))
 INVALID = json.loads((ROOT / "fixtures" / "normalized-matrix-v1" / "invalid-cases.json").read_text(encoding="utf-8"))

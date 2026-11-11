@@ -1017,7 +1017,7 @@ mod tests {
     #[test]
     fn publication_scene_matches_scene_v1_structure_for_both_matrix_kinds() {
         let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../prototypes/publication-config-v1/examples/basic.json");
+            .join("../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let source = std::fs::read_to_string(&fixture).unwrap();
         for (kind, expected_scene_kind) in [
             ("correlation", "correlation_plot"),
@@ -1102,7 +1102,7 @@ mod tests {
     #[test]
     fn general_negative_values_normalize_from_zero_to_one() {
         let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../prototypes/publication-config-v1/examples/basic.json");
+            .join("../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let source = std::fs::read_to_string(&fixture).unwrap();
         let config = source
             .replace(
@@ -1198,7 +1198,7 @@ mod tests {
     #[test]
     fn publication_ordering_reorders_both_axes_and_preserves_scene_source_mapping() {
         let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../prototypes/publication-config-v1/examples/basic.json");
+            .join("../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let source = std::fs::read_to_string(fixture).unwrap();
         let path = std::env::temp_dir().join(format!(
             "corrplot-ng-ordering-scene-{}.json",
@@ -1599,7 +1599,7 @@ mod prepared_html_table_tests {
 
     #[test]
     fn publication_html_table_uses_prepared_order_and_keeps_hidden_triangle_values() {
-        let fixture = include_str!("../../../../prototypes/publication-config-v1/examples/basic.json");
+        let fixture = include_str!("../../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let config = fixture
             .replace("\"ordering\": \"original\"", "\"ordering\": \"alphabetical\"")
             .replace("\"display\": \"full\"", "\"display\": \"upper\"");
@@ -1622,7 +1622,7 @@ mod renderer_output_tests {
     #[test]
     fn publication_svg_renderer_uses_shared_output_contract_without_changing_defaults() {
         let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../prototypes/publication-config-v1/examples/basic.json");
+            .join("../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let publication = Publication::load(config.to_str().unwrap()).unwrap();
         let title = "renderer contract";
         let expected = publication.svg(title);
@@ -1635,7 +1635,7 @@ mod renderer_output_tests {
     #[test]
     fn publication_rgba_renderer_renders_the_prepared_scene_directly() {
         let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../prototypes/publication-config-v1/examples/basic.json");
+            .join("../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let publication = Publication::load(config.to_str().unwrap()).unwrap();
         let input = PublicationRenderInput { publication: &publication, title: "raster test" };
         let options = OutputOptions::Rgba(corrplot_core::output::RasterOptions::new(640, 480));
@@ -1649,7 +1649,7 @@ mod renderer_output_tests {
     #[test]
     fn publication_svg_renderer_rejects_raster_options() {
         let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../prototypes/publication-config-v1/examples/basic.json");
+            .join("../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let publication = Publication::load(config.to_str().unwrap()).unwrap();
         let options = OutputOptions::Png(corrplot_core::output::RasterOptions::new(320, 240));
         let input = PublicationRenderInput { publication: &publication, title: "raster" };

@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 HERE = Path(__file__).parent
-sys.path.insert(0, str(HERE.parents[1] / "python" / "reference"))
+sys.path.insert(0, str(HERE.parents[1]))
 
 from publication_svg import render_publication_svg
 from scene import build_scene
@@ -17,7 +17,7 @@ SVG_NS = "{http://www.w3.org/2000/svg}"
 class PublicationSvgTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        config = json.loads((HERE.parents[1] / "python" / "reference" / "example.json").read_text(encoding="utf-8"))
+        config = json.loads((HERE.parents[1] / "example.json").read_text(encoding="utf-8"))
         cls.scene = build_scene(config)
 
     def render(self, **overrides):

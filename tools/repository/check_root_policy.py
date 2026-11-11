@@ -43,7 +43,6 @@ ALLOWED_ROOT_DIRECTORIES = {
 
 TRANSITIONAL_ROOT_DIRECTORIES = {
     "benchmarks": "#373 — move cross-runtime benchmark tooling under repository tooling or owning ecosystems",
-    "prototypes": "#373 — move retained Python prototype implementations under their owning Python project",
     "scripts": "#373 — move repo-wide orchestration to tools/repository/ and R-only tools to r/",
     "tests": "#373 — move repository-level tests to tools/repository and canonical fixtures to fixtures/",
 }

@@ -12,7 +12,7 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `r/` | Production-facing R package at `r/corrplotng/`; owns R APIs, legacy compatibility, graphics-device behavior, and package tests. |
 | `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |
 | `experiments/` | Disposable cross-runtime experiments; non-production and not supported package backends. |
-| `prototypes/` | Retained Python reference implementations and validators for normalized-matrix and publication configuration/SVG prototypes. Normative schemas live under `contracts/`; canonical shared fixtures live under `fixtures/`. |
+| `python/reference/prototypes/` | Python semantic validators and publication configuration/SVG prototypes, tests, and examples. Normative schemas live under `contracts/`; canonical shared fixtures live under `fixtures/`. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
 | `scripts/` | Maintainer and CI utilities that operate across packages or validate generated artifacts. |
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
@@ -20,16 +20,6 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `.github/` | GitHub Actions workflows, issue templates, and repository automation. |
 
 Root-level manifests and configuration files remain at the repository root when their tools expect them there.
-
-## Retained Python prototypes under `prototypes/`
-
-The remaining `prototypes/` tree contains executable Python reference code and tests, not canonical contract definitions:
-
-- `normalized-matrix-v1/` contains the Python semantic validator and its tests. Its normative schema is `contracts/normalized-matrix-v1/`; canonical valid/invalid fixtures are `fixtures/normalized-matrix-v1/`.
-- `publication-config-v1/` contains the Python publication-configuration prototype, examples, and tests. Its normative schema and specification are under `contracts/publication-config-v1/`.
-- `publication-svg-v1/` contains the Python publication-SVG prototype, examples, and tests. Its normative schema and specification are under `contracts/publication-svg-v1/`.
-
-The Python scene/SVG reference is separately owned by `python/reference/`. Do not treat prototype implementation code as the source of truth for versioned schemas or shared fixtures.
 
 ## Rust package boundary
 

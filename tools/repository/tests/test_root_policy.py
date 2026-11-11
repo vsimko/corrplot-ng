@@ -24,14 +24,14 @@ class RootPolicyTests(unittest.TestCase):
             "rust/crates/corrplot-core/Cargo.toml",
             "r/corrplotng/DESCRIPTION",
             "experiments/wasm-r/README.md",
-            "prototypes/publication-config-v1/README.md",
+            "python/reference/prototypes/publication-config-v1/README.md",
         ]
         errors, warnings = validate_paths(paths)
         self.assertEqual(errors, [])
         self.assertFalse(any("package.json" in warning for warning in warnings))
         self.assertFalse(any("requirements-dev.txt" in warning for warning in warnings))
         self.assertFalse(any("experiments/" in warning for warning in warnings))
-        self.assertTrue(any("prototypes/" in warning for warning in warnings))
+        self.assertFalse(any("prototypes/" in warning for warning in warnings))
 
     def test_adr_approved_experiments_root_is_allowed(self):
         errors, warnings = validate_paths(["experiments/wasm-r/README.md"])

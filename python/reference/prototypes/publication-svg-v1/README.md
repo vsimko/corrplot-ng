@@ -21,7 +21,7 @@ The font-width estimate is deliberately conservative and does not embed fonts. T
 From the repository root:
 
 ```sh
-python -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
+python -m unittest discover -s python/reference/prototypes/publication-svg-v1 -p 'test_*.py' -v
 ```
 
 This is an initial export contract and regression suite, not a promise of pixel-identical rendering across operating systems. PDF and PNG export remain out of scope.

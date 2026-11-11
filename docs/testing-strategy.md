@@ -61,7 +61,7 @@ Run the contract tests from the repository root:
 
 ```sh
 python -m unittest discover -s tests -v
-python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+python -m unittest discover -s python/reference/prototypes/normalized-matrix-v1 -p 'test_*.py' -v
 ```
 
 The R adapter tests run through `R CMD check --as-cran r/corrplotng`.
