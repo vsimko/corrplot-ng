@@ -74,7 +74,7 @@ quick_checks() {
   check_python_dependencies
   # Check the canonical shared corpus before running language-specific contract tests.
   "$PYTHON_BIN" -m json.tool fixtures/matrix-input-v1/correlation-cases.json > /dev/null
-  "$PYTHON_BIN" -m unittest discover -s tests -v
+  "$PYTHON_BIN" -m unittest discover -s tools/repository/tests -v
   "$PYTHON_BIN" - <<'PY'
 import json
 import jsonschema
