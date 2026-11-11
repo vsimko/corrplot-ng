@@ -1,9 +1,7 @@
 #' Parse a legacy corrplot label
 #'
-#' Labels prefixed with `:`, `=`, or `#' Parse a legacy corrplot label
-#'
-#' 
-#' prefix) are parsed as native R plotmath expressions. Other labels are
+#' Labels prefixed with `:`, `=`, or `$` are parsed as native R plotmath
+#' expressions. Other labels are
 #' returned unchanged as character strings.
 #'
 #' @param label One non-missing character string.

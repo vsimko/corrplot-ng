@@ -133,6 +133,46 @@ jobs:
           _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
           CARGO_NET_OFFLINE: "true"
         run: R CMD check --as-cran --no-manual corrplotng_*.tar.gz
+      - name: Build Windows binary package
+        if: runner.os == 'Windows'
+        working-directory: r
+        shell: bash
+        run: R CMD INSTALL --build --no-multiarch corrplotng_*.tar.gz
+      - name: Install Windows binary without a Rust toolchain
+        if: runner.os == 'Windows'
+        working-directory: r
+        shell: pwsh
+        run: |
+          $env:PATH = (($env:PATH -split ';') | Where-Object {
+            $_ -and ($_ -notmatch '(?i)\.cargo[\\/]bin|\.rustup[\\/]')
+          }) -join ';'
+          if (Get-Command cargo -ErrorAction SilentlyContinue) {
+            throw "cargo is still available on PATH"
+          }
+          if (Get-Command rustc -ErrorAction SilentlyContinue) {
+            throw "rustc is still available on PATH"
+          }
+          $binary = Get-ChildItem -Path . -Filter 'corrplotng_*.zip' |
+            Select-Object -First 1
+          if (-not $binary) {
+            throw "R CMD INSTALL --build did not produce a Windows binary ZIP"
+          }
+          $library = Join-Path $env:RUNNER_TEMP 'corrplotng-binary-library'
+          New-Item -ItemType Directory -Force -Path $library | Out-Null
+          & R CMD INSTALL "--library=$library" $binary.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $libraryR = $library.Replace('\', '/')
+          @"
+          .libPaths(c("$libraryR", .libPaths()))
+          library(corrplotng)
+          scene <- corrplot_ng(matrix(c(1, 0.5, 0.5, 1), nrow = 2), engine = "scene")
+          svg <- corrplot_ng_render_svg(scene)
+          stopifnot(is.character(svg), length(svg) == 1L, grepl("<svg ", svg, fixed = TRUE))
+          "@ | Set-Content -Encoding utf8 (Join-Path $env:RUNNER_TEMP 'test-corrplotng-binary.R')
+          & Rscript (Join-Path $env:RUNNER_TEMP 'test-corrplotng-binary.R')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "Windows binary installation and SVG smoke test passed without Cargo/rustc on PATH." |
+            Set-Content -Encoding utf8 (Join-Path (Get-Location) 'corrplotng-windows-binary-evidence.txt')
       - name: Upload public CI validation evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -142,5 +182,7 @@ jobs:
             r/corrplotng_*.tar.gz
             r/corrplotng.Rcheck/**
             r/corrplotng-build-evidence.txt
+            r/corrplotng_*.zip
+            r/corrplotng-windows-binary-evidence.txt
           if-no-files-found: warn
           retention-days: 14
