@@ -27,8 +27,6 @@ if (!file.copy(core_source, core_target, recursive = TRUE)) {
 }
 
 rust_dir <- file.path(package_root, "src", "rust")
-old_dir <- getwd()
-on.exit(setwd(old_dir), add = TRUE)
 setwd(rust_dir)
 
 run_checked <- function(command, arguments, stdout = FALSE) {
