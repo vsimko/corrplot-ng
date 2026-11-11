@@ -120,7 +120,7 @@ test_rust_cli() {
   rust/target/release-cli/corrplot-ng render \
     --config python/reference/prototypes/publication-config-v1/examples/basic.json \
     --output "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
-  "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
+  "$PYTHON_BIN" tools/repository/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
 }
 
 test_node() {
