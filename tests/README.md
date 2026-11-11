@@ -24,7 +24,7 @@ The reference is `corrplot` 0.95 at commit `62532f700e6c9d04b93ffbf0bf56e264b0e0
 Regeneration is opt-in and refuses to run unless the installed package version matches the pinned manifest:
 
 ```sh
-UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript scripts/update-legacy-visual-snapshots.R
+UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript r/corrplotng/tools/update-legacy-visual-snapshots.R
 ```
 
 Review all generated PNGs and commit the complete set together. Ordinary tests never rewrite baselines.
