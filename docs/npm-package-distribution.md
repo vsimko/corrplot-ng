@@ -84,6 +84,17 @@ The staging workflow includes the React and Vue adapter tarballs after WASM and 
 
 The staging workflow must remain non-publishing: it must not run `npm publish`, use npm credentials, request OIDC publication permissions, or publish automatically from tags. The current stage is build/test/package only.
 
+### Access-control boundary for preview artifacts
+
+The repository `vsimko/corrplot-ng` is public. GitHub Actions artifacts are downloadable by anyone who has read access to the repository; for this public repository, that means the staging bundle is effectively public. GitHub Release assets in this repository would also be public. Therefore the current staging artifact is a CI validation bundle, **not a private preview distribution**, and must not be shared or described as a non-public preview channel.
+
+A genuinely private preview requires a registry/package namespace with independent access controls:
+
+- **Private npm registry package:** retain the current `@corrplot-ng` package names only after confirming ownership and access to that npm organization/scope. Private npm packages require an appropriately entitled npm account/organization and authenticated consumers. Scope ownership and publication authority remain separate release gates under #293.
+- **Private GitHub Packages npm package:** the npm registry supports granular package visibility and access controls, but package scopes are tied to a GitHub user or organization. The current `@corrplot-ng` scope is not the repository owner's `@vsimko` scope. A private preview under `@vsimko` would therefore need a distinct, coordinated preview namespace and rewritten internal package references. If linked to this public repository, inherited repository permissions must be reviewed and removed/restricted before any tester receives access. Consumers also need authenticated package access.
+
+Do not publish to either registry, create credentials, or change package scopes until maintainers explicitly choose the namespace, identify authorized preview consumers, and approve the access model. The existing workflow remains useful for build/package validation only.
+
 ## Future publication order
 
 When a public release is explicitly approved, the intended order is:
