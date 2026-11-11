@@ -12,7 +12,7 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `r/` | Production-facing R package at `r/corrplotng/`; owns R APIs, legacy compatibility, graphics-device behavior, and package tests. |
 | `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |
 | `experiments/` | Disposable cross-runtime experiments; non-production and not supported package backends. |
-| `prototypes/` | Transitional home for normative versioned contracts whose current location is historical, not a statement that they are throwaway. |
+| `prototypes/` | Retained Python reference implementations and validators for normalized-matrix and publication configuration/SVG prototypes. Normative schemas live under `contracts/`; canonical shared fixtures live under `fixtures/`. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
 | `scripts/` | Maintainer and CI utilities that operate across packages or validate generated artifacts. |
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
@@ -21,12 +21,15 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 
 Root-level manifests and configuration files remain at the repository root when their tools expect them there.
 
-## Categories currently grouped under `prototypes/`
+## Retained Python prototypes under `prototypes/`
 
-The remaining transitional paths are retained until their owning migration issues update package manifests, CI filters, and documented commands:
+The remaining `prototypes/` tree contains executable Python reference code and tests, not canonical contract definitions:
 
-- **Normative, versioned contracts:** `normalized-matrix-v1/`, `publication-config-v1/`, `publication-svg-v1/`, the scene-v1 schema and fixtures, and `renderer-capabilities-v1.schema.json`. Their schemas and compatibility rules are normative; their current location under `prototypes/` is historical, not a statement that the contracts are throwaway.
-The Python scene/SVG reference is now owned by `python/reference/`; it is not part of the transitional `prototypes/` tree.
+- `normalized-matrix-v1/` contains the Python semantic validator and its tests. Its normative schema is `contracts/normalized-matrix-v1/`; canonical valid/invalid fixtures are `fixtures/normalized-matrix-v1/`.
+- `publication-config-v1/` contains the Python publication-configuration prototype, examples, and tests. Its normative schema and specification are under `contracts/publication-config-v1/`.
+- `publication-svg-v1/` contains the Python publication-SVG prototype, examples, and tests. Its normative schema and specification are under `contracts/publication-svg-v1/`.
+
+The Python scene/SVG reference is separately owned by `python/reference/`. Do not treat prototype implementation code as the source of truth for versioned schemas or shared fixtures.
 
 ## Rust package boundary
 
@@ -44,10 +47,10 @@ The canonical sources and package copies are:
 
 | Canonical source | Package copy | Policy |
 | --- | --- | --- |
-| `prototypes/normalized-matrix-v1/fixtures/valid-cases.json` | `r/corrplotng/inst/extdata/normalized-matrix-v1/valid-cases.json` | Exact byte-for-byte copy; required in the installed R package. |
-| `prototypes/normalized-matrix-v1/fixtures/invalid-cases.json` | `r/corrplotng/inst/extdata/normalized-matrix-v1/invalid-cases.json` | Exact byte-for-byte copy; required in the installed R package. |
+| `fixtures/normalized-matrix-v1/valid-cases.json` | `r/corrplotng/inst/extdata/normalized-matrix-v1/valid-cases.json` | Exact byte-for-byte copy; required in the installed R package. |
+| `fixtures/normalized-matrix-v1/invalid-cases.json` | `r/corrplotng/inst/extdata/normalized-matrix-v1/invalid-cases.json` | Exact byte-for-byte copy; required in the installed R package. |
 | `tests/legacy-visual/cases.json` | `r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json` | Exact byte-for-byte package-test copy. |
-| `tests/fixtures/general-matrix-cases.json` | `r/corrplotng/inst/extdata/general-matrix-cases.json` | The package copy is a declared projection: it omits the canonical `all-missing` invalid render case. Keep all other content identical. |
+| `fixtures/matrix-input-v1/general-matrix-cases.json` | `r/corrplotng/inst/extdata/general-matrix-cases.json` | The package copy is a declared projection: it omits the canonical `all-missing` invalid render case. Keep all other content identical. |
 
 `tests/test_fixture_integrity.py` checks the exact copies and the declared general-matrix projection. Update that test and this table together if the ownership or projection changes. Do not edit package copies independently.
 
