@@ -8,7 +8,6 @@ on:
       - "npm/packages/native-node/**"
       - "npm/packages/native-node-*/**"
       - "npm/tests/cross-backend/**"
-      - "tests/fixtures/**"
       - "npm/packages/wasm/**"
       - "npm/tests/cross-backend/**"
       - "rust/bindings/node/**"
