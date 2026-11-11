@@ -43,7 +43,7 @@ flowchart TB
     ROOT --> NPM["npm/\nprivate npm workspace + lockfile"]
     ROOT --> RPKG["r/corrplotng/\nR package DESCRIPTION"]
     ROOT --> PY["python/reference/\nPython reference"]
-    ROOT --> TESTS["tests/, contracts/, fixtures/\nshared inputs and conformance"]
+    ROOT --> TESTS["tools/repository/tests/, contracts/, fixtures/\nrepository test harnesses and canonical conformance data"]
     ROOT --> ORCH["tools/repository/dev-check.sh\noptional orchestration"]
     RUST --> CORE["rust/crates/corrplot-core"]
     RUST --> NODE_BINDING["rust/bindings/node"]
