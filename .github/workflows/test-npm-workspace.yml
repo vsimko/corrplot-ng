@@ -22,7 +22,6 @@ on:
     paths:
       - "contracts/**"
       - "fixtures/**"
-      - "fixtures/**"
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
