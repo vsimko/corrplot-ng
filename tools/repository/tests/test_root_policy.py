@@ -7,7 +7,7 @@ from check_root_policy import validate_paths
 
 
 class RootPolicyTests(unittest.TestCase):
-    def test_current_migration_baseline_allows_experiments_and_warns_only_for_benchmarks(self):
+    def test_current_root_baseline_allows_experiments_without_transitional_directories(self):
         paths = [
             ".gitattributes",
             ".gitignore",
@@ -24,7 +24,6 @@ class RootPolicyTests(unittest.TestCase):
             "rust/crates/corrplot-core/Cargo.toml",
             "r/corrplotng/DESCRIPTION",
             "experiments/wasm-r/README.md",
-            "benchmarks/README.md",
             "python/reference/prototypes/publication-config-v1/README.md",
         ]
         errors, warnings = validate_paths(paths)
@@ -33,8 +32,7 @@ class RootPolicyTests(unittest.TestCase):
         self.assertFalse(any("requirements-dev.txt" in warning for warning in warnings))
         self.assertFalse(any("experiments/" in warning for warning in warnings))
         self.assertFalse(any("prototypes/" in warning for warning in warnings))
-        self.assertEqual(len(warnings), 1)
-        self.assertTrue(warnings[0].startswith("benchmarks/"))
+        self.assertEqual(warnings, [])
 
     def test_adr_approved_experiments_root_is_allowed(self):
         errors, warnings = validate_paths(["experiments/wasm-r/README.md"])
@@ -69,10 +67,15 @@ class RootPolicyTests(unittest.TestCase):
         errors, _ = validate_paths(["README.md", "new-product-root/source.rs"])
         self.assertTrue(any("new-product-root" in error for error in errors))
 
-    def test_root_tests_directory_is_no_longer_a_transition_exception(self):
+    def test_root_tests_directory_is_not_allowed(self):
         errors, warnings = validate_paths(["tests/test_fixture_integrity.py"])
         self.assertTrue(any(error.startswith("tests: unreviewed repository-root entry") for error in errors))
-        self.assertFalse(any(warning.startswith("tests/") for warning in warnings))
+        self.assertEqual(warnings, [])
+
+    def test_root_benchmarks_directory_is_not_allowed(self):
+        errors, warnings = validate_paths(["benchmarks/run_shared_core.py"])
+        self.assertTrue(any(error.startswith("benchmarks: unreviewed repository-root entry") for error in errors))
+        self.assertEqual(warnings, [])
 
 
 if __name__ == "__main__":
