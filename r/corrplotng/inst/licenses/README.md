@@ -11,5 +11,7 @@ notice is shared by those three crates; it is copied into the generated R
 package under `inst/licenses/` so it remains in the package source/install
 tree even though the individual vendored crate directories do not contain it.
 
-The remaining dependencies' license texts are retained in their Cargo vendor
-directories by `cargo vendor`.
+The copyright holders for the complete bundled Rust dependency set are listed
+in `inst/COPYRIGHTS` and in the package `Authors@R` field. The remaining
+third-party license texts are retained in their Cargo vendor directories by
+`cargo vendor`.

@@ -1,7 +1,14 @@
 Package: corrplotng
 Title: Next Generation Correlation Plots
 Version: 0.0.0.9000
-Authors@R: person("corrplot-ng contributors", role = c("aut", "cre"), email = "maintainers@example.invalid")
+Authors@R: c(
+    person("corrplot-ng contributors", role = c("aut", "cre"), email = "maintainers@example.invalid"),
+    person("The Extendr", "contributors", role = "cph"),
+    person("Marvin", "Löbel", role = "cph"),
+    person("Aleksey", "Kladov", role = "cph"),
+    person("David", "Tolnay", role = "cph"),
+    person("Alex", "Crichton", role = "cph")
+    )
 Description: An R adapter for corrplot-ng. It retains a legacy-compatible
     plotting path through the upstream corrplot package and provides an
     experimental scene-v1 preparation path, a Rust-backed SVG renderer,
