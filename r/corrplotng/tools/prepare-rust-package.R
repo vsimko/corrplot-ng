@@ -20,8 +20,11 @@ if (length(missing)) {
 if (dir.exists(core_target)) {
   unlink(core_target, recursive = TRUE, force = TRUE)
 }
-dir.create(dirname(core_target), recursive = TRUE, showWarnings = FALSE)
-if (!file.copy(core_source, core_target, recursive = TRUE)) {
+dir.create(core_target, recursive = TRUE, showWarnings = FALSE)
+core_entries <- list.files(core_source, all.files = TRUE, no.. = TRUE,
+                           full.names = TRUE)
+if (!length(core_entries) ||
+    !all(file.copy(core_entries, core_target, recursive = TRUE))) {
   stop("Could not copy the authoritative shared Rust core into the R source package",
        call. = FALSE)
 }
