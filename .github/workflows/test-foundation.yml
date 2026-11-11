@@ -37,9 +37,6 @@ jobs:
               - 'fixtures/**'
               - 'npm/packages/typescript/**'
               - 'npm/packages/wasm/package.json'
-              - 'benchmarks/compare_runs.py'
-              - 'benchmarks/test_compare_runs.py'
-              - 'benchmarks/run_shared_core.py'
               - 'tools/repository/validate_svg.py'
               - 'tools/repository/dev-check.sh'
               - 'python/reference/requirements-dev.txt'
@@ -85,7 +82,7 @@ jobs:
       - name: Test TypeScript facade core
         run: node --test npm/packages/typescript/test/factory.test.js npm/packages/typescript/test/package-isolation.test.js npm/packages/typescript/test/node-cjs.test.cjs
       - name: Test benchmark run comparison
-        run: python -m unittest discover -s benchmarks -p 'test_compare_runs.py' -v
+        run: python -m unittest discover -s tools/repository/benchmarks -p 'test_compare_runs.py' -v
 
   svg-interoperability:
     name: Rasterize a self-contained SVG with librsvg
