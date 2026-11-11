@@ -132,7 +132,7 @@ presentation fidelity or complete legacy API compatibility.
 
 ### 4. SVG structure, export, and interoperability
 
-`scripts/validate_svg.py` checks the supported self-contained SVG subset:
+`tools/repository/validate_svg.py` checks the supported self-contained SVG subset:
 well-formed XML, namespace and dimensions, viewBox geometry, unique IDs,
 local and accessibility references, and the absence of scripts, event
 handlers, remote assets, and external CSS dependencies.
@@ -146,7 +146,7 @@ deterministic serialization.
 Run the validator against an artifact with:
 
 ```sh
-python scripts/validate_svg.py figure.svg
+python tools/repository/validate_svg.py figure.svg
 ```
 
 A manual LaTeX embedding smoke test is documented in
@@ -261,7 +261,7 @@ The binding READMEs document runtime boundaries.
 
 ### Local command entry point
 
-Use `bash scripts/dev-check.sh` from the repository root to run the same
+Use `bash tools/repository/dev-check.sh` from the repository root to run the same
 component checks locally without copying long CI command sequences:
 
 - `quick`: fixture integrity, capability-schema validation, normalized
