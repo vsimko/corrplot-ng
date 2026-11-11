@@ -24,6 +24,7 @@ class RootPolicyTests(unittest.TestCase):
             "rust/crates/corrplot-core/Cargo.toml",
             "r/corrplotng/DESCRIPTION",
             "experiments/wasm-r/README.md",
+            "prototypes/publication-config-v1/README.md",
         ]
         errors, warnings = validate_paths(paths)
         self.assertEqual(errors, [])
