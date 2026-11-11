@@ -26,7 +26,7 @@ on:
       - "npm/packages/native-node/**"
       - "npm/packages/native-node-*/**"
       - "npm/tests/cross-backend/**"
-      - "tests/fixtures/**"
+      - "fixtures/**"
       - "npm/packages/wasm/**"
       - "rust/bindings/node/**"
       - "rust/bindings/wasm/**"
