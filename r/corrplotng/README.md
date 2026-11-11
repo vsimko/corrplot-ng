@@ -1,6 +1,6 @@
 # R implementation
 
-This directory is the root of the provisional R package.
+This directory is the root of the production R package.
 
 - DESCRIPTION, NAMESPACE, and LICENSE define the R package.
 - R/ contains the R interface.
@@ -12,7 +12,7 @@ This directory is the root of the provisional R package.
 `corrplot_ng()` has two explicit paths:
 
 - The default `engine = "legacy"` delegates to the original corrplot package and preserves its plotting behavior.
-- Experimental `engine = "scene"` converts a supported square correlation matrix into a renderer-neutral scene-v1 object. It prepares scene data; it does not draw a plot yet. Unsupported plotting arguments are rejected instead of being ignored.
+- Experimental `engine = "scene"` converts a supported square matrix into a renderer-neutral scene-v1 object. `corrplot_ng_render_svg()` renders supported circle-glyph scenes through the shared Rust SVG renderer. Unsupported plotting arguments are rejected instead of being ignored.
 
 See [the adapter design](../../docs/legacy-r-adapter.md) for argument mapping, current limitations, and the migration sequence.
 
@@ -41,8 +41,10 @@ parameter: doing so would restore plot coordinates and invalidate the
 existing plot window used by `add = TRUE`. The adapter also does not call
 `dev.off()`; closing a device is always the caller's responsibility.
 
-The experimental `engine = "scene"` path only prepares a scene-v1 object and
-does not access a graphics device. Regression tests in
+The experimental `engine = "scene"` path prepares a scene-v1 object without
+accessing a graphics device. `corrplot_ng_render_svg()` renders supported
+circle-glyph scenes through the shared Rust core, also without opening or
+modifying a graphics device. Regression tests in
 `tests/testthat/test-graphics-device.R` cover current-device ownership,
 `add = TRUE` composition, restoration after an error, and the scene path's
 absence of graphics side effects.
@@ -53,18 +55,15 @@ absence of graphics side effects.
 
 See [the adapter design](../../docs/legacy-r-adapter.md) and the `corrRect` / `corrRect.hclust` help pages.
 
-Run checks from this directory:
+From the repository root, prepare the self-contained source package and check it with:
 
 ```sh
-R CMD check .
-```
-
-From the repository root, build and check the source package with:
-
-```sh
+Rscript r/corrplotng/tools/prepare-rust-package.R
 R CMD build r/corrplotng
 R CMD check --as-cran --no-manual corrplotng_*.tar.gz
 ```
+
+The preparation script copies the authoritative core from `rust/crates/corrplot-core` and creates the offline Cargo vendor archive. Building from source requires Cargo and rustc 1.78 or later; users of prebuilt R binaries do not need Rust on the consumer machine. The source tarball is created in the current working directory.
 
 The tarball is created in the current working directory. Run the commands from a
 clean temporary directory if you want to keep generated package artifacts out
@@ -75,7 +74,7 @@ of the repository.
 `corrplot_ng_normalize_matrix(x, metadata = NULL)` converts an already-computed
 square numeric matrix or numeric data frame into the language-neutral
 normalized-matrix v1 object defined in
-`prototypes/normalized-matrix-v1/schema.json`.
+`../../contracts/normalized-matrix-v1/schema.json`.
 
 - If both row and column names are supplied, they must match exactly. If only
   one axis has names, those labels are used for both; otherwise `V1` through

@@ -74,6 +74,33 @@ corrplot_ng <- function(corr, ..., engine = c("legacy", "scene")) {
   .corrplot_ng_build_scene_v1(corr, options)
 }
 
+
+#' Render a scene-v1 object as SVG
+#'
+#' Uses the shared Rust scene parser and SVG renderer. The initial R integration
+#' supports circle glyph scenes; unsupported presentation features fail with a
+#' path-specific scene-v1 diagnostic rather than being silently approximated.
+#'
+#' @param scene A scene-v1 object returned by corrplot_ng(engine = "scene").
+#' @return A single character string containing SVG markup.
+#' @export
+corrplot_ng_render_svg <- function(scene) {
+  if (!inherits(scene, "corrplot_ng_scene")) {
+    stop("scene must be a corrplot_ng_scene object", call. = FALSE)
+  }
+  if (!identical(scene$glyph_method, "circle")) {
+    stop("the Rust SVG renderer currently supports only circle glyph scenes", call. = FALSE)
+  }
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("corrplot_ng_render_svg() requires the suggested 'jsonlite' package", call. = FALSE)
+  }
+  scene_json <- as.character(jsonlite::toJSON(
+    unclass(scene), auto_unbox = TRUE, null = "null", na = "null",
+    digits = NA, pretty = FALSE
+  ))
+  render_scene_svg_rust(scene_json)
+}
+
 #' Mixed legacy corrplot adapter
 #'
 #' Delegates to corrplot.mixed and preserves its invisible return object.
@@ -326,7 +353,8 @@ corrplot_ng_mixed <- function(corr, ..., engine = "legacy") {
       has_observed_values = has_observed_values),
     width = left_margin + n * cell_size + 24, height = top_margin + n * cell_size + 64,
     labels = label_items, cells = cells, annotation = annotation,
-    glyph_method = method, text_annotations = text_annotations,
+    glyph_method = method, display_type = display_type, show_diagonal = options$diag,
+    text_annotations = text_annotations,
     title = "", description = "",
     style = list(positive_color = "#2166ac", negative_color = "#b2182b", zero_color = "#bdbdbd", missing_fill = "#f2f2f2", grid_color = "#e0e0e0"))
   class(scene) <- c("corrplot_ng_scene", "list")
