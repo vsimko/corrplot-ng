@@ -2,7 +2,7 @@
 """Compare native CLI startup and representative publication rendering.
 
 Build baseline and candidate binaries from separate revisions, then run:
-python benchmarks/cli_startup.py --baseline /path/to/baseline/corrplot-ng \
+python tools/repository/benchmarks/cli_startup.py --baseline /path/to/baseline/corrplot-ng \
   --candidate /path/to/candidate/corrplot-ng
 """
 from __future__ import annotations

@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/cross-language-benchmarks.yml"
-      - "benchmarks/**"
+      - "tools/repository/benchmarks/**"
       - "rust/bindings/r/rextendr-prototype/**"
   workflow_dispatch:
     inputs:
@@ -38,9 +38,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Test benchmark timing harness
-        run: python -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
+        run: python -m unittest discover -s tools/repository/benchmarks -p 'test_timing_method.py' -v
       - name: Run regular shared-core workloads
-        run: python benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
+        run: python tools/repository/benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
       - name: Upload shared-core results
         uses: actions/upload-artifact@v7
         with:
@@ -61,7 +61,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run B03 and B04 stress workloads
-        run: python benchmarks/run_shared_core.py --iterations 20 --include-stress --output benchmark-results/stress-results.json
+        run: python tools/repository/benchmarks/run_shared_core.py --iterations 20 --include-stress --output benchmark-results/stress-results.json
       - name: Upload shared-core stress results
         uses: actions/upload-artifact@v7
         with:
@@ -97,18 +97,18 @@ jobs:
             any::rextendr
             any::usethis
       - name: Test Python scene-v1 invalid-input handling
-        run: python -m unittest discover -s benchmarks -p 'test_scene_v1_*.py' -v
+        run: python -m unittest discover -s tools/repository/benchmarks -p 'test_scene_v1_*.py' -v
       - name: Parse benchmark R scripts
-        run: Rscript -e 'invisible(parse(file = "benchmarks/run_native_scene_v1.R")); invisible(parse(file = "benchmarks/test_native_scene_v1.R"))'
+        run: Rscript -e 'invisible(parse(file = "tools/repository/benchmarks/run_native_scene_v1.R")); invisible(parse(file = "tools/repository/benchmarks/test_native_scene_v1.R"))'
       - name: Export deterministic scene-v1 fixtures
-        run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
+        run: python tools/repository/benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
       - name: Generate Rust/rextendr package
         run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Install Rust/rextendr candidate
         shell: bash
         run: R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Verify semantic parity for pure R and Rust/rextendr
-        run: Rscript benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json
+        run: Rscript tools/repository/benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json
 
   cross-language:
     if: github.event_name != 'pull_request'
@@ -137,18 +137,18 @@ jobs:
             any::rextendr
             any::usethis
       - name: Test Python scene-v1 invalid-input handling
-        run: python -m unittest discover -s benchmarks -p 'test_scene_v1_*.py' -v
+        run: python -m unittest discover -s tools/repository/benchmarks -p 'test_scene_v1_*.py' -v
       - name: Export regular shared fixtures
-        run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
+        run: python tools/repository/benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
       - name: Benchmark Python reference on regular fixtures
-        run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
+        run: python tools/repository/benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/native-fixtures.json --output benchmark-results/python-scene-v1.json
       - name: Generate Rust/rextendr package
         run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Install Rust/rextendr candidate
         shell: bash
         run: R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Benchmark Pure R and Rust/rextendr on regular fixtures
-        run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
+        run: Rscript tools/repository/benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
       - name: Upload regular cross-language results
         uses: actions/upload-artifact@v7
         with:
@@ -158,13 +158,13 @@ jobs:
           retention-days: 90
       - name: Export B03/B04 stress fixtures
         if: github.event_name == 'workflow_dispatch' && inputs.include_stress
-        run: python benchmarks/export_native_fixtures.py --stress-only --output benchmark-results/stress-fixtures.json
+        run: python tools/repository/benchmarks/export_native_fixtures.py --stress-only --output benchmark-results/stress-fixtures.json
       - name: Benchmark Python reference on B03/B04
         if: github.event_name == 'workflow_dispatch' && inputs.include_stress
-        run: python benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/stress-fixtures.json --output benchmark-results/python-stress-scene-v1.json
+        run: python tools/repository/benchmarks/run_python_scene_v1_reference.py --fixtures benchmark-results/stress-fixtures.json --output benchmark-results/python-stress-scene-v1.json
       - name: Benchmark Rust/rextendr on B03/B04
         if: github.event_name == 'workflow_dispatch' && inputs.include_stress
-        run: Rscript benchmarks/run_native_scene_v1.R benchmark-results/stress-fixtures.json benchmark-results/native-stress-scene-v1.json --stress-mode
+        run: Rscript tools/repository/benchmarks/run_native_scene_v1.R benchmark-results/stress-fixtures.json benchmark-results/native-stress-scene-v1.json --stress-mode
       - name: Upload cross-language stress results
         if: github.event_name == 'workflow_dispatch' && inputs.include_stress
         uses: actions/upload-artifact@v7
@@ -205,11 +205,11 @@ jobs:
             any::rextendr
             any::usethis
       - name: Export deterministic scene-v1 fixtures
-        run: python benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
+        run: python tools/repository/benchmarks/export_native_fixtures.py --output benchmark-results/native-fixtures.json
       - name: Generate Rust/rextendr R package
         run: Rscript rust/bindings/r/rextendr-prototype/prepare-r-package.R
       - name: Build and install Rust/rextendr package
         shell: bash
         run: R CMD INSTALL rust/bindings/r/rextendr-prototype/.ci-r-package
       - name: Verify semantic parity for pure R and Rust/rextendr
-        run: Rscript benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json
+        run: Rscript tools/repository/benchmarks/test_native_scene_v1.R benchmark-results/native-fixtures.json

@@ -2,7 +2,7 @@ import importlib.util
 import unittest
 from pathlib import Path
 
-MODULE_PATH = Path(__file__).resolve().parents[3] / "benchmarks" / "run_shared_core.py"
+MODULE_PATH = Path(__file__).resolve().parents[3] / "tools" / "repository" / "benchmarks" / "run_shared_core.py"
 SPEC = importlib.util.spec_from_file_location("run_shared_core", MODULE_PATH)
 benchmark = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(benchmark)

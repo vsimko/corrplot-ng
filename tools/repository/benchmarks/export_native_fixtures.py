@@ -6,8 +6,8 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "benchmarks"))
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools" / "repository" / "benchmarks"))
 sys.path.insert(0, str(ROOT / "python" / "reference"))
 from run_shared_core import make_cases
 from scene import build_scene
@@ -61,7 +61,7 @@ def main() -> None:
         })
     payload = {
         "schema_version": 1,
-        "generator": "benchmarks/export_native_fixtures.py",
+        "generator": "tools/repository/benchmarks/export_native_fixtures.py",
         "seed": 20261029,
         "workloads": workloads,
     }

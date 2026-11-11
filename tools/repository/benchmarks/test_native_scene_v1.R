@@ -4,7 +4,7 @@ fixtures_path <- args[[1]]
 
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(corrplotngrustspike))
-source("benchmarks/scene_v1_reference.R")
+source("tools/repository/benchmarks/scene_v1_reference.R")
 
 same_scene <- function(value, expected) {
   comparison <- all.equal(value, expected, tolerance = 1e-12,

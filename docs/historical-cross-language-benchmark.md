@@ -39,7 +39,7 @@ package compilation and installation; those are separate packaging evidence.
 
 The original 2026-10-30 run used the following sequence. The C++/Rcpp setup and install commands have been retired and are intentionally omitted; they are not valid against current `main`. The historical workflow run links below preserve the original artifacts and measurements.
 
-For the current Python, pure-R and Rust/rextendr benchmark workflow, follow [benchmarks/README.md](README.md) and `.github/workflows/cross-language-benchmarks.yml`. The current workflow no longer installs Rcpp or references the removed C++ prototype.
+For the current Python, pure-R and Rust/rextendr benchmark workflow, follow [benchmark operations](benchmark-operations.md) and `.github/workflows/cross-language-benchmarks.yml`. The current workflow no longer installs Rcpp or references the removed C++ prototype.
 
 ## Input validation parity
 
@@ -56,7 +56,7 @@ Python-specific.
 
 Run the Python negative tests with:
 
-    python -m unittest discover -s benchmarks -p 'test_scene_v1_*.py' -v
+    python -m unittest discover -s tools/repository/benchmarks -p 'test_scene_v1_*.py' -v
 
 The R smoke harness exercises the same negative cases after both native
 packages are installed.
@@ -153,7 +153,7 @@ the C++/Rcpp and Rust/rextendr prototype packages on Ubuntu, macOS and Windows,
 then checked semantic parity for pure R and both native bindings. PR #332 later
 retired the C++/Rcpp implementation. The current package-smoke job builds and
 tests only the Rust/rextendr adapter plus the pure-R implementation; see
-[benchmarks/README.md](README.md) for current workflow behavior.
+[benchmark operations](benchmark-operations.md) for current workflow behavior.
 
 ## Python large-matrix stress run (2026-10-30)
 

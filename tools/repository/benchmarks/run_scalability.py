@@ -11,7 +11,7 @@ import time
 import tracemalloc
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "python" / "reference"))
 from renderer import render_scene_svg
 from scene import build_scene

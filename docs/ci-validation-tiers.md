@@ -30,7 +30,7 @@ retired implementation and its comparison material are historical only.
 | `CITATION.cff` or `validate-citation.yml` | `validate-citation.yml`: citation metadata validation |
 | `.github/workflows/**` | `test-workflows.yml`: actionlint validates every workflow, including manually dispatched workflows |
 | `requirements-dev.txt` or `.github/dependabot.yml` | Foundation quick checks verify the declared Python test dependency and local command entry point |
-| `.github/workflows/cross-language-benchmarks.yml`, `benchmarks/**`, `rust/bindings/r/rextendr-prototype/**`, or `rust/crates/corrplot-core/**` | `cross-language-benchmarks.yml`: benchmark-harness and shared-fixture parity smoke; timing/stress runs are reserved for manual dispatch |
+| `.github/workflows/cross-language-benchmarks.yml`, `tools/repository/benchmarks/**`, `rust/bindings/r/rextendr-prototype/**`, or `rust/crates/corrplot-core/**` | `cross-language-benchmarks.yml`: benchmark-harness and shared-fixture parity smoke; timing/stress runs are reserved for manual dispatch |
 
 `test-foundation.yml` and `test-r.yml` use pull-request path detection inside
 the workflow rather than event-level `paths` filters. Docs-only changes still

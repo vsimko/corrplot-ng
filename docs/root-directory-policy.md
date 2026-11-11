@@ -12,15 +12,9 @@ This policy implements the root-directory rules in [ADR 0003](adr/0003-monorepo-
 - `experiments/` for isolated, non-production research and cross-runtime proofs with independent build/test boundaries, as explicitly allowed by ADR 0003.
 - `tools/` only for repository-wide orchestration under `tools/repository/`; ecosystem executables belong with their ecosystem.
 
-## Explicit migration exceptions
+## Transitional root entries
 
-The following current entries remain documented migration exceptions. They are warnings in the checker until the owning files move to their final project roots; no new root-level package manager is permitted.
-
-| Current root entry | Reason / destination |
-|---|---|
-| `benchmarks/` | Mixed-runtime harness; split by ownership under final cleanup #373. |
-
-The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception; remaining benchmark ownership cleanup is tracked under #373. The checker fails on unreviewed root entries and on new root dependency manifests.
+None. The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception. The checker fails on every unreviewed root entry and on new root dependency manifests.
 
 ## Generated paths that must never be committed
 
@@ -43,4 +37,4 @@ python3 tools/repository/check_root_policy.py
 python3 -m unittest discover -s tools/repository/tests -p 'test_*.py' -v
 ```
 
-The foundation CI job runs both commands. When a migration removes a transitional root entry, remove its exception from `tools/repository/check_root_policy.py` and this table in the same PR.
+The foundation CI job runs both commands. Keep the checker and this policy section synchronized whenever a documented transitional exception is introduced or retired.

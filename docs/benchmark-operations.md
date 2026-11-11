@@ -12,11 +12,11 @@ Performance benchmarks are deliberately excluded from pull-request workflows. Th
 From the repository root:
 
 ```sh
-python -m unittest discover -s benchmarks -p 'test_timing_method.py' -v
-python benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
-python benchmarks/run_scalability.py --iterations 5 --output benchmark-results/scalability.json
+python -m unittest discover -s tools/repository/benchmarks -p 'test_timing_method.py' -v
+python tools/repository/benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
+python tools/repository/benchmarks/run_scalability.py --iterations 5 --output benchmark-results/scalability.json
 # Explicit opt-in for 500x500 and 1000x1000 stress workloads:
-python benchmarks/run_scalability.py --iterations 3 --include-stress --output benchmark-results/scalability-stress.json
+python tools/repository/benchmarks/run_scalability.py --iterations 3 --include-stress --output benchmark-results/scalability-stress.json
 ```
 
 The shared-core runner stores its deterministic inputs and manifest in the result JSON. The scalability runner records workload dimensions and SHA-256 fingerprints, avoiding duplication of large input matrices in result artifacts.
@@ -84,7 +84,7 @@ To compare two or more runs from the same compatible environment, place the
 baseline first:
 
 ```sh
-python benchmarks/compare_runs.py \
+python tools/repository/benchmarks/compare_runs.py \
   benchmark-results/baseline.json \
   benchmark-results/latest.json \
   --output benchmark-results/trend.json

@@ -60,7 +60,7 @@ bash tools/repository/dev-check.sh test-all
 The script is Bash-only; use WSL or Git Bash on Windows. Each command requires
 only its listed ecosystem toolchains. `test-all` requires all of them.
 See the [testing strategy](docs/testing-strategy.md), [CI validation tiers](docs/ci-validation-tiers.md),
-[regression test guide](docs/regression-testing.md), and [benchmark operations](benchmarks/README.md).
+[regression test guide](docs/regression-testing.md), and [benchmark operations](docs/benchmark-operations.md).
 
 ## Citation
 

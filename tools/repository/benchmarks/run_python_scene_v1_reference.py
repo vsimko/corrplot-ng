@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import Callable
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "python" / "reference"))
 from scene import build_scene
 from export_native_fixtures import project_scene_v1

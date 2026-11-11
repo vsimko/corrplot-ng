@@ -61,7 +61,7 @@ jobs:
           file dist/corrplot-ng | grep -Eqi 'static(-pie)?(ally)? linked'
           ./dist/corrplot-ng --help >/dev/null
           ./dist/corrplot-ng version
-          python3 benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target x86_64-unknown-linux-musl --output dist/RELEASE-AUDIT.json
+          python3 tools/repository/benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target x86_64-unknown-linux-musl --output dist/RELEASE-AUDIT.json
           docker run --rm --network none -v "$PWD/dist:/release:ro" alpine:3.21 /release/corrplot-ng --help >/dev/null
           tar -C dist -czf corrplot-ng-linux-x86_64-musl.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt RELEASE-AUDIT.json
           mkdir package-check
@@ -142,7 +142,7 @@ jobs:
           lipo -info dist/corrplot-ng
           ./dist/corrplot-ng --help >/dev/null
           ./dist/corrplot-ng version
-          python3 benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target universal-apple-darwin --output dist/RELEASE-AUDIT.json
+          python3 tools/repository/benchmarks/cli_release_audit.py --binary dist/corrplot-ng --target universal-apple-darwin --output dist/RELEASE-AUDIT.json
           tar -C dist -czf corrplot-ng-macos-universal.tar.gz corrplot-ng README.md LICENSE BUILD-INFO.txt RELEASE-AUDIT.json
           mkdir package-check
           tar -xzf corrplot-ng-macos-universal.tar.gz -C package-check
@@ -207,7 +207,7 @@ jobs:
           "@ | Set-Content -Encoding utf8NoBOM dist/BUILD-INFO.txt
           & dist/corrplot-ng.exe --help | Out-Null
           & dist/corrplot-ng.exe version
-          python benchmarks/cli_release_audit.py --binary dist/corrplot-ng.exe --target x86_64-pc-windows-msvc --output dist/RELEASE-AUDIT.json
+          python tools/repository/benchmarks/cli_release_audit.py --binary dist/corrplot-ng.exe --target x86_64-pc-windows-msvc --output dist/RELEASE-AUDIT.json
           Compress-Archive -Path dist/* -DestinationPath corrplot-ng-windows-x86_64.zip
           New-Item -ItemType Directory -Force package-check | Out-Null
           Expand-Archive -Path corrplot-ng-windows-x86_64.zip -DestinationPath package-check

@@ -6,7 +6,7 @@ stress_mode <- length(args) == 3L && identical(args[[3]], "--stress-mode")
 
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(corrplotngrustspike))
-source("benchmarks/scene_v1_reference.R")
+source("tools/repository/benchmarks/scene_v1_reference.R")
 
 target_sample_ms <- 100
 regular_sample_count <- 30L
