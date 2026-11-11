@@ -19,10 +19,9 @@ The following current entries remain documented migration exceptions. They are w
 | Current root entry | Reason / destination |
 |---|---|
 | `benchmarks/` | Mixed-runtime harness; split by ownership under final cleanup #373. |
-| `prototypes/` | Retained Python prototype implementations/tests; consolidate under `python/reference/` or otherwise assign an owning project during final cleanup (#373). Normative schemas and shared fixtures have already moved to `contracts/` and `fixtures/` (#370). |
 | `scripts/`, `tests/` | Mixed repository and runtime utilities/fixtures; split under final cleanup #373. |
 
-The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception; remaining mixed repository utilities and Python prototypes are tracked for final cleanup under #373. The checker fails on unreviewed root entries and on new root dependency manifests.
+The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception; remaining mixed repository utilities are tracked for final cleanup under #373. The checker fails on unreviewed root entries and on new root dependency manifests.
 
 ## Generated paths that must never be committed
 
