@@ -7,7 +7,7 @@ from check_root_policy import validate_paths
 
 
 class RootPolicyTests(unittest.TestCase):
-    def test_current_migration_baseline_is_allowed_with_explicit_warnings(self):
+    def test_current_migration_baseline_allows_experiments_and_warns_for_remaining_mixed_roots(self):
         paths = [
             ".gitattributes",
             ".gitignore",
@@ -24,12 +24,19 @@ class RootPolicyTests(unittest.TestCase):
             "rust/crates/corrplot-core/Cargo.toml",
             "r/corrplotng/DESCRIPTION",
             "experiments/wasm-r/README.md",
+            "prototypes/publication-config-v1/README.md",
         ]
         errors, warnings = validate_paths(paths)
         self.assertEqual(errors, [])
         self.assertFalse(any("package.json" in warning for warning in warnings))
         self.assertFalse(any("requirements-dev.txt" in warning for warning in warnings))
-        self.assertTrue(any("experiments/" in warning for warning in warnings))
+        self.assertFalse(any("experiments/" in warning for warning in warnings))
+        self.assertTrue(any("prototypes/" in warning for warning in warnings))
+
+    def test_adr_approved_experiments_root_is_allowed(self):
+        errors, warnings = validate_paths(["experiments/wasm-r/README.md"])
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
 
     def test_unknown_root_entry_fails(self):
         errors, _ = validate_paths(["README.md", "random-workspace/package.json"])

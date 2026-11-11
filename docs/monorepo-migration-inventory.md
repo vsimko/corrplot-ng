@@ -1,11 +1,11 @@
 # Monorepo migration inventory
 
-**Status:** Rust ecosystem migration in progress; Rust crates, CLI, and adapter sources moved on `chore/rust-workspace-366`.  
+**Status:** Archived pre-migration inventory; use [the current repository layout](repository-layout.md) for present-day paths and ownership.  
 **Parent decision:** [ADR 0003 — Repository layout as a multi-ecosystem monorepo](adr/0003-monorepo-layout.md).  
 **Inventory snapshot:** `main` at `45d296b59bf9570149d2efdfc4b7cd082adf0d0a` (2026-11-05), immediately after ADR 0003 was accepted.  
 **Method:** GitHub recursive Git tree plus inspection of package manifests, lockfiles, maintainer scripts, current architecture/layout documentation, and all 18 workflow definitions. The recursive tree returned 448 entries and was not truncated.
 
-This document preserves the pre-migration source-to-target map and path-coupling evidence. Issue #366 has moved Rust-owned sources into the target `rust/` tree; the remaining ecosystem moves retain their original source paths until their own issues are completed. This is not authorization to change APIs, package names, release gates, or runtime behavior.
+This document preserves the original pre-migration source-to-target map and path-coupling evidence as historical provenance. Its `Current path` and workflow tables describe the inventory snapshot, not the current checkout; completed moves are recorded in the owning issues and the current layout is maintained in `docs/repository-layout.md`. This is not authorization to change APIs, package names, release gates, or runtime behavior.
 
 ## 1. Repository-wide inventory
 
