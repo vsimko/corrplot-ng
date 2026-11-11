@@ -9,20 +9,20 @@ This policy implements the root-directory rules in [ADR 0003](adr/0003-monorepo-
 - `.github/` for workflows and repository automation.
 - `docs/` for ADRs and repository-wide documentation.
 - Target ecosystem roots defined by ADR 0003: `contracts/`, `fixtures/`, `rust/`, `npm/`, `r/`, `python/`, and `packaging/`.
+- `experiments/` for isolated, non-production research and cross-runtime proofs with independent build/test boundaries, as explicitly allowed by ADR 0003.
 - `tools/` only for repository-wide orchestration under `tools/repository/`; ecosystem executables belong with their ecosystem.
 
 ## Explicit migration exceptions
 
-The following current entries are temporary and must be removed or relocated by the linked work. They are warnings in the checker so the policy can be enforced before the structural moves finish; no new root-level package manager is permitted.
+The following current entries remain documented migration exceptions. They are warnings in the checker until the owning files move to their final project roots; no new root-level package manager is permitted.
 
 | Current root entry | Reason / destination |
 |---|---|
 | `benchmarks/` | Mixed-runtime harness; split by ownership under #364. |
-| `prototypes/` | Normative versioned contracts; remaining contract relocation is tracked under #366/#370. |
+| `prototypes/` | Retained Python prototype implementations/tests; consolidate under `python/reference/` or otherwise assign an owning project during final cleanup (#373). Normative schemas and shared fixtures have already moved to `contracts/` and `fixtures/` (#370). |
 | `scripts/`, `tests/` | Mixed repository and runtime utilities/fixtures; split under #364/#370. |
-| `experiments/` | Cross-runtime WASM/R experiment. ADR 0003's target tree does not yet show this root; #364 records it as a deliberate exception that must be explicitly retained or assigned another reviewed home before migration. |
 
-The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The remaining exceptions are tracked by their owning migration issues. The checker fails on unreviewed root entries and on new root dependency manifests.
+The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception; remaining mixed repository utilities and Python prototypes are tracked for final cleanup under #373. The checker fails on unreviewed root entries and on new root dependency manifests.
 
 ## Generated paths that must never be committed
 
