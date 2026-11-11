@@ -37,4 +37,4 @@ python3 tools/repository/check_root_policy.py
 python3 -m unittest discover -s tools/repository/tests -p 'test_*.py' -v
 ```
 
-The foundation CI job runs both commands. When a migration removes a transitional root entry, remove its exception from `tools/repository/check_root_policy.py` and this table in the same PR.
+The foundation CI job runs both commands. Keep the checker and this policy section synchronized whenever a documented transitional exception is introduced or retired.
