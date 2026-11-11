@@ -75,8 +75,9 @@ jobs:
       - name: Build source package
         working-directory: r
         run: R CMD build corrplotng
-      - name: Install source package without a Rust toolchain
+      - name: Install source package without a Rust build step
         working-directory: r
+        shell: bash
         run: R CMD INSTALL corrplotng_*.tar.gz
       - name: Smoke-test installed package
         shell: Rscript {0}
@@ -103,11 +104,15 @@ jobs:
             paste0("Installed package: ", normalizePath(package_dir)),
             paste0("Installed package bytes: ", installed_bytes),
             paste0("Installed file count: ", length(installed_files)),
-            "Rust toolchain: not installed or invoked by this workflow"
+            "Rust build: not required or invoked by this package installation"
           )
           writeLines(lines, "corrplotng-build-evidence.txt")
       - name: Check source package as CRAN
         working-directory: r
+        shell: bash
+        env:
+          _R_CHECK_CRAN_INCOMING_: "false"
+          _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
         run: R CMD check --as-cran --no-manual corrplotng_*.tar.gz
       - name: Upload public CI validation evidence
         if: always()
