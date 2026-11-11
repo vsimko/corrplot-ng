@@ -74,6 +74,7 @@ jobs:
         run: Rscript python/reference/test_r_scene_consumer.R
       - name: Build source package
         working-directory: r
+        shell: bash
         run: R CMD build corrplotng
       - name: Install source package without a Rust build step
         working-directory: r
