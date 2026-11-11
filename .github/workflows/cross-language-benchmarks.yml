@@ -5,6 +5,11 @@ on:
     paths:
       - ".github/workflows/cross-language-benchmarks.yml"
       - "tools/repository/benchmarks/**"
+      - "python/reference/scene.py"
+      - "rust/Cargo.toml"
+      - "rust/Cargo.lock"
+      - "rust/crates/corrplot-core/**"
+      - "!rust/crates/corrplot-core/src/scene_tests.rs"
       - "rust/bindings/r/rextendr-prototype/**"
   workflow_dispatch:
     inputs:
