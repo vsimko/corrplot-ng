@@ -1,6 +1,6 @@
 # Repository layout and ownership
 
-This document defines current ownership and the accepted ADR 0003 boundaries. It distinguishes production ecosystem roots from retained non-production experiments and transitional paths.
+This document defines current ownership and the accepted ADR 0003 boundaries. It distinguishes production ecosystem roots from retained non-production experiments and the permanent root exceptions.
 
 ## Top-level directories
 
