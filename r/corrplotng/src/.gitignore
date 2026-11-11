@@ -1,0 +1,11 @@
+*.o
+*.so
+*.dll
+target
+.cargo
+rust/vendor
+rust/vendor.tar.xz
+rust/vendor-config.toml
+rust/corrplot-core
+Makevars
+Makevars.win

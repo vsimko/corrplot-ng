@@ -33,6 +33,7 @@ jobs:
           filters: |
             r_package:
               - 'r/corrplotng/**'
+              - 'rust/crates/corrplot-core/**'
               - 'python/reference/**'
               - 'fixtures/**'
               - 'schemas/**'
@@ -64,6 +65,17 @@ jobs:
         with:
           working-directory: r/corrplotng
           needs: check
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Prepare the self-contained R source package
+        run: Rscript r/corrplotng/tools/prepare-rust-package.R
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Audit production R package Rust dependency licenses
+        working-directory: r/corrplotng/src/rust
+        run: cargo deny check licenses
       - name: Check pinned legacy corrplot reference
         shell: Rscript {0}
         run: |
@@ -76,9 +88,11 @@ jobs:
         working-directory: r
         shell: bash
         run: R CMD build corrplotng
-      - name: Install source package without a Rust build step
+      - name: Install source package with offline Rust build
         working-directory: r
         shell: bash
+        env:
+          CARGO_NET_OFFLINE: "true"
         run: R CMD INSTALL corrplotng_*.tar.gz
       - name: Smoke-test installed package
         shell: Rscript {0}
@@ -86,6 +100,9 @@ jobs:
           library(corrplotng)
           normalized <- corrplot_ng_normalize_matrix(matrix(c(1, 0.5, 0.5, 1), nrow = 2))
           stopifnot(is.list(normalized))
+          scene <- corrplot_ng(matrix(c(1, 0.5, 0.5, 1), nrow = 2), engine = "scene")
+          svg <- corrplot_ng_render_svg(scene)
+          stopifnot(is.character(svg), length(svg) == 1L, grepl("<svg ", svg, fixed = TRUE))
       - name: Record package build and installation sizes
         working-directory: r
         shell: Rscript {0}
@@ -105,7 +122,7 @@ jobs:
             paste0("Installed package: ", normalizePath(package_dir)),
             paste0("Installed package bytes: ", installed_bytes),
             paste0("Installed file count: ", length(installed_files)),
-            "Rust build: not required or invoked by this package installation"
+            "Rust build: performed from vendored dependencies in offline mode"
           )
           writeLines(lines, "corrplotng-build-evidence.txt")
       - name: Check source package as CRAN
@@ -114,7 +131,49 @@ jobs:
         env:
           _R_CHECK_CRAN_INCOMING_: "false"
           _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
+          CARGO_NET_OFFLINE: "true"
         run: R CMD check --as-cran --no-manual corrplotng_*.tar.gz
+      - name: Build Windows binary package
+        if: runner.os == 'Windows'
+        working-directory: r
+        shell: bash
+        run: R CMD INSTALL --build --no-multiarch corrplotng_*.tar.gz
+      - name: Install Windows binary without a Rust toolchain
+        if: runner.os == 'Windows'
+        working-directory: r
+        shell: pwsh
+        run: |
+          $env:PATH = (($env:PATH -split ';') | Where-Object {
+            $_ -and ($_ -notmatch '(?i)\.cargo[\\/]bin|\.rustup[\\/]')
+          }) -join ';'
+          if (Get-Command cargo -ErrorAction SilentlyContinue) {
+            throw "cargo is still available on PATH"
+          }
+          if (Get-Command rustc -ErrorAction SilentlyContinue) {
+            throw "rustc is still available on PATH"
+          }
+          $binary = Get-ChildItem -Path . -Filter 'corrplotng_*.zip' |
+            Select-Object -First 1
+          if (-not $binary) {
+            throw "R CMD INSTALL --build did not produce a Windows binary ZIP"
+          }
+          $library = Join-Path $env:RUNNER_TEMP 'corrplotng-binary-library'
+          New-Item -ItemType Directory -Force -Path $library | Out-Null
+          $rExecutable = (Get-Command R.exe -ErrorAction Stop).Source
+          & $rExecutable CMD INSTALL "--library=$library" $binary.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $libraryR = $library.Replace('\', '/')
+          @"
+          .libPaths(c("$libraryR", .libPaths()))
+          library(corrplotng)
+          scene <- corrplot_ng(matrix(c(1, 0.5, 0.5, 1), nrow = 2), engine = "scene")
+          svg <- corrplot_ng_render_svg(scene)
+          stopifnot(is.character(svg), length(svg) == 1L, grepl("<svg ", svg, fixed = TRUE))
+          "@ | Set-Content -Encoding utf8 (Join-Path $env:RUNNER_TEMP 'test-corrplotng-binary.R')
+          & Rscript (Join-Path $env:RUNNER_TEMP 'test-corrplotng-binary.R')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "Windows binary installation and SVG smoke test passed without Cargo/rustc on PATH." |
+            Set-Content -Encoding utf8 (Join-Path (Get-Location) 'corrplotng-windows-binary-evidence.txt')
       - name: Upload public CI validation evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -124,5 +183,7 @@ jobs:
             r/corrplotng_*.tar.gz
             r/corrplotng.Rcheck/**
             r/corrplotng-build-evidence.txt
+            r/corrplotng_*.zip
+            r/corrplotng-windows-binary-evidence.txt
           if-no-files-found: warn
           retention-days: 14
