@@ -50,6 +50,7 @@ The canonical sources and package copies are:
 | `fixtures/normalized-matrix-v1/valid-cases.json` | `r/corrplotng/inst/extdata/normalized-matrix-v1/valid-cases.json` | Exact byte-for-byte copy; required in the installed R package. |
 | `fixtures/normalized-matrix-v1/invalid-cases.json` | `r/corrplotng/inst/extdata/normalized-matrix-v1/invalid-cases.json` | Exact byte-for-byte copy; required in the installed R package. |
 | `tests/legacy-visual/cases.json` | `r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json` | Exact byte-for-byte package-test copy. |
+| `fixtures/matrix-input-v1/correlation-cases.json` | `r/corrplotng/inst/extdata/correlation-cases.json` | Exact byte-for-byte copy; required by installed-package scene-adapter tests. |
 | `fixtures/matrix-input-v1/general-matrix-cases.json` | `r/corrplotng/inst/extdata/general-matrix-cases.json` | The package copy is a declared projection: it omits the canonical `all-missing` invalid render case. Keep all other content identical. |
 
 `tests/test_fixture_integrity.py` checks the exact copies and the declared general-matrix projection. Update that test and this table together if the ownership or projection changes. Do not edit package copies independently.
