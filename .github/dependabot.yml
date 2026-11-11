@@ -58,6 +58,18 @@ updates:
       timezone: Europe/Berlin
     open-pull-requests-limit: 0
 
+  # The production R package has its own Cargo manifest and lockfile.
+  # Keep routine updates coordinated with the offline package/CRAN evidence;
+  # security updates remain enabled.
+  - package-ecosystem: cargo
+    directory: /r/corrplotng/src/rust
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:30"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 0
+
   # The npm/ directory is the private workspace root.
   # Platform-specific native packages are unpublished build artifacts.
   - package-ecosystem: npm
