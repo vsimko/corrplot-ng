@@ -1,6 +1,9 @@
 name: Reproduce Dependabot Vite workspace update
 
 on:
+  push:
+    branches:
+      - experiment/dependabot-vite-workspace-repro
   pull_request:
     paths:
       - "npm/**"
