@@ -84,13 +84,13 @@ schema = json.loads(Path("contracts/renderer-capability-v1/schema.json").read_te
 declaration = json.loads(Path("rust/crates/corrplot-core/renderer-capabilities.json").read_text())
 jsonschema.validate(declaration, schema)
 PY
-  "$PYTHON_BIN" -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+  "$PYTHON_BIN" -m unittest discover -s python/reference/prototypes/normalized-matrix-v1 -p 'test_*.py' -v
   (
     cd "$ROOT_DIR/python/reference"
     "$PYTHON_BIN" -m unittest discover -s . -p 'test_*.py' -v
   )
-  "$PYTHON_BIN" -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
-  "$PYTHON_BIN" -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
+  "$PYTHON_BIN" -m unittest discover -s python/reference/prototypes/publication-config-v1 -p 'test_*.py' -v
+  "$PYTHON_BIN" -m unittest discover -s python/reference/prototypes/publication-svg-v1 -p 'test_*.py' -v
   "$PYTHON_BIN" python/reference/renderer.py python/reference/example.json > "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
   "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
 }
@@ -118,7 +118,7 @@ test_rust_cli() {
   cargo build --locked --offline --profile release-cli --manifest-path rust/tools/corrplot-cli/Cargo.toml
   need_python
   rust/target/release-cli/corrplot-ng render \
-    --config python/reference/prototypes/publication-config-v1/examples/basic.json \
+    --config python/reference/python/reference/prototypes/publication-config-v1/examples/basic.json \
     --output "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
   "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
 }
