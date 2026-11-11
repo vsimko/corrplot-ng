@@ -1,0 +1,61 @@
+name: Reproduce Dependabot Vite workspace update
+
+on:
+  pull_request:
+    paths:
+      - "npm/**"
+      - ".github/workflows/repro-dependabot-vite.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    name: npm 12 workspace update reproduction
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install the npm version used by Dependabot
+        run: |
+          npm install --global npm@12.2.2 --no-audit --no-fund
+          npm --version
+
+      - name: Inspect Vite lockfile entries before update
+        working-directory: npm
+        run: |
+          node --input-type=commonjs -e '
+            const lock = require("./package-lock.json");
+            for (const [path, entry] of Object.entries(lock.packages)) {
+              if (path.endsWith("node_modules/vite")) {
+                console.log(JSON.stringify({ path, version: entry.version, peer: !!entry.peer, dev: !!entry.dev }));
+              }
+            }
+          '
+          npm ls vite --all || true
+
+      - name: Run the exact Dependabot npm update command
+        working-directory: npm
+        run: |
+          npm update vite --force --ignore-scripts --package-lock-only --allow-git=all --allow-remote=all --min-release-age=0
+
+      - name: Report lockfile changes
+        working-directory: npm
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "RESULT: no package-lock.json change"
+            echo "The npm command completed without changing the lockfile."
+            echo "### Dependabot Vite reproduction" >> "$GITHUB_STEP_SUMMARY"
+            echo "The exact npm 12.2.2 update command produced no lockfile diff." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "RESULT: package-lock.json changed"
+            git diff --stat -- package-lock.json
+            git diff -- package-lock.json
+            echo "### Dependabot Vite reproduction" >> "$GITHUB_STEP_SUMMARY"
+            echo "The exact npm 12.2.2 update command changed the lockfile; inspect the job log." >> "$GITHUB_STEP_SUMMARY"
+          fi
