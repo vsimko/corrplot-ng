@@ -54,11 +54,8 @@ no_rustc_msg <- c(
 )
 
 # Add {user}/.cargo/bin to path before checking
-new_path <- paste0(
-  Sys.getenv("PATH"),
-  ":",
-  paste0(Sys.getenv("HOME"), "/.cargo/bin")
-)
+new_path <- paste(Sys.getenv("PATH"), path.expand("~/.cargo/bin"),
+                  sep = .Platform$path.sep)
 
 # set the path with the new path
 Sys.setenv("PATH" = new_path)
@@ -113,6 +110,18 @@ if (!is.na(msrv)) {
     )
     stop(sprintf(fmt, msrv, current_rust_version))
   }
+}
+
+# The committed Cargo.lock uses lockfile format 4, which requires Cargo 1.78.
+# Keep the Cargo minimum explicit as well as the rustc minimum in DESCRIPTION.
+cargo_min_version <- "1.78.0"
+current_cargo_version <- extract_semver(cargo_version)
+if (is.na(current_cargo_version) ||
+    utils::compareVersion(cargo_min_version, current_cargo_version) == 1) {
+  stop(sprintf(
+    "Unsupported Cargo version: require >= %s, found %s",
+    cargo_min_version, cargo_version
+  ), call. = FALSE)
 }
 
 # print the versions
