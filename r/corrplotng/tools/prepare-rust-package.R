@@ -32,8 +32,8 @@ if (!length(core_entries) ||
 rust_dir <- file.path(package_root, "src", "rust")
 setwd(rust_dir)
 
-run_checked <- function(command, arguments, stdout = FALSE) {
-  result <- system2(command, arguments, stdout = stdout, stderr = TRUE)
+run_checked <- function(command, arguments, stdout = FALSE, stderr = TRUE) {
+  result <- system2(command, arguments, stdout = stdout, stderr = stderr)
   status <- attr(result, "status")
   if (!is.null(status) && status != 0L) {
     stop(command, " failed with exit status ", status, call. = FALSE)
@@ -46,7 +46,10 @@ if (dir.exists("vendor")) {
   unlink("vendor", recursive = TRUE, force = TRUE)
 }
 if (file.exists("vendor.tar.xz")) unlink("vendor.tar.xz")
-run_checked("cargo", c("vendor", "--locked", "vendor"), stdout = "vendor-config.toml")
+vendor_config_output <- run_checked(
+  "cargo", c("vendor", "--locked", "vendor"), stdout = TRUE, stderr = ""
+)
+writeLines(vendor_config_output, "vendor-config.toml")
 
 vendor_config <- readLines("vendor-config.toml", warn = FALSE)
 directory_line <- grep('directory = "vendor"', vendor_config, fixed = TRUE)
