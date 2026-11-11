@@ -2,6 +2,8 @@
 
 This is a non-production reference implementation and architecture experiment, not a distributable Python package or a commitment to Python, Rust, or SVG as the final design. The generated scene is checked against the experimental JSON Schema in `../../contracts/scene-v1/schema.json`.
 
+The `prototypes/` subdirectory contains additional non-production Python validators and publication configuration/SVG implementations. Their normative schemas and canonical fixtures remain in the repository-level `contracts/` and `fixtures/` trees. Run those prototype tests from the repository root with `bash scripts/dev-check.sh quick`.
+
 It accepts a language-neutral JSON object and renders a correlation matrix as deterministic SVG. The example includes positive, negative, and missing values, plus one user-defined text annotation.
 
 Run from this project directory:
