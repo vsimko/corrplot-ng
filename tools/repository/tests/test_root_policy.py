@@ -7,7 +7,7 @@ from check_root_policy import validate_paths
 
 
 class RootPolicyTests(unittest.TestCase):
-    def test_current_migration_baseline_allows_experiments_and_warns_for_remaining_mixed_roots(self):
+    def test_current_migration_baseline_allows_experiments_and_warns_only_for_benchmarks(self):
         paths = [
             ".gitattributes",
             ".gitignore",
@@ -24,6 +24,7 @@ class RootPolicyTests(unittest.TestCase):
             "rust/crates/corrplot-core/Cargo.toml",
             "r/corrplotng/DESCRIPTION",
             "experiments/wasm-r/README.md",
+            "benchmarks/README.md",
             "python/reference/prototypes/publication-config-v1/README.md",
         ]
         errors, warnings = validate_paths(paths)
@@ -32,6 +33,8 @@ class RootPolicyTests(unittest.TestCase):
         self.assertFalse(any("requirements-dev.txt" in warning for warning in warnings))
         self.assertFalse(any("experiments/" in warning for warning in warnings))
         self.assertFalse(any("prototypes/" in warning for warning in warnings))
+        self.assertEqual(len(warnings), 1)
+        self.assertTrue(warnings[0].startswith("benchmarks/"))
 
     def test_adr_approved_experiments_root_is_allowed(self):
         errors, warnings = validate_paths(["experiments/wasm-r/README.md"])
@@ -69,3 +72,10 @@ class RootPolicyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RemovedRootTestsDirectoryTests(unittest.TestCase):
+    def test_root_tests_directory_is_no_longer_a_transition_exception(self):
+        errors, warnings = validate_paths(["tests/test_fixture_integrity.py"])
+        self.assertTrue(any(error.startswith("tests: unreviewed repository-root entry") for error in errors))
+        self.assertFalse(any(warning.startswith("tests/") for warning in warnings))
