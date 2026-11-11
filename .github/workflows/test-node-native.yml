@@ -1,16 +1,7 @@
 name: Test native Node binding
 
 on:
-  pull_request:
-    paths:
-      - "npm/packages/native-node/**"
-      - "npm/packages/native-node-*/**"
-      - "rust/bindings/node/**"
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - "rust/crates/corrplot-core/**"
-      - "!rust/crates/corrplot-core/src/scene_tests.rs"
-      - ".github/workflows/test-node-native.yml"
+  workflow_call:
   push:
     branches: [main]
     paths:

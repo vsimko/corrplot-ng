@@ -1,15 +1,7 @@
 name: Rust Windows binary install
 
 on:
-  pull_request:
-    paths:
-      - "rust/bindings/r/rextendr-prototype/**"
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - "rust/crates/corrplot-core/**"
-      - "!rust/crates/corrplot-core/src/scene_tests.rs"
-      - ".github/workflows/test-rust-windows-binary.yml"
-      - "docs/cran-rust-dependency-audit-results.md"
+  workflow_call:
   workflow_dispatch:
 
 permissions:

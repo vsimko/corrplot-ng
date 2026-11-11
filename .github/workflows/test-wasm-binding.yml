@@ -1,23 +1,7 @@
 name: Test browser WebAssembly binding
 
 on:
-  pull_request:
-    paths:
-      - "contracts/**"
-      - "fixtures/**"
-      - "npm/packages/wasm/**"
-      - "rust/bindings/wasm/**"
-      - "npm/packages/typescript/**"
-      - "npm/packages/react/**"
-      - "npm/packages/vue/**"
-      - "npm/package.json"
-      - "npm/package-lock.json"
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - "rust/crates/corrplot-core/**"
-      - "fixtures/scene-v1/**"
-      - "!rust/crates/corrplot-core/src/scene_tests.rs"
-      - ".github/workflows/test-wasm-binding.yml"
+  workflow_call:
   push:
     branches: [main]
     paths:

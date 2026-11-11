@@ -1,18 +1,9 @@
 name: Verify shared Rust core reuse
 
 on:
+  workflow_call:
   push:
     branches: [main]
-    paths:
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - "rust/crates/corrplot-core/**"
-      - "rust/tools/corrplot-cli/**"
-      - "rust/bindings/r/rextendr-prototype/**"
-      - "rust/bindings/node/**"
-      - "rust/bindings/wasm/**"
-      - ".github/workflows/test-shared-rust-core.yml"
-  pull_request:
     paths:
       - "rust/Cargo.toml"
       - "rust/Cargo.lock"

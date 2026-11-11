@@ -11,7 +11,7 @@ stopifnot(
 cat("Offline Rust-to-R integration smoke test passed.\n")
 
 scene_fixture <- readLines(
-  "prototypes/shared-svg/scene-v1-construction.example.json",
+  "python/reference/scene-v1-construction.example.json",
   warn = FALSE
 )
 scene_json <- paste(scene_fixture, collapse = "\n")
