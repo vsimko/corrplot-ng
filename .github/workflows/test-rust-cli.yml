@@ -10,8 +10,7 @@ on:
       - "python/reference/prototypes/publication-config-v1/**"
       - "tools/repository/validate_svg.py"
       - "docs/cli-installation.md"
-      - "tests/fixtures/**"
-      - "tests/README.md"
+      - "fixtures/**"
       - ".github/workflows/test-rust-cli.yml"
   push:
     branches: [main]
