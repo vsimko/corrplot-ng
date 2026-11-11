@@ -1,14 +1,7 @@
 name: WASM from R experiment
 
 on:
-  pull_request:
-    paths:
-      - "experiments/wasm-r/**"
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - "rust/crates/corrplot-core/**"
-      - "!rust/crates/corrplot-core/src/scene_tests.rs"
-      - ".github/workflows/test-wasm-r-experiment.yml"
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
