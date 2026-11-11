@@ -1,6 +1,7 @@
-name: Stage npm package tarballs (no publishing)
+name: Stage npm package tarballs (CI validation only; no publishing)
 
 on:
+  # This public repository's artifacts are public to repository readers; this is CI validation, not private distribution.
   workflow_dispatch:
 
 permissions:
