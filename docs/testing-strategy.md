@@ -60,7 +60,7 @@ allowing source provenance to differ.
 Run the contract tests from the repository root:
 
 ```sh
-python -m unittest discover -s tests -v
+python -m unittest discover -s tools/repository/tests -v
 python -m unittest discover -s python/reference/prototypes/normalized-matrix-v1 -p 'test_*.py' -v
 ```
 
@@ -92,7 +92,7 @@ the pinned upstream source, exports representative legacy matrix semantics,
 and checks the scene bridge. This is targeted evidence, not exhaustive
 coverage of every public argument or option interaction.
 
-See [the regression test guide](../tests/README.md) for the pinned reference,
+See [the regression test guide](regression-testing.md) for the pinned reference,
 snapshot regeneration procedure, fixture inventory, and platform limitations.
 
 Run the package check from the repository root:
@@ -150,7 +150,7 @@ python tools/repository/validate_svg.py figure.svg
 ```
 
 A manual LaTeX embedding smoke test is documented in
-[the regression test guide](../tests/README.md). SVG validation checks a
+[the regression test guide](regression-testing.md). SVG validation checks a
 documented subset; it is not complete SVG 2 conformance and does not promise
 identical rendering in every viewer.
 
