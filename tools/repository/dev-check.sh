@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 PYTHON_BIN="${PYTHON:-python3}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/dev-check.sh <command>
+Usage: ./tools/repository/dev-check.sh <command>
 
 Quick and focused checks:
   quick                 Python foundation checks used by the foundation CI job
@@ -92,7 +92,7 @@ PY
   "$PYTHON_BIN" -m unittest discover -s python/reference/prototypes/publication-config-v1 -p 'test_*.py' -v
   "$PYTHON_BIN" -m unittest discover -s python/reference/prototypes/publication-svg-v1 -p 'test_*.py' -v
   "$PYTHON_BIN" python/reference/renderer.py python/reference/example.json > "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
-  "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
+  "$PYTHON_BIN" tools/repository/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-shared-svg.svg"
 }
 
 test_r() {
@@ -120,7 +120,7 @@ test_rust_cli() {
   rust/target/release-cli/corrplot-ng render \
     --config python/reference/prototypes/publication-config-v1/examples/basic.json \
     --output "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
-  "$PYTHON_BIN" scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
+  "$PYTHON_BIN" tools/repository/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng-native-cli.svg"
 }
 
 test_node() {

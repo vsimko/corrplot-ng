@@ -8,7 +8,7 @@ on:
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "python/reference/prototypes/publication-config-v1/**"
-      - "scripts/validate_svg.py"
+      - "tools/repository/validate_svg.py"
       - "docs/cli-installation.md"
       - "tests/fixtures/**"
       - "tests/README.md"
@@ -22,7 +22,7 @@ on:
       - "rust/Cargo.lock"
       - "rust/crates/corrplot-core/**"
       - "python/reference/prototypes/publication-config-v1/**"
-      - "scripts/validate_svg.py"
+      - "tools/repository/validate_svg.py"
       - "tests/fixtures/**"
       - "tests/README.md"
       - ".github/workflows/test-rust-cli.yml"
@@ -80,7 +80,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           rust/target/release-cli/corrplot-ng render --config python/reference/prototypes/publication-config-v1/examples/basic.json --output "$RUNNER_TEMP/native-cli.svg"
-          python scripts/validate_svg.py "$RUNNER_TEMP/native-cli.svg"
+          python tools/repository/validate_svg.py "$RUNNER_TEMP/native-cli.svg"
 
       - name: Verify installed CLI outside the checkout (Unix)
         if: runner.os != 'Windows'

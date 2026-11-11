@@ -19,9 +19,9 @@ The following current entries remain documented migration exceptions. They are w
 | Current root entry | Reason / destination |
 |---|---|
 | `benchmarks/` | Mixed-runtime harness; split by ownership under final cleanup #373. |
-| `scripts/`, `tests/` | Mixed repository and runtime utilities/fixtures; split under final cleanup #373. |
+| `tests/` | Mixed repository tests and fixture inventory; ownership cleanup remains under #373. |
 
-The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception; remaining mixed repository utilities are tracked for final cleanup under #373. The checker fails on unreviewed root entries and on new root dependency manifests.
+The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception; remaining test and benchmark ownership cleanup is tracked under #373. The checker fails on unreviewed root entries and on new root dependency manifests.
 
 ## Generated paths that must never be committed
 

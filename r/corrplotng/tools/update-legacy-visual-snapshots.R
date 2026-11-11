@@ -2,7 +2,7 @@
 
 # Regenerate committed legacy visual snapshots intentionally.
 # Run from the repository root:
-#   UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript scripts/update-legacy-visual-snapshots.R
+#   UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript r/corrplotng/tools/update-legacy-visual-snapshots.R
 
 if (Sys.getenv("UPDATE_LEGACY_VISUAL_SNAPSHOTS") != "1") {
   stop("Set UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 to confirm snapshot regeneration.")

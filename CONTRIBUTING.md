@@ -19,7 +19,7 @@ those ecosystems.
 
 - Prefer one focused issue and one reviewable pull request per change.
 - Run the targeted tests for the changed ecosystem. Use
-  `bash scripts/dev-check.sh test-all` only when the change or integration
+  `bash tools/repository/dev-check.sh test-all` only when the change or integration
   risk spans all ecosystems.
 - Update the owning README and relevant architecture/developer documentation
   when commands, public behavior, dependencies, or project boundaries change.

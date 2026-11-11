@@ -49,12 +49,12 @@ and release boundaries.
 For optional repository-wide orchestration, run from the repository root:
 
 ```sh
-bash scripts/dev-check.sh quick
-bash scripts/dev-check.sh test-r
-bash scripts/dev-check.sh test-rust-cli
-bash scripts/dev-check.sh test-node
-bash scripts/dev-check.sh test-wasm
-bash scripts/dev-check.sh test-all
+bash tools/repository/dev-check.sh quick
+bash tools/repository/dev-check.sh test-r
+bash tools/repository/dev-check.sh test-rust-cli
+bash tools/repository/dev-check.sh test-node
+bash tools/repository/dev-check.sh test-wasm
+bash tools/repository/dev-check.sh test-all
 ```
 
 The script is Bash-only; use WSL or Git Bash on Windows. Each command requires

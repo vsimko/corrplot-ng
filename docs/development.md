@@ -44,7 +44,7 @@ flowchart TB
     ROOT --> RPKG["r/corrplotng/\nR package DESCRIPTION"]
     ROOT --> PY["python/reference/\nPython reference"]
     ROOT --> TESTS["tests/, contracts/, fixtures/\nshared inputs and conformance"]
-    ROOT --> ORCH["scripts/dev-check.sh\noptional orchestration"]
+    ROOT --> ORCH["tools/repository/dev-check.sh\noptional orchestration"]
     RUST --> CORE["rust/crates/corrplot-core"]
     RUST --> NODE_BINDING["rust/bindings/node"]
     RUST --> WASM_BINDING["rust/bindings/wasm"]
@@ -132,7 +132,7 @@ On Linux, macOS, WSL, or Git Bash, render and validate a reference SVG from
 ```sh
 cd python/reference
 python renderer.py example.json > "${TMPDIR:-/tmp}/corrplot-ng.svg"
-python ../../scripts/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng.svg"
+python ../../tools/repository/validate_svg.py "${TMPDIR:-/tmp}/corrplot-ng.svg"
 cd ../..
 ```
 
@@ -201,7 +201,7 @@ Rscript python/reference/test_r_scene_consumer.R
 ```
 
 For the pinned legacy semantic oracle, use the root command
-`bash scripts/dev-check.sh test-r-legacy` (requires both R and Python).
+`bash tools/repository/dev-check.sh test-r-legacy` (requires both R and Python).
 
 The production R package root is `r/corrplotng/`. The separate
 `rust/bindings/r/rextendr-prototype/` adapter remains disposable evaluation
@@ -344,15 +344,15 @@ convenience, not a package manager or dependency root.
 Run it from the repository root:
 
 ```sh
-bash scripts/dev-check.sh quick
-bash scripts/dev-check.sh test-r
-bash scripts/dev-check.sh test-r-legacy
-bash scripts/dev-check.sh test-rust-cli
-bash scripts/dev-check.sh test-node
-bash scripts/dev-check.sh test-wasm
-bash scripts/dev-check.sh test-all
-bash scripts/dev-check.sh build-cli
-bash scripts/dev-check.sh build-node
+bash tools/repository/dev-check.sh quick
+bash tools/repository/dev-check.sh test-r
+bash tools/repository/dev-check.sh test-r-legacy
+bash tools/repository/dev-check.sh test-rust-cli
+bash tools/repository/dev-check.sh test-node
+bash tools/repository/dev-check.sh test-wasm
+bash tools/repository/dev-check.sh test-all
+bash tools/repository/dev-check.sh build-cli
+bash tools/repository/dev-check.sh build-node
 ```
 
 | Command | Required toolchains |

@@ -14,7 +14,6 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | `experiments/` | Disposable cross-runtime experiments; non-production and not supported package backends. |
 | `python/reference/prototypes/` | Python semantic validators and publication configuration/SVG prototypes, tests, and examples. Normative schemas live under `contracts/`; canonical shared fixtures live under `fixtures/`. |
 | `tests/` | Cross-language fixtures, compatibility oracles, and repository-level tests that are not owned by one runtime package. |
-| `scripts/` | Maintainer and CI utilities that operate across packages or validate generated artifacts. |
 | `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
 | `docs/` | Architecture decisions, contracts and workflow documentation, testing guidance, and the roadmap. |
 | `.github/` | GitHub Actions workflows, issue templates, and repository automation. |

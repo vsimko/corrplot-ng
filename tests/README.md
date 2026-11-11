@@ -24,7 +24,7 @@ The reference is `corrplot` 0.95 at commit `62532f700e6c9d04b93ffbf0bf56e264b0e0
 Regeneration is opt-in and refuses to run unless the installed package version matches the pinned manifest:
 
 ```sh
-UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript scripts/update-legacy-visual-snapshots.R
+UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript r/corrplotng/tools/update-legacy-visual-snapshots.R
 ```
 
 Review all generated PNGs and commit the complete set together. Ordinary tests never rewrite baselines.
@@ -71,12 +71,12 @@ produce the same representation before any renderer is invoked.
 
 ## SVG artifact validation and interoperability
 
-`scripts/validate_svg.py` validates the repository's supported self-contained SVG subset using only Python's standard library. It checks well-formed XML, the SVG namespace, positive absolute dimensions, a finite positive viewBox, allowed element types, unique IDs, local references, accessibility references, and the absence of scripts, event handlers, external assets, and external CSS URLs.
+`tools/repository/validate_svg.py` validates the repository's supported self-contained SVG subset using only Python's standard library. It checks well-formed XML, the SVG namespace, positive absolute dimensions, a finite positive viewBox, allowed element types, unique IDs, local references, accessibility references, and the absence of scripts, event handlers, external assets, and external CSS URLs.
 
 Run it against an exported artifact:
 
 ```sh
-python scripts/validate_svg.py figures/correlation.svg
+python tools/repository/validate_svg.py figures/correlation.svg
 ```
 
 CI validates both the Python reference SVG and a native Rust CLI export. The `svg-interoperability` job also rasterizes the Python SVG with `rsvg-convert` (librsvg), so XML parsing is not the only acceptance check.

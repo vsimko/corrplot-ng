@@ -13,11 +13,11 @@ Use an R environment with the exact `corrplot` version in the manifest, plus
 `jsonlite` and `png`. From the repository root run:
 
 ```sh
-UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript scripts/update-legacy-visual-snapshots.R
+UPDATE_LEGACY_VISUAL_SNAPSHOTS=1 Rscript r/corrplotng/tools/update-legacy-visual-snapshots.R
 ```
 
 The script writes 900×900 PNGs to
-`implementations/r/tests/testthat/fixtures/legacy-visual/`. Review all images
+`r/corrplotng/tests/testthat/fixtures/legacy-visual/`. Review all images
 and commit the complete set together. Regeneration is opt-in so normal tests
 cannot silently rewrite approved references. Exact pixel matching assumes the
 same R graphics device and environment as the CI runner.
