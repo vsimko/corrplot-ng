@@ -315,7 +315,7 @@ using `workflow_dispatch` and has no scheduled trigger; the separate WASM
 and Node/WASM runtime baselines have weekly/manual triggers as described above.
 Large B03/B04 stress workloads and the three-platform native package smoke
 matrix are separate opt-in inputs for manual runs. See
-[benchmark operations](../benchmarks/README.md). The native CLI correctness
+[benchmark operations](benchmark-operations.md). The native CLI correctness
 workflow does not run a baseline-versus-candidate performance comparison on
 pull requests.
 
