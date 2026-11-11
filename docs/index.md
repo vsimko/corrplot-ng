@@ -53,7 +53,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 - [Testing strategy](testing-strategy.md): current test layers, evidence limits, and CI workflows.
-- [Regression test guide](../tests/README.md): pinned legacy reference, raster baselines, normalized input tests, and SVG validation.
+- [Regression test guide](regression-testing.md): pinned legacy reference, raster baselines, normalized input tests, and SVG validation.
 - [Shared-core benchmark plan](shared-core-benchmark-plan.md): benchmark scope, correctness gates, measurement protocol, and decision criteria.
 - [Benchmark operations](../benchmarks/README.md): how to run the shared-core, cross-language, stress, and package-smoke workflows.
 
