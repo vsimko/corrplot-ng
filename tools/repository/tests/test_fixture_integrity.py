@@ -9,10 +9,11 @@ import unittest
 from pathlib import Path
 
 
-FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "matrix-input-v1" / "correlation-cases.json"
-LEGACY_VISUAL_PATH = Path(__file__).parent / "legacy-visual" / "cases.json"
+ROOT = Path(__file__).resolve().parents[3]
+FIXTURE_PATH = ROOT / "fixtures" / "matrix-input-v1" / "correlation-cases.json"
+LEGACY_VISUAL_PATH = ROOT / "fixtures" / "legacy-visual" / "cases.json"
 R_LEGACY_VISUAL_PATH = (
-    Path(__file__).parent.parent
+    ROOT
     / "r"
     / "corrplotng"
     / "tests"
@@ -20,7 +21,6 @@ R_LEGACY_VISUAL_PATH = (
     / "fixtures"
     / "legacy-visual-cases.json"
 )
-ROOT = Path(__file__).parent.parent
 NORMALIZED_FIXTURE_PAIRS = (
     (
         ROOT / "fixtures" / "normalized-matrix-v1" / "valid-cases.json",

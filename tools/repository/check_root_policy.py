@@ -43,7 +43,6 @@ ALLOWED_ROOT_DIRECTORIES = {
 
 TRANSITIONAL_ROOT_DIRECTORIES = {
     "benchmarks": "#373 — move cross-runtime benchmark tooling under repository tooling or owning ecosystems",
-    "tests": "#373 — move repository-level tests to tools/repository and canonical fixtures to fixtures/",
 }
 
 FORBIDDEN_ROOT_MANIFESTS = {

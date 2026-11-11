@@ -34,7 +34,7 @@ jobs:
             r_package:
               - 'r/corrplotng/**'
               - 'python/reference/**'
-              - 'tests/fixtures/**'
+              - 'fixtures/**'
               - 'schemas/**'
               - '**/*.schema.json'
               - '.github/workflows/test-r.yml'

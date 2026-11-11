@@ -19,7 +19,7 @@ Semantic bridge failures are prefixed `SEMANTIC`; SVG/XML/layout failures are pr
 
 ## Pinned reference and regeneration
 
-The reference is `corrplot` 0.95 at commit `62532f700e6c9d04b93ffbf0bf56e264b0e0368e`. The reference commit, source files, case IDs, and intent are recorded in `tests/legacy-visual/cases.json` and `r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json`.
+The reference is `corrplot` 0.95 at commit `62532f700e6c9d04b93ffbf0bf56e264b0e0368e`. The reference commit, source files, case IDs, and intent are recorded in `fixtures/legacy-visual/cases.json` and `r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json`.
 
 Regeneration is opt-in and refuses to run unless the installed package version matches the pinned manifest:
 
@@ -46,7 +46,7 @@ The semantic and structural tests are the cross-platform contract; they do not r
 Run the general fixture checks with Python 3.10 or later:
 
 ```sh
-python -m unittest discover -s tests -v
+python -m unittest discover -s tools/repository/tests -v
 ```
 
 The fixture integrity tests use only the Python standard library. The Python reference suite additionally installs `jsonschema` from `python/reference/requirements-dev.txt` as described in its README.
@@ -54,7 +54,7 @@ The fixture integrity tests use only the Python standard library. The Python ref
 ## Normalized matrix input contract
 
 The language-neutral input boundary is defined in
-`contracts/normalized-matrix-v1/` defines the schema; valid/invalid examples live in `fixtures/normalized-matrix-v1/`
+`contracts/normalized-matrix-v1/`; its schema defines the data shape, while valid and invalid examples live in `fixtures/normalized-matrix-v1/`.
 specify square dimensions, unique Unicode labels, zero-based source-index
 mapping, and `null` missing values. All-missing and constant matrices remain
 valid at normalization time; scene construction decides whether they can be
@@ -63,7 +63,7 @@ rendered.
 Run the schema and semantic fixture suite with:
 
 ```sh
-python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+python -m unittest discover -s python/reference/prototypes/normalized-matrix-v1 -p 'test_*.py' -v
 ```
 
 The suite is part of `Test foundation`. R object and file adapters must
@@ -85,7 +85,7 @@ A manual LaTeX embedding smoke test can be run with librsvg and a TeX installati
 
 ```sh
 rsvg-convert --format png --output figure.png figures/correlation.svg
-cp tests/fixtures/svg-publication-example.tex paper.tex
+cp fixtures/publication/svg-publication-example.tex paper.tex
 pdflatex -interaction=nonstopmode -halt-on-error paper.tex
 ```
 
@@ -93,7 +93,7 @@ Run the commands from a directory containing both `paper.tex` and `figure.png`. 
 
 ## Shared fixtures and unsupported behavior
 
-`fixtures/matrix-input-v1/correlation-cases.json` contains language-neutral correlation matrices. `tests/legacy-visual/cases.json` records the pinned visual case inventory. Use JSON `null` for missing values, explicit labels/dimensions, stable case IDs, and documented expected properties.
+`fixtures/matrix-input-v1/correlation-cases.json` contains language-neutral correlation matrices. `fixtures/legacy-visual/cases.json` records the pinned visual case inventory. Use JSON `null` for missing values, explicit labels/dimensions, stable case IDs, and documented expected properties.
 
 Unsupported legacy features remain explicit gaps in the compatibility inventory. Passing these fixtures does not establish complete API compatibility; add a fixture and a corresponding assertion before claiming support for a new behavior.
 
