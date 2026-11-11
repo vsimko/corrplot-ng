@@ -41,8 +41,8 @@ jobs:
               - 'benchmarks/compare_runs.py'
               - 'benchmarks/test_compare_runs.py'
               - 'benchmarks/run_shared_core.py'
-              - 'scripts/validate_svg.py'
-              - 'scripts/dev-check.sh'
+              - 'tools/repository/validate_svg.py'
+              - 'tools/repository/dev-check.sh'
               - 'python/reference/requirements-dev.txt'
               - '.github/dependabot.yml'
               - 'python/reference/**'
@@ -80,9 +80,9 @@ jobs:
         with:
           node-version: 24
       - name: Validate local development command syntax
-        run: bash -n scripts/dev-check.sh
+        run: bash -n tools/repository/dev-check.sh
       - name: Run quick foundation checks through the local entry point
-        run: bash scripts/dev-check.sh quick
+        run: bash tools/repository/dev-check.sh quick
       - name: Test TypeScript facade core
         run: node --test npm/packages/typescript/test/factory.test.js npm/packages/typescript/test/package-isolation.test.js npm/packages/typescript/test/node-cjs.test.cjs
       - name: Test benchmark run comparison
@@ -104,7 +104,7 @@ jobs:
       - name: Render and validate SVG
         run: |
           python python/reference/renderer.py python/reference/example.json > "$RUNNER_TEMP/figure.svg"
-          python scripts/validate_svg.py "$RUNNER_TEMP/figure.svg"
+          python tools/repository/validate_svg.py "$RUNNER_TEMP/figure.svg"
       - name: Rasterize SVG
         run: |
           rsvg-convert --format png --output "$RUNNER_TEMP/figure.png" "$RUNNER_TEMP/figure.svg"
