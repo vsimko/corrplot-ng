@@ -54,7 +54,7 @@ The workflow uploads machine-readable JSON fixtures and timing results as artifa
 
 ## Cross-language methodology
 
-The cross-language workflow exports shared fixtures before timing. The Python reference, pure-R builder and Rust/rextendr adapter are compared on equivalent inputs. Each measured implementation must pass semantic comparison against the expected scene before its timing is considered. Pure R remains in the regular comparison but is intentionally omitted from B03/B04 stress measurements because its JSON serialization path is not practical at those sizes. The retired C++/Rcpp candidate is not part of the current workflow; its earlier measurements remain in the [historical cross-language report](CROSS-LANGUAGE.md).
+The cross-language workflow exports shared fixtures before timing. The Python reference, pure-R builder and Rust/rextendr adapter are compared on equivalent inputs. Each measured implementation must pass semantic comparison against the expected scene before its timing is considered. Pure R remains in the regular comparison but is intentionally omitted from B03/B04 stress measurements because its JSON serialization path is not practical at those sizes. The retired C++/Rcpp candidate is not part of the current workflow; its earlier measurements remain in the [historical cross-language report](historical-cross-language-benchmark.md).
 
 Regular measurements use warmups and repeated samples with calibrated batches for short workloads. Stress measurements use one warmup, five measured samples and batch size one. Results are specific to the CI runner and are not, by themselves, a production-language decision.
 
