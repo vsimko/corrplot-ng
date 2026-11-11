@@ -5,7 +5,6 @@ on:
     paths:
       - "contracts/**"
       - "fixtures/**"
-      - "tests/fixtures/**"
       - "npm/packages/wasm/**"
       - "rust/bindings/wasm/**"
       - "npm/packages/typescript/**"
