@@ -1599,7 +1599,7 @@ mod prepared_html_table_tests {
 
     #[test]
     fn publication_html_table_uses_prepared_order_and_keeps_hidden_triangle_values() {
-        let fixture = include_str!("../../../../prototypes/publication-config-v1/examples/basic.json");
+        let fixture = include_str!("../../../../python/reference/prototypes/publication-config-v1/examples/basic.json");
         let config = fixture
             .replace("\"ordering\": \"original\"", "\"ordering\": \"alphabetical\"")
             .replace("\"display\": \"full\"", "\"display\": \"upper\"");
