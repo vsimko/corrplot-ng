@@ -4,9 +4,9 @@
 Run from any working directory with:
     python3 tools/repository/check_root_policy.py
 
-The current repository is in a staged migration. Transitional root entries are
-explicitly listed with their owning issue; they are warnings, not permanent
-allowlist entries. New root entries and new root dependency manifests fail.
+Permanent root entries are explicitly allowlisted. Any unreviewed root entry
+or root dependency manifest fails; transitional exceptions, if ever needed,
+must identify their owning issue.
 """
 from __future__ import annotations
 
