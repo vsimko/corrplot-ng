@@ -23,7 +23,6 @@ on:
     paths:
       - "contracts/**"
       - "fixtures/**"
-      - "tests/fixtures/**"
       - "npm/packages/wasm/**"
       - "npm/package-lock.json"
       - "rust/bindings/wasm/**"
