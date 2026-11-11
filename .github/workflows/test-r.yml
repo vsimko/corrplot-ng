@@ -40,11 +40,18 @@ jobs:
               - '.github/workflows/test-r.yml'
 
   r-cmd-check:
-    name: R CMD check
+    name: R CMD check (${{ matrix.os }})
     needs: changes
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.r_package == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -67,7 +74,55 @@ jobs:
         run: Rscript python/reference/test_r_scene_consumer.R
       - name: Build source package
         working-directory: r
+        shell: bash
         run: R CMD build corrplotng
+      - name: Install source package without a Rust build step
+        working-directory: r
+        shell: bash
+        run: R CMD INSTALL corrplotng_*.tar.gz
+      - name: Smoke-test installed package
+        shell: Rscript {0}
+        run: |
+          library(corrplotng)
+          normalized <- corrplot_ng_normalize_matrix(matrix(c(1, 0.5, 0.5, 1), nrow = 2))
+          stopifnot(is.list(normalized))
+      - name: Record package build and installation sizes
+        working-directory: r
+        shell: Rscript {0}
+        run: |
+          tarball <- Sys.glob("corrplotng_*.tar.gz")
+          stopifnot(length(tarball) == 1L, file.exists(tarball))
+          package_dir <- find.package("corrplotng")
+          installed_files <- list.files(package_dir, recursive = TRUE,
+            full.names = TRUE, all.files = TRUE)
+          installed_files <- installed_files[file.info(installed_files)$isdir %in% FALSE]
+          installed_bytes <- sum(file.info(installed_files)$size, na.rm = TRUE)
+          lines <- c(
+            paste0("R version: ", getRversion()),
+            paste0("Platform: ", R.version$platform),
+            paste0("Source tarball: ", tarball),
+            paste0("Source tarball bytes: ", file.info(tarball)$size),
+            paste0("Installed package: ", normalizePath(package_dir)),
+            paste0("Installed package bytes: ", installed_bytes),
+            paste0("Installed file count: ", length(installed_files)),
+            "Rust build: not required or invoked by this package installation"
+          )
+          writeLines(lines, "corrplotng-build-evidence.txt")
       - name: Check source package as CRAN
         working-directory: r
+        shell: bash
+        env:
+          _R_CHECK_CRAN_INCOMING_: "false"
+          _R_CHECK_CRAN_INCOMING_REMOTE_: "false"
         run: R CMD check --as-cran --no-manual corrplotng_*.tar.gz
+      - name: Upload public CI validation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: r-package-ci-evidence-${{ matrix.os }}
+          path: |
+            r/corrplotng_*.tar.gz
+            r/corrplotng.Rcheck/**
+            r/corrplotng-build-evidence.txt
+          if-no-files-found: warn
+          retention-days: 14
