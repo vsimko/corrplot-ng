@@ -1,21 +1,8 @@
 name: Rust CRAN dependency audit
 
 on:
+  workflow_call:
   # Fast license-policy check for dependency-related changes.
-  pull_request:
-    paths:
-      - "rust/Cargo.toml"
-      - "rust/bindings/r/rextendr-prototype/Cargo.toml"
-      - "rust/bindings/r/rextendr-prototype/Cargo.lock"
-      - "rust/Cargo.lock"
-      - "rust/bindings/r/rextendr-prototype/deny.toml"
-      - "rust/bindings/r/rextendr-prototype/src/**"
-      - "rust/crates/corrplot-core/**"
-      - "r/corrplotng/DESCRIPTION"
-      - "r/corrplotng/tools/prepare-rust-package.R"
-      - "r/corrplotng/src/rust/**"
-      - ".github/workflows/rust-cran-dependency-audit.yml"
-  # Full vendoring and offline-build audit, weekly.
   schedule:
     - cron: "23 5 * * 1"
   # Full audit can also be started manually, e.g. before a CRAN release.
