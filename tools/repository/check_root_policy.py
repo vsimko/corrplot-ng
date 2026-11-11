@@ -42,7 +42,6 @@ ALLOWED_ROOT_DIRECTORIES = {
 }
 
 TRANSITIONAL_ROOT_DIRECTORIES = {
-    "benchmarks": "#373 — move cross-runtime benchmark tooling under repository tooling or owning ecosystems",
 }
 
 FORBIDDEN_ROOT_MANIFESTS = {
