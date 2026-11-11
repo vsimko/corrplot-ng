@@ -23,6 +23,9 @@ render_legacy_case <- function(case, plotter, path) {
 }
 
 test_that("corrplot-ng matches the saved legacy visual examples", {
+  if (!identical(Sys.info()[["sysname"]], "Linux")) {
+    skip("Exact PNG pixel baselines are renderer-specific; run this regression on Linux.")
+  }
   skip_if_not_installed("png")
   snapshot_dir <- testthat::test_path("fixtures", "legacy-visual")
   snapshot_files <- file.path(snapshot_dir, paste0(names(legacy_visual_cases), ".png"))
