@@ -8,13 +8,13 @@ This document defines current ownership and the accepted ADR 0003 boundaries. It
 | --- | --- |
 | `rust/` | Rust workspace root for the shared core, CLI, Node-API and browser-WASM crates. The disposable R/rextendr adapter is kept under `rust/bindings/r/` but excluded from the workspace with its own audited lockfile. |
 | `npm/` | Private npm workspace, lockfile, installable packages, platform-specific native package manifests, and cross-backend npm tests. Rust crate sources live under `rust/bindings/`. |
-| `tools/` | Repository-wide orchestration and repository-level test harness under `tools/repository/`. |
+| `tools/` | Repository-wide orchestration, repository-level tests, and cross-runtime benchmark tooling under `tools/repository/`. |
 | `r/` | Production-facing R package at `r/corrplotng/`; owns R APIs, legacy compatibility, graphics-device behavior, and package tests. |
 | `python/` | Python reference project under `python/reference/`; non-production and not a distributable package. |
 | `experiments/` | Disposable cross-runtime experiments; non-production and not supported package backends. |
 | `python/reference/prototypes/` | Python semantic validators and publication configuration/SVG prototypes, tests, and examples. Normative schemas live under `contracts/`; canonical shared fixtures live under `fixtures/`. |
 | `tools/repository/tests/` | Cross-runtime repository-level test harnesses; canonical fixture data lives under `fixtures/`. |
-| `benchmarks/` | Opt-in performance and resource measurements. Benchmarks are not part of routine correctness checks unless a specific issue requires them. |
+| `tools/repository/benchmarks/` | Opt-in performance harnesses for shared-core, scalability, and cross-language measurements. |
 | `docs/` | Architecture decisions, contracts and workflow documentation, testing guidance, and the roadmap. |
 | `.github/` | GitHub Actions workflows, issue templates, and repository automation. |
 
