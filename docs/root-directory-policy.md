@@ -12,14 +12,9 @@ This policy implements the root-directory rules in [ADR 0003](adr/0003-monorepo-
 - `experiments/` for isolated, non-production research and cross-runtime proofs with independent build/test boundaries, as explicitly allowed by ADR 0003.
 - `tools/` only for repository-wide orchestration under `tools/repository/`; ecosystem executables belong with their ecosystem.
 
-## Explicit migration exceptions
+## Transitional root entries
 
-The following current entries remain documented migration exceptions. They are warnings in the checker until the owning files move to their final project roots; no new root-level package manager is permitted.
-
-| Current root entry | Reason / destination |
-|---|---|
-
-The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception. No transitional root directories remain; the checker fails on unreviewed root entries and on new root dependency manifests.
+None. The npm workspace, lockfile, Changesets metadata, and JavaScript packages have moved under `npm/` in #367. The `experiments/` directory is a permanent ADR-approved root exception. The checker fails on every unreviewed root entry and on new root dependency manifests.
 
 ## Generated paths that must never be committed
 
