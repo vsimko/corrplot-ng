@@ -1,0 +1,24 @@
+{
+  "config_version": 1,
+  "input": {
+    "kind": "inline_matrix",
+    "labels": ["temperature", "humidity", "yield"],
+    "values": [
+      [1.0, -0.42, 0.71],
+      [-0.42, 1.0, -0.18],
+      [0.71, -0.18, 1.0]
+    ]
+  },
+  "matrix": { "kind": "correlation", "method": "pearson", "missing": "preserve" },
+  "plot": {
+    "method": "circle",
+    "display": "full",
+    "ordering": "original",
+    "show_values": false,
+    "significance": { "enabled": false, "p_values": null, "thresholds": [0.001, 0.01, 0.05] }
+  },
+  "colors": { "negative": "#b2182b", "neutral": "#f7f7f7", "positive": "#2166ac", "missing": "#d9d9d9" },
+  "dimensions": { "width": 160, "height": 145, "unit": "mm" },
+  "typography": { "family": "sans-serif", "base_size": 9 },
+  "output": { "format": "svg", "path": "figures/basic-correlation.svg" }
+}
