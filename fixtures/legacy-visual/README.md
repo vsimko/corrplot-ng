@@ -1,7 +1,7 @@
 # Legacy visual regression snapshots
 
 The 15 committed PNGs are reference renders from `corrplot` version 0.95.
-Their IDs, sources and intent are recorded in `legacy-visual-cases.json`.
+Their IDs, sources and intent are recorded in `cases.json`.
 
 The R regression test renders only `corrplotng::corrplot_ng()` and compares its
 pixels to these saved baselines. It does not render the original implementation
