@@ -159,7 +159,8 @@ jobs:
           }
           $library = Join-Path $env:RUNNER_TEMP 'corrplotng-binary-library'
           New-Item -ItemType Directory -Force -Path $library | Out-Null
-          & R CMD INSTALL "--library=$library" $binary.FullName
+          $rExecutable = (Get-Command R.exe -ErrorAction Stop).Source
+          & $rExecutable CMD INSTALL "--library=$library" $binary.FullName
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $libraryR = $library.Replace('\', '/')
           @"
