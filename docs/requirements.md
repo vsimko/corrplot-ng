@@ -95,7 +95,7 @@ a complete language package or proof of shared compiled implementation.
 
 | Runtime or component | Current status | What the status means |
 |---|---|---|
-| R package | Provisional implementation | Default plotting delegates to upstream corrplot. It also provides normalized matrix/file adapters, statistical and palette helpers, and an experimental scene-v1 preparation path. It is not a complete replacement renderer. |
+| R package | Provisional implementation with an opt-in Rust renderer | Default plotting continues to delegate to upstream corrplot. The package also provides normalized matrix/file adapters, statistical and palette helpers, scene-v1 preparation, and an opt-in Rust-backed SVG renderer for the currently documented supported subset. The renderer is experimental and does not replace the legacy plotting path. |
 | Python | Reference/prototype | The shared scene/SVG prototype exercises scene construction and deterministic SVG output. It is not a production package or selected shared core. |
 | Rust shared core and CLI | Partial shared implementation | `rust/crates/corrplot-core` is the selected shared implementation. The standalone CLI and disposable R/rextendr adapter link to the same crate and call its matrix-validation API. The core also contains typed scene SVG and RGBA rendering APIs, but it does not yet implement the complete scene-v1 parser/builder or full correlation-plot pipeline. |
 | Rust/rextendr | Disposable evaluation adapter | It proves shared-crate reuse for selected operations; it is not the production R backend. |
@@ -123,12 +123,26 @@ The current support and test details are maintained in
 - The current shared core is a partial implementation, not a complete
   visualization engine. Scene-v1 parsing/building and broader plot semantics
   remain in progress.
-- The production R package has not migrated to Rust/rextendr. Its remaining
-  adoption gates are CRAN disposition for the vendor-metadata NOTE,
-  compatibility with the intended CRAN toolchain, and validation of the
-  actual production-package artifact and footprint (#173). The proposed
-  human maintainer-time comparison was discontinued by #269 and is not a gate.
-  Do not claim CRAN acceptance or authorize a production R migration.
+- The production R package now embeds the shared Rust core and exposes an
+  opt-in Rust-backed SVG renderer through the extendr adapter (PR #417).
+  This is a bounded experimental integration, not a wholesale migration:
+  default plotting remains on the legacy upstream corrplot path, and the Rust
+  renderer supports only its documented scene-v1 subset.
+- The production package candidate was built and checked on Linux, macOS, and
+  Windows. Offline source installation, renderer smoke tests, and
+  `R CMD check --as-cran --no-manual` passed with `Status: OK` and no NOTE
+  on all three platforms. The Windows binary ZIP also installed and passed
+  its renderer smoke test with Cargo/rustc absent from PATH. The source
+  tarball was 2,610,492 bytes and the installed package was 2,631,354 bytes
+  in the recorded Ubuntu run (see #173 and PR #417).
+- The production packaging approach retains Cargo checksum/provenance
+  metadata inside the compressed vendor archive and does not reproduce the
+  historical hidden-file NOTE. #268 remains open only for the historical
+  prototype NOTE's external maintainer/CRAN disposition; it is not a
+  demonstrated blocker for the current production package candidate.
+- Do not claim CRAN acceptance or imply that the experimental renderer
+  replaces the legacy plotting path. The proposed human maintainer-time
+  comparison was discontinued by #269 and is not a gate.
 - C++/Rcpp was rejected and retired; it is not an R-only fallback.
 - TypeScript, Node native bindings, browser WASM, direct Canvas, and the React
   and Vue adapters have implemented slices. Full scene-v1 presentation
