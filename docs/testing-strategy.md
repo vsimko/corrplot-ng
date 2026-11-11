@@ -43,9 +43,9 @@ The current implementation includes:
 
 ### 1. Shared fixtures and normalized-matrix v1
 
-The general fixtures in `tests/fixtures/correlation-cases.json` describe
+The canonical correlation fixtures in `fixtures/matrix-input-v1/correlation-cases.json` describe
 language-neutral matrix cases. The normalized-matrix v1 contract in
-`prototypes/normalized-matrix-v1/` defines the canonical input shape,
+`contracts/normalized-matrix-v1/` defines the canonical input shape,
 including square dimensions, exact Unicode labels, zero-based source-index
 mapping, and JSON `null` for missing values. Zero remains a numeric value.
 
@@ -155,7 +155,7 @@ documented subset; it is not complete SVG 2 conformance and does not promise
 identical rendering in every viewer.
 
 Renderer capability declarations are checked against
-`prototypes/renderer-capabilities-v1.schema.json`. The shared-SVG prototype
+`contracts/renderer-capability-v1/schema.json`. The Python scene/SVG reference
 tests strict rejection of unsupported required features and permissive
 omission only when the caller explicitly marks a feature optional. Each
 omission returns a structured warning. The native CLI exposes its narrow
