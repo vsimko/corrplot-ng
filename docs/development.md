@@ -121,9 +121,9 @@ python -m pip install -r requirements-dev.txt
 python -m unittest discover -s . -p 'test_*.py' -v
 cd ../..
 python -m unittest discover -s tests -v
-python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
-python -m unittest discover -s prototypes/publication-config-v1 -p 'test_*.py' -v
-python -m unittest discover -s prototypes/publication-svg-v1 -p 'test_*.py' -v
+python -m unittest discover -s python/reference/prototypes/normalized-matrix-v1 -p 'test_*.py' -v
+python -m unittest discover -s python/reference/prototypes/publication-config-v1 -p 'test_*.py' -v
+python -m unittest discover -s python/reference/prototypes/publication-svg-v1 -p 'test_*.py' -v
 ```
 
 On Linux, macOS, WSL, or Git Bash, render and validate a reference SVG from
