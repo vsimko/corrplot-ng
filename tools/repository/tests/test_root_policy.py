@@ -69,13 +69,11 @@ class RootPolicyTests(unittest.TestCase):
         errors, _ = validate_paths(["README.md", "new-product-root/source.rs"])
         self.assertTrue(any("new-product-root" in error for error in errors))
 
-
-if __name__ == "__main__":
-    unittest.main()
-
-
-class RemovedRootTestsDirectoryTests(unittest.TestCase):
     def test_root_tests_directory_is_no_longer_a_transition_exception(self):
         errors, warnings = validate_paths(["tests/test_fixture_integrity.py"])
         self.assertTrue(any(error.startswith("tests: unreviewed repository-root entry") for error in errors))
         self.assertFalse(any(warning.startswith("tests/") for warning in warnings))
+
+
+if __name__ == "__main__":
+    unittest.main()
