@@ -13,7 +13,7 @@ those ecosystems.
    or an issue description as proof of behavior.
 4. Keep shared correlation and visualization semantics in
    `rust/crates/corrplot-core`. Keep R legacy API and graphics-device behavior
-   in `implementations/r/`. Keep framework lifecycle code in its npm adapter.
+   in `r/corrplotng/`. Keep framework lifecycle code in its npm adapter.
 
 ## Changes and validation
 

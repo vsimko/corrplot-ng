@@ -76,4 +76,4 @@ cells, missing-cell positions, or the complete call argument list. The
 upstream temporaries or undocumented data-frame construction details.
 
 The contract is tested against the pinned corrplot 0.95 implementation in
-`implementations/r/tests/testthat/test-return-values.R`.
+`r/corrplotng/tests/testthat/test-return-values.R`.

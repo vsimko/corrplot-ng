@@ -59,11 +59,16 @@ Run checks from this directory:
 R CMD check .
 ```
 
-From the repository root, use:
+From the repository root, build and check the source package with:
 
 ```sh
-R CMD check implementations/r
+R CMD build r/corrplotng
+R CMD check --as-cran --no-manual corrplotng_*.tar.gz
 ```
+
+The tarball is created in the current working directory. Run the commands from a
+clean temporary directory if you want to keep generated package artifacts out
+of the repository.
 
 ## Normalized matrix input adapter
 

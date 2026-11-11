@@ -64,7 +64,7 @@ python -m unittest discover -s tests -v
 python -m unittest discover -s prototypes/normalized-matrix-v1 -p 'test_*.py' -v
 ```
 
-The R adapter tests run through `R CMD check implementations/r`.
+The R adapter tests run through `R CMD check --as-cran r/corrplotng`.
 
 This layer validates already-computed matrices. It does not calculate
 correlations from raw observations and does not test rendering.
@@ -98,7 +98,7 @@ snapshot regeneration procedure, fixture inventory, and platform limitations.
 Run the package check from the repository root:
 
 ```sh
-R CMD check implementations/r
+R CMD check --as-cran r/corrplotng
 ```
 
 ### 3. Scene-v1 contract and renderer-neutral behavior

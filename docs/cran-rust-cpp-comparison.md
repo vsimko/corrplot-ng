@@ -124,7 +124,7 @@ CRAN does not accept package-maintainer uploads of Windows/macOS binaries. CRAN'
 
 ## 6. Current production-R implications
 
-The R package at `implementations/r` remains a provisional compatibility harness and has not migrated to the Rust binding. ADR 0001 selects Rust as the sole shared native implementation; C++/Rcpp is rejected and its prototype was removed by PR #332. The old questions about which language to choose are closed.
+The R package at `r/corrplotng` remains a provisional compatibility harness and has not migrated to the Rust binding. ADR 0001 selects Rust as the sole shared native implementation; C++/Rcpp is rejected and its prototype was removed by PR #332. The old questions about which language to choose are closed.
 
 The remaining operational questions before any production R adoption are:
 

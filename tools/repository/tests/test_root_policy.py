@@ -22,7 +22,7 @@ class RootPolicyTests(unittest.TestCase):
             "npm/.changeset/config.json",
             "python/reference/requirements-dev.txt",
             "rust/crates/corrplot-core/Cargo.toml",
-            "implementations/r/DESCRIPTION",
+            "r/corrplotng/DESCRIPTION",
             "experiments/wasm-r/README.md",
         ]
         errors, warnings = validate_paths(paths)
