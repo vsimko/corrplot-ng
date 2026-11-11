@@ -55,7 +55,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Testing strategy](testing-strategy.md): current test layers, evidence limits, and CI workflows.
 - [Regression test guide](regression-testing.md): pinned legacy reference, raster baselines, normalized input tests, and SVG validation.
 - [Shared-core benchmark plan](shared-core-benchmark-plan.md): benchmark scope, correctness gates, measurement protocol, and decision criteria.
-- [Benchmark operations](../benchmarks/README.md): how to run the shared-core, cross-language, stress, and package-smoke workflows.
+- [Benchmark operations](benchmark-operations.md): how to run the shared-core, cross-language, stress, and package-smoke workflows.
 
 The R package lives in [r/corrplotng](../r/corrplotng/README.md). It delegates legacy plotting to upstream `corrplot` by default, exposes a mixed legacy wrapper, and also provides an experimental scene path, normalized-matrix and file adapters, and statistical/palette helpers. Its scene path prepares renderer-neutral data; it is not a complete replacement renderer.
 
