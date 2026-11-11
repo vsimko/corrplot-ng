@@ -1,22 +1,7 @@
 name: Test npm workspace
 
 on:
-  pull_request:
-    paths:
-      - "contracts/**"
-      - "fixtures/**"
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - "rust/crates/corrplot-core/**"
-      - "npm/package.json"
-      - "npm/package-lock.json"
-      - "npm/packages/native-node-*/**"
-      - "npm/tests/cross-backend/**"
-      - "npm/.changeset/**"
-      - "npm/packages/**"
-      - "rust/bindings/node/**"
-      - "rust/bindings/wasm/**"
-      - ".github/workflows/test-npm-workspace.yml"
+  workflow_call:
   push:
     branches: [main]
     paths:
