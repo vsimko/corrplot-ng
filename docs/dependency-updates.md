@@ -8,11 +8,11 @@ Dependabot checks these declared dependency sources weekly on Monday
 | Ecosystem | Source | Policy |
 | --- | --- | --- |
 | GitHub Actions | `.github/workflows/` | Minor/patch updates grouped; major updates separate |
-| Cargo | `/rust` workspace (committed lockfile), three independent WASM-R experiment projects (manifest-only; no committed lockfiles), the R package candidate at `/r/corrplotng/src/rust` (separate lockfile), and excluded standalone R/rextendr prototype (separate lockfile) | Workspace and experiment minor/patch updates grouped; both R Cargo roots use security-only updates while routine changes remain coordinated with packaging evidence |
+| Cargo | `/rust` workspace (committed lockfile), three independent WASM-R experiment projects (manifest-only; no committed lockfiles), the production R package at `/r/corrplotng/src/rust` (separate lockfile), and excluded standalone R/rextendr prototype (separate lockfile) | Workspace and experiment minor/patch updates grouped; both R Cargo roots use security-only updates while routine changes remain coordinated with packaging evidence |
 | npm | npm workspace (`npm/package.json`, `npm/package-lock.json`, and `npm/packages/*`) | External dependencies across workspace manifests are maintained; four unpublished native platform-package references are ignored |
 | pip | `python/reference/requirements-dev.txt` | Python development/test dependencies; minor/patch updates grouped |
 
-The production-facing Cargo workspace is rooted at `/rust` and contains the shared core, CLI, Node and WASM crates. The three `experiments/wasm-r` crates remain independent projects. The production R package candidate at `r/corrplotng/src/rust` and the excluded `rust/bindings/r/rextendr-prototype` each retain their own lockfile and separate security-only Dependabot entries.
+The production-facing Cargo workspace is rooted at `/rust` and contains the shared core, CLI, Node and WASM crates. The three `experiments/wasm-r` crates remain independent projects. The production R package at `r/corrplotng/src/rust` and the excluded `rust/bindings/r/rextendr-prototype` each retain their own lockfile and separate security-only Dependabot entries.
 
 Only `/rust`, `r/corrplotng/src/rust`, and `rust/bindings/r/rextendr-prototype` currently commit Cargo lockfiles. The three WASM/R experiment projects have no committed `Cargo.lock`; Dependabot updates their manifests, and their CI builds resolve compatible versions without `--locked`. This is an explicit limitation of the disposable experiments, not a reproducible locked-build guarantee. If any experiment becomes a maintained or release input, add its lockfile and validate switching its workflow to `--locked` as a separate change.
 
@@ -32,7 +32,7 @@ The `npm/packages/wasm` package has no external npm dependencies of its own.
   offline vendor/package and CRAN checks. The zero open-PR limit disables
   routine version-update PRs for this directory; it does not disable security
   update PRs.
-- `r/corrplotng/src/rust` is the production R package candidate's separate
+- `r/corrplotng/src/rust` is the production R package's separate
   Cargo root and is configured for security updates only. Its `extendr-api`
   dependency is pinned to 0.9.0; routine changes must be coordinated with the
   package's generated vendor archive, dependency/license inventory, and
