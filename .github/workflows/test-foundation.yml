@@ -32,7 +32,6 @@ jobs:
         with:
           filters: |
             foundation:
-              - 'tests/**'
               - 'r/corrplotng/**'
               - 'contracts/**'
               - 'fixtures/**'
