@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "kind": "visualization_document",
+  "metadata": {
+    "title": "General numeric matrix",
+    "description": "Synthetic non-correlation matrix with non-negative values."
+  },
+  "layout": {
+    "width": 560,
+    "height": 400,
+    "units": "logical"
+  },
+  "data_sources": [
+    {
+      "id": "measurements",
+      "kind": "matrix",
+      "values": [
+        [
+          12,
+          18,
+          25
+        ],
+        [
+          7,
+          null,
+          14
+        ]
+      ],
+      "semantics": "general_numeric",
+      "row_labels": [
+        "north",
+        "south"
+      ],
+      "column_labels": [
+        "temperature",
+        "pressure",
+        "humidity"
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "id": "magnitude",
+      "kind": "color",
+      "domain": [
+        0,
+        30
+      ],
+      "range": [
+        "#fff7bc",
+        "#d95f0e"
+      ],
+      "transform": "linear"
+    }
+  ],
+  "plots": [
+    {
+      "id": "heatmap",
+      "coordinate_system": {
+        "kind": "cartesian",
+        "x_domain": [
+          -0.5,
+          2.5
+        ],
+        "y_domain": [
+          -0.5,
+          1.5
+        ],
+        "aspect": "equal"
+      },
+      "layers": [
+        {
+          "id": "heatmap-cells",
+          "kind": "matrix",
+          "data": "measurements",
+          "encoding": {
+            "glyph": "square",
+            "color": {
+              "field": "value",
+              "scale": "magnitude"
+            },
+            "missing": "preserve"
+          },
+          "display": {
+            "triangle": "full",
+            "diagonal": true
+          }
+        }
+      ],
+      "legends": [
+        {
+          "id": "magnitude-legend",
+          "scale": "magnitude",
+          "title": "Measurement"
+        }
+      ],
+      "annotations": [],
+      "accessibility": {
+        "summary": "Heatmap of non-negative measurements across three regions."
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 **Upstream:** [taiyun/corrplot](https://github.com/taiyun/corrplot/tree/62532f700e6c9d04b93ffbf0bf56e264b0e0368e)  
 **Machine-readable inventory:** [legacy-api-inventory.json](../r/corrplotng/tests/testthat/fixtures/legacy-api-inventory.json)
 
-This is a compatibility baseline, not a promise that every legacy option belongs in the cross-language API. The pinned upstream `NAMESPACE` exports nine functions; the inventory records each function's formal arguments, defaults, and documented choice sets. The inventory is deliberately versioned separately from the renderer-neutral scene contract.
+\n\n> **Namespace progress:** this branch re-exports the exact upstream names `corrplot`, `corrplot.mixed`, and `corrMatOrder` and tests all nine upstream exports against their pinned formals/defaults. These three entry points still delegate to the upstream package as explicit compatibility fallbacks; full behavioral parity and the Rust renderer cutover remain incomplete. See the [detailed pinned compatibility audit](legacy-api-compatibility-audit.md) for the remaining work.\n\nThis is a compatibility baseline, not a promise that every legacy option belongs in the cross-language API. The pinned upstream `NAMESPACE` exports nine functions; the inventory records each function's formal arguments, defaults, and documented choice sets. The inventory is deliberately versioned separately from the renderer-neutral scene contract.
 
 ## Exported API
 

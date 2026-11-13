@@ -1,0 +1,767 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vsimko/corrplot-ng/blob/main/contracts/visualization-model-v1/schema.json",
+  "title": "corrplot-ng renderer-neutral visualization model v1",
+  "description": "Semantic visualization document compiled from legacy and modern APIs. Contains no renderer-specific paths, pixels, DOM, or Canvas operations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "layout",
+    "data_sources",
+    "scales",
+    "plots"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "visualization_document"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "layout": {
+      "$ref": "#/$defs/layout"
+    },
+    "data_sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/matrix_source"
+          },
+          {
+            "$ref": "#/$defs/table_source"
+          }
+        ]
+      }
+    },
+    "scales": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scale"
+      }
+    },
+    "plots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/plot"
+      }
+    }
+  },
+  "$defs": {
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width",
+        "height",
+        "units"
+      ],
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "units": {
+          "const": "logical"
+        },
+        "arrangement": {
+          "enum": [
+            "single",
+            "grid",
+            "flow"
+          ]
+        }
+      }
+    },
+    "matrix_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "values",
+        "semantics"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "matrix"
+        },
+        "labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "semantics": {
+          "enum": [
+            "correlation",
+            "general_numeric"
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "row_labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "column_labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "labels"
+          ]
+        },
+        {
+          "required": [
+            "row_labels",
+            "column_labels"
+          ]
+        }
+      ]
+    },
+    "table_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "columns"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "table"
+        },
+        "columns": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/column"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "values"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "number",
+            "integer",
+            "category",
+            "boolean",
+            "text"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "items": {}
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "domain",
+        "range",
+        "transform"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "linear",
+            "log",
+            "band",
+            "point",
+            "color",
+            "size"
+          ]
+        },
+        "domain": {
+          "type": "array",
+          "minItems": 1,
+          "items": {}
+        },
+        "range": {
+          "type": "array",
+          "minItems": 1,
+          "items": {}
+        },
+        "transform": {
+          "enum": [
+            "identity",
+            "linear",
+            "log",
+            "sqrt",
+            "absolute"
+          ]
+        },
+        "clamp": {
+          "type": "boolean"
+        },
+        "missing": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "plot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "coordinate_system",
+        "layers"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "coordinate_system": {
+          "$ref": "#/$defs/coordinates"
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/layer"
+          }
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/panel"
+          }
+        },
+        "legends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/legend"
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/annotation"
+          }
+        },
+        "accessibility": {
+          "$ref": "#/$defs/accessibility"
+        },
+        "axis_labels": {
+          "$ref": "#/$defs/axis_labels"
+        }
+      }
+    },
+    "coordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "cartesian",
+            "polar",
+            "matrix"
+          ]
+        },
+        "x_domain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        "y_domain": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        "x_scale": {
+          "$ref": "#/$defs/id"
+        },
+        "y_scale": {
+          "$ref": "#/$defs/id"
+        },
+        "aspect": {
+          "enum": [
+            "equal",
+            "auto",
+            "free"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "normal",
+            "reversed"
+          ]
+        }
+      }
+    },
+    "panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "layer_ids"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "layer_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "data",
+        "encoding"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "matrix",
+            "bar",
+            "line",
+            "point",
+            "rect",
+            "text"
+          ]
+        },
+        "data": {
+          "$ref": "#/$defs/id"
+        },
+        "encoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "glyph": {
+              "enum": [
+                "circle",
+                "square",
+                "ellipse",
+                "number",
+                "shade",
+                "color",
+                "pie"
+              ]
+            },
+            "x": {
+              "$ref": "#/$defs/channel"
+            },
+            "y": {
+              "$ref": "#/$defs/channel"
+            },
+            "color": {
+              "$ref": "#/$defs/channel"
+            },
+            "size": {
+              "$ref": "#/$defs/size_channel"
+            },
+            "text": {
+              "$ref": "#/$defs/text_channel"
+            },
+            "color_scale": {
+              "$ref": "#/$defs/id"
+            },
+            "missing": {
+              "enum": [
+                "preserve",
+                "omit",
+                "error"
+              ]
+            }
+          }
+        },
+        "display": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "triangle": {
+              "enum": [
+                "full",
+                "upper",
+                "lower"
+              ]
+            },
+            "diagonal": {
+              "type": "boolean"
+            }
+          }
+        },
+        "style": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "filter": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "z_index": {
+          "type": "integer"
+        }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "value": {},
+        "scale": {
+          "$ref": "#/$defs/id"
+        },
+        "format": {
+          "type": "string"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "field"
+          ]
+        },
+        {
+          "required": [
+            "value"
+          ]
+        }
+      ]
+    },
+    "size_channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "transform",
+        "range"
+      ],
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "transform": {
+          "enum": [
+            "identity",
+            "absolute",
+            "sqrt",
+            "log"
+          ]
+        },
+        "range": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "scale": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "text_channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "text",
+            "number",
+            "fixed",
+            "percent"
+          ]
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "field"
+          ]
+        },
+        {
+          "required": [
+            "value"
+          ]
+        }
+      ]
+    },
+    "legend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scale",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "scale": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "position": {
+          "enum": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        }
+      }
+    },
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "text",
+        "anchor"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "text",
+            "reference_line",
+            "region",
+            "callout"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "anchor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "plot",
+                "data",
+                "coordinate"
+              ]
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "field": {
+              "type": "string"
+            },
+            "value": {}
+          }
+        }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "long_description": {
+          "type": "string"
+        },
+        "data_table": {
+          "type": "boolean"
+        }
+      }
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "axis_labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "$ref": "#/$defs/axis_label"
+        },
+        "column": {
+          "$ref": "#/$defs/axis_label"
+        }
+      }
+    },
+    "axis_label": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visible": {
+          "type": "boolean"
+        },
+        "position": {
+          "enum": [
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "inside",
+            "none"
+          ]
+        },
+        "rotation": {
+          "type": "number"
+        },
+        "offset": {
+          "type": "number"
+        },
+        "font_size": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "font_family": {
+          "type": "string"
+        },
+        "font_weight": {
+          "enum": [
+            "normal",
+            "bold"
+          ]
+        },
+        "color": {
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "text",
+            "plotmath"
+          ]
+        }
+      }
+    }
+  }
+}

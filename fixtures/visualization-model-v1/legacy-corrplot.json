@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "kind": "visualization_document",
+  "metadata": {
+    "title": "Legacy corrplot mapping",
+    "description": "Synthetic correlation matrix representing the shared semantics of a legacy corrplot call."
+  },
+  "layout": {
+    "width": 640,
+    "height": 480,
+    "units": "logical"
+  },
+  "data_sources": [
+    {
+      "id": "correlations",
+      "kind": "matrix",
+      "values": [
+        [
+          1,
+          0.65,
+          -0.4
+        ],
+        [
+          0.65,
+          1,
+          null
+        ],
+        [
+          -0.4,
+          null,
+          1
+        ]
+      ],
+      "semantics": "correlation",
+      "row_labels": [
+        "alpha",
+        "beta",
+        "gamma"
+      ],
+      "column_labels": [
+        "alpha",
+        "beta",
+        "gamma"
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "id": "correlation-color",
+      "kind": "color",
+      "domain": [
+        -1,
+        0,
+        1
+      ],
+      "range": [
+        "#b2182b",
+        "#ffffff",
+        "#2166ac"
+      ],
+      "transform": "linear"
+    }
+  ],
+  "plots": [
+    {
+      "id": "main",
+      "coordinate_system": {
+        "kind": "cartesian",
+        "x_domain": [
+          -0.5,
+          2.5
+        ],
+        "y_domain": [
+          -0.5,
+          2.5
+        ],
+        "aspect": "equal"
+      },
+      "layers": [
+        {
+          "id": "matrix-cells",
+          "kind": "matrix",
+          "data": "correlations",
+          "encoding": {
+            "glyph": "circle",
+            "color_scale": "correlation-color",
+            "size": {
+              "field": "value",
+              "transform": "absolute",
+              "range": [
+                0,
+                1
+              ]
+            },
+            "color": {
+              "field": "value",
+              "scale": "correlation-color"
+            },
+            "missing": "preserve"
+          },
+          "display": {
+            "triangle": "full",
+            "diagonal": true
+          }
+        },
+        {
+          "id": "coefficient-labels",
+          "kind": "text",
+          "data": "correlations",
+          "encoding": {
+            "text": {
+              "field": "value",
+              "format": "fixed",
+              "digits": 2
+            }
+          },
+          "style": {
+            "color": "#202020",
+            "font_size": 11
+          }
+        }
+      ],
+      "legends": [
+        {
+          "id": "correlation-legend",
+          "scale": "correlation-color",
+          "title": "Correlation"
+        }
+      ],
+      "annotations": [],
+      "accessibility": {
+        "summary": "Correlation matrix for alpha, beta, and gamma; one pair is missing."
+      },
+      "axis_labels": {
+        "row": {
+          "visible": true,
+          "position": "left",
+          "rotation": 0,
+          "offset": 0.4,
+          "font_size": 11,
+          "font_family": "sans-serif",
+          "font_weight": "normal",
+          "color": "red",
+          "format": "text"
+        },
+        "column": {
+          "visible": true,
+          "position": "top",
+          "rotation": 90,
+          "offset": 0.4,
+          "font_size": 11,
+          "font_family": "sans-serif",
+          "font_weight": "normal",
+          "color": "red",
+          "format": "text"
+        }
+      }
+    }
+  ]
+}

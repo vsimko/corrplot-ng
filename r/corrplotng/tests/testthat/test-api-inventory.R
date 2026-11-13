@@ -47,3 +47,30 @@ test_that("legacy API inventory records the full documented plot vocabulary", {
     c("original", "AOE", "FPC", "hclust", "alphabet")
   )
 })
+
+
+test_that("corrplotng re-exports every pinned corrplot 0.95 function", {
+  inventory <- jsonlite::fromJSON(
+    testthat::test_path("fixtures", "legacy-api-inventory.json"),
+    simplifyVector = FALSE
+  )
+  expected_exports <- vapply(inventory$functions, `[[`, character(1), "name")
+  actual_exports <- getNamespaceExports(asNamespace("corrplotng"))
+
+  expect_true(all(expected_exports %in% actual_exports))
+
+  for (entry in inventory$functions) {
+    adapted <- getExportedValue("corrplotng", entry$name)
+    upstream <- getExportedValue("corrplot", entry$name)
+    expect_identical(
+      names(formals(adapted)),
+      unlist(entry$formals, use.names = FALSE),
+      info = paste("corrplotng formal arguments differ for:", entry$name)
+    )
+    expect_identical(
+      formals(adapted),
+      formals(upstream),
+      info = paste("corrplotng defaults differ from upstream for:", entry$name)
+    )
+  }
+})
