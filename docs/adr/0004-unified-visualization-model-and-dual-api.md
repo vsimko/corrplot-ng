@@ -71,7 +71,7 @@ A renderer capability manifest is a declaration, not proof of implementation. A 
 - R-specific function signatures, data-frame/matrix conversion, statistical helper functions, return objects, and graphics-device integration remain adapter responsibilities where appropriate.
 - The modern API is independent in syntax and composition, but not in semantics or rendering implementation.
 - Python may remain a reference/oracle during migration but is not a production visualization engine.
-- SVG, RGBA/raster, and Canvas consume the same model semantics; backend-specific drawing remains separate.
+- SVG, RGBA/raster, and Canvas consume the same model semantics. The Rust core owns shared layout, glyph geometry, scales, clipping, and annotation semantics for every backend. Browser JavaScript may own the Canvas context, DOM lifecycle, and execution of Rust-defined draw commands, but it must not maintain a separate production implementation of those semantics. The Canvas migration is tracked by [#435](https://github.com/vsimko/corrplot-ng/issues/435).
 - No release date or compatibility completion date is implied.
 
 ## Implementation sequence
