@@ -1,6 +1,6 @@
 # ADR 0001: Shared-core architecture for corrplot-ng
 
-- **Status:** Accepted — Rust is the sole selected native implementation; production R adoption remains gated by CRAN/toolchain and package-footprint evidence
+- **Status:** Accepted — Rust is the sole selected native implementation; the production R package embeds the Rust core, while default-path cutover and CRAN release remain gated by compatibility and package-readiness evidence
 - **Date:** 2026-10-31
 - **Decision owners:** corrplot-ng maintainers
 - **Related:** [Issue #12](https://github.com/vsimko/corrplot-ng/issues/12), [Rust/rextendr spike #13](https://github.com/vsimko/corrplot-ng/pull/13), [C++/Rcpp spike #14](https://github.com/vsimko/corrplot-ng/pull/14), [language evaluation #116](https://github.com/vsimko/corrplot-ng/issues/116)
@@ -126,7 +126,7 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 
 - Scene-v1 remains the stable experimental interchange boundary. It describes plot meaning and geometry, not a language-specific object graph or renderer API.
 - Keep the Python scene prototype as the reference producer and shared fixtures as the semantic compatibility gate.
-- Keep the Rust/rextendr integration isolated until its production R rollout gates are met. Retire the C++/Rcpp spike; do not introduce a parallel native implementation.
+- Keep the disposable Rust/rextendr evaluation spike separate from the production R package integration. The production package now embeds the shared Rust core through its extendr adapter; broader default-path cutover and release remain gated. Retire the C++/Rcpp spike; do not introduce a parallel native implementation.
 - Preserve the legacy R API, defaults, return values, graphics-device behavior, and compatibility tests. No breaking migration is implied.
 - Keep the standalone CLI in Rust as already decided in #98. This decision does not require the CLI to depend on the rextendr package.
 - Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
@@ -167,7 +167,7 @@ Before making the shared Rust crate a production R dependency:
 - Record the generated source-tarball and installed-package sizes and assess the installed size against rextendr's 5 MB caution.
 - Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates. The C++/Rcpp comparison was discontinued by explicit project decision; no human-effort measurements were claimed.
 
-If Rust's R packaging or CRAN/toolchain burden cannot be brought within the maintainer budget, keep Rust authoritative for the CLI and other consumers and evaluate a narrowly scoped pure-R adapter as an explicit exception. C++/Rcpp is not an approved fallback. Any alternative adapter must conform to the same versioned contracts and shared fixtures; it must not silently redefine common semantics.
+The production R package now embeds the shared Rust core through extendr. If a future packaging constraint prevents a particular integration path, evaluate a different thin binding or packaging boundary before considering any semantic exception. Do not introduce a separate pure-R production renderer or duplicate common visualization semantics. C++/Rcpp is not an approved fallback. Any host adapter must conform to the same versioned model and shared fixtures.
 
 ## Rollback and exit strategy
 
@@ -176,7 +176,7 @@ No production package depends on either spike yet, so the shared-library rollout
 1. Keep the language-specific implementation behind the existing scene-v1 and R adapter boundaries.
 2. Require semantic parity and legacy compatibility before switching the default path.
 3. Retain the previous implementation until the new path passes supported-platform package checks and binary/source installation tests.
-4. If Rust's CRAN/toolchain conditions cannot be met within the maintainer budget, do not force an unsafe or unmaintainable Rust dependency into the R package. Keep Rust as the authoritative core for consumers it can serve, and document any R-only adapter exception against the same conformance fixtures. The scene-v1 schema and fixtures remain unchanged.
+4. If a Rust binding or packaging path cannot meet a supported platform's constraints, evaluate an alternative thin host binding that still calls the same Rust core. Do not replace the shared Rust renderer with an independent R implementation. Preserve existing scene-v1 fixtures and use an explicitly versioned model for broader semantics.
 5. C++/Rcpp is not an option under the current project decision. Retain the language-neutral interchange boundary if a future adapter constraint arises.
 
 ## Revisit the rollout plan when
