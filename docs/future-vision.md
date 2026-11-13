@@ -170,10 +170,11 @@ logic in one place.
 
 Rust is selected as the shared-core language because the standalone CLI is
 already Rust and the same source can serve native and WebAssembly targets.
-Merged PR #180 extracted `rust/crates/corrplot-core` and proved that both the CLI
-and disposable R/rextendr adapter call its matrix-validation operation.
-This is a real but deliberately small compiled-library reuse proof; the core
-does not yet implement the complete visualization pipeline.
+Merged PR #180 extracted `rust/crates/corrplot-core` and proved that the CLI
+and R/rextendr adapter call its matrix-validation operation. PR #417 later
+integrated the same shared core into the production R package through extendr,
+with an opt-in Rust-backed scene renderer. This is real shared implementation,
+but the core does not yet implement the complete legacy visualization pipeline.
 
 The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The initial integration issues have implementation evidence:
 
@@ -185,30 +186,35 @@ The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross
 
 The initial direct Canvas adapter (#144) and cross-backend parity/visual-conformance suite (#146) are complete for their implemented slice. Moving shared Canvas drawing semantics into Rust is follow-up work in #435. Full scene-v1 presentation semantics remain incomplete beyond the matrix-bearing slice; R-host measurements are tracked separately in #267.
 
-**Completed integration gate:** the CLI and disposable R/rextendr adapter
-depend on the exact same reusable crate and call its matrix-validation API.
-PR #184 records Rust/Cargo 1.78, extendr 0.9.0, three-platform offline
-package checks, and measured source/installed package sizes. This proof does
-not establish a complete visualization engine or CRAN acceptance.
+**Completed integration gate:** the CLI, disposable R/rextendr adapter, and
+production R package depend on the same reusable crate. The production R
+package exposes the Rust renderer as an opt-in scene path. PRs #184 and #417
+record Rust/Cargo 1.78, extendr 0.9.0, three-platform offline package checks,
+and source/installed package sizes. This proves an initial shared integration,
+not a complete visualization engine, full legacy renderer cutover, or CRAN acceptance.
 
-**Remaining rollout gates:** obtain CRAN guidance on the vendor metadata
-NOTE and installed package size, confirm compatibility with the intended
-CRAN toolchain, and validate the actual production-package artifact and
-footprint. The proposed human maintainer-effort comparison against C++/Rcpp
-was discontinued by #269 on 2026-11-04 and is not a gate. These CRAN/package
-gates apply only to production R adoption; they must not block independent
-Node/WASM architecture and portability work.
+**Remaining rollout gates:** complete the legacy corrplot 0.95 semantic and
+visual parity work before making Rust the default renderer, confirm the
+intended CRAN toolchain and package requirements, and obtain explicit
+maintainer approval for any CRAN submission. The current production package
+candidate passed `R CMD check --as-cran --no-manual` without a NOTE on Linux,
+macOS, and Windows. Issue #268 tracks the historical disposable-prototype
+vendor-metadata NOTE; it is not a demonstrated failure of the current
+production package. The proposed human maintainer-effort comparison against
+C++/Rcpp was discontinued by #269 and is not a gate.
 
 **Completed implementation gate:** the shared crate builds for native and
-WASM targets, and the CLI, Node, browser-WASM, and disposable R/rextendr
-adapters consume it for the operations implemented in each integration.
+WASM targets, and the CLI, production R package, Node, and browser-WASM
+integrations consume it for the operations implemented in each integration.
 Further work extends shared semantics and conformance; shared JSON fixtures
 alone are not proof of shared implementation.
 
-If the R integration cannot meet its packaging constraints, keep the Rust
-core authoritative for the CLI and future consumers and assess a narrowly
-scoped R adapter exception. Do not fork common semantics silently. Continue
-to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
+If a particular R binding or packaging path cannot meet its constraints,
+evaluate a different thin host binding that still calls the same Rust core.
+Do not create a separate R production renderer or fork common semantics.
+Continue to preserve normalized-matrix v1 and scene-v1 as existing
+language-neutral contracts; the general visualization model requires an
+explicit versioned extension under #431.
 
 **Measurable outcomes for the remaining core/runtime work:**
 
