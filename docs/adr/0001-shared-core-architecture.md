@@ -108,7 +108,7 @@ The measured performance difference does not override these operational consider
 - The vendoring, lockfile, license inventory, generated rextendr scaffold, and offline archive add ongoing maintenance work.
 - The CLI and disposable R/rextendr spike now share `corrplot-core`; the remaining operational questions are package footprint, CRAN disposition, and maintainer cost.
 
-**Assessment:** selected as the repository-wide shared-core implementation. The shared-library proof and tested MSRV are complete; production R adoption remains gated by CRAN disposition for the vendor-metadata NOTE, intended toolchain compatibility, and evidence from the actual production package artifact and its footprint.
+**Assessment:** selected as the repository-wide shared-core implementation. The shared-library proof and production R package integration are complete for the current opt-in scene renderer. Default-path migration to the full legacy API and any CRAN release remain gated by the historical vendor-metadata NOTE disposition, intended toolchain compatibility, compatibility parity, and release evidence from the production package.
 
 ### C++ + Rcpp
 
