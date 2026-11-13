@@ -147,7 +147,7 @@
           }
         }
       },
-      "anyOf": [
+      "oneOf": [
         {
           "required": [
             "labels"
