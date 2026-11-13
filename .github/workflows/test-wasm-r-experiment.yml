@@ -84,11 +84,18 @@ jobs:
           VERSION=50.0.1
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             ARCHIVE="wasmtime-v${VERSION}-x86_64-macos.tar.xz"
+            EXPECTED_SHA256="ea1818fa8cbb51524847ab2ad22197e0051594fdc96cbd0cc2afb65832e11925"
           else
             ARCHIVE="wasmtime-v${VERSION}-x86_64-linux.tar.xz"
+            EXPECTED_SHA256="685466455dd42a14774a86c36c8f2e45cbb9bd6d92a850139315df60a75498a5"
           fi
           URL="https://github.com/bytecodealliance/wasmtime/releases/download/v${VERSION}/${ARCHIVE}"
           curl -fsSL "$URL" -o "/tmp/$ARCHIVE"
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "$EXPECTED_SHA256  /tmp/$ARCHIVE" | sha256sum -c -
+          else
+            echo "$EXPECTED_SHA256  /tmp/$ARCHIVE" | shasum -a 256 -c -
+          fi
           mkdir -p "$RUNNER_TEMP/wasmtime-cli"
           tar -xJf "/tmp/$ARCHIVE" --strip-components=1 -C "$RUNNER_TEMP/wasmtime-cli"
           echo "$RUNNER_TEMP/wasmtime-cli" >> "$GITHUB_PATH"
@@ -100,9 +107,14 @@ jobs:
         run: |
           $version = "50.0.1"
           $archive = "wasmtime-v$version-x86_64-windows.zip"
+          $expectedSha256 = "c3646ee2de8cfcefe532e75852e1fd2728d78c3fcc43251794803a698d1c30ca"
           $zip = Join-Path $env:RUNNER_TEMP $archive
           $dest = Join-Path $env:RUNNER_TEMP "wasmtime-cli"
           Invoke-WebRequest -Uri "https://github.com/bytecodealliance/wasmtime/releases/download/v$version/$archive" -OutFile $zip
+          $actualSha256 = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSha256 -ne $expectedSha256) {
+            throw "Wasmtime CLI SHA-256 mismatch: $actualSha256"
+          }
           Expand-Archive -Path $zip -DestinationPath $dest -Force
           $exe = Get-ChildItem $dest -Filter wasmtime.exe -Recurse | Select-Object -First 1
           if (-not $exe) { throw "wasmtime.exe not found" }
@@ -345,7 +357,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        uses: actions/upload-artifact@v7
         with:
           name: corrplot-r-backend-benchmarks-${{ matrix.os }}-${{ matrix.repeat_index }}
           path: ${{ runner.temp }}/corrplot-r-benchmarks/
