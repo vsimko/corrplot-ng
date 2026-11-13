@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 import json
 import unittest
 from pathlib import Path
@@ -50,8 +49,16 @@ def validate_document(document: dict, schema: dict) -> None:
             if source["semantics"] == "correlation":
                 if len(row_labels) != len(column_labels):
                     raise ValueError(f"correlation source {source['id']} must be square")
-                for index, row in enumerate(rows):
-                    if row[index] is not None and abs(row[index] - 1.0) > 1e-8:
+                for row_index, row in enumerate(rows):
+                    for column_index, value in enumerate(row):
+                        if value is not None and not (-1.0 <= value <= 1.0):
+                            raise ValueError(f"correlation source {source['id']} value is outside [-1, 1]")
+                        opposite = rows[column_index][row_index]
+                        if (value is None) != (opposite is None) or (
+                            value is not None and abs(value - opposite) > 1e-8
+                        ):
+                            raise ValueError(f"correlation source {source['id']} must be symmetric")
+                    if row[row_index] is None or abs(row[row_index] - 1.0) > 1e-8:
                         raise ValueError(f"correlation source {source['id']} diagonal must equal one")
         else:
             lengths = {len(column["values"]) for column in source["columns"].values()}
@@ -91,6 +98,9 @@ def validate_document(document: dict, schema: dict) -> None:
                                 f"layer {layer['id']} references missing table field {channel['field']}"
                             )
 
+        all_ids.extend(panel["id"] for panel in plot.get("panels", []))
+        all_ids.extend(legend["id"] for legend in plot.get("legends", []))
+        all_ids.extend(annotation["id"] for annotation in plot.get("annotations", []))
         for legend in plot.get("legends", []):
             if legend["scale"] not in scales:
                 raise ValueError(f"legend {legend['id']} references missing scale {legend['scale']}")
