@@ -70,7 +70,7 @@ jobs:
       - name: Prepare the self-contained R source package
         run: Rscript r/corrplotng/tools/prepare-rust-package.R
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: cargo-deny
       - name: Audit production R package Rust dependency licenses

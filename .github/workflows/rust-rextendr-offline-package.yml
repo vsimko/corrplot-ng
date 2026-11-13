@@ -47,7 +47,7 @@ jobs:
       - name: Fetch Rust workspace dependencies after cache restore
         run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: cargo-deny
       - name: Install R integration-test dependencies

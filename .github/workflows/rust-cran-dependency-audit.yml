@@ -26,7 +26,7 @@ jobs:
       - name: Fetch the committed Rust workspace dependencies
         run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: cargo-deny
       - name: Verify committed lockfile is current
@@ -48,7 +48,7 @@ jobs:
       - name: Prepare the production R package and its locked vendor sources
         run: Rscript r/corrplotng/tools/prepare-rust-package.R
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: cargo-deny
       - name: Verify production R Cargo lockfile
@@ -69,7 +69,7 @@ jobs:
       - name: Prepare the production R package and its locked vendor sources
         run: Rscript r/corrplotng/tools/prepare-rust-package.R
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: cargo-deny
       - name: Verify production R Cargo lockfile
@@ -139,7 +139,7 @@ jobs:
       - name: Fetch the committed Rust workspace dependencies
         run: cargo fetch --locked --manifest-path rust/Cargo.toml
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: cargo-deny
       - name: Verify committed lockfile is current
