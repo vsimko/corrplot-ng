@@ -89,3 +89,18 @@ R CMD check --as-cran r/corrplotng
 ```
 
 The manifest check fails if the installed reference version differs from 0.95 or the fixture IDs drift from the executable case list. The API inventory test compares every exported function's formal argument names against the pinned inventory. The visual test checks candidate output against committed upstream snapshots under a fixed Cairo PNG configuration.
+
+
+## Target compatibility guarantee and migration policy
+
+The long-term compatibility requirement is stronger than accepting the old function names. A user should be able to replace only `library(corrplot)` with `library(corrplotng)`; all existing plotting calls, arguments, defaults, and scripts remain unchanged. The resulting plots must be semantically and visually equivalent or better, subject only to documented platform, font, and graphics-device tolerances.
+
+The pinned upstream implementation is the behavioral oracle, not the final production renderer. The current R delegation path is a temporary migration fallback. It may be used for features not yet implemented by Rust, but fallback use must be observable and it must be removed from production plotting after the complete compatibility gate passes.
+
+The final architecture has two APIs and one engine:
+
+- The legacy R adapter translates the historical corrplot API into the shared visualization model.
+- A modern composable API offers new syntax and broader visualization types without inheriting legacy argument constraints.
+- Both APIs use the same versioned, renderer-neutral model and the same authoritative Rust semantics and renderers.
+
+The current scene-v1 matrix subset is not assumed to represent every legacy feature or the general modern model. The model evolution and implementation plan are recorded in [ADR 0004](adr/0004-unified-visualization-model-and-dual-api.md) and [#430](https://github.com/vsimko/corrplot-ng/issues/430). The exhaustive compatibility corpus is tracked in [#432](https://github.com/vsimko/corrplot-ng/issues/432).

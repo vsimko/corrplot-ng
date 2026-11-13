@@ -111,3 +111,14 @@ and number glyphs only; missing-cell styling is shared across those supported
 methods. An all-missing general matrix is represented as a missing-only scene
 with `matrix_semantics.has_observed_values = false`; the fallback domain is
 not evidence of observed numeric values.
+
+
+## Migration target: Rust-backed compatibility adapter
+
+The delegation described above is a temporary compatibility fallback, not the final production architecture. The long-term requirement is a drop-in replacement for corrplot 0.95: users change only the package import and keep all plotting calls and arguments unchanged.
+
+The R adapter must translate the complete historical API into the shared renderer-neutral visualization model. Shared matrix semantics, ordering, layout, glyphs, scales, annotations, and production rendering belong in the authoritative Rust core. R-only concerns such as argument conversion, statistical helper functions, historical return objects, graphics-device ownership, and extension hooks remain in the R adapter only where they are genuinely host-specific.
+
+During migration, unsupported legacy calls may delegate to upstream corrplot 0.95. Such fallback must be observable, tested, and treated as temporary. The upstream implementation remains a pinned test oracle, but it must not remain a permanent production renderer. Remove the runtime fallback only after the full compatibility inventory, semantic tests, visual regression suite, and supported-platform package checks pass.
+
+The separate modern composable API must compile to the same visualization model and Rust core. It must not be implemented as a second rendering engine or constrained to the historical `corrplot()` signature. See [ADR 0004](adr/0004-unified-visualization-model-and-dual-api.md), [#430](https://github.com/vsimko/corrplot-ng/issues/430), and the linked workstreams #431–#434.

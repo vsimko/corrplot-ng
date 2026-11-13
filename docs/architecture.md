@@ -189,3 +189,48 @@ The accepted Rust shared-core direction now has working CLI, Node, browser-WASM,
 8. Keep browser DOM, Canvas, workers, and framework lifecycle concerns outside the portable Rust core.
 
 These principles keep contract interoperability explicit while assigning shared semantic operations to Rust and runtime-specific behavior to thin adapters.
+
+
+## Target architecture: two APIs, one visualization engine
+
+The current implementation is an incremental foundation. The target architecture is explicit under [ADR 0004](adr/0004-unified-visualization-model-and-dual-api.md) and umbrella issue [#430](https://github.com/vsimko/corrplot-ng/issues/430).
+
+```mermaid
+flowchart TB
+  LEGACY[Legacy R API: corrplot / corrplot.mixed]
+  MODERN[Modern composable API: R / TypeScript]
+  RADAPTER[Thin R compatibility adapter]
+  APIADAPTER[Thin modern API adapters]
+  MODEL[Versioned renderer-neutral visualization model]
+  CORE[Authoritative Rust visualization core]
+  SVG[SVG renderer]
+  RASTER[Raster / RGBA renderer]
+  CANVAS[Browser Canvas adapter]
+  LEGACY --> RADAPTER
+  MODERN --> APIADAPTER
+  RADAPTER --> MODEL
+  APIADAPTER --> MODEL
+  MODEL --> CORE
+  CORE --> SVG
+  CORE --> RASTER
+  CORE -->|Rust-defined draw operations| CANVAS
+```
+
+Both public APIs must produce the same internal model for equivalent visualizations. The Rust core owns shared validation, matrix and data semantics, ordering, layout, scales, glyphs, annotations, and production rendering. Adapters own host-language conversion, public API ergonomics, runtime lifecycle, and genuinely host-specific operations such as R graphics-device integration or browser DOM/Canvas integration. The Rust core owns shared drawing semantics for SVG, raster/RGBA, and Canvas. The browser adapter may acquire and own a Canvas 2D context and execute a Rust-defined draw-command/display-list interface, but must not independently implement glyph geometry, layout, scales, clipping, or annotation placement. This migration is tracked by [#435](https://github.com/vsimko/corrplot-ng/issues/435).
+
+The model must support more than correlation matrices. It should provide composable layers/glyphs, data sources, visual encodings and scales, labels, legends, annotations, multiple matrices/panels, coordinate/layout systems, and accessibility metadata. The contract design is tracked by [#431](https://github.com/vsimko/corrplot-ng/issues/431). Do not assume that current scene-v1 or renderer capability declarations already provide these features. Preserve scene-v1 and normalized-matrix-v1 as existing contracts; any broader model requires explicit versioning and migration.
+
+### Legacy compatibility and migration boundary
+
+The compatibility target is upstream R corrplot 0.95 at commit `62532f700e6c9d04b93ffbf0bf56e264b0e0368e`. Existing users should only need to change the package import; plotting calls and arguments remain unchanged. This includes the full exported API, historical defaults, accepted values, annotations, ordering, matrix modes, mixed displays, and observable R integration behavior. The exhaustive specification and oracle corpus are tracked by [#432](https://github.com/vsimko/corrplot-ng/issues/432).
+
+The current upstream R implementation is a temporary fallback while Rust parity is incomplete and remains the reference oracle for regression tests. Fallback use must be explicit and observable. It is not the final production renderer. The Rust migration and conformance gate is tracked by [#433](https://github.com/vsimko/corrplot-ng/issues/433). The modern API is tracked separately by [#434](https://github.com/vsimko/corrplot-ng/issues/434), but it must use the same model and Rust core.
+
+### Implementation status rules
+
+- **Implemented** means code exists and relevant tests exercise the behavior.
+- **Experimental** means a bounded integration exists but is not a complete or stable public contract.
+- **Fallback** means the temporary upstream R implementation is used for a behavior not yet supported by Rust.
+- **Planned** means the architecture or issue describes a goal without implementation evidence.
+
+A capability manifest is not implementation evidence. Do not advertise a feature as supported unless the implementation and conformance tests prove it for the relevant backend. Do not claim complete corrplot compatibility until the pinned inventory is covered and the upstream runtime fallback is no longer required.

@@ -1,6 +1,6 @@
 # ADR 0001: Shared-core architecture for corrplot-ng
 
-- **Status:** Accepted — Rust is the sole selected native implementation; production R adoption remains gated by CRAN/toolchain and package-footprint evidence
+- **Status:** Accepted — Rust is the sole selected native implementation; the production R package embeds the Rust core, while default-path cutover and CRAN release remain gated by compatibility and package-readiness evidence
 - **Date:** 2026-10-31
 - **Decision owners:** corrplot-ng maintainers
 - **Related:** [Issue #12](https://github.com/vsimko/corrplot-ng/issues/12), [Rust/rextendr spike #13](https://github.com/vsimko/corrplot-ng/pull/13), [C++/Rcpp spike #14](https://github.com/vsimko/corrplot-ng/pull/14), [language evaluation #116](https://github.com/vsimko/corrplot-ng/issues/116)
@@ -108,7 +108,7 @@ The measured performance difference does not override these operational consider
 - The vendoring, lockfile, license inventory, generated rextendr scaffold, and offline archive add ongoing maintenance work.
 - The CLI and disposable R/rextendr spike now share `corrplot-core`; the remaining operational questions are package footprint, CRAN disposition, and maintainer cost.
 
-**Assessment:** selected as the repository-wide shared-core implementation. The shared-library proof and tested MSRV are complete; production R adoption remains gated by CRAN disposition for the vendor-metadata NOTE, intended toolchain compatibility, and evidence from the actual production package artifact and its footprint.
+**Assessment:** selected as the repository-wide shared-core implementation. The shared-library proof and production R package integration are complete for the current opt-in scene renderer. Default-path migration to the full legacy API and any CRAN release remain gated by the historical vendor-metadata NOTE disposition, intended toolchain compatibility, compatibility parity, and release evidence from the production package.
 
 ### C++ + Rcpp
 
@@ -126,7 +126,7 @@ Rejected. Duplicating matrix normalization, ordering, and visualization semantic
 
 - Scene-v1 remains the stable experimental interchange boundary. It describes plot meaning and geometry, not a language-specific object graph or renderer API.
 - Keep the Python scene prototype as the reference producer and shared fixtures as the semantic compatibility gate.
-- Keep the Rust/rextendr integration isolated until its production R rollout gates are met. Retire the C++/Rcpp spike; do not introduce a parallel native implementation.
+- Keep the disposable Rust/rextendr evaluation spike separate from the production R package integration. The production package now embeds the shared Rust core through its extendr adapter; broader default-path cutover and release remain gated. Retire the C++/Rcpp spike; do not introduce a parallel native implementation.
 - Preserve the legacy R API, defaults, return values, graphics-device behavior, and compatibility tests. No breaking migration is implied.
 - Keep the standalone CLI in Rust as already decided in #98. This decision does not require the CLI to depend on the rextendr package.
 - Python may continue to act as a reference implementation and test oracle during migration. Production consumers that need shared semantics should call the Rust core through an appropriate thin binding; scene-v1 remains the language-neutral interchange and conformance format.
@@ -156,27 +156,29 @@ The measurements distinguish current process RSS snapshots, process-lifetime pea
 
 **Experiment recommendation: retain native Rust as the R integration direction and WASM for Node/browser consumers.** Process-based WASI remains a portability/feasibility baseline, not the preferred high-throughput R interface. These synthetic validation microbenchmarks are not corrplot rendering or end-to-end package benchmarks, do not establish CRAN acceptance, and do not authorize migration or release of the production R package. The production package, full dependency/license closure, offline installation, R CMD check --as-cran, supported-platform behavior, and the CRAN vendor-metadata disposition in #268 remain separate rollout gates.
 
-## Conditions for production rollout
+## Conditions for default-path migration and release
 
-The strategic language decision (Rust only; C++/Rcpp rejected) and the shared-library integration gate are complete: the CLI and disposable R/rextendr binding link to `rust/crates/corrplot-core` and invoke the same tested validation operation. Remaining gates concern CRAN disposition for the vendor-metadata NOTE, compatibility with the intended CRAN toolchain, and validation of the actual production R package artifact and its footprint. The proposed C++/Rcpp human-effort comparison was discontinued by #269 and is not a gate.
+The strategic language decision (Rust only; C++/Rcpp rejected), shared-crate boundary, and initial production R integration are complete. The production R package embeds `rust/crates/corrplot-core` through extendr and exposes an opt-in Rust-backed scene renderer. The default legacy plotting path still delegates to upstream corrplot 0.95. The full renderer migration and default-path cutover are tracked by #430–#435.
 
-Before making the shared Rust crate a production R dependency:
+Before making the Rust renderer the default for the complete legacy plotting API and before any CRAN submission:
 
-- Retain the single Cargo vendor metadata NOTE only with an explicit CRAN-comments explanation: `.cargo-checksum.json` is required for offline vendored-source integrity and `.cargo_vcs_info.json` preserves source provenance. Do not delete these files merely to silence `R CMD check`.
+- Complete the corrplot 0.95 semantic and visual compatibility corpus; passing the current scene subset is not sufficient.
+- Validate the actual production R source and binary package artifacts on supported platforms, including offline source installation, package size, and consumer installation without a Rust toolchain where binary packages are provided.
 - Keep Rust 1.78/Cargo 1.78 as the declared and CI-tested MSRV, and confirm the intended minimum against the actual CRAN build environment before submission.
-- Record the generated source-tarball and installed-package sizes and assess the installed size against rextendr's 5 MB caution.
-- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates. The C++/Rcpp comparison was discontinued by explicit project decision; no human-effort measurements were claimed.
+- Keep dependency vendoring, offline compilation, license notices, Cargo parallelism, and source-package size as release gates.
+- Issue #268 tracks the historical disposable-prototype vendor-metadata NOTE disposition. The production package candidate passed `R CMD check --as-cran --no-manual` with no NOTE on Linux, macOS, and Windows; do not describe the historical prototype NOTE as a current production-package failure.
+- Obtain explicit maintainer approval for a CRAN submission or broader default-renderer rollout. CI evidence alone does not authorize release.
 
-If Rust's R packaging or CRAN/toolchain burden cannot be brought within the maintainer budget, keep Rust authoritative for the CLI and other consumers and evaluate a narrowly scoped pure-R adapter as an explicit exception. C++/Rcpp is not an approved fallback. Any alternative adapter must conform to the same versioned contracts and shared fixtures; it must not silently redefine common semantics.
+The production R package already embeds the shared Rust core. If a future packaging constraint prevents a particular integration path, evaluate a different thin binding or packaging boundary that still calls the same Rust core. Do not introduce a separate pure-R production renderer or duplicate common visualization semantics. C++/Rcpp is not an approved fallback.
 
 ## Rollback and exit strategy
 
-No production package depends on either spike yet, so the shared-library rollout can be staged without a breaking migration. When a future implementation is attempted:
+The production R package already depends on the shared Rust core for its opt-in scene renderer; the separate Rust/rextendr evaluation prototype is not the production package. The upstream corrplot implementation remains the temporary fallback for legacy calls not yet covered by Rust and remains the pinned test oracle.
 
-1. Keep the language-specific implementation behind the existing scene-v1 and R adapter boundaries.
-2. Require semantic parity and legacy compatibility before switching the default path.
-3. Retain the previous implementation until the new path passes supported-platform package checks and binary/source installation tests.
-4. If Rust's CRAN/toolchain conditions cannot be met within the maintainer budget, do not force an unsafe or unmaintainable Rust dependency into the R package. Keep Rust as the authoritative core for consumers it can serve, and document any R-only adapter exception against the same conformance fixtures. The scene-v1 schema and fixtures remain unchanged.
+1. Keep the legacy adapter and Rust implementation behind explicit routing until semantic parity and legacy compatibility pass.
+2. Require supported-platform package checks and binary/source installation tests before switching the default path.
+3. Retain the upstream fallback until every required legacy behavior is implemented and tested by Rust.
+4. If a Rust binding or packaging path cannot meet a supported platform's constraints, evaluate an alternative thin host binding that still calls the same Rust core. Do not replace the shared Rust renderer with an independent R implementation. Preserve existing scene-v1 fixtures and use an explicitly versioned model for broader semantics.
 5. C++/Rcpp is not an option under the current project decision. Retain the language-neutral interchange boundary if a future adapter constraint arises.
 
 ## Revisit the rollout plan when
@@ -184,3 +186,12 @@ No production package depends on either spike yet, so the shared-library rollout
 - The shared-crate proof identifies a better crate boundary or binding strategy.
 - CRAN toolchain policy, rextendr maintenance costs, or binary distribution constraints change.
 - A full compatibility and performance comparison exists for representative corrplot workloads rather than only the current scene-v1 prototype.
+
+
+## 2026-11-13 clarification: full visualization-engine target
+
+This ADR's Rust selection is unchanged and now applies explicitly to the complete visualization engine, not only matrix validation or the current scene-v1 operations. Rust is the sole production authority for shared visualization semantics, layout, and rendering. The R package's upstream corrplot delegation is a temporary migration fallback and test oracle, not a permanent second renderer.
+
+The project has two public API surfaces: a compatibility adapter for the complete pinned corrplot 0.95 behavior and a separate modern composable API. Both compile into one general, versioned, renderer-neutral visualization model and use the same Rust implementation. R-specific argument conversion, statistical helpers, return objects, and graphics-device integration remain in a thin R adapter where they are host-specific.
+
+The current scene-v1 contract is not assumed to be sufficiently general. A new model version or distinct visualization-model contract must be designed explicitly, while preserving existing scene-v1 compatibility. See [ADR 0004](0004-unified-visualization-model-and-dual-api.md) and [#430](https://github.com/vsimko/corrplot-ng/issues/430).

@@ -159,7 +159,7 @@ the issue is deliberately reactivated.
 
 ### Phase 3 — Establish the shared Rust core
 
-**Status:** Strategic architecture selected; CLI/R crate-reuse proof, native Node and browser-WASM binding slices, normalized-matrix scene construction, the runtime-isolated TypeScript facade, and direct browser Canvas rendering are implemented. Full scene-v1 presentation semantics and production R rollout remain separate work.
+**Status:** Strategic architecture selected; CLI/R crate-reuse proof, native Node and browser-WASM binding slices, normalized-matrix scene construction, the runtime-isolated TypeScript facade, the production R package's opt-in Rust scene renderer, and the initial browser Canvas adapter are implemented. Full legacy renderer cutover, full scene-v1 presentation semantics, and Rust ownership of Canvas drawing semantics remain separate work (#430–#435).
 
 The target is one authoritative Rust implementation of shared correlation,
 validation, scene construction, layout, and other common visualization
@@ -170,10 +170,11 @@ logic in one place.
 
 Rust is selected as the shared-core language because the standalone CLI is
 already Rust and the same source can serve native and WebAssembly targets.
-Merged PR #180 extracted `rust/crates/corrplot-core` and proved that both the CLI
-and disposable R/rextendr adapter call its matrix-validation operation.
-This is a real but deliberately small compiled-library reuse proof; the core
-does not yet implement the complete visualization pipeline.
+Merged PR #180 extracted `rust/crates/corrplot-core` and proved that the CLI
+and R/rextendr adapter call its matrix-validation operation. PR #417 later
+integrated the same shared core into the production R package through extendr,
+with an opt-in Rust-backed scene renderer. This is real shared implementation,
+but the core does not yet implement the complete legacy visualization pipeline.
 
 The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross-runtime-typescript-architecture.md). The initial integration issues have implementation evidence:
 
@@ -183,32 +184,37 @@ The cross-runtime architecture decision is recorded in [ADR 0002](adr/0002-cross
 - [#142 — Browser WebAssembly backend](https://github.com/vsimko/corrplot-ng/issues/142) — initial browser-WASM binding and cross-browser smoke coverage implemented.
 - [#145 — Unified TypeScript API](https://github.com/vsimko/corrplot-ng/issues/145) — runtime-isolated Node/browser facade, normalized-matrix scene workflow, typed-array input, typed-scene SVG/RGBA, and compatibility rendering implemented.
 
-Direct Canvas rendering (#144) and the initial cross-backend parity/visual-conformance suite (#146) are complete. Full scene-v1 presentation semantics remain incomplete beyond the matrix-bearing slice; R-host measurements are tracked separately in #267.
+The initial direct Canvas adapter (#144) and cross-backend parity/visual-conformance suite (#146) are complete for their implemented slice. Moving shared Canvas drawing semantics into Rust is follow-up work in #435. Full scene-v1 presentation semantics remain incomplete beyond the matrix-bearing slice; R-host measurements are tracked separately in #267.
 
-**Completed integration gate:** the CLI and disposable R/rextendr adapter
-depend on the exact same reusable crate and call its matrix-validation API.
-PR #184 records Rust/Cargo 1.78, extendr 0.9.0, three-platform offline
-package checks, and measured source/installed package sizes. This proof does
-not establish a complete visualization engine or CRAN acceptance.
+**Completed integration gate:** the CLI, disposable R/rextendr adapter, and
+production R package depend on the same reusable crate. The production R
+package exposes the Rust renderer as an opt-in scene path. PRs #184 and #417
+record Rust/Cargo 1.78, extendr 0.9.0, three-platform offline package checks,
+and source/installed package sizes. This proves an initial shared integration,
+not a complete visualization engine, full legacy renderer cutover, or CRAN acceptance.
 
-**Remaining rollout gates:** obtain CRAN guidance on the vendor metadata
-NOTE and installed package size, confirm compatibility with the intended
-CRAN toolchain, and validate the actual production-package artifact and
-footprint. The proposed human maintainer-effort comparison against C++/Rcpp
-was discontinued by #269 on 2026-11-04 and is not a gate. These CRAN/package
-gates apply only to production R adoption; they must not block independent
-Node/WASM architecture and portability work.
+**Remaining rollout gates:** complete the legacy corrplot 0.95 semantic and
+visual parity work before making Rust the default renderer, confirm the
+intended CRAN toolchain and package requirements, and obtain explicit
+maintainer approval for any CRAN submission. The current production package
+candidate passed `R CMD check --as-cran --no-manual` without a NOTE on Linux,
+macOS, and Windows. Issue #268 tracks the historical disposable-prototype
+vendor-metadata NOTE; it is not a demonstrated failure of the current
+production package. The proposed human maintainer-effort comparison against
+C++/Rcpp was discontinued by #269 and is not a gate.
 
 **Completed implementation gate:** the shared crate builds for native and
-WASM targets, and the CLI, Node, browser-WASM, and disposable R/rextendr
-adapters consume it for the operations implemented in each integration.
+WASM targets, and the CLI, production R package, Node, and browser-WASM
+integrations consume it for the operations implemented in each integration.
 Further work extends shared semantics and conformance; shared JSON fixtures
 alone are not proof of shared implementation.
 
-If the R integration cannot meet its packaging constraints, keep the Rust
-core authoritative for the CLI and future consumers and assess a narrowly
-scoped R adapter exception. Do not fork common semantics silently. Continue
-to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
+If a particular R binding or packaging path cannot meet its constraints,
+evaluate a different thin host binding that still calls the same Rust core.
+Do not create a separate R production renderer or fork common semantics.
+Continue to preserve normalized-matrix v1 and scene-v1 as existing
+language-neutral contracts; the general visualization model requires an
+explicit versioned extension under #431.
 
 **Measurable outcomes for the remaining core/runtime work:**
 
@@ -223,7 +229,7 @@ to use normalized-matrix v1 and scene-v1 as stable language-neutral contracts.
 
 **Status:** The initial multi-format renderer, direct Canvas, and cross-backend conformance slice is implemented. Further output formats remain future work and should be added only when a consumer and contract exist.
 
-The initial implementation tracked by #143 (renderer output contract and SVG/raster), #144 (direct browser Canvas), and #146 (shared-fixture parity, browser visual conformance, renderer capabilities, and informational performance baselines) is complete. These issues are closed. Full scene-v1 presentation semantics remain limited to the current matrix-bearing subset; do not imply that the complete scene-v1 contract is implemented.
+The initial implementation tracked by #143 (renderer output contract and SVG/raster), #144 (direct browser Canvas adapter), and #146 (shared-fixture parity, browser visual conformance, renderer capabilities, and informational performance baselines) is complete. These issues are closed for their original scope. Rust ownership of shared Canvas drawing semantics is tracked separately in #435. Full scene-v1 presentation semantics remain limited to the current matrix-bearing subset; do not imply that the complete scene-v1 contract is implemented.
 
 Canvas is a browser adapter, not an SVG intermediate. Raster and Canvas
 renderers must declare capabilities and preserve the scene contract. Visual
@@ -244,6 +250,38 @@ on every pull request.
   rasterizers or font environments as byte-identical.
 - Performance measurements record the environment and remain separate from
   fast correctness checks until stable baselines justify a gate.
+
+### Phase 5 — Unify full legacy compatibility and the modern visualization API
+
+**Status:** Accepted target architecture; planning and implementation are tracked by #430–#434. This is not yet implemented.
+
+The project has two public API surfaces and one production visualization engine:
+
+- **Legacy R compatibility:** existing scripts should need only to replace `library(corrplot)` with `library(corrplotng)`. Calls, arguments, defaults, and observable behavior remain unchanged. The pinned corrplot 0.95 implementation is the behavioral oracle.
+- **Modern composable API:** a new API provides layers, glyphs, scales, annotations, panels/multiple matrices, and extensibility to general matrix and non-correlation diagram types. It is not constrained by the historical `corrplot()` signature.
+- **Shared model and Rust core:** both APIs compile into one general, versioned, renderer-neutral visualization model and use the same Rust semantics, layout, and renderers. R, CLI, Node, WASM, and browser integrations remain thin adapters.
+
+The current scene-v1 matrix subset is a foundation, not the final visualization model. Issue #431 defines the general model and explicit evolution/migration rules without silently changing normalized-matrix v1 or scene-v1. The compatibility corpus and oracle work is tracked in #432. Rust implementation is tracked in #433, and the modern API in #434.
+
+The upstream R renderer may remain only as an observable, temporary migration fallback and as the pinned regression oracle. It must be removed from the production plotting path only after complete corrplot 0.95 parity is demonstrated. It is not an acceptable permanent second renderer. Capability declarations do not count as implementation evidence.
+
+**Sequence and gates:**
+
+1. Complete the public API/behavior inventory and executable oracle corpus (#432).
+2. Design and validate the general visualization model (#431).
+3. Implement shared Rust semantics and renderer behavior against that model and corpus (#433).
+4. Migrate legacy R calls incrementally; keep fallback explicit until every required behavior passes.
+5. Deliver the modern composable API over the same model and core (#434).
+6. Remove the upstream runtime fallback after full compatibility, visual regression, and supported-platform package gates pass.
+
+**Measurable outcomes:**
+
+- A compatibility corpus can run without editing plotting calls or arguments.
+- Every pinned legacy export and argument has a documented status and executable evidence or a clearly justified exception.
+- Equivalent legacy and modern inputs produce equivalent internal model semantics.
+- Rust is the only production implementation of shared visualization semantics and rendering.
+- SVG, raster/RGBA, and Canvas preserve the same semantic model within documented backend tolerances; Canvas drawing semantics and geometry are Rust-owned, while JavaScript owns only the browser context and host integration (#435).
+- No current implementation or capability manifest is described as complete until tests prove it.
 
 ### Longer-term ideas
 
@@ -276,7 +314,7 @@ The authoritative shared-core language decision is
 [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md).
 The Node/browser runtime and API boundary is specified in
 [ADR 0002: Cross-runtime Rust and TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md).
-Changes to either decision require an explicit update to the relevant ADR.
+The unified visualization-model and dual-API decision is recorded in [ADR 0004](adr/0004-unified-visualization-model-and-dual-api.md). Changes to these decisions require an explicit update to the relevant ADR.
 
 ## How to use this roadmap
 
