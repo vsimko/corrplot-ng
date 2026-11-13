@@ -23,11 +23,11 @@ jobs:
       foundation: ${{ steps.filter.outputs.foundation }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Filter changed paths
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
+        uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -58,9 +58,9 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -72,7 +72,7 @@ jobs:
       - name: Install scene schema validator
         run: python -m pip install -r python/reference/requirements-dev.txt
       - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Validate local development command syntax
@@ -92,7 +92,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7
       - name: Install SVG rasterizer
         run: |
           sudo apt-get update
@@ -115,7 +115,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out corrplot-ng
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
@@ -136,7 +136,7 @@ jobs:
       - name: Verify legacy semantic oracle and export scene input
         run: Rscript python/reference/test_legacy_corrplot_oracle.R
       - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Verify legacy-to-scene bridge
