@@ -16,9 +16,9 @@ The fixture records every export in the pinned upstream `NAMESPACE`, its formal 
 
 | Upstream export | Purpose | Current corrplot-ng surface | Compatibility work |
 |---|---|---|---|
-| `corrplot` | Primary plotting API | `corrplot_ng` | Export exact `corrplot` name/signature; keep legacy path default during migration |
-| `corrplot.mixed` | Upper/lower mixed plot | `corrplot_ng_mixed` | Export exact dotted name/signature and preserve invisible result |
-| `corrMatOrder` | Matrix ordering | Not exported | Implement or delegate exact API; pin ordering results |
+| `corrplot` | Primary plotting API | `corrplot` (re-exported upstream fallback) plus `corrplot_ng` | Validate attached-package behavior and preserve fallback until Rust parity |
+| `corrplot.mixed` | Upper/lower mixed plot | `corrplot.mixed` (re-exported upstream fallback) plus `corrplot_ng_mixed` | Validate attached-package behavior and preserve invisible result |
+| `corrMatOrder` | Matrix ordering | `corrMatOrder` (re-exported upstream fallback) | Validate exact ordering API; later move shared ordering to Rust |
 | `cor.mtest` | Pairwise p-values and CIs | `cor.mtest` | Verify formals, errors, missing data, result matrices and all cor.test methods |
 | `colorlegend` | Standalone legend drawing | `colorlegend` | Verify full graphics semantics and `...` forwarding |
 | `COL1` | Sequential palettes | `COL1` | Verify all palette names, interpolation, edge values and exact colors |
@@ -75,7 +75,7 @@ The adapter must not independently calculate production geometry, scales, orderi
 
 Existing tests already compare legacy delegation return objects and graphics-device behavior, exercise all seven upstream glyph methods through the legacy path, and pin the upstream API inventory. The following gaps remain explicit:
 
-- Exact upstream export aliases are missing for `corrplot`, `corrplot.mixed`, and `corrMatOrder`.
+- This branch adds exact upstream exports for `corrplot`, `corrplot.mixed`, and `corrMatOrder`; package-level attached-session tests and cross-platform `R CMD check` evidence are still required.
 - The modern Rust scene renderer supports only a documented subset; it is not a drop-in implementation of the full legacy API.
 - The modern/scene path does not yet cover all methods, ordering, labels, legends, significance, confidence intervals, or mixed plots.
 - The inventory is currently strongest on signatures/defaults/choice sets; it must be extended with behavior-level oracle cases for warnings/errors, rectangular inputs, ordering edge cases, palette values, helper return behavior and all annotation modes.
@@ -83,7 +83,7 @@ Existing tests already compare legacy delegation return objects and graphics-dev
 
 ## Required next steps
 
-1. Add exact legacy export aliases and a namespace test against the pinned upstream export set.
+1. Validate the exact legacy re-exports in installed/attached package workflows and cross-platform `R CMD check`; keep them explicitly classified as temporary upstream fallbacks.
 2. Expand the JSON inventory with behavior-level cases and expected outputs, keeping upstream source/ref pinned.
 3. Generate oracle fixtures by running upstream 0.95 and corrplot-ng side by side on the same deterministic inputs and devices.
 4. Classify each behavior as `rust-core`, `r-adapter`, `temporary-upstream-fallback`, or `deferred-with-explicit-error`.
