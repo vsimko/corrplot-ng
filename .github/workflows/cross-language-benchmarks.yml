@@ -47,7 +47,7 @@ jobs:
       - name: Run regular shared-core workloads
         run: python tools/repository/benchmarks/run_shared_core.py --iterations 20 --output benchmark-results/results.json
       - name: Upload shared-core results
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        uses: actions/upload-artifact@v7
         with:
           name: shared-core-benchmark-results
           path: benchmark-results/results.json
@@ -68,7 +68,7 @@ jobs:
       - name: Run B03 and B04 stress workloads
         run: python tools/repository/benchmarks/run_shared_core.py --iterations 20 --include-stress --output benchmark-results/stress-results.json
       - name: Upload shared-core stress results
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        uses: actions/upload-artifact@v7
         with:
           name: shared-core-stress-benchmark-results
           path: benchmark-results/stress-results.json
@@ -155,7 +155,7 @@ jobs:
       - name: Benchmark Pure R and Rust/rextendr on regular fixtures
         run: Rscript tools/repository/benchmarks/run_native_scene_v1.R benchmark-results/native-fixtures.json benchmark-results/native-scene-v1.json
       - name: Upload regular cross-language results
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        uses: actions/upload-artifact@v7
         with:
           name: cross-language-scene-v1-benchmark-results
           path: benchmark-results/
@@ -172,7 +172,7 @@ jobs:
         run: Rscript tools/repository/benchmarks/run_native_scene_v1.R benchmark-results/stress-fixtures.json benchmark-results/native-stress-scene-v1.json --stress-mode
       - name: Upload cross-language stress results
         if: github.event_name == 'workflow_dispatch' && inputs.include_stress
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        uses: actions/upload-artifact@v7
         with:
           name: cross-language-stress-benchmark-results
           path: benchmark-results/
