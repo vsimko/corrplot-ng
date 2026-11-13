@@ -91,7 +91,6 @@
       "required": [
         "id",
         "kind",
-        "labels",
         "values",
         "semantics"
       ],
@@ -132,8 +131,35 @@
         "metadata": {
           "type": "object",
           "additionalProperties": true
+        },
+        "row_labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "column_labels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "labels"
+          ]
+        },
+        {
+          "required": [
+            "row_labels",
+            "column_labels"
+          ]
+        }
+      ]
     },
     "table_source": {
       "type": "object",
@@ -285,6 +311,9 @@
         },
         "accessibility": {
           "$ref": "#/$defs/accessibility"
+        },
+        "axis_labels": {
+          "$ref": "#/$defs/axis_labels"
         }
       }
     },
@@ -674,6 +703,65 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "axis_labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "$ref": "#/$defs/axis_label"
+        },
+        "column": {
+          "$ref": "#/$defs/axis_label"
+        }
+      }
+    },
+    "axis_label": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visible": {
+          "type": "boolean"
+        },
+        "position": {
+          "enum": [
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "inside",
+            "none"
+          ]
+        },
+        "rotation": {
+          "type": "number"
+        },
+        "offset": {
+          "type": "number"
+        },
+        "font_size": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "font_family": {
+          "type": "string"
+        },
+        "font_weight": {
+          "enum": [
+            "normal",
+            "bold"
+          ]
+        },
+        "color": {
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "text",
+            "plotmath"
+          ]
+        }
+      }
     }
   }
 }
