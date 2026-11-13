@@ -28,12 +28,12 @@ jobs:
           - package: win32-x64-msvc
             os: windows-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: 24
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
         with:
           workspaces: rust -> target
           shared-key: npm-native-addon
@@ -46,7 +46,7 @@ jobs:
           CORRPLOT_NODE_PLATFORM_PACKAGE: ${{ matrix.package }}
           CORRPLOT_NODE_PACKAGE_OUTPUT: ${{ runner.temp }}/npm-stage
         run: npm run package:prebuilt
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: npm-native-${{ matrix.package }}
           path: ${{ runner.temp }}/npm-stage/*.tgz
@@ -58,11 +58,11 @@ jobs:
     runs-on: ubuntu-24.04
     needs: native-platforms
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: 24
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
         with:
           targets: wasm32-unknown-unknown
       - name: Install wasm-pack
@@ -91,7 +91,7 @@ jobs:
       - name: Stage TypeScript facade
         working-directory: npm/packages/typescript
         run: npm pack --pack-destination ${{ runner.temp }}
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: npm-runtime-packages
           path: ${{ runner.temp }}/*.tgz
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [native-platforms, browser-and-facade]
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: npm-*
           path: dist
@@ -127,7 +127,7 @@ jobs:
           This bundle is a CI artifact only. It is not published to npm.
           EOF
           sha256sum -c SHA256SUMS
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: corrplot-ng-npm-staging-bundle
           path: dist/
