@@ -213,10 +213,10 @@ flowchart TB
   MODEL --> CORE
   CORE --> SVG
   CORE --> RASTER
-  MODEL --> CANVAS
+  CORE -->|Rust-defined draw operations| CANVAS
 ```
 
-Both public APIs must produce the same internal model for equivalent visualizations. The Rust core owns shared validation, matrix and data semantics, ordering, layout, scales, glyphs, annotations, and production rendering. Adapters own host-language conversion, public API ergonomics, runtime lifecycle, and genuinely host-specific operations such as R graphics-device integration or browser DOM/Canvas integration.
+Both public APIs must produce the same internal model for equivalent visualizations. The Rust core owns shared validation, matrix and data semantics, ordering, layout, scales, glyphs, annotations, and production rendering. Adapters own host-language conversion, public API ergonomics, runtime lifecycle, and genuinely host-specific operations such as R graphics-device integration or browser DOM/Canvas integration. The Rust core owns shared drawing semantics for SVG, raster/RGBA, and Canvas. The browser adapter may acquire and own a Canvas 2D context and execute a Rust-defined draw-command/display-list interface, but must not independently implement glyph geometry, layout, scales, clipping, or annotation placement. This migration is tracked by [#435](https://github.com/vsimko/corrplot-ng/issues/435).
 
 The model must support more than correlation matrices. It should provide composable layers/glyphs, data sources, visual encodings and scales, labels, legends, annotations, multiple matrices/panels, coordinate/layout systems, and accessibility metadata. The contract design is tracked by [#431](https://github.com/vsimko/corrplot-ng/issues/431). Do not assume that current scene-v1 or renderer capability declarations already provide these features. Preserve scene-v1 and normalized-matrix-v1 as existing contracts; any broader model requires explicit versioning and migration.
 
