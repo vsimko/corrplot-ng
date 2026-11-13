@@ -34,7 +34,7 @@ Coordinates use logical document units. They are not device pixels. Backends may
 - A panel is a plot-local composition region; multiple panels do not imply shared scales unless they reference the same scale ID.
 - An annotation is semantic content anchored to data, a coordinate, or a plot region. It is not a renderer-specific primitive.
 
-The first schema deliberately supports a focused set of common data and mark forms. Matrix shape validation and cross-reference validation are performed by the Rust validator in addition to JSON Schema; the canonical fixture tests exercise those invariants. New semantic capabilities require an explicit compatible schema evolution decision; renderer-specific fields do not belong here.
+The first schema deliberately supports a focused set of common data and mark forms. Matrix shape validation and cross-reference validation are required in addition to JSON Schema. The current Python conformance test exercises these invariants; the Rust core must implement the same checks before the model is adopted by production adapters. New semantic capabilities require an explicit compatible schema evolution decision; renderer-specific fields do not belong here.
 
 ## Mapping legacy corrplot
 
