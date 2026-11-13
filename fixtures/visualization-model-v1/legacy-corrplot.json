@@ -14,11 +14,6 @@
     {
       "id": "correlations",
       "kind": "matrix",
-      "labels": [
-        "alpha",
-        "beta",
-        "gamma"
-      ],
       "values": [
         [
           1,
@@ -36,7 +31,17 @@
           1
         ]
       ],
-      "semantics": "correlation"
+      "semantics": "correlation",
+      "row_labels": [
+        "alpha",
+        "beta",
+        "gamma"
+      ],
+      "column_labels": [
+        "alpha",
+        "beta",
+        "gamma"
+      ]
     }
   ],
   "scales": [
@@ -125,6 +130,30 @@
       "annotations": [],
       "accessibility": {
         "summary": "Correlation matrix for alpha, beta, and gamma; one pair is missing."
+      },
+      "axis_labels": {
+        "row": {
+          "visible": true,
+          "position": "left",
+          "rotation": 0,
+          "offset": 0.4,
+          "font_size": 11,
+          "font_family": "sans-serif",
+          "font_weight": "normal",
+          "color": "red",
+          "format": "text"
+        },
+        "column": {
+          "visible": true,
+          "position": "top",
+          "rotation": 90,
+          "offset": 0.4,
+          "font_size": 11,
+          "font_family": "sans-serif",
+          "font_weight": "normal",
+          "color": "red",
+          "format": "text"
+        }
       }
     }
   ]
