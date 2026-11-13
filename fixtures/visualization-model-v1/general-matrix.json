@@ -14,11 +14,6 @@
     {
       "id": "measurements",
       "kind": "matrix",
-      "labels": [
-        "north",
-        "south",
-        "west"
-      ],
       "values": [
         [
           12,
@@ -36,7 +31,16 @@
           9
         ]
       ],
-      "semantics": "general_numeric"
+      "semantics": "general_numeric",
+      "row_labels": [
+        "north",
+        "south"
+      ],
+      "column_labels": [
+        "temperature",
+        "pressure",
+        "humidity"
+      ]
     }
   ],
   "scales": [
@@ -65,7 +69,7 @@
         ],
         "y_domain": [
           -0.5,
-          2.5
+          1.5
         ],
         "aspect": "equal"
       },
