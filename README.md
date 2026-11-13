@@ -31,7 +31,7 @@ See [the current architecture](docs/architecture.md), [ADR 0001](docs/adr/0001-s
 
 ## Compatibility scope
 
-The original [R corrplot package](https://github.com/taiyun/corrplot) remains the reference for legacy behavior. The current R adapter preserves the legacy plotting path by delegation and has an experimental scene-preparation path. Automated tests cover selected legacy cases, normalized-input behavior, scene/SVG semantics, and saved raster references. These tests are representative, not exhaustive; full behavioral compatibility is not claimed.
+The original [R corrplot package](https://github.com/taiyun/corrplot) remains the reference for legacy behavior. The current R adapter preserves the legacy plotting path by delegation and has an experimental scene-preparation path. Automated tests cover selected legacy cases, normalized-input behavior, scene/SVG semantics, and saved raster references. These tests are representative, not exhaustive; full behavioral compatibility is not yet claimed. The accepted target is a drop-in replacement for corrplot 0.95, with a separate modern composable API; both will use one general visualization model and the same Rust production engine. The upstream R renderer is a temporary migration fallback and test oracle, not the final production path. See [ADR 0004](docs/adr/0004-unified-visualization-model-and-dual-api.md) and [the implementation plan](https://github.com/vsimko/corrplot-ng/issues/430).
 
 The Python scene/SVG prototype supports seven publication glyph methods. The current native CLI and Rust-backed bindings expose narrower, documented operation slices. Do not assume complete feature or presentation parity between the prototype, R adapter, CLI, Node, and browser-WASM integrations.
 
