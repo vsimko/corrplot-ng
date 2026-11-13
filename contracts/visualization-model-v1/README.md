@@ -17,7 +17,7 @@ The Rust core is the authority for validation, data-to-visual encoding, coordina
 
 The document separates:
 
-- **Data:** inline matrix or tabular values, labels, and stable source identity.
+- **Data:** inline matrix or tabular values, independent row/column labels (or a shared `labels` shorthand for square matrices), and stable source identity.
 - **Semantics:** plot type, layers, marks, visual encodings, annotations, and accessibility descriptions.
 - **Layout:** logical dimensions, plot/panel arrangement, and coordinate systems.
 - **Scales:** data domains and semantic visual ranges.
@@ -27,19 +27,19 @@ Coordinates use logical document units. They are not device pixels. Backends may
 
 ## Core objects
 
-- A document has versioned data sources, scales, plots, and metadata.
+- A document has versioned data sources, scales, plots, and metadata. Matrix sources may be rectangular; row and column labels are independent.
 - A plot has one coordinate system, ordered layers, optional panels, legends, annotations, and accessibility metadata.
 - A layer references data by stable ID and expresses visual mappings declaratively.
 - Layer order is paint order: later layers are composited above earlier layers.
 - A panel is a plot-local composition region; multiple panels do not imply shared scales unless they reference the same scale ID.
 - An annotation is semantic content anchored to data, a coordinate, or a plot region. It is not a renderer-specific primitive.
 
-The first schema deliberately supports a focused set of common data and mark forms. New semantic capabilities require an explicit compatible schema evolution decision; renderer-specific fields do not belong here.
+The first schema deliberately supports a focused set of common data and mark forms. Matrix shape validation and cross-reference validation are performed by the Rust validator in addition to JSON Schema; the canonical fixture tests exercise those invariants. New semantic capabilities require an explicit compatible schema evolution decision; renderer-specific fields do not belong here.
 
 ## Mapping legacy corrplot
 
 The legacy `corrplot()` adapter maps:
-- input matrix and labels to a matrix data source;
+- input matrix and independent row/column labels to a matrix data source;
 - `type`, `diag`, and ordering to selected data indices / layer visibility;
 - `method` to the matrix layer's glyph encoding;
 - `col`, `col.lim`, and palette helpers to a shared color scale;
