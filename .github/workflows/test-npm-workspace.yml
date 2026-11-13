@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: 24
       - name: Cache npm downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-workspace-${{ runner.os }}-node-24-${{ hashFiles('npm/package.json', 'npm/package-lock.json', 'npm/**/package.json') }}
@@ -55,7 +55,7 @@ jobs:
           shared-key: npm-workspace
       - name: Cache wasm-pack executable
         id: wasm-pack-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/bin/wasm-pack
           key: wasm-pack-${{ runner.os }}-${{ runner.arch }}-0.13.1
@@ -155,7 +155,7 @@ jobs:
         with:
           node-version: 24
       - name: Cache npm downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-native-toolchains-${{ runner.os }}-node-24-${{ hashFiles('npm/package.json', 'npm/package-lock.json') }}
