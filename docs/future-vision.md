@@ -245,6 +245,38 @@ on every pull request.
 - Performance measurements record the environment and remain separate from
   fast correctness checks until stable baselines justify a gate.
 
+### Phase 5 — Unify full legacy compatibility and the modern visualization API
+
+**Status:** Accepted target architecture; planning and implementation are tracked by #430–#434. This is not yet implemented.
+
+The project has two public API surfaces and one production visualization engine:
+
+- **Legacy R compatibility:** existing scripts should need only to replace `library(corrplot)` with `library(corrplotng)`. Calls, arguments, defaults, and observable behavior remain unchanged. The pinned corrplot 0.95 implementation is the behavioral oracle.
+- **Modern composable API:** a new API provides layers, glyphs, scales, annotations, panels/multiple matrices, and extensibility to general matrix and non-correlation diagram types. It is not constrained by the historical `corrplot()` signature.
+- **Shared model and Rust core:** both APIs compile into one general, versioned, renderer-neutral visualization model and use the same Rust semantics, layout, and renderers. R, CLI, Node, WASM, and browser integrations remain thin adapters.
+
+The current scene-v1 matrix subset is a foundation, not the final visualization model. Issue #431 defines the general model and explicit evolution/migration rules without silently changing normalized-matrix v1 or scene-v1. The compatibility corpus and oracle work is tracked in #432. Rust implementation is tracked in #433, and the modern API in #434.
+
+The upstream R renderer may remain only as an observable, temporary migration fallback and as the pinned regression oracle. It must be removed from the production plotting path only after complete corrplot 0.95 parity is demonstrated. It is not an acceptable permanent second renderer. Capability declarations do not count as implementation evidence.
+
+**Sequence and gates:**
+
+1. Complete the public API/behavior inventory and executable oracle corpus (#432).
+2. Design and validate the general visualization model (#431).
+3. Implement shared Rust semantics and renderer behavior against that model and corpus (#433).
+4. Migrate legacy R calls incrementally; keep fallback explicit until every required behavior passes.
+5. Deliver the modern composable API over the same model and core (#434).
+6. Remove the upstream runtime fallback after full compatibility, visual regression, and supported-platform package gates pass.
+
+**Measurable outcomes:**
+
+- A compatibility corpus can run without editing plotting calls or arguments.
+- Every pinned legacy export and argument has a documented status and executable evidence or a clearly justified exception.
+- Equivalent legacy and modern inputs produce equivalent internal model semantics.
+- Rust is the only production implementation of shared visualization semantics and rendering.
+- SVG, raster/RGBA, and Canvas preserve the same semantic model within documented backend tolerances.
+- No current implementation or capability manifest is described as complete until tests prove it.
+
 ### Longer-term ideas
 
 Interactive matrix exploration is described in
@@ -276,7 +308,7 @@ The authoritative shared-core language decision is
 [ADR 0001: Shared-core architecture](adr/0001-shared-core-architecture.md).
 The Node/browser runtime and API boundary is specified in
 [ADR 0002: Cross-runtime Rust and TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md).
-Changes to either decision require an explicit update to the relevant ADR.
+The unified visualization-model and dual-API decision is recorded in [ADR 0004](adr/0004-unified-visualization-model-and-dual-api.md). Changes to these decisions require an explicit update to the relevant ADR.
 
 ## How to use this roadmap
 
