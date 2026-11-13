@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "kind": "visualization_document",
+  "metadata": {
+    "title": "Quarterly revenue",
+    "description": "Synthetic example of a modern composable chart."
+  },
+  "layout": {
+    "width": 720,
+    "height": 420,
+    "units": "logical"
+  },
+  "data_sources": [
+    {
+      "id": "revenue",
+      "kind": "table",
+      "columns": {
+        "quarter": {
+          "type": "category",
+          "values": [
+            "Q1",
+            "Q2",
+            "Q3",
+            "Q4"
+          ]
+        },
+        "actual": {
+          "type": "number",
+          "values": [
+            12,
+            18,
+            15,
+            24
+          ]
+        },
+        "target": {
+          "type": "number",
+          "values": [
+            14,
+            16,
+            17,
+            20
+          ]
+        }
+      }
+    }
+  ],
+  "scales": [
+    {
+      "id": "revenue-y",
+      "kind": "linear",
+      "domain": [
+        0,
+        25
+      ],
+      "range": [
+        0,
+        25
+      ],
+      "transform": "linear"
+    },
+    {
+      "id": "quarter-x",
+      "kind": "band",
+      "domain": [
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4"
+      ],
+      "range": [
+        0,
+        4
+      ],
+      "transform": "identity"
+    },
+    {
+      "id": "series-color",
+      "kind": "color",
+      "domain": [
+        "actual",
+        "target"
+      ],
+      "range": [
+        "#2166ac",
+        "#bdbdbd"
+      ],
+      "transform": "identity"
+    }
+  ],
+  "plots": [
+    {
+      "id": "revenue-plot",
+      "coordinate_system": {
+        "kind": "cartesian",
+        "x_scale": "quarter-x",
+        "y_scale": "revenue-y"
+      },
+      "layers": [
+        {
+          "id": "actual-bars",
+          "kind": "bar",
+          "data": "revenue",
+          "encoding": {
+            "x": {
+              "field": "quarter",
+              "scale": "quarter-x"
+            },
+            "y": {
+              "field": "actual",
+              "scale": "revenue-y"
+            },
+            "color": {
+              "value": "actual",
+              "scale": "series-color"
+            }
+          }
+        },
+        {
+          "id": "target-line",
+          "kind": "line",
+          "data": "revenue",
+          "encoding": {
+            "x": {
+              "field": "quarter",
+              "scale": "quarter-x"
+            },
+            "y": {
+              "field": "target",
+              "scale": "revenue-y"
+            },
+            "color": {
+              "value": "target",
+              "scale": "series-color"
+            }
+          }
+        },
+        {
+          "id": "actual-labels",
+          "kind": "text",
+          "data": "revenue",
+          "encoding": {
+            "x": {
+              "field": "quarter",
+              "scale": "quarter-x"
+            },
+            "y": {
+              "field": "actual",
+              "scale": "revenue-y"
+            },
+            "text": {
+              "field": "actual",
+              "format": "number"
+            }
+          }
+        }
+      ],
+      "legends": [
+        {
+          "id": "revenue-series",
+          "scale": "series-color",
+          "title": "Series"
+        }
+      ],
+      "annotations": [
+        {
+          "id": "target-note",
+          "kind": "text",
+          "text": "Target shown as a line",
+          "anchor": {
+            "kind": "plot"
+          }
+        }
+      ],
+      "accessibility": {
+        "summary": "Quarterly actual revenue bars with a target line."
+      }
+    }
+  ]
+}
