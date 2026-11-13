@@ -274,7 +274,7 @@ The upstream R renderer may remain only as an observable, temporary migration fa
 - Every pinned legacy export and argument has a documented status and executable evidence or a clearly justified exception.
 - Equivalent legacy and modern inputs produce equivalent internal model semantics.
 - Rust is the only production implementation of shared visualization semantics and rendering.
-- SVG, raster/RGBA, and Canvas preserve the same semantic model within documented backend tolerances.
+- SVG, raster/RGBA, and Canvas preserve the same semantic model within documented backend tolerances; Canvas drawing semantics and geometry are Rust-owned, while JavaScript owns only the browser context and host integration (#435).
 - No current implementation or capability manifest is described as complete until tests prove it.
 
 ### Longer-term ideas
