@@ -184,3 +184,12 @@ No production package depends on either spike yet, so the shared-library rollout
 - The shared-crate proof identifies a better crate boundary or binding strategy.
 - CRAN toolchain policy, rextendr maintenance costs, or binary distribution constraints change.
 - A full compatibility and performance comparison exists for representative corrplot workloads rather than only the current scene-v1 prototype.
+
+
+## 2026-11-13 clarification: full visualization-engine target
+
+This ADR's Rust selection is unchanged and now applies explicitly to the complete visualization engine, not only matrix validation or the current scene-v1 operations. Rust is the sole production authority for shared visualization semantics, layout, and rendering. The R package's upstream corrplot delegation is a temporary migration fallback and test oracle, not a permanent second renderer.
+
+The project has two public API surfaces: a compatibility adapter for the complete pinned corrplot 0.95 behavior and a separate modern composable API. Both compile into one general, versioned, renderer-neutral visualization model and use the same Rust implementation. R-specific argument conversion, statistical helpers, return objects, and graphics-device integration remain in a thin R adapter where they are host-specific.
+
+The current scene-v1 contract is not assumed to be sufficiently general. A new model version or distinct visualization-model contract must be designed explicitly, while preserving existing scene-v1 compatibility. See [ADR 0004](0004-unified-visualization-model-and-dual-api.md) and [#430](https://github.com/vsimko/corrplot-ng/issues/430).
