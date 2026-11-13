@@ -104,6 +104,16 @@ if (length(target_idx) != 1L) stop("Could not identify generated TARGET_DIR in "
 
 makevars[target_idx] <- paste0("TARGET_DIR = ", target_dir)
 
+# Rust's Windows standard library emits native-static-libs including
+# -lsynchronization; carry that dependency into the generated R DLL link.
+if (.Platform[["OS.type"]] == "windows") {
+  pkg_libs_idx <- grep("^PKG_LIBS[[:space:]]*=", makevars)
+  if (length(pkg_libs_idx) != 1L) {
+    stop("Could not identify generated Windows PKG_LIBS assignment in ", makevars_file)
+  }
+  makevars[pkg_libs_idx] <- paste(makevars[pkg_libs_idx], "-lsynchronization")
+}
+
 rust_clean_idx <- grep("^rust_clean:", makevars)
 clean_idx <- grep("^clean:", makevars)
 if (length(rust_clean_idx) != 1L || length(clean_idx) != 1L || clean_idx <= rust_clean_idx) {
