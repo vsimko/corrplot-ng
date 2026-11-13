@@ -42,6 +42,7 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Repository layout](repository-layout.md): top-level directory ownership, contract/reference/experiment categories, and shared fixture sources of truth.
 - [ADR 0001: shared-core architecture](adr/0001-shared-core-architecture.md): Rust shared-core decision and the CLI/rextendr reuse proof.
 - [ADR 0002: cross-runtime TypeScript architecture](adr/0002-cross-runtime-typescript-architecture.md): Node-API and browser-WASM targets, backend selection, API boundaries, compatibility matrix, and memory/error contracts.
+- [ADR 0004: unified visualization model and dual API](adr/0004-unified-visualization-model-and-dual-api.md): complete corrplot 0.95 compatibility, a modern composable API, one general visualization model, and one Rust production engine.
 - [corrplot-core](../rust/crates/corrplot-core/README.md): the dependency-free shared matrix validation library.
 - [Native CLI installation](cli-installation.md): installed paths, embedded runtime assets, checksums, upgrades, and clean-environment verification.
 - [Renderer capability negotiation](renderer-capabilities.md): machine-readable renderer declarations, strict/permissive behavior, host targets, and current backend limits.
@@ -50,7 +51,8 @@ See [the current architecture](architecture.md) for implementation boundaries. S
 - [Legacy R adapter design](legacy-r-adapter.md): explicit legacy/scene routing, supported R input, `corrRect()` / `corrRect.hclust()` cluster-region compatibility, and graphics-device ownership.
 - [Legacy R return values](legacy-r-return-values.md): invisible corrplot/corrplot.mixed results, reordered matrix names, plotted cell coordinates, and mixed diagonal behavior.
 - [Diagnostic-v1 error model](diagnostics.md): stable codes, structured R/Python/CLI errors, and bug-report guidance.
-- [Future vision](future-vision.md): draft goals and possible development direction; not a delivery schedule.
+- [Future vision and roadmap](future-vision.md): implementation baseline, phased direction, and gates; not a delivery schedule.
+- [Unified visualization architecture plan](https://github.com/vsimko/corrplot-ng/issues/430): umbrella plan and acceptance gates for full legacy compatibility and the modern API.
 - [Catalog of diagrams and visualizations](diagram-catalog.md): compatibility targets, shared display options, and ideas for future visualizations.
 - [Testing strategy](testing-strategy.md): current test layers, evidence limits, and CI workflows.
 - [Regression test guide](regression-testing.md): pinned legacy reference, raster baselines, normalized input tests, and SVG validation.
