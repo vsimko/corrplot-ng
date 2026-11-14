@@ -75,12 +75,19 @@ test_that("legacy corrRect.hclust drawing matches every pinned linkage method", 
     "average", "mcquitty", "median", "centroid"
   )
 
+  draw <- function(fun, method) {
+    graphics::plot.new()
+    graphics::plot.window(xlim = c(0.5, nrow(M) + 0.5),
+                          ylim = c(0.5, nrow(M) + 0.5))
+    fun(M, k = 3, method = method)
+  }
+
   for (method in methods) {
     expected <- capture_legacy_helper_plot(
-      corrplot::corrRect.hclust(M, k = 3, method = method)
+      draw(corrplot::corrRect.hclust, method)
     )
     actual <- capture_legacy_helper_plot(
-      corrplotng::corrRect.hclust(M, k = 3, method = method)
+      draw(corrplotng::corrRect.hclust, method)
     )
 
     expect_identical(actual$result, expected$result, info = method)
