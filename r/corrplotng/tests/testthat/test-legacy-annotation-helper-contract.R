@@ -50,7 +50,7 @@ test_that("legacy corrRect index and name selectors match pinned upstream drawin
     draw <- function(corrplot_fun, corrRect_fun) {
       corr_res <- corrplot_fun(M, type = configuration$type)
       args <- configuration[setdiff(names(configuration), "type")]
-      withVisible(do.call(corrRect_fun, c(list(corrRes = corr_res), args)))
+      do.call(corrRect_fun, c(list(corrRes = corr_res), args))
     }
 
     expected <- capture_legacy_helper_plot(
