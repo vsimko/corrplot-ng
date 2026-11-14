@@ -37,8 +37,8 @@ test_that("legacy corrplot.mixed restores graphics parameters after drawing", {
   M <- stats::cor(datasets::mtcars[, c("mpg", "cyl", "disp", "hp")])
 
   with_legacy_mixed_pdf({
-    grDevices::par(mar = c(2, 3, 4, 5), bg = "grey95")
-    before <- grDevices::par(c("mar", "bg"))
+    graphics::par(mar = c(2, 3, 4, 5), bg = "grey95")
+    before <- graphics::par(c("mar", "bg"))
 
     result <- corrplotng::corrplot.mixed(
       M,
@@ -48,7 +48,7 @@ test_that("legacy corrplot.mixed restores graphics parameters after drawing", {
       bg = "white"
     )
 
-    after <- grDevices::par(c("mar", "bg"))
+    after <- graphics::par(c("mar", "bg"))
     expect_identical(after, before)
     expect_true(is.list(result))
     expect_named(result, c("corr", "corrPos"))
