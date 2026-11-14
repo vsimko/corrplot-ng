@@ -43,7 +43,8 @@ test_that("legacy corrRect index and name selectors match pinned upstream drawin
     list(index = c(1, 3, 5), type = "full"),
     list(index = c(1, 3, 5), type = "upper"),
     list(index = c(1, 3, 5), type = "lower"),
-    list(name = c("mpg", "disp", "wt"), type = "full")
+    list(name = c("mpg", "disp", "wt"), type = "full"),
+    list(namesMat = c("mpg", "cyl", "disp", "hp"), type = "full")
   )
 
   for (configuration in configurations) {
