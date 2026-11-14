@@ -84,7 +84,11 @@ test_that("legacy ordering modes produce the expected reordered matrix contract"
     for (method in c("AOE", "FPC", "hclust", "alphabet")) {
       reordered <- corrplotng::corrplot(M, order = method)$corr
       expect_true(is.matrix(reordered))
-      expected_names <- rownames(corrplot::corrMatOrder(M, order = method))
+      oracle_order <- corrplot::corrMatOrder(M, order = method)
+      if (is.character(oracle_order)) {
+        oracle_order <- match(oracle_order, rownames(M))
+      }
+      expected_names <- rownames(M)[oracle_order]
       expect_identical(rownames(reordered), expected_names)
       expect_identical(colnames(reordered), expected_names)
     }
