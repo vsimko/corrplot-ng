@@ -147,3 +147,50 @@ test_that("legacy aspect-ratio restrictions remain explicit", {
     )
   })
 })
+
+
+test_that("legacy hierarchical ordering supports every pinned linkage method", {
+  M <- stats::cor(datasets::mtcars)
+
+  with_legacy_behavior_pdf({
+    methods <- c(
+      "complete", "ward", "ward.D", "ward.D2", "single",
+      "average", "mcquitty", "median", "centroid"
+    )
+
+    for (method in methods) {
+      oracle_order <- corrplot::corrMatOrder(
+        M, order = "hclust", hclust.method = method
+      )
+      reordered <- corrplotng::corrplot(
+        M, order = "hclust", hclust.method = method
+      )$corr
+
+      expect_identical(rownames(reordered), rownames(M)[oracle_order])
+      expect_identical(colnames(reordered), colnames(M)[oracle_order])
+    }
+  })
+})
+
+test_that("legacy significance display modes preserve their accepted behavior", {
+  M <- stats::cor(datasets::mtcars)
+  pmat <- matrix(
+    seq(0, 1, length.out = length(M)),
+    nrow = nrow(M),
+    dimnames = dimnames(M)
+  )
+
+  with_legacy_behavior_pdf({
+    for (mode in c("pch", "p-value", "blank", "n", "label_sig")) {
+      expect_silent(corrplotng::corrplot(
+        M,
+        p.mat = pmat,
+        insig = mode,
+        sig.level = c(0.001, 0.01, 0.05),
+        pch = "*",
+        pch.col = "blue",
+        pch.cex = 1.5
+      ))
+    }
+  })
+})
