@@ -6,9 +6,9 @@
 
 ## Executive finding
 
-The current R package is **not yet a drop-in replacement** for `corrplot` 0.95. The existing `corrplot_ng()` and `corrplot_ng_mixed()` adapters delegate to upstream for the legacy engine, but their names and exports differ from the upstream API. In particular, the package namespace does not currently export `corrplot`, `corrplot.mixed`, or `corrMatOrder`. A user cannot yet change only `library(corrplot)` to `library(corrplotng)` and keep all original calls unchanged.
+The exact upstream namespace surface is now present: `corrplotng` re-exports all nine pinned upstream exports, including `corrplot`, `corrplot.mixed`, and `corrMatOrder`, and the package tests compare their formal arguments and defaults with the pinned upstream package. This closes the initial symbol/signature blocker, but it does **not** establish full drop-in compatibility. The three plotting/ordering entry points remain explicit upstream-backed fallbacks; behavioral parity, attached-session workflows, and the Rust renderer cutover remain separate gates.
 
-This is an API-surface blocker, separate from renderer parity. It should be fixed before any production renderer cutover.
+A user-facing `library(corrplotng)` migration is therefore supported at the exported-name/signature layer, but must not yet be advertised as complete renderer or behavior parity.
 
 ## Pinned public API inventory
 
@@ -75,7 +75,7 @@ The adapter must not independently calculate production geometry, scales, orderi
 
 Existing tests already compare legacy delegation return objects and graphics-device behavior, exercise all seven upstream glyph methods through the legacy path, and pin the upstream API inventory. The following gaps remain explicit:
 
-- This branch adds exact upstream exports for `corrplot`, `corrplot.mixed`, and `corrMatOrder`; package-level attached-session tests and cross-platform `R CMD check` evidence are still required.
+- Exact upstream exports and formal arguments are checked against the pinned package, and installed-package `R CMD check` currently passes on Linux, macOS, and Windows. The three re-exported plotting/ordering entry points are still upstream-backed fallbacks rather than Rust implementations.
 - The modern Rust scene renderer supports only a documented subset; it is not a drop-in implementation of the full legacy API.
 - The modern/scene path does not yet cover all methods, ordering, labels, legends, significance, confidence intervals, or mixed plots.
 - The inventory is currently strongest on signatures/defaults/choice sets; it must be extended with behavior-level oracle cases for warnings/errors, rectangular inputs, ordering edge cases, palette values, helper return behavior and all annotation modes.
