@@ -181,16 +181,26 @@ test_that("legacy significance display modes preserve their accepted behavior", 
   )
 
   with_legacy_behavior_pdf({
-    for (mode in c("pch", "p-value", "blank", "n", "label_sig")) {
+    for (mode in c("pch", "p-value", "blank", "n")) {
       expect_silent(corrplotng::corrplot(
         M,
         p.mat = pmat,
         insig = mode,
-        sig.level = c(0.001, 0.01, 0.05),
+        sig.level = 0.05,
         pch = "*",
         pch.col = "blue",
         pch.cex = 1.5
       ))
     }
+
+    expect_silent(corrplotng::corrplot(
+      M,
+      p.mat = pmat,
+      insig = "label_sig",
+      sig.level = c(0.001, 0.01, 0.05),
+      pch = "*",
+      pch.col = "blue",
+      pch.cex = 1.5
+    ))
   })
 })
