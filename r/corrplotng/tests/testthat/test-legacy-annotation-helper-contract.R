@@ -16,7 +16,9 @@ test_that("legacy colorlegend drawing matches the pinned upstream helper", {
   configurations <- list(
     list(vertical = TRUE, align = "c"),
     list(vertical = TRUE, align = "l", lim.segment = c(0.35, 0.55)),
-    list(vertical = TRUE, align = "r", addlabels = FALSE),
+    # With labels disabled, upstream still draws tick segments when at is
+    # supplied; leaving it NULL creates an empty coordinate vector and errors.
+    list(vertical = TRUE, align = "r", addlabels = FALSE, at = c(0, 0.5, 1)),
     list(vertical = FALSE),
     list(vertical = FALSE, at = c(0, 0.4, 1), ratio.colbar = 0.3)
   )
