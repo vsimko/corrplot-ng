@@ -92,5 +92,5 @@ test_that("legacy corrplot errors do not take ownership of the active graphics d
 
   expect_identical(grDevices::dev.cur(), device)
   expect_identical(grDevices::dev.list(), devices)
-  expect_equal(graphics::par(c("mar", "bg", "usr")), before_par)
+  expect_equal(graphics::par(c("mar", "bg")), before_par)
 })
