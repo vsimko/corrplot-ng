@@ -73,25 +73,16 @@ test_that("legacy cor.mtest forwards Kendall and cor.test options exactly", {
   expect_true(all(is.na(kendall$uppCI[upper.tri(kendall$uppCI)])))
 })
 
-test_that("legacy cor.mtest missing-value errors match the pinned oracle", {
-  # One missing observation is omitted by cor.test(); an entirely missing
-  # variable exercises the actual insufficient-finite-observations error.
+test_that("legacy cor.mtest handles missing observations like the pinned oracle", {
   data <- data.frame(
-    x = rep(NA_real_, 6),
+    x = c(1, 2, NA_real_, 4, 5, 6),
     y = c(2, 1, 4, 3, 6, 5),
     z = c(3, 5, 2, 6, 1, 4)
   )
 
-  expected <- tryCatch(
-    corrplot::cor.mtest(data, method = "pearson"),
-    error = identity
-  )
-  actual <- tryCatch(
-    corrplotng::cor.mtest(data, method = "pearson"),
-    error = identity
-  )
+  expected <- corrplot::cor.mtest(data, method = "pearson")
+  actual <- corrplotng::cor.mtest(data, method = "pearson")
 
-  expect_s3_class(expected, "error")
-  expect_s3_class(actual, "error")
-  expect_identical(conditionMessage(actual), conditionMessage(expected))
+  expect_identical(actual, expected)
+  expect_identical(names(actual), c("p", "lowCI", "uppCI"))
 })
