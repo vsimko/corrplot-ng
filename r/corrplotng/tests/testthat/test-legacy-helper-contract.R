@@ -63,9 +63,9 @@ test_that("legacy cor.mtest forwards Kendall and cor.test options exactly", {
 
     expect_identical(actual, expected, info = paste("method:", method))
     expect_identical(names(actual), c("p", "lowCI", "uppCI"))
-    expect_identical(diag(actual$p), c(0, 0, 0))
-    expect_identical(diag(actual$lowCI), c(1, 1, 1))
-    expect_identical(diag(actual$uppCI), c(1, 1, 1))
+    expect_identical(unname(diag(actual$p)), c(0, 0, 0))
+    expect_identical(unname(diag(actual$lowCI)), c(1, 1, 1))
+    expect_identical(unname(diag(actual$uppCI)), c(1, 1, 1))
   }
 
   kendall <- corrplotng::cor.mtest(data, method = "kendall")
