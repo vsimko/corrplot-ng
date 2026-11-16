@@ -74,8 +74,10 @@ test_that("legacy cor.mtest forwards Kendall and cor.test options exactly", {
 })
 
 test_that("legacy cor.mtest missing-value errors match the pinned oracle", {
+  # One missing observation is omitted by cor.test(); an entirely missing
+  # variable exercises the actual insufficient-finite-observations error.
   data <- data.frame(
-    x = c(1, 2, NA_real_, 4, 5, 6),
+    x = rep(NA_real_, 6),
     y = c(2, 1, 4, 3, 6, 5),
     z = c(3, 5, 2, 6, 1, 4)
   )
