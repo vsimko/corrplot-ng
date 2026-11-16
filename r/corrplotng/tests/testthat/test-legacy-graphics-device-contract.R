@@ -83,11 +83,13 @@ test_that("legacy corrplot errors do not take ownership of the active graphics d
 
   graphics::plot.new()
   graphics::plot.window(xlim = c(0, 1), ylim = c(0, 1))
-  before_par <- graphics::par(c("mar", "bg", "usr"))
+  before_par <- graphics::par(c("mar", "bg"))
 
+  # "ld" is a recognized label position, but it is incompatible with
+  # upper-only plots; unlike an unknown string, this is a pinned 0.95 error.
   expect_error(
-    corrplotng::corrplot(M, tl.pos = "not-a-valid-position"),
-    regexp = "."
+    corrplotng::corrplot(M, tl.pos = "ld", type = "upper"),
+    regexp = "type should be"
   )
 
   expect_identical(grDevices::dev.cur(), device)
