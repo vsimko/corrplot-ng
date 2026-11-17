@@ -62,8 +62,9 @@ test_that("legacy corrplot preserves caller-owned devices and page composition",
   expect_identical(package$result$value, upstream$result$value)
   expect_identical(package$plot, upstream$plot)
   expect_identical(package$device, upstream$device)
-  expect_length(package$devices, 2L)
-  expect_length(upstream$devices, 2L)
+  # Compare the complete caller-owned device topology without assuming that
+  # the R runtime has no additional graphics devices already open.
+  expect_identical(package$devices, upstream$devices)
   expect_equal(package$par, upstream$par)
 })
 
