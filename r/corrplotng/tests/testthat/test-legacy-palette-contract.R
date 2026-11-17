@@ -28,7 +28,7 @@ test_that("COL1 and COL2 reproduce every pinned palette at representative sizes"
       context <- paste("COL1", palette, "n =", n)
       expect_identical(actual, expected, info = context)
       expect_type(actual, "character")
-      expect_length(actual, n, info = context)
+      expect_length(actual, n)
     }
   }
 
