@@ -63,7 +63,7 @@ test_that("colorlegend matches pinned horizontal and no-label graphics output", 
     ),
     list(
       vertical = FALSE,
-      at = NULL,
+      at = c(0.2, 0.8),
       labels = c("unused", "labels"),
       addlabels = FALSE,
       lim.segment = NULL,
