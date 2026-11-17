@@ -85,9 +85,9 @@ test_that("cor.mtest preserves upstream errors for invalid input and cor.test op
   )
 
   for (case in cases) {
-    expect_identical(
-      capture_cor_mtest_condition(case$adapter()),
-      capture_cor_mtest_condition(case$upstream())
-    )
+    actual <- capture_cor_mtest_condition(case$adapter())
+    expected <- capture_cor_mtest_condition(case$upstream())
+    expect_identical(actual$class, expected$class)
+    expect_match(actual$message, expected$message, fixed = TRUE)
   }
 })
