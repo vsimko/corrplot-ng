@@ -38,8 +38,8 @@ test_that("COL1 and COL2 reproduce every pinned palette at representative sizes"
       actual <- corrplotng::COL2(diverging = palette, n = n)
       context <- paste("COL2", palette, "n =", n)
       expect_identical(actual, expected, info = context)
-      expect_type(actual, "character", info = context)
-      expect_length(actual, n, info = context)
+      expect_type(actual, "character")
+      expect_length(actual, n)
     }
   }
 })
