@@ -97,10 +97,8 @@ test_that("cor.mtest preserves upstream errors for invalid input and cor.test op
     actual <- capture_cor_mtest_condition(case$adapter())
     expected <- capture_cor_mtest_condition(case$upstream())
     expect_true(inherits(actual$class, "error"))
-    if (is.null(expected)) {
-      # The pinned helper may ignore an option that the adapter validates.
-      expect_null(expected)
-    } else {
+    # The pinned helper may ignore an option that the adapter validates.
+    if (!is.null(expected)) {
       expect_true(inherits(expected$class, "error"))
       expect_match(actual$message, expected$message, fixed = TRUE)
     }
