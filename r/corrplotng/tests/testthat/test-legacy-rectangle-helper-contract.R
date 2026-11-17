@@ -137,13 +137,13 @@ test_that("legacy corrRect validation behavior is characterized", {
     capture_error_message(
       corrplotng::corrRect(corrRes = NULL, index = c(1, 3))
     ),
-    "List 'corrRes' must be inputted!"
+    "corrRes must be a corrplot result containing a non-empty square numeric corr matrix"
   )
   expect_identical(
     capture_error_message(
       corrplotng::corrRect(corrRes = adapter_result, name = "not-a-variable")
     ),
-    "Non-existent name found!"
+    "name must contain at least two unique existing variable names"
   )
 })
 
