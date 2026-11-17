@@ -1,3 +1,15 @@
+capture_legacy_colorlegend_plot <- function(expr) {
+  path <- tempfile(fileext = ".pdf")
+  grDevices::pdf(path, width = 7, height = 7)
+  on.exit({
+    if (grDevices::dev.cur() > 1L) grDevices::dev.off()
+    unlink(path)
+  }, add = TRUE)
+
+  result <- withVisible(force(expr))
+  list(result = result, plot = grDevices::recordPlot())
+}
+
 test_that("legacy colorlegend preserves tick, segment, alignment, and sizing options", {
   palette <- grDevices::hcl.colors(11, "Blue-Red 3")
   configurations <- list(
@@ -29,8 +41,8 @@ test_that("legacy colorlegend preserves tick, segment, alignment, and sizing opt
       ))
     }
 
-    expected <- capture_legacy_helper_plot(draw(corrplot::colorlegend))
-    actual <- capture_legacy_helper_plot(draw(corrplotng::colorlegend))
+    expected <- capture_legacy_colorlegend_plot(draw(corrplot::colorlegend))
+    actual <- capture_legacy_colorlegend_plot(draw(corrplotng::colorlegend))
     expect_identical(actual$result$visible, expected$result$visible)
     expect_identical(actual$plot, expected$plot)
   }
