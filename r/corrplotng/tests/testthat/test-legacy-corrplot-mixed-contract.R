@@ -51,7 +51,7 @@ test_that("corrplot.mixed preserves pinned default and color forwarding", {
   )
 
   for (configuration in configurations) {
-    args <- c(list(corr = data, cl.pos = "n", tl.pos = "n"), configuration)
+    args <- c(list(corr = data, tl.pos = "n"), configuration)
     expected <- capture_legacy_mixed(function() {
       do.call(corrplot::corrplot.mixed, args)
     })
