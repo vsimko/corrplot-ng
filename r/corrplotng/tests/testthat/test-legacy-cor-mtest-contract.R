@@ -71,8 +71,8 @@ test_that("cor.mtest preserves pairwise missing-value and dimname behavior", {
 test_that("cor.mtest preserves upstream errors for invalid input and cor.test options", {
   cases <- list(
     list(
-      upstream = function() corrplot::cor.mtest(matrix(1:12, nrow = 4)),
-      adapter = function() corrplotng::cor.mtest(matrix(1:12, nrow = 4))
+      upstream = function() corrplot::cor.mtest(matrix(1:4, ncol = 1)),
+      adapter = function() corrplotng::cor.mtest(matrix(1:4, ncol = 1))
     ),
     list(
       upstream = function() corrplot::cor.mtest(mtcars[, 1:3], conf.level = 2),
