@@ -76,7 +76,6 @@ test_that("legacy corrplot requires both confidence interval matrices", {
   M <- diag(3)
   args <- list(corr = M, plotCI = "circle", tl.pos = "n", cl.pos = "n")
 
-  expect_error(corrplot::corrplot, "Need lowCI.mat and uppCI.mat!")
   expect_error(
     do.call(corrplot::corrplot, args),
     "Need lowCI.mat and uppCI.mat!"
