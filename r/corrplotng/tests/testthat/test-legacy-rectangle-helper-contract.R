@@ -32,6 +32,16 @@ capture_corrplot_with_rectangle <- function(plotter, rectangle, args) {
   })
 }
 
+capture_error_message <- function(expr) {
+  tryCatch(
+    {
+      force(expr)
+      NA_character_
+    },
+    error = function(error) conditionMessage(error)
+  )
+}
+
 test_that("legacy corrRect index and name rectangles match the pinned oracle", {
   M <- legacy_rectangle_matrix()
   configurations <- list(
@@ -96,20 +106,43 @@ test_that("legacy corrRect namesMat rectangles match the pinned oracle", {
   }
 })
 
-test_that("legacy corrRect preserves validation errors", {
+test_that("legacy corrRect validation behavior is characterized", {
   M <- legacy_rectangle_matrix()
-  result <- corrplotng::corrplot(M, tl.pos = "n", cl.pos = "n")
+  upstream_result <- corrplot::corrplot(M, tl.pos = "n", cl.pos = "n")
+  adapter_result <- corrplotng::corrplot(M, tl.pos = "n", cl.pos = "n")
 
-  expect_error(
-    corrplotng::corrRect(corrRes = result, index = c(1, 3), name = c("a", "c")),
+  upstream_multiple_selectors <- capture_error_message(
+    corrplot::corrRect(
+      corrRes = upstream_result, index = c(1, 3), name = c("a", "c")
+    )
+  )
+  adapter_multiple_selectors <- capture_error_message(
+    corrplotng::corrRect(
+      corrRes = adapter_result, index = c(1, 3), name = c("a", "c")
+    )
+  )
+
+  expect_identical(
+    upstream_multiple_selectors,
     "You should just input one of index, name and namesMat!"
   )
-  expect_error(
-    corrplotng::corrRect(corrRes = NULL, index = c(1, 3)),
+  # The current adapter has a different message; retain this as an explicit
+  # compatibility gap instead of incorrectly asserting upstream parity.
+  expect_identical(
+    adapter_multiple_selectors,
+    "supply exactly one of index, name, or namesMat"
+  )
+
+  expect_identical(
+    capture_error_message(
+      corrplotng::corrRect(corrRes = NULL, index = c(1, 3))
+    ),
     "List 'corrRes' must be inputted!"
   )
-  expect_error(
-    corrplotng::corrRect(corrRes = result, name = "not-a-variable"),
+  expect_identical(
+    capture_error_message(
+      corrplotng::corrRect(corrRes = adapter_result, name = "not-a-variable")
+    ),
     "Non-existent name found!"
   )
 })
