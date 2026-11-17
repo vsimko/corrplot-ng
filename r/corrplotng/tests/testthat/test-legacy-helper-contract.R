@@ -86,3 +86,73 @@ test_that("legacy cor.mtest handles missing observations like the pinned oracle"
   expect_identical(actual, expected)
   expect_identical(names(actual), c("p", "lowCI", "uppCI"))
 })
+
+
+test_that("legacy corrMatOrder directly preserves every ordering mode", {
+  M <- stats::cor(datasets::mtcars)
+
+  expect_identical(
+    corrplotng::corrMatOrder(M),
+    corrplot::corrMatOrder(M)
+  )
+
+  for (method in c("AOE", "FPC", "hclust", "alphabet")) {
+    expected <- corrplot::corrMatOrder(M, order = method)
+    actual <- corrplotng::corrMatOrder(M, order = method)
+
+    expect_identical(actual, expected, info = paste("order:", method))
+    if (method == "alphabet") {
+      expect_type(actual, "character")
+      expect_identical(actual, sort(rownames(M)))
+    } else {
+      expect_type(actual, "integer")
+      expect_length(actual, nrow(M))
+      expect_setequal(actual, seq_len(nrow(M)))
+    }
+  }
+
+  # match.arg() accepts unambiguous partial choices in the legacy API.
+  expect_identical(
+    corrplotng::corrMatOrder(M, order = "AO"),
+    corrplot::corrMatOrder(M, order = "AO")
+  )
+  expect_identical(
+    corrplotng::corrMatOrder(M, order = "hcl"),
+    corrplot::corrMatOrder(M, order = "hcl")
+  )
+})
+
+test_that("legacy corrMatOrder preserves all hierarchical linkage choices", {
+  M <- stats::cor(datasets::mtcars)
+  methods <- c(
+    "complete", "ward", "ward.D", "ward.D2", "single",
+    "average", "mcquitty", "median", "centroid"
+  )
+
+  for (method in methods) {
+    expected <- corrplot::corrMatOrder(
+      M, order = "hclust", hclust.method = method
+    )
+    actual <- corrplotng::corrMatOrder(
+      M, order = "hclust", hclust.method = method
+    )
+
+    expect_identical(
+      actual, expected,
+      info = paste("hclust.method:", method)
+    )
+  }
+
+  expect_identical(
+    corrplotng::corrMatOrder(M, order = "hclust", hclust.method = "comp"),
+    corrplot::corrMatOrder(M, order = "hclust", hclust.method = "comp")
+  )
+  expect_error(
+    corrplotng::corrMatOrder(M, order = "unknown"),
+    regexp = "should be one of"
+  )
+  expect_error(
+    corrplotng::corrMatOrder(M, order = "hclust", hclust.method = "unknown"),
+    regexp = "should be one of"
+  )
+})
