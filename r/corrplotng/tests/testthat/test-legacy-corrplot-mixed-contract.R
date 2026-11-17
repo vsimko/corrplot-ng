@@ -26,7 +26,7 @@ test_that("corrplot.mixed preserves pinned upper/lower method combinations", {
   )
 
   for (configuration in configurations) {
-    args <- c(list(corr = data, cl.pos = "n"), configuration)
+    args <- c(list(corr = data), configuration)
     expected <- capture_legacy_mixed(function() {
       do.call(corrplot::corrplot.mixed, args)
     })
