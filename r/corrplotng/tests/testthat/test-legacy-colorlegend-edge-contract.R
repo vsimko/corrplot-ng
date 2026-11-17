@@ -11,7 +11,10 @@ capture_legacy_colorlegend_plot <- function(expr) {
 }
 
 test_that("legacy colorlegend preserves tick, segment, alignment, and sizing options", {
-  palette <- grDevices::hcl.colors(11, "Blue-Red 3")
+  colours <- c(
+    "#000004", "#1B0C41", "#4A0C6B", "#781C6D", "#A52C60",
+    "#CF4446", "#ED6925", "#FB9B06", "#F7D13D", "#FCFFA4", "#FFFFFF"
+  )
   configurations <- list(
     list(vertical = TRUE, align = "c", at = c(0, 0.25, 0.5, 0.75, 1)),
     list(vertical = TRUE, align = "l", lim.segment = "auto",
@@ -32,7 +35,7 @@ test_that("legacy colorlegend preserves tick, segment, alignment, and sizing opt
       graphics::plot.window(xlim = c(0, 1), ylim = c(0, 1))
       do.call(fun, c(
         list(
-          colbar = palette,
+          colbar = colours,
           labels = paste("tick", seq_along(configuration$at)),
           xlim = c(0.05, 0.95),
           ylim = c(0.1, 0.9)
