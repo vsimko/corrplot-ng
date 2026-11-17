@@ -33,7 +33,7 @@ test_that("legacy colorlegend preserves tick, segment, alignment, and sizing opt
       do.call(fun, c(
         list(
           colbar = palette,
-          labels = c("minimum", "middle", "maximum"),
+          labels = paste("tick", seq_along(configuration$at)),
           xlim = c(0.05, 0.95),
           ylim = c(0.1, 0.9)
         ),
