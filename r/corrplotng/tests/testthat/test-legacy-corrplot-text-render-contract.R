@@ -49,7 +49,7 @@ test_that("legacy corrplot coefficient formatting and text styling match upstrea
                      collapse = ", ")
 
     expected <- capture_legacy_corrplot_text_plot(corrplot::corrplot, args)
-    actual <- capture_legacy_corrplot_text_plot(corrplotng::corrplotng, args)
+    actual <- capture_legacy_corrplot_text_plot(corrplotng::corrplot, args)
     expect_identical(actual$result, expected$result, info = context)
     expect_identical(actual$plot, expected$plot, info = context)
   }
