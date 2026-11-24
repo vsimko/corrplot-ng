@@ -3746,6 +3746,82 @@
       "notes": "Legacy PNG snapshots and Rust RGBA smoke tests are independent; no cross-renderer pixel tolerance is asserted."
     },
     {
+      "feature_id": "scene-v1-all-missing-matrix-state",
+      "behavior": "All-missing matrices set has_observed_values=false and avoid implying a numeric domain",
+      "layer": "semantic_model_geometry",
+      "inventory_refs": [],
+      "legacy_support": "unknown",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "missing-rust-and-legacy-fixture",
+      "notes": "Current missing-value tests include partial missingness; an all-missing canonical fixture is not linked."
+    },
+    {
+      "feature_id": "scene-v1-arbitrary-layered-annotations",
+      "behavior": "Arbitrary positioned/layered annotation objects beyond the single annotation string",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "deferred",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-deliberate-limit",
+      "notes": "The v1 contract explicitly limits annotation to one plain string; this is not a supported v1 behavior."
+    },
+    {
+      "feature_id": "scene-v1-canonical-fixture-parse",
+      "behavior": "Canonical scene-v1 JSON fixture parses through the Rust consumer",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "parses_the_shared_canonical_scene_v1_fixture"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "Canonical cross-language payload test; not a legacy parity assertion."
+    },
+    {
+      "feature_id": "scene-v1-cell-encoding-validation",
+      "behavior": "Cell encoding magnitude, sign, significance and confidence-interval bounds are validated",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "validates_scene_v1_cell_encoding_significance_and_confidence_interval"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "Payload validation, not full legacy rendering."
+    },
+    {
       "feature_id": "scene-v1-cell-identity",
       "behavior": "Explicit row/column cell identity is preserved independent of JSON array order",
       "layer": "semantic",
@@ -3838,6 +3914,21 @@
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
       "notes": "Rust tests preserve identity and reject out-of-matrix annotation coordinates."
+    },
+    {
+      "feature_id": "scene-v1-closed-schema-unknown-properties",
+      "behavior": "Unknown scene-v1 document properties are rejected by the closed schema",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust negative test for an unknown document property is linked."
     },
     {
       "feature_id": "scene-v1-cluster-region-validation",
@@ -4039,6 +4130,42 @@
       "notes": "Rust tests validate global significance fields; they do not prove all legacy insig render modes."
     },
     {
+      "feature_id": "scene-v1-hidden-cell-rendering",
+      "behavior": "SVG and RGBA renderers omit invisible cells while preserving identity/geometry",
+      "layer": "svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "type",
+            "diag"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "order-aoe-upper",
+              "lower-with-coefficients"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-renderer-conformance-gap",
+      "notes": "Scene-model mask tests exist, but no linked Rust renderer test proves hidden cells are omitted from both outputs."
+    },
+    {
       "feature_id": "scene-v1-invalid-display-diagnostic",
       "behavior": "Invalid scene display options fail explicitly instead of defaulting",
       "layer": "semantic",
@@ -4083,6 +4210,67 @@
       "parity_evidence": [],
       "disposition": "scene-v1-conformance",
       "notes": "Stable scene-v1 parser diagnostics are not a legacy corrplot function behavior."
+    },
+    {
+      "feature_id": "scene-v1-legend-render-layout",
+      "behavior": "Legend layout, clipping and renderer-specific placement are tested independently from legend metadata",
+      "layer": "svg_raster",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "renderer-layout-evidence-gap",
+      "notes": "Typed legend data is validated, but output layout/clipping is renderer-owned and lacks a linked Rust fixture."
+    },
+    {
+      "feature_id": "scene-v1-logical-canvas-geometry",
+      "behavior": "Canvas width/height and cell x/y/size use logical scene units",
+      "layer": "model_geometry",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_preserves_title_annotation_geometry_and_palette"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "Rust test asserts logical dimensions and exact cell geometry."
+    },
+    {
+      "feature_id": "scene-v1-mapped-cell-color",
+      "behavior": "Mapped cell color is preserved as six-digit sRGB and used by glyph geometry",
+      "layer": "model_geometry",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_preserves_title_annotation_geometry_and_palette"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "Rust test asserts the mapped sRGB color in prepared glyph geometry."
     },
     {
       "feature_id": "scene-v1-matrix-diagnostic-paths",
@@ -4151,6 +4339,44 @@
       "notes": "Rust model test checks annotation positions after upper-triangle filtering."
     },
     {
+      "feature_id": "scene-v1-number-coefficient-precedence",
+      "behavior": "Per-cell number glyph precedence over coefficient overlay and number typography defaults",
+      "layer": "semantic_model_geometry",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method",
+            "addCoef.col",
+            "number.digits",
+            "number.cex",
+            "number.font"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
+            "test": "legacy corrplot coefficient formatting and text styling match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "lower-with-coefficients"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Legacy precedence is characterized; no linked Rust test proves the equivalent scene behavior."
+    },
+    {
       "feature_id": "scene-v1-optional-typography-display",
       "behavior": "Optional typography, legend and display metadata are validated with stable field paths",
       "layer": "semantic",
@@ -4196,6 +4422,29 @@
       "notes": "Rust test validates scene fields and diagnostics; legacy R typography semantics are not directly compared."
     },
     {
+      "feature_id": "scene-v1-overflowing-number-diagnostic",
+      "behavior": "Overflowing JSON numeric values are rejected with a stable root path",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "rejects_overflowing_json_numbers_as_invalid_json"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "Rust rejects non-finite overflow at the JSON boundary."
+    },
+    {
       "feature_id": "scene-v1-source-index-validation",
       "behavior": "Duplicate and out-of-range source indices are rejected with stable diagnostics",
       "layer": "semantic",
@@ -4222,6 +4471,44 @@
       "parity_evidence": [],
       "disposition": "scene-v1-conformance",
       "notes": "Scene source-index validation is a versioned interchange requirement."
+    },
+    {
+      "feature_id": "scene-v1-style-fallback-colors",
+      "behavior": "Style fallback colors and missing_fill apply when cell-level color/annotation is absent",
+      "layer": "model_geometry",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Mapped color is tested; fallback precedence and missing_fill need a dedicated Rust fixture."
+    },
+    {
+      "feature_id": "scene-v1-title-description-svg-accessibility",
+      "behavior": "Document title, description and SVG accessible title/description/role relationships",
+      "layer": "svg",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_preserves_title_annotation_geometry_and_palette"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "SVG accessibility markup is verified as output behavior; accessibility metadata is not a general scene-v1 capability."
     },
     {
       "feature_id": "scene-v1-typed-legend",
@@ -4270,6 +4557,54 @@
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
       "notes": "Scene legend metadata is not the same as standalone R colorlegend device layout."
+    },
+    {
+      "feature_id": "scene-v1-unknown-glyph-diagnostic",
+      "behavior": "Unknown glyph methods produce an explicit unsupported-capability diagnostic",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "All seven known methods have model tests; unknown-method rejection is not independently tested."
+    },
+    {
+      "feature_id": "scene-v1-variable-order-metadata",
+      "behavior": "Variable-order source indices preserve mapping to original matrix identity",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_conversion_uses_explicit_cell_identity_not_array_order"
+          },
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "rejects_duplicate_source_indices_with_stable_path"
+          },
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "rejects_out_of_range_source_indices"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-conformance",
+      "notes": "Prepared order metadata is validated; computation of AOE/FPC/hclust remains a separate gap."
     },
     {
       "feature_id": "scene-v1-version-kind",
@@ -4719,6 +5054,217 @@
       "parity_evidence": [],
       "disposition": "rust-diagnostic-evidence-gap",
       "notes": "Rust diagnostics have not been shown to match legacy R errors."
+    }
+  ],
+  "scene_v1_requirement_coverage": [
+    {
+      "id": "schema-version-kind",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-version-kind"
+      ]
+    },
+    {
+      "id": "logical-canvas-units",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-logical-canvas-geometry"
+      ]
+    },
+    {
+      "id": "matrix-values-and-null",
+      "status": "verified",
+      "feature_ids": [
+        "matrix-input-missing-values",
+        "scene-v1-missing-label-mask"
+      ]
+    },
+    {
+      "id": "row-major-cell-identity",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-cell-identity"
+      ]
+    },
+    {
+      "id": "variable-order-source-metadata",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-variable-order-metadata"
+      ]
+    },
+    {
+      "id": "triangle-mask-and-diagonal",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-display-mask-identity",
+        "diagonal-visibility"
+      ]
+    },
+    {
+      "id": "hidden-cells-rendered-as-omitted",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-hidden-cell-rendering"
+      ]
+    },
+    {
+      "id": "missing-fill-and-annotation",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-style-fallback-colors",
+        "scene-v1-missing-label-mask"
+      ]
+    },
+    {
+      "id": "all-missing-matrix-state",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-all-missing-matrix-state"
+      ]
+    },
+    {
+      "id": "normalized-value-visual-magnitude",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-general-numeric-magnitude"
+      ]
+    },
+    {
+      "id": "mapped-srgb-cell-color",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-mapped-cell-color"
+      ]
+    },
+    {
+      "id": "seven-glyph-model-geometry",
+      "status": "verified",
+      "feature_ids": [
+        "glyph-circle-model-geometry",
+        "glyph-square-model-geometry",
+        "glyph-ellipse-model-geometry",
+        "glyph-number-model-geometry",
+        "glyph-shade-model-geometry",
+        "glyph-color-model-geometry",
+        "glyph-pie-model-geometry"
+      ]
+    },
+    {
+      "id": "seven-glyph-svg-and-raster-output",
+      "status": "gap",
+      "feature_ids": [
+        "glyph-circle-svg",
+        "glyph-circle-raster",
+        "glyph-square-svg",
+        "glyph-square-raster",
+        "glyph-ellipse-svg",
+        "glyph-ellipse-raster",
+        "glyph-number-svg",
+        "glyph-number-raster",
+        "glyph-shade-svg",
+        "glyph-shade-raster",
+        "glyph-color-svg",
+        "glyph-color-raster",
+        "glyph-pie-svg",
+        "glyph-pie-raster"
+      ]
+    },
+    {
+      "id": "cell-encoding-significance-confidence",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-cell-encoding-validation",
+        "scene-v1-global-significance",
+        "confidence-interval-metadata"
+      ]
+    },
+    {
+      "id": "typed-legend-metadata",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-typed-legend"
+      ]
+    },
+    {
+      "id": "legend-output-layout-and-clipping",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-legend-render-layout"
+      ]
+    },
+    {
+      "id": "figure-text-and-plain-annotation",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-figure-text",
+        "scene-v1-title-description-svg-accessibility"
+      ]
+    },
+    {
+      "id": "cell-text-annotation-identity",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-cell-text-identity"
+      ]
+    },
+    {
+      "id": "number-coefficient-precedence",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-number-coefficient-precedence"
+      ]
+    },
+    {
+      "id": "plotmath-explicit-rejection",
+      "status": "verified",
+      "feature_ids": [
+        "plotmath-labels"
+      ]
+    },
+    {
+      "id": "closed-schema-unknown-properties",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-closed-schema-unknown-properties"
+      ]
+    },
+    {
+      "id": "unknown-glyph-rejection",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-unknown-glyph-diagnostic"
+      ]
+    },
+    {
+      "id": "source-index-validation",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-source-index-validation"
+      ]
+    },
+    {
+      "id": "stable-json-and-matrix-diagnostics",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-invalid-json-diagnostic",
+        "scene-v1-overflowing-number-diagnostic",
+        "scene-v1-matrix-diagnostic-paths"
+      ]
+    },
+    {
+      "id": "r-graphics-device-excluded",
+      "status": "not-in-contract",
+      "feature_ids": [
+        "graphics-device-ownership"
+      ]
+    },
+    {
+      "id": "arbitrary-layered-annotations-excluded",
+      "status": "not-in-contract",
+      "feature_ids": [
+        "scene-v1-arbitrary-layered-annotations"
+      ]
     }
   ]
 }
