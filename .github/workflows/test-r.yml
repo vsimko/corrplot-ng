@@ -50,7 +50,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
+          # Exact Linux PNG pixel baselines depend on the runner's Cairo/font
+          # stack; pin Ubuntu rather than following ubuntu-latest.
+          - ubuntu-24.04
           - macos-latest
           - windows-latest
     steps:
