@@ -213,7 +213,29 @@
         "label": {
           "type": "string"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "number" } } },
+          "then": { "properties": { "values": { "items": { "type": ["number", "null"] } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "integer" } } },
+          "then": { "properties": { "values": { "items": { "type": ["integer", "null"] } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "category" } } },
+          "then": { "properties": { "values": { "items": { "type": ["string", "number", "boolean", "null"] } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "boolean" } } },
+          "then": { "properties": { "values": { "items": { "type": ["boolean", "null"] } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "text" } } },
+          "then": { "properties": { "values": { "items": { "type": ["string", "null"] } } } }
+        }
+      ]
     },
     "scale": {
       "type": "object",

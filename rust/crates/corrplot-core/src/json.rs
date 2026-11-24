@@ -1,6 +1,6 @@
 //! Small dependency-free JSON reader used at the shared-core data boundary.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Value {
@@ -19,19 +19,44 @@ pub(crate) struct ParseError {
 }
 
 pub(crate) fn parse(source: &str) -> Result<Value, ParseError> {
-    let mut parser = Parser { bytes: source.as_bytes(), offset: 0 };
+    parse_internal(source, false).map(|(value, _)| value)
+}
+
+/// Parse a JSON value and retain exact lexical integrality for every number token.
+///
+/// The ordinary parser intentionally keeps its existing value representation;
+/// visualization-model integer columns use this sidecar to avoid treating a
+/// rounded fractional token (or an underflowed token) as an integer.
+pub(crate) fn parse_with_number_integrality(
+    source: &str,
+) -> Result<(Value, HashMap<String, bool>), ParseError> {
+    parse_internal(source, true)
+}
+
+fn parse_internal(
+    source: &str,
+    track_number_integrality: bool,
+) -> Result<(Value, HashMap<String, bool>), ParseError> {
+    let mut parser = Parser {
+        bytes: source.as_bytes(),
+        offset: 0,
+        path: track_number_integrality.then(Vec::new),
+        number_integrality: HashMap::new(),
+    };
     parser.whitespace();
     let value = parser.value()?;
     parser.whitespace();
     if parser.offset != parser.bytes.len() {
         return Err(parser.error("unexpected trailing input"));
     }
-    Ok(value)
+    Ok((value, parser.number_integrality))
 }
 
 struct Parser<'a> {
     bytes: &'a [u8],
     offset: usize,
+    path: Option<Vec<String>>,
+    number_integrality: HashMap<String, bool>,
 }
 
 impl Parser<'_> {
@@ -142,7 +167,14 @@ impl Parser<'_> {
         let mut values = Vec::new();
         if self.bytes.get(self.offset) == Some(&b']') { self.offset += 1; return Ok(Value::Array(values)); }
         loop {
-            values.push(self.value()?);
+            if let Some(path) = &mut self.path {
+                path.push(values.len().to_string());
+            }
+            let parsed = self.value();
+            if let Some(path) = &mut self.path {
+                path.pop();
+            }
+            values.push(parsed?);
             self.whitespace();
             match self.bytes.get(self.offset) {
                 Some(b',') => { self.offset += 1; self.whitespace(); }
@@ -163,7 +195,14 @@ impl Parser<'_> {
             self.whitespace();
             if self.bytes.get(self.offset) != Some(&b':') { return Err(self.error("expected ':' after JSON object key")); }
             self.offset += 1;
-            let value = self.value()?;
+            if let Some(path) = &mut self.path {
+                path.push(key.clone());
+            }
+            let parsed = self.value();
+            if let Some(path) = &mut self.path {
+                path.pop();
+            }
+            let value = parsed?;
             if values.insert(key, value).is_some() { return Err(self.error("duplicate JSON object key")); }
             self.whitespace();
             match self.bytes.get(self.offset) {
@@ -201,8 +240,43 @@ impl Parser<'_> {
         let raw = std::str::from_utf8(&self.bytes[start..self.offset]).map_err(|_| self.error("invalid JSON number"))?;
         let value = raw.parse::<f64>().map_err(|_| self.error("invalid JSON number"))?;
         if !value.is_finite() { return Err(self.error("JSON number is outside the finite range")); }
+        if let Some(path) = &self.path {
+            let pointer = path.iter().fold(String::new(), |mut path, segment| {
+                path.push('/');
+                path.push_str(&segment.replace('~', "~0").replace('/', "~1"));
+                path
+            });
+            self.number_integrality.insert(pointer, is_integral_json_number(raw));
+        }
         Ok(Value::Number(value))
     }
+}
+
+fn is_integral_json_number(raw: &str) -> bool {
+    let (mantissa, exponent) = match raw.find(|character| matches!(character, 'e' | 'E')) {
+        Some(index) => {
+            let (mantissa, exponent) = raw.split_at(index);
+            let exponent = &exponent[1..];
+            let parsed = exponent.parse::<i64>().unwrap_or_else(|_| {
+                if exponent.starts_with('-') { i64::MIN } else { i64::MAX }
+            });
+            (mantissa, parsed)
+        }
+        None => (raw, 0_i64),
+    };
+    let mantissa = mantissa.strip_prefix('-').unwrap_or(mantissa);
+    let (whole, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
+    let digits = format!("{whole}{fraction}");
+    if digits.bytes().all(|digit| digit == b'0') {
+        return true;
+    }
+    let scale = exponent.saturating_sub(fraction.len() as i64);
+    if scale >= 0 {
+        return true;
+    }
+    let required_trailing_zeroes = scale.unsigned_abs();
+    let trailing_zeroes = digits.bytes().rev().take_while(|digit| *digit == b'0').count() as u64;
+    trailing_zeroes >= required_trailing_zeroes
 }
 
 #[cfg(test)]
@@ -215,6 +289,27 @@ mod tests {
         let Value::Object(object) = value else { panic!("expected object") };
         assert_eq!(object.get("label"), Some(&Value::String("A🚀".into())));
         assert_eq!(object.get("cells"), Some(&Value::Array(vec![Value::Null, Value::Bool(true), Value::Number(-125.0)])));
+    }
+
+    #[test]
+    fn ordinary_parse_skips_number_path_tracking() {
+        let source = r#"{"nested":[1,{"value":2.5}]}"#;
+        let (ordinary, integrality) = parse_internal(source, false).unwrap();
+        assert_eq!(ordinary, parse(source).unwrap());
+        assert!(integrality.is_empty());
+    }
+
+    #[test]
+    fn tracks_integrality_from_exact_json_number_tokens() {
+        let (_, integrality) = parse_with_number_integrality(
+            r#"{"values":[1,1.0,1e0,10e-1,1.00000000000000001,1e-999,0e-999]}"#,
+        ).unwrap();
+        for index in 0..4 {
+            assert_eq!(integrality.get(&format!("/values/{index}")), Some(&true));
+        }
+        assert_eq!(integrality.get("/values/4"), Some(&false));
+        assert_eq!(integrality.get("/values/5"), Some(&false));
+        assert_eq!(integrality.get("/values/6"), Some(&true));
     }
 
     #[test]

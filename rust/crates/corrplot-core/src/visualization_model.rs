@@ -92,7 +92,7 @@ fn optional_id_ref(o: &Object, key: &str, path: &str, known: &HashSet<String>) -
 /// Schema. This function rejects malformed JSON, duplicate IDs, invalid matrix
 /// and table dimensions, invalid correlation semantics, and unresolved IDs.
 pub fn validate_visualization_model_v1(source: &str) -> Result<()> {
-    let root_value = json::parse(source).map_err(|e| VisualizationModelError::new(
+    let (root_value, number_integrality) = json::parse_with_number_integrality(source).map_err(|e| VisualizationModelError::new(
         "model.invalid_json", format!("invalid JSON at byte {}: {}", e.offset, e.message), "$"
     ))?;
     let root = object(&root_value, "$")?;
@@ -209,14 +209,49 @@ pub fn validate_visualization_model_v1(source: &str) -> Result<()> {
                 }
                 let mut expected_len = None;
                 for (name, column) in columns {
-                    let cpath = format!("{path}.columns.{name}");
+                    let escaped_name = name.replace('\\', "\\\\").replace('"', "\\\"");
+                    let cpath = format!("{path}.columns[\"{escaped_name}\"]");
                     let column = object(column, &cpath)?;
+                    let column_type = string(required(column, "type", &cpath)?, &format!("{cpath}.type"))?;
+                    if !matches!(column_type, "number" | "integer" | "category" | "boolean" | "text") {
+                        return Err(VisualizationModelError::new(
+                            "model.table.invalid_column_type",
+                            format!("unsupported table column type '{column_type}'"),
+                            format!("{cpath}.type"),
+                        ));
+                    }
                     let values = array(required(column, "values", &cpath)?, &format!("{cpath}.values"))?;
                     if let Some(expected) = expected_len {
                         if values.len() != expected {
                             return Err(VisualizationModelError::new("model.table.column_length_mismatch", "all table columns must have equal lengths", format!("{cpath}.values")));
                         }
                     } else { expected_len = Some(values.len()); }
+                    for (index, value) in values.iter().enumerate() {
+                        let value_path = format!("{cpath}.values[{index}]");
+                        if matches!(value, Value::Null) {
+                            continue;
+                        }
+                        let compatible = match column_type {
+                            "number" => matches!(value, Value::Number(number) if number.is_finite()),
+                            "integer" => {
+                                let pointer_column = name.replace('~', "~0").replace('/', "~1");
+                                let number_pointer = format!("/data_sources/{i}/columns/{pointer_column}/values/{index}");
+                                matches!(value, Value::Number(number) if number.is_finite())
+                                    && number_integrality.get(&number_pointer).copied().unwrap_or(false)
+                            },
+                            "category" => matches!(value, Value::String(_) | Value::Bool(_) | Value::Number(_)),
+                            "boolean" => matches!(value, Value::Bool(_)),
+                            "text" => matches!(value, Value::String(_)),
+                            _ => unreachable!("column type was checked above"),
+                        };
+                        if !compatible {
+                            return Err(VisualizationModelError::new(
+                                "model.table.column_value_type_mismatch",
+                                format!("value is incompatible with table column type '{column_type}'"),
+                                value_path,
+                            ));
+                        }
+                    }
                 }
             }
             _ => return Err(VisualizationModelError::new("model.data_source.invalid_kind", "data source kind must be matrix or table", format!("{path}.kind"))),
@@ -341,5 +376,74 @@ mod tests {
     fn rejects_unequal_matrix_rows() {
         let fixture = r#"{"schema_version":1,"kind":"visualization_document","layout":{"width":100,"height":80,"units":"logical"},"data_sources":[{"id":"m","kind":"matrix","values":[[1,2],[3]],"semantics":"general_numeric","row_labels":["a","b"],"column_labels":["x","y"]}],"scales":[],"plots":[{"id":"p","coordinate_system":{"kind":"matrix"},"layers":[{"id":"l","kind":"matrix","data":"m","encoding":{}}]}]}"#;
         assert_eq!(validate_visualization_model_v1(fixture).unwrap_err().code, "model.matrix.shape_mismatch");
+    }
+
+    fn table_document(column_type: &str, value_json: &str) -> String {
+        format!(
+            r#"{{"schema_version":1,"kind":"visualization_document","layout":{{"width":100,"height":80,"units":"logical"}},"data_sources":[{{"id":"t","kind":"table","columns":{{"amount":{{"type":"{}","values":[{}]}}}}}}],"scales":[],"plots":[{{"id":"p","coordinate_system":{{"kind":"cartesian"}},"layers":[{{"id":"l","kind":"bar","data":"t","encoding":{{}}}}]}}]}}"#,
+            column_type, value_json
+        )
+    }
+
+    #[test]
+    fn validates_typed_table_fixture_and_null_missing_values() {
+        let fixture = include_str!("../../../../fixtures/visualization-model-v1/table-column-types.json");
+        validate_visualization_model_v1(fixture).unwrap();
+    }
+
+    #[test]
+    fn rejects_mismatched_values_for_every_table_column_type() {
+        for (column_type, value_json) in [
+            ("number", r#""not-a-number""#),
+            ("integer", "1.5"),
+            ("category", "[]"),
+            ("boolean", "1"),
+            ("text", "false"),
+        ] {
+            let fixture = table_document(column_type, value_json);
+            let error = validate_visualization_model_v1(&fixture).unwrap_err();
+            assert_eq!(error.code, "model.table.column_value_type_mismatch", "{column_type}");
+            assert_eq!(
+                error.path,
+                "$.data_sources[0].columns[\"amount\"].values[0]",
+                "{column_type}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_fractional_integer_tokens_even_when_f64_rounds_or_underflows() {
+        for value_json in ["1.00000000000000001", "1e-999"] {
+            let fixture = table_document("integer", value_json);
+            let error = validate_visualization_model_v1(&fixture).unwrap_err();
+            assert_eq!(error.code, "model.table.column_value_type_mismatch");
+            assert_eq!(
+                error.path,
+                "$.data_sources[0].columns[\"amount\"].values[0]"
+            );
+        }
+    }
+
+    #[test]
+    fn accepts_all_category_scalar_variants() {
+        for value_json in [r#""label""#, "42", "true"] {
+            let fixture = table_document("category", value_json);
+            validate_visualization_model_v1(&fixture).unwrap();
+        }
+    }
+
+    #[test]
+    fn rejects_unrepresentable_json_number_at_the_json_boundary() {
+        let fixture = table_document("number", "1e999");
+        let error = validate_visualization_model_v1(&fixture).unwrap_err();
+        assert_eq!(error.code, "model.invalid_json");
+    }
+
+    #[test]
+    fn rejects_unknown_table_column_type_with_type_path() {
+        let fixture = table_document("date", "null");
+        let error = validate_visualization_model_v1(&fixture).unwrap_err();
+        assert_eq!(error.code, "model.table.invalid_column_type");
+        assert_eq!(error.path, "$.data_sources[0].columns[\"amount\"].type");
     }
 }
