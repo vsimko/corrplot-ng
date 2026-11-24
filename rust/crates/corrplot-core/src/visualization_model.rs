@@ -400,7 +400,7 @@ mod tests {
             assert_eq!(error.code, "model.table.column_value_type_mismatch", "{column_type}");
             assert_eq!(
                 error.path,
-                "$.data_sources[0].columns[\\"amount\\"].values[0]",
+                "$.data_sources[0].columns[\"amount\"].values[0]",
                 "{column_type}"
             );
         }
@@ -411,7 +411,6 @@ mod tests {
         let fixture = table_document("date", "null");
         let error = validate_visualization_model_v1(&fixture).unwrap_err();
         assert_eq!(error.code, "model.table.invalid_column_type");
-        assert_eq!(error.path, "$.data_sources[0].columns[\\"amount\\"].type");
+        assert_eq!(error.path, "$.data_sources[0].columns[\"amount\"].type");
     }
-}
 }
