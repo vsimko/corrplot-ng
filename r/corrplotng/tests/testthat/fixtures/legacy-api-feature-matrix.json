@@ -337,11 +337,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           }
         ],
         "rust": [
@@ -356,7 +352,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust test asserts annotation placement in the scene model; output-level parity is not asserted."
+      "notes": "Rust test asserts annotation placement in the scene model; output-level parity is not asserted.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "cluster-region-model-geometry",
@@ -429,20 +433,12 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           },
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-plotmath-percent-contract.R",
-            "test": "legacy corrplot plotmath labels and percentage coefficients match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "math-labels"
-            ]
+            "test": "legacy corrplot plotmath labels and percentage coefficients match upstream"
           }
         ]
       },
@@ -450,7 +446,16 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "Rust text annotation placement does not establish legacy number formatting semantics."
+      "notes": "Rust text annotation placement does not establish legacy number formatting semantics.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients",
+            "math-labels"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "colorlegend-horizontal",
@@ -540,11 +545,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
-            "test": "legacy corrplot confidence interval overlays match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "confidence-interval"
-            ]
+            "test": "legacy corrplot confidence interval overlays match upstream"
           }
         ]
       },
@@ -552,7 +553,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test proves circle CI rendering."
+      "notes": "No Rust test proves circle CI rendering.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "confidence-interval"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "confidence-interval-metadata",
@@ -575,11 +584,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
-            "test": "legacy corrplot confidence interval overlays match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "confidence-interval"
-            ]
+            "test": "legacy corrplot confidence interval overlays match upstream"
           },
           {
             "kind": "test",
@@ -604,7 +609,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust validates/transfers CI metadata; this is not visual parity."
+      "notes": "Rust validates/transfers CI metadata; this is not visual parity.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "confidence-interval"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "confidence-interval-rect",
@@ -628,11 +641,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
-            "test": "legacy corrplot confidence interval overlays match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "confidence-interval"
-            ]
+            "test": "legacy corrplot confidence interval overlays match upstream"
           }
         ]
       },
@@ -640,7 +649,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test proves rect CI rendering."
+      "notes": "No Rust test proves rect CI rendering.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "confidence-interval"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "confidence-interval-required-bounds",
@@ -696,11 +713,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
-            "test": "legacy corrplot confidence interval overlays match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "confidence-interval"
-            ]
+            "test": "legacy corrplot confidence interval overlays match upstream"
           }
         ]
       },
@@ -708,7 +721,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test proves square CI rendering."
+      "notes": "No Rust test proves square CI rendering.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "confidence-interval"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "cor-mtest-kendall",
@@ -840,11 +861,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "non-correlation-matrix"
-            ]
+            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior"
           }
         ],
         "rust": [
@@ -859,7 +876,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust evidence covers scene-v1 general_numeric validation, not every legacy transform or palette rule."
+      "notes": "Rust evidence covers scene-v1 general_numeric validation, not every legacy transform or palette rule.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "non-correlation-matrix"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "corrrect-hclust-average",
@@ -1283,11 +1308,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1302,7 +1323,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust test asserts diagonal suppression; no comparative conformance test exists."
+      "notes": "Rust test asserts diagonal suppression; no comparative conformance test exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "display-full",
@@ -1324,11 +1353,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1343,7 +1368,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust default scene exercises full display; no comparative conformance test exists."
+      "notes": "Rust default scene exercises full display; no comparative conformance test exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "display-lower",
@@ -1365,11 +1398,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ]
       },
@@ -1377,7 +1406,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No linked Rust test explicitly exercises lower-only visibility."
+      "notes": "No linked Rust test explicitly exercises lower-only visibility.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "display-upper",
@@ -1399,11 +1436,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "order-aoe-upper"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1418,7 +1451,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust scene test checks upper visibility; no cross-renderer assertion exists."
+      "notes": "Rust scene test checks upper visibility; no cross-renderer assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "order-aoe-upper"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-circle-model-geometry",
@@ -1440,11 +1481,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1464,7 +1501,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-circle-raster",
@@ -1486,17 +1531,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ],
         "rust": [
@@ -1511,7 +1546,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-circle-svg",
@@ -1563,11 +1612,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-color"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1582,7 +1627,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "method-color"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-color-raster",
@@ -1604,17 +1657,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ]
       },
@@ -1622,7 +1665,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-color-svg",
@@ -1666,11 +1723,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-ellipse"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1685,7 +1738,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "method-ellipse"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-ellipse-raster",
@@ -1707,17 +1768,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ]
       },
@@ -1725,7 +1776,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-ellipse-svg",
@@ -1769,11 +1834,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-number"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1793,7 +1854,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "method-number"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-number-raster",
@@ -1815,17 +1884,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ]
       },
@@ -1833,7 +1892,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-number-svg",
@@ -1877,11 +1950,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-pie"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -1901,7 +1970,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "method-pie"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-pie-raster",
@@ -1923,17 +2000,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ]
       },
@@ -1941,7 +2008,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-pie-svg",
@@ -1985,11 +2066,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-shade"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -2004,7 +2081,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "method-shade"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-shade-raster",
@@ -2026,17 +2111,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ]
       },
@@ -2044,7 +2119,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-shade-svg",
@@ -2088,11 +2177,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-square"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -2112,7 +2197,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists."
+      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-square-raster",
@@ -2134,17 +2227,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ]
       },
@@ -2152,7 +2235,21 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only."
+      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "glyph-square-svg",
@@ -2290,11 +2387,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           }
         ],
         "rust": [
@@ -2314,7 +2407,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust tests validate model geometry and SVG text; cross-platform font raster equivalence remains open."
+      "notes": "Rust tests validate model geometry and SVG text; cross-platform font raster equivalence remains open.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "matrix-input-missing-values",
@@ -2339,11 +2440,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "missing-values"
-            ]
+            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior"
           }
         ],
         "rust": [
@@ -2363,7 +2460,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Independent support evidence exists; no direct legacy-versus-Rust assertion."
+      "notes": "Independent support evidence exists; no direct legacy-versus-Rust assertion.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "missing-values"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "mixed-color-forwarding",
@@ -2418,11 +2523,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-mixed-contract.R",
-            "test": "corrplot.mixed preserves pinned upper/lower method combinations",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "mixed-circle-ellipse"
-            ]
+            "test": "corrplot.mixed preserves pinned upper/lower method combinations"
           }
         ]
       },
@@ -2430,7 +2531,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test demonstrates full mixed upper/lower composition."
+      "notes": "No Rust test demonstrates full mixed upper/lower composition.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "mixed-circle-ellipse"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "mixed-return-device",
@@ -3562,11 +3671,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-plotmath-percent-contract.R",
-            "test": "legacy corrplot plotmath labels and percentage coefficients match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "math-labels"
-            ]
+            "test": "legacy corrplot plotmath labels and percentage coefficients match upstream"
           }
         ],
         "rust": [
@@ -3581,7 +3686,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "legacy-r-adapter-only",
-      "notes": "Rust explicitly rejects plotmath metadata; keep this behavior visible until a portable equivalent is specified."
+      "notes": "Rust explicitly rejects plotmath metadata; keep this behavior visible until a portable equivalent is specified.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "math-labels"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "return-corrplot-object",
@@ -3717,18 +3830,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-visual-regression.R",
-            "test": "corrplot-ng matches the saved legacy visual examples",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-number",
-              "method-square",
-              "method-ellipse",
-              "method-shade",
-              "method-color",
-              "method-pie",
-              "missing-values"
-            ]
+            "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ],
         "rust": [
@@ -3743,7 +3845,22 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-output-parity-unproven",
-      "notes": "Legacy PNG snapshots and Rust RGBA smoke tests are independent; no cross-renderer pixel tolerance is asserted."
+      "notes": "Legacy PNG snapshots and Rust RGBA smoke tests are independent; no cross-renderer pixel tolerance is asserted.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle",
+            "method-color",
+            "method-ellipse",
+            "method-number",
+            "method-pie",
+            "method-shade",
+            "method-square",
+            "missing-values"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-all-missing-matrix-state",
@@ -3841,11 +3958,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -3865,7 +3978,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust validates identity; no direct comparison against legacy cell association exists."
+      "notes": "Rust validates identity; no direct comparison against legacy cell association exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "default-circle"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-cell-text-identity",
@@ -3889,11 +4010,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           }
         ],
         "rust": [
@@ -3913,7 +4030,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust tests preserve identity and reject out-of-matrix annotation coordinates."
+      "notes": "Rust tests preserve identity and reject out-of-matrix annotation coordinates.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-closed-schema-unknown-properties",
@@ -4011,12 +4136,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "order-aoe-upper",
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ],
         "rust": [
@@ -4036,7 +4156,16 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
-      "notes": "Rust tests explicitly retain cell identity under display masks; no comparative assertion exists."
+      "notes": "Rust tests explicitly retain cell identity under display masks; no comparative assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients",
+            "order-aoe-upper"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-figure-text",
@@ -4098,11 +4227,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "non-correlation-matrix"
-            ]
+            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior"
           }
         ],
         "rust": [
@@ -4117,7 +4242,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "The Rust test proves one normalized magnitude example; complete legacy transform parity remains open."
+      "notes": "The Rust test proves one normalized magnitude example; complete legacy transform parity remains open.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "non-correlation-matrix"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-global-significance",
@@ -4141,11 +4274,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ],
         "rust": [
@@ -4165,7 +4294,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust tests validate global significance fields; they do not prove all legacy insig render modes."
+      "notes": "Rust tests validate global significance fields; they do not prove all legacy insig render modes.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-hidden-cell-rendering",
@@ -4188,12 +4325,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "order-aoe-upper",
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
           }
         ]
       },
@@ -4201,7 +4333,16 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-renderer-conformance-gap",
-      "notes": "Scene-model mask tests exist, but no linked Rust renderer test proves hidden cells are omitted from both outputs."
+      "notes": "Scene-model mask tests exist, but no linked Rust renderer test proves hidden cells are omitted from both outputs.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients",
+            "order-aoe-upper"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-invalid-display-diagnostic",
@@ -4278,11 +4419,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           }
         ]
       },
@@ -4290,7 +4427,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust label typography/collision test covers placement and rotation; no comparative legacy assertion exists."
+      "notes": "Rust label typography/collision test covers placement and rotation; no comparative legacy assertion exists.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-legend-order-missing-entry",
@@ -4413,11 +4558,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "missing-values"
-            ]
+            "test": "legacy NA labels and non-correlation matrix mode retain upstream behavior"
           }
         ],
         "rust": [
@@ -4432,7 +4573,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust model test checks annotation positions after upper-triangle filtering."
+      "notes": "Rust model test checks annotation positions after upper-triangle filtering.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "missing-values"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-number-coefficient-precedence",
@@ -4458,11 +4607,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           }
         ]
       },
@@ -4470,7 +4615,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "Legacy precedence is characterized; no linked Rust test proves the equivalent scene behavior."
+      "notes": "Legacy precedence is characterized; no linked Rust test proves the equivalent scene behavior.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-optional-capability-diagnostic",
@@ -4511,11 +4664,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "lower-with-coefficients"
-            ]
+            "test": "legacy corrplot coefficient formatting and text styling match upstream"
           }
         ],
         "rust": [
@@ -4530,7 +4679,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust test validates scene fields and diagnostics; legacy R typography semantics are not directly compared."
+      "notes": "Rust test validates scene fields and diagnostics; legacy R typography semantics are not directly compared.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "lower-with-coefficients"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "scene-v1-overflowing-number-diagnostic",
@@ -4784,11 +4941,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ]
       },
@@ -4796,7 +4949,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test demonstrates the blank legacy display mode."
+      "notes": "No Rust test demonstrates the blank legacy display mode.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "significance-label_sig",
@@ -4822,11 +4983,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ]
       },
@@ -4834,7 +4991,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test demonstrates the label_sig legacy display mode."
+      "notes": "No Rust test demonstrates the label_sig legacy display mode.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "significance-metadata",
@@ -4858,11 +5023,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ],
         "rust": [
@@ -4882,7 +5043,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust evidence proves metadata preservation, not every legacy display mode."
+      "notes": "Rust evidence proves metadata preservation, not every legacy display mode.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "significance-n",
@@ -4908,11 +5077,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ]
       },
@@ -4920,7 +5085,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test demonstrates the n legacy display mode."
+      "notes": "No Rust test demonstrates the n legacy display mode.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "significance-p-value",
@@ -4946,11 +5119,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ]
       },
@@ -4958,7 +5127,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test demonstrates the p-value legacy display mode."
+      "notes": "No Rust test demonstrates the p-value legacy display mode.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "significance-pch",
@@ -4984,11 +5161,7 @@
           {
             "kind": "test",
             "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
+            "test": "legacy corrplot significance annotations match upstream"
           }
         ]
       },
@@ -4996,7 +5169,15 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "No Rust test demonstrates the pch legacy display mode."
+      "notes": "No Rust test demonstrates the pch legacy display mode.",
+      "fixtures": [
+        {
+          "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+          "ids": [
+            "significance"
+          ]
+        }
+      ]
     },
     {
       "feature_id": "svg-output",
