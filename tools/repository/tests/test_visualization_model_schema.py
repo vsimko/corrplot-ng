@@ -128,6 +128,26 @@ class VisualizationModelSchemaTests(unittest.TestCase):
             with self.subTest(fixture=name):
                 validate_document(load_fixture(name), self.schema)
 
+    def test_table_column_scalar_types_and_nulls(self) -> None:
+        document = load_fixture("table-column-types.json")
+        validate_document(document, self.schema)
+
+    def test_rejects_table_column_type_mismatches(self) -> None:
+        mismatches = {
+            "number": "not-a-number",
+            "integer": 1.5,
+            "category": [],
+            "boolean": 1,
+            "text": False,
+        }
+        for column_type, invalid_value in mismatches.items():
+            with self.subTest(column_type=column_type):
+                document = load_fixture("table-column-types.json")
+                document["data_sources"][0]["columns"]["sample"]["type"] = column_type
+                document["data_sources"][0]["columns"]["sample"]["values"][0] = invalid_value
+                with self.assertRaises(jsonschema.ValidationError):
+                    validate_document(document, self.schema)
+
     def test_general_matrix_fixture_is_rectangular(self) -> None:
         document = load_fixture("general-matrix.json")
         source = document["data_sources"][0]
