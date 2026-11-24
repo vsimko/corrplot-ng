@@ -34,9 +34,19 @@ If either side is `unknown` or `not_applicable`, the row remains unclassified. A
 
 **A `both` classification is a parity claim.** It requires independent executable support on both sides and a comparative test that directly asserts the legacy and Rust outputs for that behavior. Independent implementation tests alone do not qualify. No row in this initial matrix currently makes that claim.
 
+## Scene-v1 requirement coverage
+
+The JSON includes a separate `scene_v1_requirement_coverage` map. Each documented v1 requirement is linked to one or more atomic matrix rows and is marked:
+
+- `verified`: an executable Rust conformance test exists. This includes explicit rejection tests for intentionally unsupported behavior such as plotmath.
+- `gap`: the contract requirement is documented, but at least one required Rust behavior/output layer still lacks executable evidence.
+- `not-in-contract`: the behavior is explicitly an adapter responsibility or a deliberate v1 limit.
+
+The validator checks that every coverage entry points to existing feature rows and that a `verified` entry has Rust test evidence. Gaps are retained rather than inferred from schema declarations or implementation code.
+
 ## Current evidence gaps and decisions
 
-- Rust ordering algorithms remain unverified. All seven glyphs have model/geometry tests, but the SVG/RGBA renderer smoke evidence currently exercises only the default circle; the remaining six glyphs are therefore unknown at those output layers.
+- Rust ordering algorithms remain unverified. All seven glyphs have model/geometry tests, but SVG/RGBA renderer smoke evidence currently exercises only the default circle; the remaining six glyphs are unknown at those output layers. The requirement map also records gaps for hidden-cell output filtering, all-missing matrix state, fallback style colors, unknown glyph/unknown-property diagnostics, number/coefficient precedence, and legend layout/clipping.
 - Legacy plotmath is characterized, while the current Rust scene path explicitly rejects it. A portable text-shaping decision remains open.
 - Legacy significance modes, coefficient formatting, palette generation, mixed upper/lower composition, and warning/error compatibility need Rust conformance evidence before parity can be claimed.
 - SVG and RGBA evidence is recorded per output layer and separately from legacy R graphics-device and PNG snapshot tests. They do not imply a cross-renderer pixel match or a tolerance policy.
