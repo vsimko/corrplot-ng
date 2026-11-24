@@ -15,7 +15,8 @@ from validate_legacy_feature_matrix import derive_classification, validate_docum
 
 class FeatureMatrixClassificationTests(unittest.TestCase):
     def test_all_four_derived_classes(self):
-        self.assertEqual(derive_classification("verified", "verified"), "both")
+        self.assertIsNone(derive_classification("verified", "verified"))
+        self.assertEqual(derive_classification("verified", "verified", parity_verified=True), "both")
         self.assertEqual(derive_classification("verified", "unsupported"), "legacy-only")
         self.assertEqual(derive_classification("unsupported", "verified"), "rust-only")
         self.assertEqual(derive_classification("unsupported", "unsupported"), "neither")
