@@ -40,9 +40,8 @@ fn parse_internal(
     let mut parser = Parser {
         bytes: source.as_bytes(),
         offset: 0,
-        path: Vec::new(),
+        path: track_number_integrality.then(Vec::new),
         number_integrality: HashMap::new(),
-        track_number_integrality,
     };
     parser.whitespace();
     let value = parser.value()?;
@@ -56,9 +55,8 @@ fn parse_internal(
 struct Parser<'a> {
     bytes: &'a [u8],
     offset: usize,
-    path: Vec<String>,
+    path: Option<Vec<String>>,
     number_integrality: HashMap<String, bool>,
-    track_number_integrality: bool,
 }
 
 impl Parser<'_> {
@@ -169,9 +167,13 @@ impl Parser<'_> {
         let mut values = Vec::new();
         if self.bytes.get(self.offset) == Some(&b']') { self.offset += 1; return Ok(Value::Array(values)); }
         loop {
-            self.path.push(values.len().to_string());
+            if let Some(path) = &mut self.path {
+                path.push(values.len().to_string());
+            }
             let parsed = self.value();
-            self.path.pop();
+            if let Some(path) = &mut self.path {
+                path.pop();
+            }
             values.push(parsed?);
             self.whitespace();
             match self.bytes.get(self.offset) {
@@ -193,9 +195,13 @@ impl Parser<'_> {
             self.whitespace();
             if self.bytes.get(self.offset) != Some(&b':') { return Err(self.error("expected ':' after JSON object key")); }
             self.offset += 1;
-            self.path.push(key.clone());
+            if let Some(path) = &mut self.path {
+                path.push(key.clone());
+            }
             let parsed = self.value();
-            self.path.pop();
+            if let Some(path) = &mut self.path {
+                path.pop();
+            }
             let value = parsed?;
             if values.insert(key, value).is_some() { return Err(self.error("duplicate JSON object key")); }
             self.whitespace();
@@ -234,8 +240,8 @@ impl Parser<'_> {
         let raw = std::str::from_utf8(&self.bytes[start..self.offset]).map_err(|_| self.error("invalid JSON number"))?;
         let value = raw.parse::<f64>().map_err(|_| self.error("invalid JSON number"))?;
         if !value.is_finite() { return Err(self.error("JSON number is outside the finite range")); }
-        if self.track_number_integrality {
-            let pointer = self.path.iter().fold(String::new(), |mut path, segment| {
+        if let Some(path) = &self.path {
+            let pointer = path.iter().fold(String::new(), |mut path, segment| {
                 path.push('/');
                 path.push_str(&segment.replace('~', "~0").replace('/', "~1"));
                 path
@@ -283,6 +289,14 @@ mod tests {
         let Value::Object(object) = value else { panic!("expected object") };
         assert_eq!(object.get("label"), Some(&Value::String("A🚀".into())));
         assert_eq!(object.get("cells"), Some(&Value::Array(vec![Value::Null, Value::Bool(true), Value::Number(-125.0)])));
+    }
+
+    #[test]
+    fn ordinary_parse_skips_number_path_tracking() {
+        let source = r#"{"nested":[1,{"value":2.5}]}"#;
+        let (ordinary, integrality) = parse_internal(source, false).unwrap();
+        assert_eq!(ordinary, parse(source).unwrap());
+        assert!(integrality.is_empty());
     }
 
     #[test]
