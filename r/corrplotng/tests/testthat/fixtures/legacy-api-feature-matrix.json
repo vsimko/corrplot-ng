@@ -15,11 +15,11 @@
     "not_applicable"
   ],
   "classification_rules": {
-    "both": "legacy_support=verified and rust_support=verified",
+    "both": "legacy_support=verified and rust_support=verified and parity_status=verified with comparative_test evidence",
     "legacy_only": "legacy_support=verified and rust_support=unsupported",
     "rust_only": "legacy_support=unsupported and rust_support=verified",
     "neither": "legacy_support=unsupported and rust_support=unsupported",
-    "unclassified": "Unknown or not_applicable on either side; no four-way classification is asserted.",
+    "unclassified": "Unknown/not_applicable on either side, or independently verified on both sides without comparative conformance evidence.",
     "parity": "A 'both' classification means independent support evidence only. parity_status=verified requires executable comparative_test evidence."
   },
   "rows": [
@@ -122,7 +122,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
@@ -165,7 +165,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
@@ -213,7 +213,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
@@ -259,7 +259,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
@@ -305,7 +305,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
@@ -488,7 +488,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
@@ -619,7 +619,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
@@ -667,7 +667,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
@@ -761,7 +761,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
@@ -996,7 +996,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
@@ -1113,7 +1113,7 @@
           }
         ]
       },
-      "classification": "both",
+      "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-output-parity-unproven",
