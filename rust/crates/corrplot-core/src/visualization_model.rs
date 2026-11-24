@@ -372,4 +372,46 @@ mod tests {
         let fixture = r#"{"schema_version":1,"kind":"visualization_document","layout":{"width":100,"height":80,"units":"logical"},"data_sources":[{"id":"m","kind":"matrix","values":[[1,2],[3]],"semantics":"general_numeric","row_labels":["a","b"],"column_labels":["x","y"]}],"scales":[],"plots":[{"id":"p","coordinate_system":{"kind":"matrix"},"layers":[{"id":"l","kind":"matrix","data":"m","encoding":{}}]}]}"#;
         assert_eq!(validate_visualization_model_v1(fixture).unwrap_err().code, "model.matrix.shape_mismatch");
     }
+
+    fn table_document(column_type: &str, value_json: &str) -> String {
+        format!(
+            r#"{{"schema_version":1,"kind":"visualization_document","layout":{{"width":100,"height":80,"units":"logical"}},"data_sources":[{{"id":"t","kind":"table","columns":{{"amount":{{"type":"{}","values":[{}]}}}}}}],"scales":[],"plots":[{{"id":"p","coordinate_system":{{"kind":"cartesian"}},"layers":[{{"id":"l","kind":"bar","data":"t","encoding":{{}}}}]}}]}}"#,
+            column_type, value_json
+        )
+    }
+
+    #[test]
+    fn validates_typed_table_fixture_and_null_missing_values() {
+        let fixture = include_str!("../../../../fixtures/visualization-model-v1/table-column-types.json");
+        validate_visualization_model_v1(fixture).unwrap();
+    }
+
+    #[test]
+    fn rejects_mismatched_values_for_every_table_column_type() {
+        for (column_type, value_json) in [
+            ("number", r#""not-a-number""#),
+            ("integer", "1.5"),
+            ("category", "[]"),
+            ("boolean", "1"),
+            ("text", "false"),
+        ] {
+            let fixture = table_document(column_type, value_json);
+            let error = validate_visualization_model_v1(&fixture).unwrap_err();
+            assert_eq!(error.code, "model.table.column_value_type_mismatch", "{column_type}");
+            assert_eq!(
+                error.path,
+                "$.data_sources[0].columns[\\"amount\\"].values[0]",
+                "{column_type}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_unknown_table_column_type_with_type_path() {
+        let fixture = table_document("date", "null");
+        let error = validate_visualization_model_v1(&fixture).unwrap_err();
+        assert_eq!(error.code, "model.table.invalid_column_type");
+        assert_eq!(error.path, "$.data_sources[0].columns[\\"amount\\"].type");
+    }
+}
 }
