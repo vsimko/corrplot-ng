@@ -168,6 +168,47 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
         else:
             errors.append(f"{prefix}: parity_status must be 'verified' or 'not-claimed'")
 
+    row_by_id = {row.get("feature_id"): row for row in rows}
+    requirements = document.get("scene_v1_requirement_coverage", [])
+    if not requirements:
+        errors.append("scene_v1_requirement_coverage must be a non-empty array")
+    requirement_ids: set[str] = set()
+    for index, requirement in enumerate(requirements):
+        prefix = f"scene_v1_requirement_coverage[{index}]"
+        requirement_id = requirement.get("id")
+        if not requirement_id or requirement_id in requirement_ids:
+            errors.append(f"{prefix}: requirement id must be non-empty and unique")
+        requirement_ids.add(requirement_id)
+        status = requirement.get("status")
+        if status not in {"verified", "gap", "not-in-contract"}:
+            errors.append(f"{prefix}: invalid coverage status {status!r}")
+        feature_ids = requirement.get("feature_ids", [])
+        if not feature_ids:
+            errors.append(f"{prefix}: at least one feature_id is required")
+        linked = []
+        for feature_id in feature_ids:
+            row = row_by_id.get(feature_id)
+            if row is None:
+                errors.append(f"{prefix}: unknown feature row {feature_id!r}")
+            else:
+                linked.append(row)
+        if status == "verified" and linked and not all(
+            row.get("rust_support") in {"verified", "unsupported"}
+            and row.get("evidence", {}).get("rust")
+            for row in linked
+        ):
+            errors.append(f"{prefix}: verified scene-v1 requirement needs executable Rust conformance evidence")
+        if status == "gap" and linked and not any(
+            row.get("rust_support") in {"unknown", "not_applicable"}
+            for row in linked
+        ):
+            errors.append(f"{prefix}: gap status requires at least one missing Rust evidence row")
+        if status == "not-in-contract" and linked and not all(
+            row.get("scene_v1_contract_status") in {"r-adapter", "deferred", "not-applicable"}
+            for row in linked
+        ):
+            errors.append(f"{prefix}: not-in-contract rows must be marked as adapter/deferred/out-of-contract")
+
     return errors
 
 
