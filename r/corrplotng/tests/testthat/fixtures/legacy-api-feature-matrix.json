@@ -3968,6 +3968,29 @@
       "notes": "Scene-v1 cluster-region schema validation is not identical to legacy R helper drawing."
     },
     {
+      "feature_id": "scene-v1-coefficient-overlay-gating",
+      "behavior": "Coefficient overlays are emitted only when coefficient color is supplied; missing values are not formatted as zero",
+      "layer": "model_geometry",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "addCoef.col",
+            "na.label"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Legacy behavior is characterized; no Rust fixture covers overlay gating and missing-value exclusion."
+    },
+    {
       "feature_id": "scene-v1-display-mask-identity",
       "behavior": "Triangle filtering preserves cell identities and does not renumber hidden cells",
       "layer": "semantic",
@@ -4037,6 +4060,21 @@
       "parity_evidence": [],
       "disposition": "scene-v1-conformance",
       "notes": "Scene-v1 figure_text is a renderer-neutral extension, not a distinct corrplot 0.95 public argument."
+    },
+    {
+      "feature_id": "scene-v1-full-label-typography",
+      "behavior": "Full arbitrary label typography beyond the limited v1 typography fields",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "deferred",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "scene-v1-deliberate-limit",
+      "notes": "The v1 contract explicitly limits typography fields; broader label typography is outside this contract version."
     },
     {
       "feature_id": "scene-v1-general-numeric-magnitude",
@@ -4212,6 +4250,45 @@
       "notes": "Stable scene-v1 parser diagnostics are not a legacy corrplot function behavior."
     },
     {
+      "feature_id": "scene-v1-label-identity-visibility",
+      "behavior": "Label identity, side visibility, placement, rotation and offset remain attached to prepared variables",
+      "layer": "model_geometry",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "tl.pos",
+            "tl.srt",
+            "tl.offset"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "shared-model-parity-unproven",
+      "notes": "Rust label typography/collision test covers placement and rotation; no comparative legacy assertion exists."
+    },
+    {
+      "feature_id": "scene-v1-legend-order-missing-entry",
+      "behavior": "Legend ordering and distinct missing-value entry are preserved",
+      "layer": "model_geometry",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Current typed-legend fixture checks one entry; ordering and missing-entry interactions need a dedicated fixture."
+    },
+    {
       "feature_id": "scene-v1-legend-render-layout",
       "behavior": "Legend layout, clipping and renderer-specific placement are tested independently from legend metadata",
       "layer": "svg_raster",
@@ -4375,6 +4452,21 @@
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
       "notes": "Legacy precedence is characterized; no linked Rust test proves the equivalent scene behavior."
+    },
+    {
+      "feature_id": "scene-v1-optional-capability-diagnostic",
+      "behavior": "Unsupported optional capabilities fail explicitly rather than being ignored or substituted",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No dedicated fixture exercises an unsupported optional capability boundary."
     },
     {
       "feature_id": "scene-v1-optional-typography-display",
@@ -4572,6 +4664,21 @@
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
       "notes": "All seven known methods have model tests; unknown-method rejection is not independently tested."
+    },
+    {
+      "feature_id": "scene-v1-unknown-kind-diagnostic",
+      "behavior": "Unknown scene kind values are rejected rather than interpreted as correlation or general matrix",
+      "layer": "semantic",
+      "inventory_refs": [],
+      "legacy_support": "not_applicable",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "supported",
+      "evidence": {},
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No explicit Rust negative fixture for an unknown kind value is linked."
     },
     {
       "feature_id": "scene-v1-variable-order-metadata",
@@ -5264,6 +5371,52 @@
       "status": "not-in-contract",
       "feature_ids": [
         "scene-v1-arbitrary-layered-annotations"
+      ]
+    },
+    {
+      "id": "label-identity-visibility-position-rotation-offset",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-label-identity-visibility",
+        "label-placement-typography"
+      ]
+    },
+    {
+      "id": "cell-position-and-center-geometry",
+      "status": "verified",
+      "feature_ids": [
+        "scene-v1-logical-canvas-geometry"
+      ]
+    },
+    {
+      "id": "legend-order-and-missing-entry",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-typed-legend",
+        "scene-v1-legend-order-missing-entry"
+      ]
+    },
+    {
+      "id": "coefficient-overlay-gating-and-missing-exclusion",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-coefficient-overlay-gating",
+        "scene-v1-number-coefficient-precedence"
+      ]
+    },
+    {
+      "id": "unknown-kind-and-optional-capability-diagnostics",
+      "status": "gap",
+      "feature_ids": [
+        "scene-v1-unknown-kind-diagnostic",
+        "scene-v1-optional-capability-diagnostic"
+      ]
+    },
+    {
+      "id": "full-label-typography-excluded",
+      "status": "not-in-contract",
+      "feature_ids": [
+        "scene-v1-full-label-typography"
       ]
     }
   ]
