@@ -12,10 +12,11 @@ SUPPORT = {"verified", "unsupported", "unknown", "not_applicable"}
 CONTRACT = {"supported", "contract-extension", "r-adapter", "deferred", "undocumented", "not-applicable"}
 
 
-def derive_classification(legacy: str, rust: str) -> str | None:
+def derive_classification(legacy: str, rust: str, parity_verified: bool = False) -> str | None:
     """Derive the four-way support class; unknown/N/A is deliberately unclassified."""
+    if legacy == "verified" and rust == "verified":
+        return "both" if parity_verified else None
     return {
-        ("verified", "verified"): "both",
         ("verified", "unsupported"): "legacy-only",
         ("unsupported", "verified"): "rust-only",
         ("unsupported", "unsupported"): "neither",
@@ -76,7 +77,13 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
             errors.append(f"{prefix}: invalid legacy_support {legacy!r}")
         if rust not in SUPPORT:
             errors.append(f"{prefix}: invalid rust_support {rust!r}")
-        expected = derive_classification(legacy, rust) if legacy in SUPPORT and rust in SUPPORT else None
+        parity_status = row.get("parity_status")
+        parity_evidence = row.get("parity_evidence", [])
+        comparative_evidence = any(item.get("kind") == "comparative_test" for item in parity_evidence)
+        expected = (
+            derive_classification(legacy, rust, parity_status == "verified" and comparative_evidence)
+            if legacy in SUPPORT and rust in SUPPORT else None
+        )
         if row.get("classification") != expected:
             errors.append(
                 f"{prefix}: classification must be derived as {expected!r}, "
@@ -138,8 +145,6 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
                     if fixture_id not in visual_ids:
                         errors.append(f"{prefix}: unknown legacy visual fixture ID {fixture_id!r}")
 
-        parity_status = row.get("parity_status")
-        parity_evidence = row.get("parity_evidence", [])
         if parity_status == "verified":
             if not any(item.get("kind") == "comparative_test" for item in parity_evidence):
                 errors.append(f"{prefix}: verified parity requires comparative_test evidence")
