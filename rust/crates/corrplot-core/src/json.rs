@@ -247,14 +247,17 @@ impl Parser<'_> {
 }
 
 fn is_integral_json_number(raw: &str) -> bool {
-    let (mantissa, exponent) = raw
-        .split_once(['e', 'E'])
-        .map_or((raw, 0_i64), |(mantissa, exponent)| {
+    let (mantissa, exponent) = match raw.find(|character| matches!(character, 'e' | 'E')) {
+        Some(index) => {
+            let (mantissa, exponent) = raw.split_at(index);
+            let exponent = &exponent[1..];
             let parsed = exponent.parse::<i64>().unwrap_or_else(|_| {
                 if exponent.starts_with('-') { i64::MIN } else { i64::MAX }
             });
             (mantissa, parsed)
-        });
+        }
+        None => (raw, 0_i64),
+    };
     let mantissa = mantissa.strip_prefix('-').unwrap_or(mantissa);
     let (whole, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
     let digits = format!("{whole}{fraction}");
@@ -265,8 +268,8 @@ fn is_integral_json_number(raw: &str) -> bool {
     if scale >= 0 {
         return true;
     }
-    let required_trailing_zeroes = scale.unsigned_abs() as usize;
-    let trailing_zeroes = digits.bytes().rev().take_while(|digit| *digit == b'0').count();
+    let required_trailing_zeroes = scale.unsigned_abs();
+    let trailing_zeroes = digits.bytes().rev().take_while(|digit| *digit == b'0').count() as u64;
     trailing_zeroes >= required_trailing_zeroes
 }
 
