@@ -68,6 +68,22 @@ class FeatureMatrixValidationTests(unittest.TestCase):
         errors = validate_document(document, self.repo_root)
         self.assertTrue(any("missing comparative evidence test file" in error for error in errors))
 
+    def test_rejects_scene_v1_requirement_without_feature_row(self):
+        document = copy.deepcopy(self.document)
+        document["scene_v1_requirement_coverage"][0]["feature_ids"] = ["missing-feature"]
+        errors = validate_document(document, self.repo_root)
+        self.assertTrue(any("unknown feature row" in error for error in errors))
+
+    def test_rejects_verified_scene_v1_requirement_without_rust_fixture(self):
+        document = copy.deepcopy(self.document)
+        requirement = next(
+            item for item in document["scene_v1_requirement_coverage"]
+            if item["id"] == "all-missing-matrix-state"
+        )
+        requirement["status"] = "verified"
+        errors = validate_document(document, self.repo_root)
+        self.assertTrue(any("verified scene-v1 requirement needs executable Rust conformance evidence" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
