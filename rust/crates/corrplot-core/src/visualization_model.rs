@@ -92,7 +92,7 @@ fn optional_id_ref(o: &Object, key: &str, path: &str, known: &HashSet<String>) -
 /// Schema. This function rejects malformed JSON, duplicate IDs, invalid matrix
 /// and table dimensions, invalid correlation semantics, and unresolved IDs.
 pub fn validate_visualization_model_v1(source: &str) -> Result<()> {
-    let root_value = json::parse(source).map_err(|e| VisualizationModelError::new(
+    let (root_value, number_integrality) = json::parse_with_number_integrality(source).map_err(|e| VisualizationModelError::new(
         "model.invalid_json", format!("invalid JSON at byte {}: {}", e.offset, e.message), "$"
     ))?;
     let root = object(&root_value, "$")?;
@@ -233,7 +233,12 @@ pub fn validate_visualization_model_v1(source: &str) -> Result<()> {
                         }
                         let compatible = match column_type {
                             "number" => matches!(value, Value::Number(number) if number.is_finite()),
-                            "integer" => matches!(value, Value::Number(number) if number.is_finite() && number.fract() == 0.0),
+                            "integer" => {
+                                let pointer_column = name.replace('~', "~0").replace('/', "~1");
+                                let number_pointer = format!("/data_sources/{i}/columns/{pointer_column}/values/{index}");
+                                matches!(value, Value::Number(number) if number.is_finite())
+                                    && number_integrality.get(&number_pointer).copied().unwrap_or(false)
+                            },
                             "category" => matches!(value, Value::String(_) | Value::Bool(_) | Value::Number(_)),
                             "boolean" => matches!(value, Value::Bool(_)),
                             "text" => matches!(value, Value::String(_)),
@@ -402,6 +407,19 @@ mod tests {
                 error.path,
                 "$.data_sources[0].columns[\"amount\"].values[0]",
                 "{column_type}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_fractional_integer_tokens_even_when_f64_rounds_or_underflows() {
+        for value_json in ["1.00000000000000001", "1e-999"] {
+            let fixture = table_document("integer", value_json);
+            let error = validate_visualization_model_v1(&fixture).unwrap_err();
+            assert_eq!(error.code, "model.table.column_value_type_mismatch");
+            assert_eq!(
+                error.path,
+                "$.data_sources[0].columns[\"amount\"].values[0]"
             );
         }
     }
