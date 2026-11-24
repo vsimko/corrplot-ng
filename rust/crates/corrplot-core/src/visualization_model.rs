@@ -209,14 +209,44 @@ pub fn validate_visualization_model_v1(source: &str) -> Result<()> {
                 }
                 let mut expected_len = None;
                 for (name, column) in columns {
-                    let cpath = format!("{path}.columns.{name}");
+                    let escaped_name = name.replace('\\', "\\\\").replace('"', "\\\"");
+                    let cpath = format!("{path}.columns[\\"{escaped_name}\\"]");
                     let column = object(column, &cpath)?;
+                    let column_type = string(required(column, "type", &cpath)?, &format!("{cpath}.type"))?;
+                    if !matches!(column_type, "number" | "integer" | "category" | "boolean" | "text") {
+                        return Err(VisualizationModelError::new(
+                            "model.table.invalid_column_type",
+                            format!("unsupported table column type '{column_type}'"),
+                            format!("{cpath}.type"),
+                        ));
+                    }
                     let values = array(required(column, "values", &cpath)?, &format!("{cpath}.values"))?;
                     if let Some(expected) = expected_len {
                         if values.len() != expected {
                             return Err(VisualizationModelError::new("model.table.column_length_mismatch", "all table columns must have equal lengths", format!("{cpath}.values")));
                         }
                     } else { expected_len = Some(values.len()); }
+                    for (index, value) in values.iter().enumerate() {
+                        let value_path = format!("{cpath}.values[{index}]");
+                        if matches!(value, Value::Null) {
+                            continue;
+                        }
+                        let compatible = match column_type {
+                            "number" => matches!(value, Value::Number(number) if number.is_finite()),
+                            "integer" => matches!(value, Value::Number(number) if number.is_finite() && number.fract() == 0.0),
+                            "category" => matches!(value, Value::String(_) | Value::Bool(_) | Value::Number(_)),
+                            "boolean" => matches!(value, Value::Bool(_)),
+                            "text" => matches!(value, Value::String(_)),
+                            _ => unreachable!("column type was checked above"),
+                        };
+                        if !compatible {
+                            return Err(VisualizationModelError::new(
+                                "model.table.column_value_type_mismatch",
+                                format!("value is incompatible with table column type '{column_type}'"),
+                                value_path,
+                            ));
+                        }
+                    }
                 }
             }
             _ => return Err(VisualizationModelError::new("model.data_source.invalid_kind", "data source kind must be matrix or table", format!("{path}.kind"))),
