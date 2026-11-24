@@ -36,6 +36,30 @@ Coordinates use logical document units. They are not device pixels. Backends may
 
 The first schema deliberately supports a focused set of common data and mark forms. Matrix shape validation and cross-reference validation are required in addition to JSON Schema. The current Python conformance test exercises these invariants; the Rust core must implement the same checks before the model is adopted by production adapters. New semantic capabilities require an explicit compatible schema evolution decision; renderer-specific fields do not belong here.
 
+## Table column scalar values
+
+A table column's `type` constrains every item in its `values` array. Values are
+never coerced:
+
+- `number`: any finite JSON number, including integral values.
+- `integer`: any finite JSON number whose mathematical value is integral;
+  JSON spellings such as `2`, `2.0`, and `2e0` therefore have the same
+  integer meaning. Fractional values are rejected.
+- `category`: a non-null JSON scalar: string, number, or boolean. Objects and
+  arrays are not categories.
+- `boolean`: JSON `true` or `false` only.
+- `text`: JSON strings only.
+
+For all five types, explicit JSON `null` is accepted and represents a missing
+value. An absent item is not equivalent to `null`: every column still has an
+explicit value at each row, and all columns in one table must have equal
+lengths. Empty strings, zero, and `false` remain ordinary observed values.
+
+The schema expresses the scalar domains and nullable values. The Rust semantic
+validator additionally rejects non-finite numeric values at the JSON boundary,
+checks integral numeric values for `integer`, and reports a stable diagnostic
+at the exact offending value path.
+
 ## Mapping legacy corrplot
 
 The legacy `corrplot()` adapter maps:
