@@ -4266,7 +4266,15 @@
       "legacy_support": "verified",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
-      "evidence": {},
+      "evidence": {
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_applies_label_typography_and_collision_policy"
+          }
+        ]
+      },
       "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
