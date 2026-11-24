@@ -63,12 +63,32 @@ test_that("cor.mtest preserves pairwise missing-value and dimname behavior", {
 
   expected <- corrplot::cor.mtest(data, use = "pairwise.complete.obs")
   actual <- corrplotng::cor.mtest(data, use = "pairwise.complete.obs")
-  # The adapter names the result list while corrplot 0.95 leaves it unnamed.
-  # Strip only the outer list names; identical comparison still checks every
-  # matrix value, dimension, and dimname.
-  expect_identical(unname(actual), expected)
-  expect_identical(rownames(actual$p), names(data))
-  expect_identical(colnames(actual$lowCI), names(data))
+  fields <- c("p", "lowCI", "uppCI")
+  expect_type(actual, "list")
+  expect_identical(names(actual), fields)
+  expect_length(actual, length(fields))
+  expect_type(expected, "list")
+  expect_identical(names(expected), fields)
+  expect_length(expected, length(fields))
+
+  for (field in fields) {
+    actual_matrix <- actual[[field]]
+    expected_matrix <- expected[[field]]
+    expect_true(is.matrix(actual_matrix))
+    expect_true(is.matrix(expected_matrix))
+    expect_identical(dim(actual_matrix), c(3L, 3L))
+    expect_identical(dim(expected_matrix), dim(actual_matrix))
+    expect_identical(
+      dimnames(actual_matrix),
+      list(names(data), names(data))
+    )
+    expect_identical(dimnames(expected_matrix), dimnames(actual_matrix))
+    expect_equal(
+      unname(actual_matrix),
+      unname(expected_matrix),
+      tolerance = 0
+    )
+  }
 })
 
 test_that("cor.mtest characterizes invalid input and cor.test option behavior", {
