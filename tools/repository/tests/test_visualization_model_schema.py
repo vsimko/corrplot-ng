@@ -132,6 +132,13 @@ class VisualizationModelSchemaTests(unittest.TestCase):
         document = load_fixture("table-column-types.json")
         validate_document(document, self.schema)
 
+    def test_category_accepts_each_non_null_json_scalar(self) -> None:
+        for value in ("label", 42, True):
+            with self.subTest(value=value):
+                document = load_fixture("table-column-types.json")
+                document["data_sources"][0]["columns"]["quarter"]["values"][0] = value
+                validate_document(document, self.schema)
+
     def test_rejects_table_column_type_mismatches(self) -> None:
         mismatches = {
             "number": "not-a-number",
