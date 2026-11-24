@@ -3980,7 +3980,7 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "unknown",
       "scene_v1_contract_status": "contract-extension",
       "evidence": {},
@@ -3988,7 +3988,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "rust-evidence-gap",
-      "notes": "Legacy behavior is characterized; no Rust fixture covers overlay gating and missing-value exclusion."
+      "notes": "The current legacy text fixture exercises the positive addCoef.col case but does not independently assert omission when the color is absent or missing cells are present; keep this unknown until that fixture exists."
     },
     {
       "feature_id": "scene-v1-display-mask-identity",
@@ -4272,6 +4272,17 @@
             "kind": "test",
             "path": "rust/crates/corrplot-core/src/scene_tests.rs",
             "test": "scene_v1_to_scene_applies_label_typography_and_collision_policy"
+          }
+        ],
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
+            "test": "legacy corrplot coefficient formatting and text styling match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "lower-with-coefficients"
+            ]
           }
         ]
       },
