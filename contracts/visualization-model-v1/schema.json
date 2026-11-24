@@ -208,7 +208,13 @@
         },
         "values": {
           "type": "array",
-          "items": {}
+          "items": {
+            "oneOf": [
+              { "type": ["number", "null"] },
+              { "type": ["string", "null"] },
+              { "type": ["boolean", "null"] }
+            ]
+          }
         },
         "label": {
           "type": "string"
