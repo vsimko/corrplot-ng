@@ -407,6 +407,21 @@ mod tests {
     }
 
     #[test]
+    fn accepts_all_category_scalar_variants() {
+        for value_json in [r#""label""#, "42", "true"] {
+            let fixture = table_document("category", value_json);
+            validate_visualization_model_v1(&fixture).unwrap();
+        }
+    }
+
+    #[test]
+    fn rejects_unrepresentable_json_number_at_the_json_boundary() {
+        let fixture = table_document("number", "1e999");
+        let error = validate_visualization_model_v1(&fixture).unwrap_err();
+        assert_eq!(error.code, "model.invalid_json");
+    }
+
+    #[test]
     fn rejects_unknown_table_column_type_with_type_path() {
         let fixture = table_document("date", "null");
         let error = validate_visualization_model_v1(&fixture).unwrap_err();
