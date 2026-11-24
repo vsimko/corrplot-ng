@@ -210,7 +210,7 @@ pub fn validate_visualization_model_v1(source: &str) -> Result<()> {
                 let mut expected_len = None;
                 for (name, column) in columns {
                     let escaped_name = name.replace('\\', "\\\\").replace('"', "\\\"");
-                    let cpath = format!("{path}.columns[\\"{escaped_name}\\"]");
+                    let cpath = format!("{path}.columns[\"{escaped_name}\"]");
                     let column = object(column, &cpath)?;
                     let column_type = string(required(column, "type", &cpath)?, &format!("{cpath}.type"))?;
                     if !matches!(column_type, "number" | "integer" | "category" | "boolean" | "text") {
