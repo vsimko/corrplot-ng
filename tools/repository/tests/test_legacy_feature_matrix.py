@@ -47,7 +47,8 @@ class FeatureMatrixValidationTests(unittest.TestCase):
 
     def test_rejects_parity_claim_without_comparative_test(self):
         document = copy.deepcopy(self.document)
-        document["rows"][1]["parity_status"] = "verified"
+        row = next(item for item in document["rows"] if item["feature_id"] == "matrix-input-missing-values")
+        row["parity_status"] = "verified"
         errors = validate_document(document, self.repo_root)
         self.assertTrue(any("verified parity requires comparative_test" in error for error in errors))
 
