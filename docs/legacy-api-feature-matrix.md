@@ -16,7 +16,7 @@ This matrix is the behavior-level comparison requested by #432. It is intentiona
   - `unknown` means the current repository does not contain sufficient executable evidence. It is not equivalent to unsupported.
   - `not_applicable` means the behavior belongs to a host adapter rather than the Rust renderer, with the boundary explained in `notes`.
 - **Scene-v1 contract status** records the contract's status only: `supported`, `contract-extension`, `r-adapter`, `deferred`, or `undocumented`. It never establishes implementation support. Scene-v1-specific schema, identity, display-mask, diagnostics, annotation, legend and geometry requirements are listed independently even when no legacy API equivalent exists.
-- **Evidence / fixture** links to an exact test identifier and, when applicable, stable IDs from the pinned legacy visual fixture manifest.
+- **Evidence / fixture** separates exact executable test identifiers in `evidence` from associated stable legacy visual case IDs in the row-level `fixtures` column. This avoids implying that an inline test consumes a fixture it does not load.
 - **Disposition** records the next compatibility treatment. It is not a support claim.
 
 ## Derived classifications
