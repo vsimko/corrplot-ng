@@ -24,14 +24,14 @@ The validator derives the four requested classes from the two support columns:
 
 | Classification | Legacy | Rust |
 |---|---|---|
-| `both` | verified | verified |
+| `both` | verified | verified + comparative conformance evidence |
 | `legacy-only` | verified | unsupported |
 | `rust-only` | unsupported | verified |
 | `neither` | unsupported | unsupported |
 
-If either side is `unknown` or `not_applicable`, the row remains unclassified. The JSON stores the derived value for reviewability; the validator rejects a hand-edited value that disagrees with the source columns.
+If either side is `unknown` or `not_applicable`, the row remains unclassified. A row with independent evidence on both sides also remains unclassified until a comparative conformance test passes. The JSON stores the derived value for reviewability; the validator rejects a hand-edited value that disagrees with the support columns and parity evidence.
 
-**A `both` classification is not a parity claim.** It means each side has independent executable evidence. Parity can be marked verified only when a comparative test directly asserts the legacy and Rust outputs for that behavior. No row in this initial matrix currently makes that claim.
+**A `both` classification is a parity claim.** It requires independent executable support on both sides and a comparative test that directly asserts the legacy and Rust outputs for that behavior. Independent implementation tests alone do not qualify. No row in this initial matrix currently makes that claim.
 
 ## Current evidence gaps and decisions
 
