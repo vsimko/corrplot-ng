@@ -40,7 +40,8 @@ class FeatureMatrixValidationTests(unittest.TestCase):
 
     def test_rejects_hand_edited_inconsistent_classification(self):
         document = copy.deepcopy(self.document)
-        document["rows"][1]["classification"] = "legacy-only"
+        row = next(item for item in document["rows"] if item["feature_id"] == "matrix-input-missing-values")
+        row["classification"] = "legacy-only"
         errors = validate_document(document, self.repo_root)
         self.assertTrue(any("classification must be derived" in error for error in errors))
 
@@ -52,13 +53,14 @@ class FeatureMatrixValidationTests(unittest.TestCase):
 
     def test_rejects_support_claim_without_executable_evidence(self):
         document = copy.deepcopy(self.document)
-        document["rows"][1]["evidence"]["rust"] = []
+        row = next(item for item in document["rows"] if item["feature_id"] == "matrix-input-missing-values")
+        row["evidence"]["rust"] = []
         errors = validate_document(document, self.repo_root)
         self.assertTrue(any("rust=verified requires executable test evidence" in error for error in errors))
 
     def test_rejects_unverifiable_comparative_evidence(self):
         document = copy.deepcopy(self.document)
-        row = document["rows"][1]
+        row = next(item for item in document["rows"] if item["feature_id"] == "matrix-input-missing-values")
         row["parity_status"] = "verified"
         row["parity_evidence"] = [{"kind": "comparative_test", "path": "missing.py", "test": "missing_test"}]
         row["classification"] = "both"
