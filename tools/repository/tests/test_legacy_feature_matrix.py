@@ -84,6 +84,13 @@ class FeatureMatrixValidationTests(unittest.TestCase):
         errors = validate_document(document, self.repo_root)
         self.assertTrue(any("verified scene-v1 requirement needs executable Rust conformance evidence" in error for error in errors))
 
+    def test_rejects_unknown_visual_fixture_id(self):
+        document = copy.deepcopy(self.document)
+        row = next(item for item in document["rows"] if item.get("fixtures"))
+        row["fixtures"][0]["ids"].append("not-a-pinned-fixture")
+        errors = validate_document(document, self.repo_root)
+        self.assertTrue(any("unknown legacy visual fixture ID" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
