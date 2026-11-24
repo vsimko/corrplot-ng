@@ -28,11 +28,11 @@ def _test_is_declared(source: str, path: Path, test_name: str) -> bool:
     """Match an exact test declaration, not an arbitrary substring in its file."""
     escaped = re.escape(test_name)
     if path.suffix == ".R":
-        pattern = r"\\btest_that\\s*\\(\\s*['\\\"]" + escaped + r"['\\\"]\\s*,"
+        pattern = r"""\btest_that\s*\(\s*['"]""" + escaped + r"""['"]\s*,"""
     elif path.suffix == ".rs":
-        pattern = r"\\bfn\\s+" + escaped + r"\\s*\\("
+        pattern = r"\bfn\s+" + escaped + r"\s*\("
     elif path.suffix == ".py":
-        pattern = r"\\bdef\\s+" + escaped + r"\\s*\\("
+        pattern = r"\bdef\s+" + escaped + r"\s*\("
     else:
         return False
     return re.search(pattern, source) is not None
@@ -44,13 +44,14 @@ def _has_parity_attestation(source: str, path: Path, test_name: str) -> bool:
         return False
     escaped = re.escape(test_name)
     if path.suffix == ".R":
-        pattern = r"\\btest_that\\s*\\(\\s*['\\\"]" + escaped + r"['\\\"]\\s*,"
+        pattern = r"""\btest_that\s*\(\s*['"]""" + escaped + r"""['"]\s*,"""
     elif path.suffix == ".rs":
-        pattern = r"\\bfn\\s+" + escaped + r"\\s*\\("
+        pattern = r"\bfn\s+" + escaped + r"\s*\("
     else:
-        pattern = r"\\bdef\\s+" + escaped + r"\\s*\\("
+        pattern = r"\bdef\s+" + escaped + r"\s*\("
     match = re.search(pattern, source)
     return bool(match and "matrix-parity: compares legacy and rust outputs" in source[match.start():match.start() + 4000])
+
 
 def _read_json(path: Path) -> Any:
     with path.open(encoding="utf-8") as stream:

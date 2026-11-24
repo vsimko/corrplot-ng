@@ -37,15 +37,15 @@ class ExactTestReferenceTests(unittest.TestCase):
         source = 'test_that("declared behavior", { expect_true(TRUE) })'
         self.assertTrue(_test_is_declared(source, Path("test.R"), "declared behavior"))
         self.assertFalse(_test_is_declared(source, Path("test.R"), "behavior"))
-        self.assertFalse(_test_is_declared('test_that("other", { # declared behavior\\n })', Path("test.R"), "declared behavior"))
+        self.assertFalse(_test_is_declared('test_that("other", { # declared behavior\n })', Path("test.R"), "declared behavior"))
 
     def test_matches_exact_rust_test_function_declaration(self):
-        source = "#[test]\\nfn declared_behavior() { assert!(true); }"
+        source = "#[test]\nfn declared_behavior() { assert!(true); }"
         self.assertTrue(_test_is_declared(source, Path("scene_tests.rs"), "declared_behavior"))
         self.assertFalse(_test_is_declared(source, Path("scene_tests.rs"), "behavior"))
 
     def test_parity_requires_nearby_attestation_and_exact_declaration(self):
-        source = "fn compares_outputs() { // matrix-parity: compares legacy and rust outputs\\n assert!(legacy == rust); }"
+        source = "fn compares_outputs() { // matrix-parity: compares legacy and rust outputs\n assert!(legacy == rust); }"
         self.assertTrue(_has_parity_attestation(source, Path("test.rs"), "compares_outputs"))
         self.assertFalse(_has_parity_attestation("fn compares_outputs() { assert!(true); }", Path("test.rs"), "compares_outputs"))
         self.assertFalse(_has_parity_attestation("fn other() { // matrix-parity: compares legacy and rust outputs }", Path("test.rs"), "compares_outputs"))
