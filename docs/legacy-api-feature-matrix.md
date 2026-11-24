@@ -16,7 +16,7 @@ This matrix is the behavior-level comparison requested by #432. It is intentiona
   - `unknown` means the current repository does not contain sufficient executable evidence. It is not equivalent to unsupported.
   - `not_applicable` means the behavior belongs to a host adapter rather than the Rust renderer, with the boundary explained in `notes`.
 - **Scene-v1 contract status** records the contract's status only: `supported`, `contract-extension`, `r-adapter`, `deferred`, or `undocumented`. It never establishes implementation support. Scene-v1-specific schema, identity, display-mask, diagnostics, annotation, legend and geometry requirements are listed independently even when no legacy API equivalent exists.
-- **Evidence / fixture** separates exact executable test identifiers in `evidence` from associated stable legacy visual case IDs in the row-level `fixtures` column. This avoids implying that an inline test consumes a fixture it does not load.
+- **Evidence / fixture** separates exact executable test declarations in `evidence` from associated stable legacy visual case IDs in the row-level `fixtures` column. This avoids implying that an inline test consumes a fixture it does not load.
 - **Disposition** records the next compatibility treatment. It is not a support claim.
 
 ## Derived classifications
@@ -46,10 +46,10 @@ The validator checks that every coverage entry points to existing feature rows a
 
 ## Current evidence gaps and decisions
 
-- Rust ordering algorithms remain unverified. All seven glyphs have model/geometry tests, but SVG/RGBA renderer smoke evidence currently exercises only the default circle; the remaining six glyphs are unknown at those output layers. The requirement map also records gaps for hidden-cell output filtering, all-missing matrix state, fallback style colors, unknown glyph/unknown-property diagnostics, number/coefficient precedence, and legend layout/clipping.
+- Rust ordering algorithms remain unverified. The Rust test that loops over seven cell methods asserts only cell count and scene validity; it does not prove Shade/Color glyph variants. Explicit model assertions currently cover Circle, Square, Ellipse, Number and Pie only. Legacy glyph evidence captured through R `recordPlot()` belongs to the graphics-device layer, not renderer-neutral model geometry. SVG/RGBA smoke tests assert only output enum variants and do not inspect glyph markup or raster pixels, so output-specific Rust support remains unknown. The requirement map also records gaps for hidden-cell output filtering, all-missing matrix state, fallback style colors, unknown glyph/unknown-property diagnostics, number/coefficient precedence, and legend layout/clipping.
 - Legacy plotmath is characterized, while the current Rust scene path explicitly rejects it. A portable text-shaping decision remains open.
 - Legacy significance modes, coefficient formatting, palette generation, mixed upper/lower composition, and warning/error compatibility need Rust conformance evidence before parity can be claimed.
-- SVG and RGBA evidence is recorded per output layer and separately from legacy R graphics-device and PNG snapshot tests. They do not imply a cross-renderer pixel match or a tolerance policy.
+- SVG and RGBA evidence is recorded per output layer and separately from legacy R graphics-device and PNG snapshot tests. Renderer smoke tests that only match an output enum do not establish glyph-level output support. They do not imply a cross-renderer pixel match or a tolerance policy.
 - R-only statistical helpers, historical return values, and active graphics-device composition remain adapter responsibilities under ADR 0004.
 - Some existing regression tests are executable but inline their inputs rather than consuming a dedicated fixture file. The matrix links those tests and identifies the separate visual fixture IDs where they exist; new corpus work should add durable fixtures when an interaction needs independent regeneration or reuse.
 
@@ -60,7 +60,7 @@ The issue discussion and open follow-up PRs remain authoritative for work not ye
 1. Keep the pinned package version and commit identical to the JSON inventory.
 2. Add one row per independently testable behavior/layer; do not use one broad row to hide different renderer or device outcomes.
 3. Reuse existing inventory references and visual fixture IDs. Add a fixture only when a stable input/output case adds value beyond an inline test.
-4. Link evidence to an exact checked-in test identifier. A test file or capability manifest alone is not sufficient.
+4. Link evidence to an exact checked-in test identifier. A test file or capability manifest alone is not sufficient. The validator recognizes R `test_that()` names, Rust `#[test]` function names, and Python `test_*` declarations; a matching substring elsewhere in a file is not sufficient.
 5. Use `unknown` until executable evidence exists. Do not promote a row based on a declared capability or implementation code inspection alone.
 6. Keep `parity_status: not-claimed` until a comparative conformance test passes. Record its exact test under `parity_evidence` before changing it to `verified`.
 7. Run:

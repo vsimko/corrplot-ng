@@ -10,7 +10,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "repository"))
 
-from validate_legacy_feature_matrix import derive_classification, validate_document  # noqa: E402
+from validate_legacy_feature_matrix import (  # noqa: E402
+    _has_parity_attestation,
+    _test_is_declared,
+    derive_classification,
+    validate_document,
+)
 
 
 class FeatureMatrixClassificationTests(unittest.TestCase):
@@ -25,6 +30,25 @@ class FeatureMatrixClassificationTests(unittest.TestCase):
         self.assertIsNone(derive_classification("verified", "unknown"))
         self.assertIsNone(derive_classification("unknown", "verified"))
         self.assertIsNone(derive_classification("verified", "not_applicable"))
+
+
+class ExactTestReferenceTests(unittest.TestCase):
+    def test_matches_exact_r_test_that_declaration(self):
+        source = 'test_that("declared behavior", { expect_true(TRUE) })'
+        self.assertTrue(_test_is_declared(source, Path("test.R"), "declared behavior"))
+        self.assertFalse(_test_is_declared(source, Path("test.R"), "behavior"))
+        self.assertFalse(_test_is_declared('test_that("other", { # declared behavior\\n })', Path("test.R"), "declared behavior"))
+
+    def test_matches_exact_rust_test_function_declaration(self):
+        source = "#[test]\\nfn declared_behavior() { assert!(true); }"
+        self.assertTrue(_test_is_declared(source, Path("scene_tests.rs"), "declared_behavior"))
+        self.assertFalse(_test_is_declared(source, Path("scene_tests.rs"), "behavior"))
+
+    def test_parity_requires_nearby_attestation_and_exact_declaration(self):
+        source = "fn compares_outputs() { // matrix-parity: compares legacy and rust outputs\\n assert!(legacy == rust); }"
+        self.assertTrue(_has_parity_attestation(source, Path("test.rs"), "compares_outputs"))
+        self.assertFalse(_has_parity_attestation("fn compares_outputs() { assert!(true); }", Path("test.rs"), "compares_outputs"))
+        self.assertFalse(_has_parity_attestation("fn other() { // matrix-parity: compares legacy and rust outputs }", Path("test.rs"), "compares_outputs"))
 
 
 class FeatureMatrixValidationTests(unittest.TestCase):

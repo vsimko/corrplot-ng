@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,34 @@ def derive_classification(legacy: str, rust: str, parity_verified: bool = False)
         ("unsupported", "unsupported"): "neither",
     }.get((legacy, rust))
 
+
+def _test_is_declared(source: str, path: Path, test_name: str) -> bool:
+    """Match an exact test declaration, not an arbitrary substring in its file."""
+    escaped = re.escape(test_name)
+    if path.suffix == ".R":
+        pattern = r"\\btest_that\\s*\\(\\s*['\\\"]" + escaped + r"['\\\"]\\s*,"
+    elif path.suffix == ".rs":
+        pattern = r"\\bfn\\s+" + escaped + r"\\s*\\("
+    elif path.suffix == ".py":
+        pattern = r"\\bdef\\s+" + escaped + r"\\s*\\("
+    else:
+        return False
+    return re.search(pattern, source) is not None
+
+
+def _has_parity_attestation(source: str, path: Path, test_name: str) -> bool:
+    """Require a nearby marker; reviewers must still inspect comparison semantics."""
+    if not _test_is_declared(source, path, test_name):
+        return False
+    escaped = re.escape(test_name)
+    if path.suffix == ".R":
+        pattern = r"\\btest_that\\s*\\(\\s*['\\\"]" + escaped + r"['\\\"]\\s*,"
+    elif path.suffix == ".rs":
+        pattern = r"\\bfn\\s+" + escaped + r"\\s*\\("
+    else:
+        pattern = r"\\bdef\\s+" + escaped + r"\\s*\\("
+    match = re.search(pattern, source)
+    return bool(match and "matrix-parity: compares legacy and rust outputs" in source[match.start():match.start() + 4000])
 
 def _read_json(path: Path) -> Any:
     with path.open(encoding="utf-8") as stream:
@@ -137,9 +166,9 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
                 test_name = item.get("test", "")
                 if not test_path.is_file():
                     errors.append(f"{prefix}: missing evidence test file {item.get('path')}")
-                elif not test_name or test_name not in test_path.read_text(encoding="utf-8"):
+                elif not test_name or not _test_is_declared(test_path.read_text(encoding="utf-8"), test_path, test_name):
                     errors.append(
-                        f"{prefix}: test identifier {test_name!r} not found in {item.get('path')}"
+                        f"{prefix}: exact test declaration {test_name!r} not found in {item.get('path')}"
                     )
                 if "fixture_ids" in item or "fixture_path" in item:
                     errors.append(f"{prefix}: fixture references belong in the row-level fixtures column")
@@ -162,8 +191,12 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
                 test_name = item.get("test", "")
                 if not test_path.is_file():
                     errors.append(f"{prefix}: missing comparative evidence test file {item.get('path')}")
-                elif not test_name or test_name not in test_path.read_text(encoding="utf-8"):
-                    errors.append(f"{prefix}: comparative test identifier {test_name!r} not found in {item.get('path')}")
+                else:
+                    source = test_path.read_text(encoding="utf-8")
+                    if not test_name or not _test_is_declared(source, test_path, test_name):
+                        errors.append(f"{prefix}: exact comparative test declaration {test_name!r} not found in {item.get('path')}")
+                    elif not _has_parity_attestation(source, test_path, test_name):
+                        errors.append(f"{prefix}: comparative test must include the parity attestation marker near its declaration")
         elif parity_status == "not-claimed":
             if parity_evidence:
                 errors.append(f"{prefix}: not-claimed parity must not carry parity evidence")

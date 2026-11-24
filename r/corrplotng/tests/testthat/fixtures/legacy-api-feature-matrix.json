@@ -318,7 +318,7 @@
     {
       "feature_id": "cell-text-annotations",
       "behavior": "Cell text annotations preserve row/column identity, content, color and typography",
-      "layer": "model_geometry_svg",
+      "layer": "model_geometry",
       "inventory_refs": [
         {
           "function": "corrplot",
@@ -329,17 +329,10 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream"
-          }
-        ],
         "rust": [
           {
             "kind": "test",
@@ -352,7 +345,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust test asserts annotation placement in the scene model; output-level parity is not asserted.",
+      "notes": "Rust test asserts annotation placement in the scene model; output-level parity is not asserted. Legacy R recordPlot evidence establishes graphics-device output, not renderer-neutral model geometry; no legacy model-geometry assertion is linked.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -1473,27 +1466,15 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
         "rust": [
           {
             "kind": "test",
             "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "supports_all_seven_declared_cell_methods"
-          },
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "built_scene_is_consumed_by_both_existing_renderers"
+            "test": "builds_deterministic_scene_and_preserves_missing_values"
           }
         ]
       },
@@ -1501,7 +1482,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -1524,7 +1505,7 @@
         }
       ],
       "legacy_support": "verified",
-      "rust_support": "verified",
+      "rust_support": "unknown",
       "scene_v1_contract_status": "supported",
       "evidence": {
         "legacy": [
@@ -1534,19 +1515,13 @@
             "test": "corrplot-ng matches the saved legacy visual examples"
           }
         ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "built_scene_is_consumed_by_both_existing_renderers"
-          }
-        ]
+        "rust": []
       },
       "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "raster-conformance-gap",
-      "notes": "Legacy PNG snapshots cover this glyph; Rust raster smoke coverage currently exercises the default circle only.",
+      "notes": "Rust renderer smoke coverage confirms only the output enum variant; it does not inspect SVG glyph markup or raster dimensions/pixels. Output-specific glyph evidence is not established.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -1575,22 +1550,16 @@
         }
       ],
       "legacy_support": "unknown",
-      "rust_support": "verified",
+      "rust_support": "unknown",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "built_scene_is_consumed_by_both_existing_renderers"
-          }
-        ]
+        "rust": []
       },
       "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "svg-evidence-gap",
-      "notes": "No legacy SVG-device oracle is linked. Rust SVG output is executable-tested only for the default circle scene."
+      "notes": "Rust renderer smoke coverage confirms only the output enum variant; it does not inspect SVG glyph markup or raster dimensions/pixels. Output-specific glyph evidence is not established."
     },
     {
       "feature_id": "glyph-color-model-geometry",
@@ -1604,30 +1573,17 @@
           ]
         }
       ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
+      "legacy_support": "unknown",
+      "rust_support": "unknown",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "supports_all_seven_declared_cell_methods"
-          }
-        ]
+        "rust": []
       },
       "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust coverage loops over declared methods but asserts only cell count and scene validity; no Shade/Color glyph variant or geometry is asserted.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -1715,17 +1671,10 @@
           ]
         }
       ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
+      "legacy_support": "unknown",
+      "rust_support": "unknown",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
         "rust": [
           {
             "kind": "test",
@@ -1738,7 +1687,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -1826,23 +1775,11 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
         "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "supports_all_seven_declared_cell_methods"
-          },
           {
             "kind": "test",
             "path": "rust/crates/corrplot-core/src/scene_tests.rs",
@@ -1854,7 +1791,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -1942,23 +1879,11 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
         "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "supports_all_seven_declared_cell_methods"
-          },
           {
             "kind": "test",
             "path": "rust/crates/corrplot-core/src/scene_tests.rs",
@@ -1970,7 +1895,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -2058,30 +1983,17 @@
           ]
         }
       ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
+      "legacy_support": "unknown",
+      "rust_support": "unknown",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "supports_all_seven_declared_cell_methods"
-          }
-        ]
+        "rust": []
       },
       "classification": null,
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust coverage loops over declared methods but asserts only cell count and scene validity; no Shade/Color glyph variant or geometry is asserted.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -2169,23 +2081,11 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream"
-          }
-        ],
         "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "supports_all_seven_declared_cell_methods"
-          },
           {
             "kind": "test",
             "path": "rust/crates/corrplot-core/src/scene_tests.rs",
@@ -2197,7 +2097,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust geometry tests are independent; no legacy-versus-Rust comparative assertion exists.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -3991,7 +3891,7 @@
     {
       "feature_id": "scene-v1-cell-text-identity",
       "behavior": "Cell text annotations are attached by explicit row/column identity",
-      "layer": "model_geometry_svg",
+      "layer": "model_geometry",
       "inventory_refs": [
         {
           "function": "corrplot",
@@ -4002,17 +3902,10 @@
           ]
         }
       ],
-      "legacy_support": "verified",
+      "legacy_support": "unknown",
       "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-text-render-contract.R",
-            "test": "legacy corrplot coefficient formatting and text styling match upstream"
-          }
-        ],
         "rust": [
           {
             "kind": "test",
@@ -4030,7 +3923,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Rust tests preserve identity and reject out-of-matrix annotation coordinates.",
+      "notes": "Rust tests preserve identity and reject out-of-matrix annotation coordinates. Legacy R recordPlot evidence establishes graphics-device output, not renderer-neutral model geometry; no legacy model-geometry assertion is linked.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
@@ -5446,7 +5339,7 @@
     },
     {
       "id": "seven-glyph-model-geometry",
-      "status": "verified",
+      "status": "gap",
       "feature_ids": [
         "glyph-circle-model-geometry",
         "glyph-square-model-geometry",
