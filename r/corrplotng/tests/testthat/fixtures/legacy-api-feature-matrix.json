@@ -24,34 +24,266 @@
   },
   "rows": [
     {
-      "feature_id": "api-export-signatures",
-      "behavior": "All nine pinned exports, formal argument order and defaults",
+      "feature_id": "api-corrplot",
+      "behavior": "corrplot: export, formal order, defaults and accepted values",
       "layer": "api",
       "inventory_refs": [
         {
           "function": "corrplot"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for main plot; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-corrplot-mixed",
+      "behavior": "corrplot.mixed: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "corrplot.mixed"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for mixed plot; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-corrMatOrder",
+      "behavior": "corrMatOrder: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "corrMatOrder"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for ordering; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-cor-mtest",
+      "behavior": "cor.mtest: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "cor.mtest"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for statistics; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-colorlegend",
+      "behavior": "colorlegend: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "colorlegend"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for standalone legend; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-COL1",
+      "behavior": "COL1: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "COL1"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for sequential palette; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-COL2",
+      "behavior": "COL2: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "COL2"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for diverging palette; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-corrRect",
+      "behavior": "corrRect: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "corrRect"
-        },
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "legacy API inventory is pinned and covers every upstream export"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-api-inventory.R",
+            "test": "corrplotng re-exports every pinned corrplot 0.95 function"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-api-adapter",
+      "notes": "R API contract for cluster rectangles; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "api-corrRect-hclust",
+      "behavior": "corrRect.hclust: export, formal order, defaults and accepted values",
+      "layer": "api",
+      "inventory_refs": [
         {
           "function": "corrRect.hclust"
         }
@@ -77,7 +309,2983 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "legacy-api-adapter",
-      "notes": "Rust is not expected to expose historical R namespace names or signatures."
+      "notes": "R API contract for hierarchical rectangles; Rust renderer has no matching R function signature."
+    },
+    {
+      "feature_id": "display-full",
+      "behavior": "Full matrix displays every cell",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "type"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "default-circle"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "built_scene_is_consumed_by_both_existing_renderers"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "shared-parity-unproven",
+      "notes": "Rust default scene exercises full display; no comparative conformance test exists."
+    },
+    {
+      "feature_id": "display-upper",
+      "behavior": "Upper-triangle display retains upper cell identities",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "type"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "order-aoe-upper"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "parser_preserves_triangle_display_options_for_scene_construction"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "shared-parity-unproven",
+      "notes": "Rust scene test checks upper visibility; no cross-renderer assertion exists."
+    },
+    {
+      "feature_id": "display-lower",
+      "behavior": "Lower-triangle display retains lower cell identities",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "type"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "lower-with-coefficients"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No linked Rust test explicitly exercises lower-only visibility."
+    },
+    {
+      "feature_id": "diagonal-visibility",
+      "behavior": "Diagonal visibility is independently enabled or suppressed",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "diag"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "default-circle"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "parser_preserves_triangle_display_options_for_scene_construction"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "shared-parity-unproven",
+      "notes": "Rust test asserts diagonal suppression; no comparative conformance test exists."
+    },
+    {
+      "feature_id": "glyph-circle",
+      "behavior": "Circle glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "default-circle"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "built_scene_is_consumed_by_both_existing_renderers"
+          },
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_preserves_title_annotation_geometry_and_palette"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Rust has independent scene/render tests only; no legacy-versus-Rust conformance test."
+    },
+    {
+      "feature_id": "glyph-square",
+      "behavior": "Square glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "method-square"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_honors_root_encoding_and_per_cell_glyph_methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Rust has independent scene/render tests only; no legacy-versus-Rust conformance test."
+    },
+    {
+      "feature_id": "glyph-pie",
+      "behavior": "Pie glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "method-pie"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_honors_root_encoding_and_per_cell_glyph_methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Rust has independent scene/render tests only; no legacy-versus-Rust conformance test."
+    },
+    {
+      "feature_id": "glyph-number",
+      "behavior": "Number glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "method-number"
+            ]
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_honors_root_encoding_and_per_cell_glyph_methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "Rust has independent scene/render tests only; no legacy-versus-Rust conformance test."
+    },
+    {
+      "feature_id": "glyph-ellipse",
+      "behavior": "Ellipse glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "method-ellipse"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No linked Rust test proves ellipse glyph behavior."
+    },
+    {
+      "feature_id": "glyph-shade",
+      "behavior": "Shade glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "method-shade"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No linked Rust test proves shade glyph behavior."
+    },
+    {
+      "feature_id": "glyph-color",
+      "behavior": "Color glyph geometry and method-specific encoding",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
+            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "method-color"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No linked Rust test proves color glyph behavior."
+    },
+    {
+      "feature_id": "ordering-original",
+      "behavior": "Original matrix order is preserved",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order"
+          ]
+        },
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder preserves pinned defaults and match.arg errors"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
+            "test": "legacy ordering modes produce the expected reordered matrix contract"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust ordering algorithm test is linked."
+    },
+    {
+      "feature_id": "ordering-aoe",
+      "behavior": "AOE ordering computes the pinned variable permutation",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned AOE, FPC, and alphabetical ordering"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test computes AOE ordering."
+    },
+    {
+      "feature_id": "ordering-fpc",
+      "behavior": "FPC ordering computes the pinned variable permutation",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned AOE, FPC, and alphabetical ordering"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test computes FPC ordering."
+    },
+    {
+      "feature_id": "ordering-alphabetical",
+      "behavior": "alphabetical ordering computes the pinned variable permutation",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned AOE, FPC, and alphabetical ordering"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test computes alphabetical ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-complete",
+      "behavior": "Hierarchical ordering using complete linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves complete linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-ward",
+      "behavior": "Hierarchical ordering using ward linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves ward linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-ward-D",
+      "behavior": "Hierarchical ordering using ward.D linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves ward.D linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-ward-D2",
+      "behavior": "Hierarchical ordering using ward.D2 linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves ward.D2 linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-single",
+      "behavior": "Hierarchical ordering using single linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves single linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-average",
+      "behavior": "Hierarchical ordering using average linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves average linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-mcquitty",
+      "behavior": "Hierarchical ordering using mcquitty linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves mcquitty linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-median",
+      "behavior": "Hierarchical ordering using median linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves median linkage ordering."
+    },
+    {
+      "feature_id": "ordering-hclust-centroid",
+      "behavior": "Hierarchical ordering using centroid linkage",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "corr",
+            "order",
+            "hclust.method"
+          ]
+        },
+        {
+          "function": "corrplot",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves centroid linkage ordering."
+    },
+    {
+      "feature_id": "palette-COL1-Oranges",
+      "behavior": "COL1 Oranges sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 Oranges."
+    },
+    {
+      "feature_id": "palette-COL1-Purples",
+      "behavior": "COL1 Purples sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 Purples."
+    },
+    {
+      "feature_id": "palette-COL1-Reds",
+      "behavior": "COL1 Reds sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 Reds."
+    },
+    {
+      "feature_id": "palette-COL1-Blues",
+      "behavior": "COL1 Blues sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 Blues."
+    },
+    {
+      "feature_id": "palette-COL1-Greens",
+      "behavior": "COL1 Greens sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 Greens."
+    },
+    {
+      "feature_id": "palette-COL1-Greys",
+      "behavior": "COL1 Greys sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 Greys."
+    },
+    {
+      "feature_id": "palette-COL1-OrRd",
+      "behavior": "COL1 OrRd sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 OrRd."
+    },
+    {
+      "feature_id": "palette-COL1-YlOrRd",
+      "behavior": "COL1 YlOrRd sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 YlOrRd."
+    },
+    {
+      "feature_id": "palette-COL1-YlOrBr",
+      "behavior": "COL1 YlOrBr sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 YlOrBr."
+    },
+    {
+      "feature_id": "palette-COL1-YlGn",
+      "behavior": "COL1 YlGn sequential color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL1",
+          "arguments": [
+            "sequential",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL1 YlGn."
+    },
+    {
+      "feature_id": "palette-COL2-RdBu",
+      "behavior": "COL2 RdBu diverging color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL2",
+          "arguments": [
+            "diverging",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL2 RdBu."
+    },
+    {
+      "feature_id": "palette-COL2-BrBG",
+      "behavior": "COL2 BrBG diverging color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL2",
+          "arguments": [
+            "diverging",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL2 BrBG."
+    },
+    {
+      "feature_id": "palette-COL2-PiYG",
+      "behavior": "COL2 PiYG diverging color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL2",
+          "arguments": [
+            "diverging",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL2 PiYG."
+    },
+    {
+      "feature_id": "palette-COL2-PRGn",
+      "behavior": "COL2 PRGn diverging color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL2",
+          "arguments": [
+            "diverging",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL2 PRGn."
+    },
+    {
+      "feature_id": "palette-COL2-PuOr",
+      "behavior": "COL2 PuOr diverging color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL2",
+          "arguments": [
+            "diverging",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL2 PuOr."
+    },
+    {
+      "feature_id": "palette-COL2-RdYlBu",
+      "behavior": "COL2 RdYlBu diverging color vector at requested lengths",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "COL2",
+          "arguments": [
+            "diverging",
+            "n"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy sequential and diverging palettes match every pinned palette"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
+            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust generator test for COL2 RdYlBu."
+    },
+    {
+      "feature_id": "significance-pch",
+      "behavior": "Significance display mode: pch marker",
+      "layer": "semantic_visual",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "insig",
+            "sig.level",
+            "pch",
+            "pch.col",
+            "pch.cex"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
+            "test": "legacy corrplot significance annotations match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "significance"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test demonstrates the pch legacy display mode."
+    },
+    {
+      "feature_id": "significance-p-value",
+      "behavior": "Significance display mode: formatted p-value",
+      "layer": "semantic_visual",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "insig",
+            "sig.level",
+            "pch",
+            "pch.col",
+            "pch.cex"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
+            "test": "legacy corrplot significance annotations match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "significance"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test demonstrates the p-value legacy display mode."
+    },
+    {
+      "feature_id": "significance-blank",
+      "behavior": "Significance display mode: blanking nonsignificant cells",
+      "layer": "semantic_visual",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "insig",
+            "sig.level",
+            "pch",
+            "pch.col",
+            "pch.cex"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
+            "test": "legacy corrplot significance annotations match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "significance"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test demonstrates the blank legacy display mode."
+    },
+    {
+      "feature_id": "significance-n",
+      "behavior": "Significance display mode: no annotation",
+      "layer": "semantic_visual",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "insig",
+            "sig.level",
+            "pch",
+            "pch.col",
+            "pch.cex"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
+            "test": "legacy corrplot significance annotations match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "significance"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test demonstrates the n legacy display mode."
+    },
+    {
+      "feature_id": "significance-label_sig",
+      "behavior": "Significance display mode: multi-threshold label_sig",
+      "layer": "semantic_visual",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "insig",
+            "sig.level",
+            "pch",
+            "pch.col",
+            "pch.cex"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
+            "test": "legacy corrplot significance annotations match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "significance"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test demonstrates the label_sig legacy display mode."
+    },
+    {
+      "feature_id": "confidence-interval-metadata",
+      "behavior": "Confidence bounds remain attached to their matrix cell identities",
+      "layer": "model_geometry",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "lowCI.mat",
+            "uppCI.mat"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
+            "test": "legacy corrplot confidence interval overlays match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "confidence-interval"
+            ]
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
+            "test": "legacy corrplot requires both confidence interval matrices"
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_conversion_preserves_cell_significance_and_confidence_interval_metadata"
+          },
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "validates_scene_v1_cell_encoding_significance_and_confidence_interval"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "shared-parity-unproven",
+      "notes": "Rust validates/transfers CI metadata; this is not visual parity."
+    },
+    {
+      "feature_id": "confidence-interval-circle",
+      "behavior": "plotCI=circle: circle whiskers rendering and placement",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "plotCI",
+            "lowCI.mat",
+            "uppCI.mat"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
+            "test": "legacy corrplot confidence interval overlays match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "confidence-interval"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves circle CI rendering."
+    },
+    {
+      "feature_id": "confidence-interval-square",
+      "behavior": "plotCI=square: square bounds rendering and placement",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "plotCI",
+            "lowCI.mat",
+            "uppCI.mat"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
+            "test": "legacy corrplot confidence interval overlays match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "confidence-interval"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves square CI rendering."
+    },
+    {
+      "feature_id": "confidence-interval-rect",
+      "behavior": "plotCI=rect: rectangle bounds rendering and placement",
+      "layer": "model_geometry_svg_raster",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "plotCI",
+            "lowCI.mat",
+            "uppCI.mat"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
+            "test": "legacy corrplot confidence interval overlays match upstream",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "confidence-interval"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test proves rect CI rendering."
+    },
+    {
+      "feature_id": "confidence-interval-required-bounds",
+      "behavior": "Confidence interval rendering requires both lower and upper bound matrices",
+      "layer": "semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "plotCI",
+            "lowCI.mat",
+            "uppCI.mat"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
+            "test": "legacy corrplot requires both confidence interval matrices"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-diagnostic-evidence-gap",
+      "notes": "Rust diagnostics are not proven equivalent to the legacy R error contract."
+    },
+    {
+      "feature_id": "colorlegend-vertical",
+      "behavior": "Vertical colorlegend drawing, labels and alignment",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "colorlegend",
+          "arguments": [
+            "vertical",
+            "align",
+            "at",
+            "lim.segment"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-colorlegend-contract.R",
+            "test": "colorlegend matches pinned graphics output for vertical alignment modes"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R base graphics helper; scene legend metadata is not the same device behavior."
+    },
+    {
+      "feature_id": "colorlegend-horizontal",
+      "behavior": "Horizontal colorlegend drawing, labels and alignment",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "colorlegend",
+          "arguments": [
+            "vertical",
+            "align",
+            "at",
+            "lim.segment"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-colorlegend-contract.R",
+            "test": "colorlegend matches pinned horizontal and no-label graphics output"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R base graphics helper; scene legend metadata is not the same device behavior."
+    },
+    {
+      "feature_id": "mixed-method-combinations",
+      "behavior": "corrplot.mixed upper/lower glyph combinations and diagonal behavior",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrplot.mixed",
+          "arguments": [
+            "lower",
+            "upper",
+            "diag"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-mixed-contract.R",
+            "test": "corrplot.mixed preserves pinned upper/lower method combinations",
+            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
+            "fixture_ids": [
+              "mixed-circle-ellipse"
+            ]
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust test demonstrates full mixed upper/lower composition."
+    },
+    {
+      "feature_id": "mixed-color-forwarding",
+      "behavior": "corrplot.mixed forwards independent upper/lower colors",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrplot.mixed",
+          "arguments": [
+            "lower.col",
+            "upper.col"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-mixed-contract.R",
+            "test": "corrplot.mixed preserves pinned default and color forwarding"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-evidence-gap",
+      "notes": "No Rust adapter test proves independent upper/lower color forwarding."
+    },
+    {
+      "feature_id": "mixed-return-device",
+      "behavior": "corrplot.mixed return visibility and graphics-parameter restoration",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrplot.mixed",
+          "arguments": [
+            "mar"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-mixed-contract.R",
+            "test": "corrplot.mixed preserves pinned default and color forwarding"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R return visibility and par() ownership are adapter behavior."
+    },
+    {
+      "feature_id": "cor-mtest-pearson",
+      "behavior": "cor.mtest Pearson p-values and confidence intervals",
+      "layer": "r_statistics_adapter",
+      "inventory_refs": [
+        {
+          "function": "cor.mtest"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy cor.mtest preserves its pairwise result contract"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-statistics-adapter",
+      "notes": "R stats::cor.test execution remains adapter-only; PR #459 is unmerged and not counted."
+    },
+    {
+      "feature_id": "cor-mtest-spearman",
+      "behavior": "cor.mtest Spearman forwarding and missing CI convention",
+      "layer": "r_statistics_adapter",
+      "inventory_refs": [
+        {
+          "function": "cor.mtest"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy cor.mtest forwards Kendall and cor.test options exactly"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-statistics-adapter",
+      "notes": "R stats::cor.test execution remains adapter-only."
+    },
+    {
+      "feature_id": "cor-mtest-kendall",
+      "behavior": "cor.mtest Kendall forwarding and missing CI convention",
+      "layer": "r_statistics_adapter",
+      "inventory_refs": [
+        {
+          "function": "cor.mtest"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy cor.mtest forwards Kendall and cor.test options exactly"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-statistics-adapter",
+      "notes": "R stats::cor.test execution remains adapter-only."
+    },
+    {
+      "feature_id": "cor-mtest-pairwise-missing",
+      "behavior": "cor.mtest handles missing observations pairwise",
+      "layer": "r_statistics_adapter",
+      "inventory_refs": [
+        {
+          "function": "cor.mtest"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
+            "test": "legacy cor.mtest handles missing observations like the pinned oracle"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-statistics-adapter",
+      "notes": "R stats::cor.test execution remains adapter-only."
+    },
+    {
+      "feature_id": "corrrect-index",
+      "behavior": "corrRect index-based rectangle selection and drawing",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect",
+          "arguments": [
+            "index",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect index and name rectangles match the pinned oracle"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R graphics helper; renderer-neutral cluster geometry is a separate layer."
+    },
+    {
+      "feature_id": "corrrect-name",
+      "behavior": "corrRect name-based rectangle selection and drawing",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect",
+          "arguments": [
+            "name",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect index and name rectangles match the pinned oracle"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R graphics helper; renderer-neutral cluster geometry is a separate layer."
+    },
+    {
+      "feature_id": "corrrect-namesmat",
+      "behavior": "corrRect namesMat pair selection and drawing",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect",
+          "arguments": [
+            "namesMat",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect namesMat rectangles match the pinned oracle"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R graphics helper; renderer-neutral cluster geometry is a separate layer."
+    },
+    {
+      "feature_id": "corrrect-hclust-complete",
+      "behavior": "corrRect.hclust rectangle selection using complete linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for complete linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-ward",
+      "behavior": "corrRect.hclust rectangle selection using ward linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for ward linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-ward-D",
+      "behavior": "corrRect.hclust rectangle selection using ward.D linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for ward.D linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-ward-D2",
+      "behavior": "corrRect.hclust rectangle selection using ward.D2 linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for ward.D2 linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-single",
+      "behavior": "corrRect.hclust rectangle selection using single linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for single linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-average",
+      "behavior": "corrRect.hclust rectangle selection using average linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for average linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-mcquitty",
+      "behavior": "corrRect.hclust rectangle selection using mcquitty linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for mcquitty linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-median",
+      "behavior": "corrRect.hclust rectangle selection using median linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for median linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "corrrect-hclust-centroid",
+      "behavior": "corrRect.hclust rectangle selection using centroid linkage",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrRect.hclust",
+          "arguments": [
+            "corr",
+            "k",
+            "method",
+            "col",
+            "lwd"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-adapter-only",
+      "notes": "R clustering and graphics-device drawing for centroid linkage remain adapter responsibilities."
+    },
+    {
+      "feature_id": "graphics-add-composition",
+      "behavior": "corrplot add=TRUE composes on the caller's existing graphics page",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "add"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-main-contract.R",
+            "test": "corrplot preserves pinned add=TRUE graphics composition"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-graphics-adapter-only",
+      "notes": "Active R device composition is host-specific."
+    },
+    {
+      "feature_id": "graphics-device-ownership",
+      "behavior": "corrplot preserves caller-owned devices and device sets",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "add"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-graphics-device-contract.R",
+            "test": "legacy corrplot preserves caller-owned devices and page composition"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-graphics-adapter-only",
+      "notes": "Rust renderers return owned documents/buffers rather than controlling R devices."
+    },
+    {
+      "feature_id": "graphics-device-error-ownership",
+      "behavior": "corrplot errors do not take ownership of the active graphics device",
+      "layer": "r_graphics_device",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "add"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-graphics-device-contract.R",
+            "test": "legacy corrplot errors do not take ownership of the active graphics device"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "r-graphics-adapter-only",
+      "notes": "R device ownership is host-specific."
+    },
+    {
+      "feature_id": "return-corrplot-object",
+      "behavior": "corrplot invisible return object and reordered matrix structure",
+      "layer": "r_api_semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-return-values.R",
+            "test": "corrplot_ng preserves the upstream invisible return object and reordered matrix"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-r-return-adapter",
+      "notes": "Historical R list return shape is not part of Rust renderer contract."
+    },
+    {
+      "feature_id": "return-corrpos-coordinates",
+      "behavior": "corrPos names and coordinates map to reordered matrix cells",
+      "layer": "r_api_semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-return-values.R",
+            "test": "corrPos names and coordinates map to reordered matrix cells"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-return-values.R",
+            "test": "upper, lower, and diagonal-hidden return coordinates follow legacy filtering"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-r-return-adapter",
+      "notes": "Historical R return data-frame semantics are adapter-only."
+    },
+    {
+      "feature_id": "return-pvalue-field",
+      "behavior": "corrPos p.value field exists only when p.mat is supplied",
+      "layer": "r_api_semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "p.mat"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-return-values.R",
+            "test": "corrPos includes p.value only when a p-value matrix is supplied"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-r-return-adapter",
+      "notes": "Historical R return object details are adapter-only."
+    },
+    {
+      "feature_id": "return-mixed-object",
+      "behavior": "corrplot.mixed invisible combined return object and diagonal coordinates",
+      "layer": "r_api_semantic",
+      "inventory_refs": [
+        {
+          "function": "corrplot.mixed"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "not_applicable",
+      "scene_v1_contract_status": "r-adapter",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-return-values.R",
+            "test": "corrplot_ng_mixed preserves the combined invisible upstream return object"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-return-values.R",
+            "test": "corrplot_ng_mixed preserves legacy duplicate diagonal coordinates"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "legacy-r-return-adapter",
+      "notes": "Historical R return object details are adapter-only."
+    },
+    {
+      "feature_id": "validation-color-limits",
+      "behavior": "col.lim bounds and matrix-domain validation",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "col.lim",
+            "is.corr"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
+            "test": "legacy corrplot argument validation matches the pinned 0.95 contract"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-diagnostic-evidence-gap",
+      "notes": "Rust diagnostics have not been shown to match legacy R errors."
+    },
+    {
+      "feature_id": "validation-label-placement",
+      "behavior": "tl.pos restrictions depend on triangle display",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "tl.pos",
+            "type"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
+            "test": "legacy corrplot argument validation matches the pinned 0.95 contract"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-diagnostic-evidence-gap",
+      "notes": "Rust diagnostics have not been shown to match legacy R errors."
+    },
+    {
+      "feature_id": "validation-outline-number",
+      "behavior": "outline and number.digits validation",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "outline",
+            "number.digits"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
+            "test": "legacy outline and number-label validation retain upstream errors"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-diagnostic-evidence-gap",
+      "notes": "Rust diagnostics have not been shown to match legacy R errors."
+    },
+    {
+      "feature_id": "validation-aspect-ratio",
+      "behavior": "win.asp restrictions for supported glyph methods",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrplot",
+          "arguments": [
+            "win.asp",
+            "method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
+            "test": "legacy aspect-ratio restrictions remain explicit"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-diagnostic-evidence-gap",
+      "notes": "Rust layout diagnostics have not been shown to reproduce legacy restrictions."
+    },
+    {
+      "feature_id": "validation-match-arg",
+      "behavior": "corrMatOrder accepted choices, partial matches and invalid-choice errors",
+      "layer": "semantic_r_adapter",
+      "inventory_refs": [
+        {
+          "function": "corrMatOrder",
+          "arguments": [
+            "order",
+            "hclust.method"
+          ]
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "unknown",
+      "scene_v1_contract_status": "contract-extension",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
+            "test": "corrMatOrder preserves pinned defaults and match.arg errors"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "rust-diagnostic-evidence-gap",
+      "notes": "Rust diagnostics have not been shown to reproduce R match.arg behavior."
+    },
+    {
+      "feature_id": "cluster-region-model-geometry",
+      "behavior": "Supplied cluster-region identity and geometry transfer into scene",
+      "layer": "model_geometry",
+      "inventory_refs": [
+        {
+          "function": "corrRect"
+        },
+        {
+          "function": "corrRect.hclust"
+        }
+      ],
+      "legacy_support": "verified",
+      "rust_support": "verified",
+      "scene_v1_contract_status": "supported",
+      "evidence": {
+        "legacy": [
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect index and name rectangles match the pinned oracle"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect namesMat rectangles match the pinned oracle"
+          },
+          {
+            "kind": "test",
+            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
+            "test": "legacy corrRect.hclust matches all pinned linkage methods"
+          }
+        ],
+        "rust": [
+          {
+            "kind": "test",
+            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
+            "test": "scene_v1_to_scene_preserves_typed_legend_and_cluster_regions"
+          }
+        ]
+      },
+      "classification": null,
+      "parity_status": "not-claimed",
+      "parity_evidence": [],
+      "disposition": "shared-model-parity-unproven",
+      "notes": "Rust accepts prepared cluster-region metadata; it does not perform legacy clustering or R device drawing."
     },
     {
       "feature_id": "matrix-input-missing-values",
@@ -170,279 +3378,6 @@
       "parity_evidence": [],
       "disposition": "shared-parity-unproven",
       "notes": "Rust evidence covers scene-v1 general_numeric validation, not every legacy transform or palette rule."
-    },
-    {
-      "feature_id": "triangle-diagonal",
-      "behavior": "Full/upper/lower visibility and independent diagonal selection",
-      "layer": "semantic",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "type",
-            "diag"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
-      "scene_v1_contract_status": "supported",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle",
-              "method-square",
-              "method-ellipse",
-              "method-number",
-              "method-shade",
-              "method-color",
-              "method-pie"
-            ]
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "parser_preserves_triangle_display_options_for_scene_construction"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "shared-parity-unproven",
-      "notes": "Rust test asserts scene visibility; cross-renderer output equality is not established."
-    },
-    {
-      "feature_id": "circle-glyph-rendering",
-      "behavior": "Circle glyph geometry with SVG and RGBA rendering",
-      "layer": "model_geometry_svg_raster",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "method"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
-      "scene_v1_contract_status": "supported",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "default-circle"
-            ]
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "built_scene_is_consumed_by_both_existing_renderers"
-          },
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "scene_v1_to_scene_preserves_title_annotation_geometry_and_palette"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "shared-parity-unproven",
-      "notes": "Rust rendering smoke tests use a circle scene; they do not compare output with upstream R."
-    },
-    {
-      "feature_id": "square-pie-number-geometry",
-      "behavior": "Square, pie and number glyph geometry construction",
-      "layer": "model_geometry",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "method",
-            "number.cex",
-            "number.font",
-            "number.digits"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
-      "scene_v1_contract_status": "supported",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-square",
-              "method-pie",
-              "method-number"
-            ]
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "scene_v1_to_scene_honors_root_encoding_and_per_cell_glyph_methods"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "shared-model-parity-unproven",
-      "notes": "Rust evidence proves scene geometry variants, not end-to-end SVG/RGBA rendering for all three."
-    },
-    {
-      "feature_id": "ellipse-shade-color-geometry",
-      "behavior": "Ellipse, shade and color glyph geometry and visual mapping",
-      "layer": "model_geometry_svg_raster",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "method",
-            "shade.lwd",
-            "shade.col",
-            "outline"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-render-contract.R",
-            "test": "legacy corrplot glyphs, triangle types, and diagonal visibility match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "method-ellipse",
-              "method-shade",
-              "method-color"
-            ]
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "Scene-v1 vocabulary is not implementation evidence; no linked Rust test proves these three variants end-to-end."
-    },
-    {
-      "feature_id": "ordering-algorithms",
-      "behavior": "Original, AOE, FPC, hierarchical and alphabetical ordering",
-      "layer": "semantic",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "order",
-            "hclust.method"
-          ]
-        },
-        {
-          "function": "corrMatOrder",
-          "arguments": [
-            "corr",
-            "order",
-            "hclust.method"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
-            "test": "corrMatOrder matches pinned AOE, FPC, and alphabetical ordering"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
-            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy ordering modes produce the expected reordered matrix contract",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "order-aoe-upper"
-            ]
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "variable_order metadata is not evidence that Rust computes the legacy ordering algorithms."
-    },
-    {
-      "feature_id": "hierarchical-linkages",
-      "behavior": "All nine documented hierarchical clustering linkage methods",
-      "layer": "semantic",
-      "inventory_refs": [
-        {
-          "function": "corrMatOrder",
-          "arguments": [
-            "hclust.method"
-          ]
-        },
-        {
-          "function": "corrRect.hclust",
-          "arguments": [
-            "method"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
-            "test": "corrMatOrder matches pinned output for every hierarchical linkage"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
-            "test": "legacy corrRect.hclust matches all pinned linkage methods"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "No Rust ordering/clustering algorithm conformance fixture is linked."
     },
     {
       "feature_id": "label-placement-typography",
@@ -674,383 +3609,6 @@
       "notes": "Rust evidence proves metadata preservation, not every legacy display mode."
     },
     {
-      "feature_id": "significance-display-modes",
-      "behavior": "Legacy pch, p-value, blank, n and label_sig variants and threshold boundaries",
-      "layer": "semantic_visual",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "insig",
-            "sig.level",
-            "pch",
-            "pch.col",
-            "pch.cex"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-significance-render-contract.R",
-            "test": "legacy corrplot significance annotations match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "significance"
-            ]
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "The scene-v1 policy has a smaller vocabulary; all five legacy display modes are not established."
-    },
-    {
-      "feature_id": "confidence-intervals",
-      "behavior": "Confidence bounds, required-bound validation and interval geometry metadata",
-      "layer": "model_geometry",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "plotCI",
-            "lowCI.mat",
-            "uppCI.mat"
-          ]
-        },
-        {
-          "function": "cor.mtest"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
-      "scene_v1_contract_status": "supported",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
-            "test": "legacy corrplot confidence interval overlays match upstream",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "confidence-interval"
-            ]
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-confidence-interval-render-contract.R",
-            "test": "legacy corrplot requires both confidence interval matrices"
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "scene_conversion_preserves_cell_significance_and_confidence_interval_metadata"
-          },
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "validates_scene_v1_cell_encoding_significance_and_confidence_interval"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "shared-model-parity-unproven",
-      "notes": "Rust tests validate/convert interval metadata, not the complete legacy square/circle/rect drawing behavior."
-    },
-    {
-      "feature_id": "palette-generation",
-      "behavior": "COL1/COL2 named palettes, interpolation, edge sizes and exact color vectors",
-      "layer": "semantic",
-      "inventory_refs": [
-        {
-          "function": "COL1",
-          "arguments": [
-            "sequential",
-            "n"
-          ]
-        },
-        {
-          "function": "COL2",
-          "arguments": [
-            "diverging",
-            "n"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
-            "test": "legacy sequential and diverging palettes match every pinned palette"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-palette-contract.R",
-            "test": "COL1 and COL2 reproduce every pinned palette at representative sizes"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "Named palette metadata or mapped scene colors are not evidence of Rust palette generation."
-    },
-    {
-      "feature_id": "standalone-colorlegend",
-      "behavior": "colorlegend() base-graphics layout, labels, alignment and side effects",
-      "layer": "r_graphics_device",
-      "inventory_refs": [
-        {
-          "function": "colorlegend"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "not_applicable",
-      "scene_v1_contract_status": "r-adapter",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-colorlegend-contract.R",
-            "test": "colorlegend matches pinned graphics output for vertical alignment modes"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-colorlegend-contract.R",
-            "test": "colorlegend matches pinned horizontal and no-label graphics output"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "r-adapter-only",
-      "notes": "Standalone colorlegend draws on an R graphics device; scene legend metadata is a different contract."
-    },
-    {
-      "feature_id": "mixed-upper-lower",
-      "behavior": "corrplot.mixed() upper/lower glyph selection, diagonal handling and forwarding",
-      "layer": "semantic_r_adapter",
-      "inventory_refs": [
-        {
-          "function": "corrplot.mixed",
-          "arguments": [
-            "lower",
-            "upper",
-            "diag",
-            "tl.pos",
-            "lower.col",
-            "upper.col"
-          ]
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-mixed-contract.R",
-            "test": "corrplot.mixed preserves pinned upper/lower method combinations"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-mixed-contract.R",
-            "test": "corrplot.mixed preserves pinned default and color forwarding",
-            "fixture_path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
-            "fixture_ids": [
-              "mixed-circle-ellipse"
-            ]
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "Per-cell glyph metadata does not prove complete mixed-plot composition or adapter conformance."
-    },
-    {
-      "feature_id": "cor-mtest-statistics",
-      "behavior": "cor.mtest() pairwise cor.test execution and p-value/CI matrices",
-      "layer": "r_statistics_adapter",
-      "inventory_refs": [
-        {
-          "function": "cor.mtest"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "not_applicable",
-      "scene_v1_contract_status": "r-adapter",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
-            "test": "legacy cor.mtest preserves its pairwise result contract"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
-            "test": "legacy cor.mtest forwards Kendall and cor.test options exactly"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-helper-contract.R",
-            "test": "legacy cor.mtest handles missing observations like the pinned oracle"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "r-statistics-adapter",
-      "notes": "ADR 0004 keeps stats::cor.test execution in the R adapter; Rust renderer support is not applicable."
-    },
-    {
-      "feature_id": "corrmatorder-helper",
-      "behavior": "corrMatOrder() permutation return type, defaults and match.arg errors",
-      "layer": "r_adapter_semantic",
-      "inventory_refs": [
-        {
-          "function": "corrMatOrder"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
-            "test": "corrMatOrder matches pinned AOE, FPC, and alphabetical ordering"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrmatorder-contract.R",
-            "test": "corrMatOrder preserves pinned defaults and match.arg errors"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-evidence-gap",
-      "notes": "Prepared source indices do not prove the Rust ordering algorithms or R return conventions."
-    },
-    {
-      "feature_id": "cluster-rectangle-regions",
-      "behavior": "Cluster rectangle selection and renderer-neutral region geometry",
-      "layer": "model_geometry",
-      "inventory_refs": [
-        {
-          "function": "corrRect"
-        },
-        {
-          "function": "corrRect.hclust"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "verified",
-      "scene_v1_contract_status": "supported",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
-            "test": "legacy corrRect index and name rectangles match the pinned oracle"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
-            "test": "legacy corrRect namesMat rectangles match the pinned oracle"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-rectangle-helper-contract.R",
-            "test": "legacy corrRect.hclust matches all pinned linkage methods"
-          }
-        ],
-        "rust": [
-          {
-            "kind": "test",
-            "path": "rust/crates/corrplot-core/src/scene_tests.rs",
-            "test": "scene_v1_to_scene_preserves_typed_legend_and_cluster_regions"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "shared-model-parity-unproven",
-      "notes": "Rust evidence covers supplied cluster-region metadata, not Rust clustering or R helper drawing."
-    },
-    {
-      "feature_id": "r-graphics-device",
-      "behavior": "Caller-owned active device, add=TRUE composition and device state preservation",
-      "layer": "r_graphics_device",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "add",
-            "mar",
-            "bg"
-          ]
-        },
-        {
-          "function": "corrRect"
-        },
-        {
-          "function": "colorlegend"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "not_applicable",
-      "scene_v1_contract_status": "r-adapter",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-corrplot-main-contract.R",
-            "test": "corrplot preserves pinned add=TRUE graphics composition"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-graphics-device-contract.R",
-            "test": "legacy corrplot preserves caller-owned devices and page composition"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-graphics-device-contract.R",
-            "test": "legacy corrplot errors do not take ownership of the active graphics device"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "r-graphics-adapter-only",
-      "notes": "Rust returns SVG/RGBA data; active R graphics-device ownership belongs to the R adapter."
-    },
-    {
       "feature_id": "svg-output",
       "behavior": "Renderer-neutral scene rendered to SVG",
       "layer": "svg",
@@ -1118,98 +3676,6 @@
       "parity_evidence": [],
       "disposition": "shared-output-parity-unproven",
       "notes": "Legacy PNG snapshots and Rust RGBA smoke tests are independent; no cross-renderer pixel tolerance is asserted."
-    },
-    {
-      "feature_id": "legacy-return-contract",
-      "behavior": "Legacy return list shape, reordered matrix/corrPos and visibility",
-      "layer": "r_api_semantic",
-      "inventory_refs": [
-        {
-          "function": "corrplot"
-        },
-        {
-          "function": "corrplot.mixed"
-        },
-        {
-          "function": "corrRect"
-        },
-        {
-          "function": "corrRect.hclust"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "not_applicable",
-      "scene_v1_contract_status": "r-adapter",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-return-values.R",
-            "test": "corrplot_ng preserves the upstream invisible return object and reordered matrix"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-return-values.R",
-            "test": "corrplot_ng_mixed preserves the combined invisible upstream return object"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "legacy-r-return-adapter",
-      "notes": "Historical R return objects and visibility are outside the renderer-neutral Rust contract."
-    },
-    {
-      "feature_id": "legacy-validation-warnings-errors",
-      "behavior": "Legacy argument validation, warnings, error classes/messages and invalid combinations",
-      "layer": "semantic_r_adapter",
-      "inventory_refs": [
-        {
-          "function": "corrplot",
-          "arguments": [
-            "col.lim",
-            "tl.pos",
-            "outline",
-            "number.digits",
-            "plotCI",
-            "win.asp"
-          ]
-        },
-        {
-          "function": "corrMatOrder"
-        },
-        {
-          "function": "corrRect"
-        }
-      ],
-      "legacy_support": "verified",
-      "rust_support": "unknown",
-      "scene_v1_contract_status": "contract-extension",
-      "evidence": {
-        "legacy": [
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy corrplot argument validation matches the pinned 0.95 contract"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy outline and number-label validation retain upstream errors"
-          },
-          {
-            "kind": "test",
-            "path": "r/corrplotng/tests/testthat/test-legacy-behavior.R",
-            "test": "legacy aspect-ratio restrictions remain explicit"
-          }
-        ]
-      },
-      "classification": null,
-      "parity_status": "not-claimed",
-      "parity_evidence": [],
-      "disposition": "rust-diagnostic-evidence-gap",
-      "notes": "Rust diagnostics are not asserted to reproduce legacy R condition classes, messages or warning order."
     }
   ]
 }
