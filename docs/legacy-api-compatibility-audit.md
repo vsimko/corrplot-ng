@@ -4,6 +4,8 @@
 **Inventory:** [legacy-api-inventory.json](../r/corrplotng/tests/testthat/fixtures/legacy-api-inventory.json)  
 **Purpose:** executable migration checklist for issue #432. This is an audit snapshot, not a claim that corrplot-ng is already drop-in compatible.
 
+The behavior-level comparison is maintained in the [corrplot 0.95 feature matrix](legacy-api-feature-matrix.md). It reuses this audit and the pinned inventory, links exact executable test identifiers, and derives the four-way legacy/Rust classification without treating scene-v1 status or capability declarations as implementation evidence.
+
 ## Executive finding
 
 The exact upstream namespace surface is now present: `corrplotng` re-exports all nine pinned upstream exports, including `corrplot`, `corrplot.mixed`, and `corrMatOrder`, and the package tests compare their formal arguments and defaults with the pinned upstream package. This closes the initial symbol/signature blocker, but it does **not** establish full drop-in compatibility. The three plotting/ordering entry points remain explicit upstream-backed fallbacks; behavioral parity, attached-session workflows, and the Rust renderer cutover remain separate gates.
