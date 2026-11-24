@@ -25,9 +25,9 @@ test_that("cor.mtest matches pinned Pearson p-values and confidence intervals", 
     expect_equal(actual[[field]], t(actual[[field]]))
   }
 
-  expect_identical(diag(actual$p), rep(0, 4))
-  expect_identical(diag(actual$lowCI), rep(1, 4))
-  expect_identical(diag(actual$uppCI), rep(1, 4))
+  expect_identical(unname(diag(actual$p)), rep(0, 4))
+  expect_identical(unname(diag(actual$lowCI)), rep(1, 4))
+  expect_identical(unname(diag(actual$uppCI)), rep(1, 4))
 })
 
 test_that("cor.mtest forwards cor.test methods and options unchanged", {
