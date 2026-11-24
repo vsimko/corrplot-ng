@@ -1672,7 +1672,7 @@
         }
       ],
       "legacy_support": "unknown",
-      "rust_support": "unknown",
+      "rust_support": "verified",
       "scene_v1_contract_status": "supported",
       "evidence": {
         "rust": [
@@ -1687,7 +1687,7 @@
       "parity_status": "not-claimed",
       "parity_evidence": [],
       "disposition": "shared-model-parity-unproven",
-      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests.",
+      "notes": "Legacy glyph evidence is captured through the R graphics device and does not independently assert renderer-neutral model geometry. No legacy model-geometry test is currently linked. Rust model evidence is limited to explicit glyph assertions in the linked scene construction tests. The Rust test explicitly asserts both ellipse orientations and their rotation geometry.",
       "fixtures": [
         {
           "path": "r/corrplotng/tests/testthat/fixtures/legacy-visual-cases.json",
