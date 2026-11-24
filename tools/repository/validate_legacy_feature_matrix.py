@@ -141,13 +141,15 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
                     errors.append(
                         f"{prefix}: test identifier {test_name!r} not found in {item.get('path')}"
                     )
-                fixture_ids = item.get("fixture_ids", [])
-                fixture_path = item.get("fixture_path")
-                if fixture_ids and fixture_path != reference.get("visual_fixture_path"):
-                    errors.append(f"{prefix}: fixture IDs must point to the pinned visual fixture manifest")
-                for fixture_id in fixture_ids:
-                    if fixture_id not in visual_ids:
-                        errors.append(f"{prefix}: unknown legacy visual fixture ID {fixture_id!r}")
+                if "fixture_ids" in item or "fixture_path" in item:
+                    errors.append(f"{prefix}: fixture references belong in the row-level fixtures column")
+
+        for fixture in row.get("fixtures", []):
+            if fixture.get("path") != reference.get("visual_fixture_path"):
+                errors.append(f"{prefix}: row fixtures must point to the pinned visual fixture manifest")
+            for fixture_id in fixture.get("ids", []):
+                if fixture_id not in visual_ids:
+                    errors.append(f"{prefix}: unknown legacy visual fixture ID {fixture_id!r}")
 
         if parity_status == "verified":
             if legacy != "verified" or rust != "verified":
