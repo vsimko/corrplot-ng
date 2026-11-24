@@ -143,8 +143,8 @@ class VisualizationModelSchemaTests(unittest.TestCase):
         for column_type, invalid_value in mismatches.items():
             with self.subTest(column_type=column_type):
                 document = load_fixture("table-column-types.json")
-                document["data_sources"][0]["columns"]["sample"]["type"] = column_type
-                document["data_sources"][0]["columns"]["sample"]["values"][0] = invalid_value
+                document["data_sources"][0]["columns"]["quarter"]["type"] = column_type
+                document["data_sources"][0]["columns"]["quarter"]["values"][0] = invalid_value
                 with self.assertRaises(jsonschema.ValidationError):
                     validate_document(document, self.schema)
 
