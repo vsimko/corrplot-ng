@@ -56,6 +56,10 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
     }
     if inventory.get("reference", {}).get("ref") != reference.get("commit"):
         errors.append("matrix and inventory refer to different upstream commits")
+    for key in ("adr_path", "scene_v1_contract_path", "visualization_model_contract_path", "rust_contract_path"):
+        contract_path = repo_root / reference.get(key, "")
+        if not contract_path.is_file():
+            errors.append(f"missing architecture/contract reference: {reference.get(key)}")
 
     rows = document.get("rows", [])
     if not rows:
@@ -146,8 +150,18 @@ def validate_document(document: dict[str, Any], repo_root: Path) -> list[str]:
                         errors.append(f"{prefix}: unknown legacy visual fixture ID {fixture_id!r}")
 
         if parity_status == "verified":
-            if not any(item.get("kind") == "comparative_test" for item in parity_evidence):
+            if legacy != "verified" or rust != "verified":
+                errors.append(f"{prefix}: parity can only be verified when both implementations are verified")
+            comparative_items = [item for item in parity_evidence if item.get("kind") == "comparative_test"]
+            if not comparative_items:
                 errors.append(f"{prefix}: verified parity requires comparative_test evidence")
+            for item in comparative_items:
+                test_path = repo_root / item.get("path", "")
+                test_name = item.get("test", "")
+                if not test_path.is_file():
+                    errors.append(f"{prefix}: missing comparative evidence test file {item.get('path')}")
+                elif not test_name or test_name not in test_path.read_text(encoding="utf-8"):
+                    errors.append(f"{prefix}: comparative test identifier {test_name!r} not found in {item.get('path')}")
         elif parity_status == "not-claimed":
             if parity_evidence:
                 errors.append(f"{prefix}: not-claimed parity must not carry parity evidence")
