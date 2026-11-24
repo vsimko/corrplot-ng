@@ -3,8 +3,9 @@
 **Machine-readable source:** [legacy-api-feature-matrix.json](../r/corrplotng/tests/testthat/fixtures/legacy-api-feature-matrix.json)  
 **Pinned oracle:** [corrplot 0.95](https://github.com/taiyun/corrplot/tree/62532f700e6c9d04b93ffbf0bf56e264b0e0368e)  
 **Inventory:** [legacy-api-inventory.json](../r/corrplotng/tests/testthat/fixtures/legacy-api-inventory.json)
+**Architecture:** [ADR 0004](adr/0004-unified-visualization-model-and-dual-api.md) · [scene-v1 contract](../contracts/scene-v1/README.md) · [visualization-model-v1](../contracts/visualization-model-v1/README.md) · [Rust core contract](../rust/crates/corrplot-core/README.md)
 
-This matrix is the behavior-level comparison requested by #432. It is intentionally separate from the function/argument inventory: one row represents one independently testable behavior or output layer. It currently contains 131 atomic rows, including one row per exported R signature, each legacy glyph's model/SVG/raster evidence, and the separately testable scene-v1 requirements. The matrix reuses inventory function/argument references and existing fixture IDs instead of copying their definitions.
+This matrix is the behavior-level comparison requested by #432. It is intentionally separate from the function/argument inventory: one row represents one independently testable behavior or output layer. It currently contains 131 atomic rows, including one row per exported R signature, each legacy glyph's model/SVG/raster evidence, and the separately testable scene-v1 requirements. The matrix reuses inventory function/argument references and existing fixture IDs instead of copying their definitions. It links ADR 0004 and the relevant scene-v1, visualization-model-v1, and Rust core contracts so contract status is traceable without being mistaken for implementation evidence.
 
 ## Columns and evidence semantics
 
