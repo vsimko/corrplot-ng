@@ -56,6 +56,15 @@ class FeatureMatrixValidationTests(unittest.TestCase):
         errors = validate_document(document, self.repo_root)
         self.assertTrue(any("rust=verified requires executable test evidence" in error for error in errors))
 
+    def test_rejects_unverifiable_comparative_evidence(self):
+        document = copy.deepcopy(self.document)
+        row = document["rows"][1]
+        row["parity_status"] = "verified"
+        row["parity_evidence"] = [{"kind": "comparative_test", "path": "missing.py", "test": "missing_test"}]
+        row["classification"] = "both"
+        errors = validate_document(document, self.repo_root)
+        self.assertTrue(any("missing comparative evidence test file" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
