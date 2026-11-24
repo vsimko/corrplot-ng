@@ -2,7 +2,7 @@ Package: corrplotng
 Title: Next Generation Correlation Plots
 Version: 0.0.0.9000
 Authors@R: c(
-    person("corrplot-ng contributors", role = c("aut", "cre"), email = "maintainers@example.invalid"),
+    person("Viliam", "Simko", role = c("aut", "cre"), email = "viliam@iontrails.com"),
     person("The Extendr", "contributors", role = "cph"),
     person("Marvin", "Löbel", role = "cph"),
     person("Aleksey", "Kladov", role = "cph"),
